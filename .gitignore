@@ -1,4 +1,4 @@
-/FastBridge_app/settings.py
+FastBridge/settings.py
 .venv
 __pycache__
 *.pyc
