@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from FastBridge_app import views
 
 urlpatterns = [
+    path('', views.bridge.views.index, name='index'),
     path('admin/', admin.site.urls),
     path('bridge/', include('FastBridge_app.urls.bridge_urls')),
 ]

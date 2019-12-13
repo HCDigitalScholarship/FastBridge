@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Bridge</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cabin:700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Actor">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Adamina">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alice">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cormorant+Garamond:400,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Crete+Round">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Crimson+Text">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Muli:400,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noticia+Text">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/fontawesome5-overrides.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="assets/css/styles.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md fixed-top navigation-clean-button" id="main-nav" style="padding: 5px;background-color: #ffffff;">
+        <div class="container"><a class="navbar-brand" href="index.html" style="width: 250px;padding-top: 0px;"><img src="assets/img/bridge-text-white.png" style="filter: grayscale(0%);opacity: 1;width: 100%;"></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div
+                class="collapse navbar-collapse" id="navcol-1">
+                <ul class="nav navbar-nav mr-auto">
+                    <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;font-weight: normal;font-style: normal;">ABOUT</a>
+                        <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="#" style="font-family: Lora, serif;weight: 300;">The Bridge</a><a class="dropdown-item" role="presentation" href="#" style="font-family: Lora, serif;">Available Texts</a></div>
+                    </li>
+                    <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;">TOOLS&nbsp;</a>
+                        <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="index-oracle.html">Oracle</a><a class="dropdown-item" role="presentation" href="#">Lemmatize</a><a class="dropdown-item" role="presentation" href="#">Format</a></div>
+                    </li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="https://www.haverford.edu/classics" style="font-family: Actor, sans-serif;">HAVERFORD CLASSICS</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="#" style="font-family: Actor, sans-serif;">HELPS</a></li>
+                </ul><span class="navbar-text actions"> <a class="text-uppercase login" href="#" style="font-family: Actor, sans-serif;margin: 0px 5px;">Log In</a><a class="btn btn-light action-button" role="button" href="#" style="background-color: #66d7d7;color: #ffffff;border-radius: 35px;">Sign Up</a></span></div>
+        </div>
+    </nav>
+    <section id="oracle-select" class="content-section" style="background-color: rgba(10,17,20,0.8);height: auto;padding-top: 150px;background-image: url(&quot;assets/img/intro-bg.jpg&quot;);background-position: bottom;background-size: auto;">
+        <div class="container" style="color: #ffffff;">
+            <div class="tab-oracle">
+                <div class="row" style="margin-bottom: 30px;">
+                    <div class="col" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;">
+                        <div class="row">
+                            <div class="col-xl-7">
+                                <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">Select a vocab list</h4>
+                            </div>
+                        </div>
+                        <div id="oracle-result" style="/*border-radius: 10px;*/">
+                            <div class="table-responsive" style="margin-bottom: 50px;">
+                                <table class="table" id="oracle-result-table1">
+                                    <thead style="/*border-radius: 10px;*/">
+                                        <tr>
+                                            <th class="text-uppercase" style="color: #ffffff;font-family: Actor, sans-serif;">WORK</th>
+                                            <th class="text-uppercase" style="color: rgb(255,255,255);font-family: Actor, sans-serif;">Section(s)</th>
+                                            <th style="width: 20%;color: #7de8c2;font-family: Actor, sans-serif;">EDIT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr></tr>
+                                        <tr></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-oracle">
+                <div class="row" style="margin-bottom: 50px;margin-top: 30px;">
+                    <div class="col" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;">
+                        <div class="row">
+                            <div class="col-xl-7">
+                                <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">Define known vocabulary</h4>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="table-responsive" style="margin-bottom: 50px;">
+                                <table class="table" id="oracle-result-table2">
+                                    <thead style="/*border-radius: 10px;*/">
+                                        <tr>
+                                            <th class="text-uppercase" style="color: #ffffff;font-family: Actor, sans-serif;">Book</th>
+                                            <th class="text-uppercase" style="color: rgb(255,255,255);font-family: Actor, sans-serif;">Section(s)</th>
+                                            <th style="width: 20%;color: #7de8c2;font-family: Actor, sans-serif;">EDIT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr></tr>
+                                        <tr></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="row" style="margin-bottom: 50px;margin-top: 30px;">
+                    <div class="col d-flex justify-content-center align-items-center" id="page-buttons-oracle" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;padding: 15px;"><button class="btn" id="myPrev-oracle" type="button" style="color: #7de8c2;border-radius: 50%;border-color: #7de8c2;border: solid 2px;margin: 0px 5px;background-color: rgba(43,45,47,0.7);/*text-align: center;*/font-size: 18px;width: 43px;height: 43px;padding: 5px;"><i class="fas fa-angle-double-left"></i></button>
+                        <button
+                            class="btn btn-primary" id="openModal1-oracle" type="button" style="color: #7de8c2;border-radius: 50%;border-color: #7de8c2;border: solid 2px;margin: 0px 5px;background-color: rgba(43,45,47,0.7);/*text-align: center;*/font-size: 18px;width: 43px;height: 43px;padding: 5px;"
+                            data-toggle="modal" data-target="#oracle-select-text"><i class="fas fa-plus" style="font-size: 16px;"></i></button><button class="btn btn-primary" id="openModal2-oracle" type="button" style="color: #7de8c2;border-radius: 50%;border-color: #7de8c2;border: solid 2px;margin: 0px 5px;background-color: rgba(43,45,47,0.7);/*text-align: center;*/font-size: 18px;width: 43px;height: 43px;padding: 5px;"
+                                data-toggle="modal" data-target="#oracle-define-vocab"><i class="fas fa-plus" style="font-size: 16px;"></i></button><button class="btn btn-primary" id="myNext-oracle" type="button" style="color: #7de8c2;border-radius: 50%;border-color: #7de8c2;border: solid 2px;margin: 0px 5px;background-color: rgba(43,45,47,0.7);/*text-align: center;*/font-size: 18px;width: 43px;height: 43px;padding: 5px;"><i class="fas fa-angle-double-right"></i></button></div>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:40px;"><span class="step"></span><span class="step"></span></div>
+        </div>
+        <div class="modal fade" role="dialog" tabindex="-1" id="oracle-select-text">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" style="color: black;">Select work</h4><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div>
+                    <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
+                        <form id="oracle-modal-form1">
+                            <div>
+                                <div class="form-group"><label style="color: black;" for="select1">Please select the work you want to read.</label><select class="form-control" id="oracle-modal-form1-select1"><optgroup label="Please select"><option value="book-1" selected="">38 Latin Stories (Groton)</option><option value="book-2">50 Most Important Latin Verbs List</option><option value="book-3">Caesar, Civil Wars</option></optgroup></select></div>
+                                <div
+                                    class="form-group"><label style="color: black;" for="select2">Do you want to specify the section(s) of the book?</label><select class="form-control" id="oracle-modal-form1-select2"><optgroup label="Please select"><option value="yes" selected="">Yes</option><option value="no" selected="">No</option></optgroup></select></div>
+                            <div
+                                class="form-group" id="oracle-modal-form1-select2-hidden-div"><label id="oracle-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field">Please select the section(s).</label>
+                                <div class="form-row">
+                                    <div class="col"><input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From" required=""></div>
+                                    <div class="col"><input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To" required=""></div>
+                                </div>
+                    </div>
+                </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="padding-bottom: 25px;padding-right: 20px;padding-left: 20px;"><button class="btn btn-light" type="button" data-dismiss="modal" style="border-radius: 35px;">Close</button><button class="btn btn-primary" id="oracle-modal-form1-save" type="button" style="border-radius: 35px;">Save</button></div>
+        </div>
+        </div>
+        </div>
+        <div class="modal fade" role="dialog" tabindex="-1" id="oracle-define-vocab">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" style="color: black;">Customize my list</h4><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div>
+                    <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
+                        <form id="oracle-modal-form2">
+                            <div class="form-group"><label style="color: rgb(14,14,14);">Please select a way to define known vocabulary</label><div>
+    <input type='radio' name='method' onchange='hideBridge(this)'> <label style='color:black; padding:5px'>import from my computer </label>
+    <input type='radio' name='method' onchange='hideComputer(this)'> <label style='color:black; padding:5px'>select text from Bridge </label>
+</div></div>
+                            <div id="computer" style="display:none">
+                                <div class="form-group"><label style="color: rgb(33,32,32);">Please either upload a file, or directly copy and paste your list into the text field below</label><input type="file"><input class="form-control" type="text" placeholder="You may copy your list and paste here"></div>
+                            </div>
+                            <div id="bridge" style="display:none">
+                                <div class="form-group"><label style="color: black;" for="select1">Please select the work you have read.</label><select class="form-control" id="oracle-modal-form2-select1"><optgroup label="Please select"><option value="book-1" selected="">38 Latin Stories (Groton)</option><option value="book-2">50 Most Important Latin Verbs List</option><option value="book-3">Caesar, Civil Wars</option></optgroup></select></div>
+                                <div
+                                    class="form-group"><label style="color: black;" for="select2">Do you want to specify the section(s) of the book?</label><select class="form-control" id="oracle-modal-form2-select2"><optgroup label="Please select"><option value="yes" selected="">Yes</option><option value="no" selected="">No</option></optgroup></select></div>
+                            <div
+                                class="form-group" id="oracle-modal-form2-select2-hidden-div"><label id="oracle-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">Please select the section(s).</label>
+                                <div class="form-row">
+                                    <div class="col"><input class="form-control" type="text" id="oracle-modal-form2-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From" required=""></div>
+                                    <div class="col"><input class="form-control" type="text" id="oracle-modal-form2-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To" required=""></div>
+                                </div>
+                    </div>
+                </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="padding-bottom: 25px;padding-right: 20px;padding-left: 20px;"><button class="btn btn-light" type="button" data-dismiss="modal" style="border-radius: 35px;">Close</button><button class="btn btn-primary" id="oracle-modal-form2-save" type="button" style="border-radius: 35px;">Save</button></div>
+        </div>
+        </div>
+        </div>
+    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="assets/js/script.min.js"></script>
+</body>
+
+</html>
