@@ -1,113 +1,39 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
+{% load staticfiles %}
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Home - Brand</title>
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cabin:700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Actor">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Adamina">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alice">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cormorant+Garamond:400,700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Crete+Round">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Crimson+Text">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Muli:400,700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noticia+Text">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/fonts/fontawesome5-overrides.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
-    <link rel="stylesheet" href="assets/css/styles.min.css">
-</head>
+{% block content %}
+<style>
+    .btn {
+        border: 1px;
+        border-color: white;
+        border-radius: 35px;
+        border-style: solid;
+        color: #ffffff;
+        font-size: 20px;
+        font-family: Actor, sans-serif;
+        margin-right: 10px;
+        margin-left: 10px;
+        width: 120px;
+    }
+</style>
 
 <body id="page-top" style="background-color: #4a4e50;">
-    <nav class="navbar navbar-light navbar-expand-md fixed-top navigation-clean-button" id="main-nav" style="padding: 5px;background-color: #ffffff;">
-        <div class="container"><a class="navbar-brand" href="index.html" style="width: 250px;padding-top: 0px;"><img src="assets/img/bridge-text-white.png" style="filter: grayscale(0%);opacity: 1;width: 100%;"></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
-            <div
-                class="collapse navbar-collapse" id="navcol-1">
-                <ul class="nav navbar-nav mr-auto">
-                    <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;font-weight: normal;font-style: normal;">ABOUT</a>
-                        <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="#">First Item</a><a class="dropdown-item" role="presentation" href="#">Second Item</a><a class="dropdown-item" role="presentation" href="#">Third Item</a></div>
-                    </li>
-                    <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;">TOOLS&nbsp;</a>
-                        <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="#">First Item</a><a class="dropdown-item" role="presentation" href="#">Second Item</a><a class="dropdown-item" role="presentation" href="#">Third Item</a></div>
-                    </li>
-                    <li class="nav-item" role="presentation"><a class="nav-link" href="#" style="font-family: Actor, sans-serif;">HAVERFORD CLASSICS</a></li>
-                    <li class="nav-item" role="presentation"><a class="nav-link" href="#" style="font-family: Actor, sans-serif;">HELPS</a></li>
-                </ul><span class="navbar-text actions"> <a class="text-uppercase login" href="#" style="font-family: Actor, sans-serif;">Log In</a><a class="btn btn-light action-button" role="button" href="#" style="background-color: #66d7d7;color: #ffffff;">Sign Up</a></span></div>
-        <nav
-            class="navbar navbar-light navbar-expand-md fixed-top navigation-clean-button" id="main-nav" style="padding: 5px;background-color: #ffffff;">
-            <div class="container"><a class="navbar-brand" href="index.html" style="width: 250px;padding-top: 0px;"><img src="assets/img/bridge-text-white.png" style="filter: grayscale(0%);opacity: 1;width: 100%;"></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
-                <div
-                    class="collapse navbar-collapse" id="navcol-1">
-                    <ul class="nav navbar-nav mr-auto">
-                        <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;font-weight: normal;font-style: normal;">ABOUT</a>
-                            <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="#" style="font-family: Lora, serif;weight: 300;">The Bridge</a><a class="dropdown-item" role="presentation" href="#" style="font-family: Lora, serif;">Available Texts</a></div>
-                        </li>
-                        <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#" style="font-family: Actor, sans-serif;">TOOLS&nbsp;</a>
-                            <div class="dropdown-menu" role="menu"><a class="dropdown-item" role="presentation" href="index-oracle.html">Oracle</a><a class="dropdown-item" role="presentation" href="#">Lemmatize</a><a class="dropdown-item" role="presentation" href="#">Format</a></div>
-                        </li>
-                        <li class="nav-item" role="presentation"><a class="nav-link" href="https://www.haverford.edu/classics" style="font-family: Actor, sans-serif;">HAVERFORD CLASSICS</a></li>
-                        <li class="nav-item" role="presentation"><a class="nav-link" href="#" style="font-family: Actor, sans-serif;">HELPS</a></li>
-                    </ul><span class="navbar-text actions"> <a class="text-uppercase login" href="#" style="font-family: Actor, sans-serif;margin: 0px 5px;">Log In</a><a class="btn btn-light action-button" role="button" href="#" style="background-color: #66d7d7;color: #ffffff;border-radius: 35px;">Sign Up</a></span></div>
-            </div>
-    </nav>
-    </div>
-    </nav>
     <header class="masthead" style="background-image: url(&quot;assets/img/intro-bg.jpg&quot;);background-size: auto;filter: grayscale(0%);background-position: bottom;">
         <div class="intro-body" style="background-color: rgba(60,62,64,0.6);">
             <div class="container">
                 <div class="row">
                     <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px;">
                         <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 60px;margin-bottom: 30px;font-weight: normal;">ORACLE</p>
-                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">Select a language and get started!</p><a class="btn" role="button" data-bs-hover-animate="pulse" style="border: 1px;border-color: white;border-radius: 35px;border-style: solid;color: #ffffff;font-size: 20px;font-family: Actor, sans-serif;margin-right: 10px;margin-left: 10px;width: 120px;background-color: rgba(125,232,194,0.75);"
-                            href="select-oracle.html">GREEK</a><a class="btn" role="button" data-bs-hover-animate="pulse" style="border: 1px;border-color: white;border-radius: 35px;border-style: solid;color: #ffffff;font-size: 20px;font-family: Actor, sans-serif;margin-right: 10px;margin-left: 10px;width: 120px;background-color: rgba(232,131,125,0.75);"
-                            href="select-oracle.html">Latin</a></div>
-                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px; display:none">
-                        <h1 class="text-uppercase brand-heading" style="font-family: Actor, sans-serif;font-size: 50px;margin-bottom: 5px;">The</h1>
-                        <h1 class="text-uppercase brand-heading" style="font-family: Cabin, sans-serif;margin-bottom: 10px;">Bridge</h1>
-                        <p class="intro-text" style="font-family: 'Crimson Text', serif;font-size: 22px;">A handy tool helps you to customize your Greek and Latin vocabulary lists.</p>
-                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #b2f5dd;margin-bottom: 15px;">Select a language and get start!</p><a class="btn" role="button" data-bs-hover-animate="pulse" style="/*border: 1px;*//*border-color: white;*/border-radius: 35px;border-style: solid;color: #222222;font-size: 20px;font-family: Actor, sans-serif;margin-right: 10px;margin-left: 10px;width: 120px;background-color: #b2f5dd;"
-                            href="select.html">GREEK</a><a class="btn" role="button" data-bs-hover-animate="pulse" style="/*border: 1px;*//*border-color: white;*/border-radius: 35px;border-style: solid;color: #222222;font-size: 20px;font-family: Actor, sans-serif;margin-right: 10px;margin-left: 10px;width: 120px;background-color: #b2f5dd;"
-                            href="select.html">Latin</a></div>
+                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">
+                            Select a language and get started!</p>
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(125,232,194,0.75);" href="select-oracle.html">
+                            GREEK</a>
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="select-oracle.html">
+                            Latin</a>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
-    <section id="contact" class="content-section text-center">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 mx-auto">
-                    <h2>Contact us</h2>
-                    <p>Feel free to leave us a comment on the<a href="#">&nbsp;Grayscale template overview page</a>&nbsp;to give some feedback about this theme!</p>
-                    <ul class="list-inline banner-social-buttons">
-                        <li class="list-inline-item">&nbsp;<button class="btn btn-primary btn-lg btn-default" type="button"><i class="fa fa-google-plus fa-fw"></i><span class="network-name">&nbsp; Google+</span></button></li>
-                        <li class="list-inline-item">&nbsp;<button class="btn btn-primary btn-lg btn-default" type="button"><i class="fa fa-twitter fa-fw"></i><span class="network-name">&nbsp;Twitter</span></button></li>
-                        <li class="list-inline-item">&nbsp;<button class="btn btn-primary btn-lg btn-default" type="button"><i class="fa fa-github fa-fw"></i><span class="network-name">&nbsp;github</span></button></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-    <footer>
-        <div class="container text-center">
-            <p>Copyright ©&nbsp;Brand 2018</p>
-        </div>
-    </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
-    <script src="assets/js/script.min.js"></script>
 </body>
-
-</html>
+{% endblock %}
