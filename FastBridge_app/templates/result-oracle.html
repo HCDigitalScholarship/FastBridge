@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block content %}
 
@@ -44,7 +44,7 @@
                         </tr>
                     </tbody>
                 </table>
-            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="index-oracle.html" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a></div>
+            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="{% static 'index-oracle.html' %}" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a></div>
     </section>
 </body>
 {% endblock %}

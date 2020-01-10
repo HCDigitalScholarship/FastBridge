@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block content %}
 <style>
@@ -26,9 +26,9 @@
                         <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 60px;margin-bottom: 30px;font-weight: normal;">ORACLE</p>
                         <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">
                             Select a language and get started!</p>
-                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(125,232,194,0.75);" href="select-oracle.html">
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(125,232,194,0.75);" href="{% static 'select-oracle.html' %}">
                             GREEK</a>
-                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="select-oracle.html">
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="{% static 'select-oracle.html' %}">
                             Latin</a>
                     </div>
                 </div>
