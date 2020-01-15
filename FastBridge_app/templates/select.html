@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-<script src="{% static 'asset/js/select-vocab-step-form.js' %}"></script>
-
 {% block content %}
 <style>
 #bridge-select {
     background-color: rgba(10,17,20,0.8);
     height: auto;
     padding-top: 150px;
-    background-image: url(&quot;assets/img/background-img-gray.png&quot;);
+    background-image: url('{% static "assets/img/background-img-gray.png" %}');
     background-position: top;
     background-size: auto;
 };
@@ -74,7 +72,7 @@
                                         <div class="form-check" style="margin-bottom: 5px;">
                                             <input class="form-check-input" type="radio" id="formCheck-1" name="changeList" checked="">
                                             <label class="form-check-label" for="formCheck-1" style="margin-left: 5px;">
-                                                Exclude the following vacab from my list</label></div>
+                                                Exclude the following vocab from my list</label></div>
                                         <div class="form-check" style="margin-bottom: 5px;">
                                             <input class="form-check-input" type="radio" id="formCheck-2" name="changeList">
                                             <label class="form-check-label" for="formCheck-2" style="margin-left: 5px;">
@@ -214,5 +212,7 @@
             </div>
         </div>
     </section>
+<script src="{% static 'assets/js/select-vocab-step-form.js' %}"></script>
 </body>
+
 {% endblock %}

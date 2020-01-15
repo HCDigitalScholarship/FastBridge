@@ -1,17 +1,17 @@
 from django.http import HttpResponse
-from django.views import View
+from django.views.generic import TemplateView
 from django.shortcuts import render
 from FastBridge_app.models.i_repository import IRepository
 
 
-class LatinView(View):
+class LatinView(TemplateView):
 
-    def __init__(self, repository: IRepository):
+    def __init__(self, repository: IRepository = []):
         self.repository = repository
 
-    def get(self, request):
+    def get(self, request, **kwargs):
         # <view logic>
-        return HttpResponse('result')
+        return render(request, 'select.html', context=None)
 
     def post(self, request):
         # <view logic>
