@@ -1,5 +1,5 @@
-/* 
-step form structure 
+/*
+step form structure
 source: https://www.w3schools.com/howto/howto_js_form_steps.asp
 */
 var currentTab = 0; // Current tab is set to be the first tab (0)
@@ -7,11 +7,11 @@ showTab(currentTab, true); // Display the current tab
 // This function will display the specified tab of the form ...
 function showTab(n, isNext) {
   var x = document.getElementsByClassName("tab");
-  x[n].style.display = "block";    
+  x[n].style.display = "block";
   var prev = document.getElementById("myPrev");
   var next = document.getElementById("myNext");
   var open1 = document.getElementById("openModal1");
-  var open2 = document.getElementById("openModal2");   
+  var open2 = document.getElementById("openModal2");
   var len1 = document.getElementById("bridge-result-table1").rows.length;
   var len2 = document.getElementById("bridge-result-table2").rows.length;
   // fix previous and add buttons
@@ -28,7 +28,7 @@ function showTab(n, isNext) {
   } else {
     prev.disabled = false;
     open2.style.display = "";
-    open1.style.display = "none";   
+    open1.style.display = "none";
     if (len2 <= 3) {
         next.disabled = true;
     } else {
@@ -40,7 +40,7 @@ function showTab(n, isNext) {
   if (n == (x.length - 1)) {
     next.innerHTML = '<i class="fas fa-check"></i>';
   } else {
-    next.innerHTML = '<i class="fas fa-angle-double-right"></i>';  
+    next.innerHTML = '<i class="fas fa-angle-double-right"></i>';
   }
   // ... and run a function that displays the correct step indicator:
   fixStepIndicator(n);
@@ -48,18 +48,18 @@ function showTab(n, isNext) {
 
 // This function will figure out which tab to display
 function nextPrev(n, next) {
-  var x = document.getElementsByClassName("tab"); 
+  var x = document.getElementsByClassName("tab");
   // Hide the current tab:
   x[currentTab].style.display = "none";
   // Increase or decrease the current tab by 1:
-  currentTab = currentTab + n;    
+  currentTab = currentTab + n;
   // if you have reached the end of the form... :
   if (currentTab >= x.length) {
     //...the form gets submitted:
   //   document.getElementById("regForm").submit();
     window.location.href = "result.html";
     return false;
-  }    
+  }
   // Otherwise, display the correct tab:
   showTab(currentTab, next);
 }
@@ -111,7 +111,7 @@ function deleteRow(r) {
   table.deleteRow(i);
   if (table.rows.length <= 3){
       document.getElementById('myNext').disabled = true;
-  }  
+  }
 }
 
 // yes triggers hidden fields
@@ -125,21 +125,21 @@ $("#bridge-modal-form1-select2").change(function() {
 $("#bridge-modal-form1-select2").trigger("change");
 
 // modal save
-$('#bridge-modal-form1-save').click(function(){    
+$('#bridge-modal-form1-save').click(function(){
     // if showing select value is good enough
     // var book = $('#select-text #select1').val().trim();
-    
+
     // if showing select label is better than value
     var el = document.getElementById('bridge-modal-form1-select1');
     var book = el.options[el.selectedIndex].innerHTML;
 
     var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
-    var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();   
+    var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
         var sections = '';
-    }    
+    }
     // show the selection in a table
     var table = document.getElementById('bridge-result-table1');
     var row = table.insertRow(-1);
@@ -147,12 +147,12 @@ $('#bridge-modal-form1-save').click(function(){
     var cell2 = row.insertCell(1);
     var cell3 = row.insertCell(2);
     cell1.innerHTML = '<span style="color:white">' + book + '</span>';
-    cell2.innerHTML = '<span style="color:white">' + sections + '</span>'; 
+    cell2.innerHTML = '<span style="color:white">' + sections + '</span>';
     cell3.innerHTML = '<button class="btn" onclick="deleteRow(this)"><i class="fa fa-remove" style="font-size:25px;color:#e8837d;"></i></button>';
     // hide modal when save
     $('#bridge-select-text').modal('hide');
     // reset form values
-    $('#bridge-select-text').find('#bridge-modal-form1')[0].reset();
+  //  $('#bridge-select-text').find('#bridge-modal-form1')[0].reset();
     $('#bridge-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
@@ -183,21 +183,21 @@ $("#bridge-modal-form2-select2").change(function() {
 $("#bridge-modal-form2-select2").trigger("change");
 
 // modal save
-$('#bridge-modal-form2-save').click(function(){    
+$('#bridge-modal-form2-save').click(function(){
     // if showing select value is good enough
     // var book = $('#select-text #select1').val().trim();
-    
+
     // if showing select label is better than value
     var el = document.getElementById('bridge-modal-form2-select1');
     var book = el.options[el.selectedIndex].innerHTML;
 
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
-    var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();   
+    var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
         var sections = '';
-    }    
+    }
     // show the selection in a table
     var table = document.getElementById('bridge-result-table2');
     var row = table.insertRow(-1);
@@ -205,7 +205,7 @@ $('#bridge-modal-form2-save').click(function(){
     var cell2 = row.insertCell(1);
     var cell3 = row.insertCell(2);
     cell1.innerHTML = '<span style="color:white">' + book + '</span>';
-    cell2.innerHTML = '<span style="color:white">' + sections + '</span>'; 
+    cell2.innerHTML = '<span style="color:white">' + sections + '</span>';
     cell3.innerHTML = '<button class="btn" onclick="deleteRow2(this)"><i class="fa fa-remove" style="font-size:25px;color:#e8837d;"></i></button>';
     // hide modal when save
     $('#bridge-change-list').modal('hide');
@@ -215,7 +215,3 @@ $('#bridge-modal-form2-save').click(function(){
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
 });
-
-
-
-

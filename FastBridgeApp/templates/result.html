@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<body>
+    <section id="result" class="download-section content-section text-center" style="background-image: url('/assets/img/background-img-gray.png'); background-size: auto;background-position: top;">
+        <div class="container" style="background-color: rgba(47,49,52,0.85);border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
+            <h2> Now showing {{ section }}, which has {{ len }} words </h2>
+            <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
+                <table class="table table-striped">
+                    <thead>
+                      <th style="color: rgb(255,255,255);">Dictionary Entry</th>
+                      <th style="color: rgb(255,255,255);">Basic English</th>
+                    </thead>
+                    <tbody>
+                      {% for display_lemma, basic_def in display_lemmas %}
+                              <tr>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ display_lemma }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ basic_def }}
+                                  </td>
+                              </tr>
+                          {% endfor %}
+
+                    </tbody>
+                </table>
+            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="index.html" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a></div>
+    </section>
+</body>
+{% endblock %}
