@@ -4,8 +4,8 @@ __pycache__
 *.pyc
 *.pyo
 .mypy_cache
-/FastBridgeApp/data
-*
+
+
 /static_collected
 *.log
 *.sqlite3
