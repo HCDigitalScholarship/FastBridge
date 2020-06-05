@@ -16,21 +16,16 @@ app_path = Path.cwd()
 static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
-"""
+
 
 @app.get("/addwords")
 async def import_words(request : Request):
     context = {"request" : request}
-    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
+    #this one will take a csv of titles and the information we care about for them, and add it to the right dictionay when submitted.
     return templates.TemplateResponse("import-words.html", context)
 
-@app.post("/addingwords")
-async def import_words(language : Form(...), words : Form(...)):
-    context = {"request" : request}
-    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
-    return context
 
-"""
+
 
 
 @app.get("/import") #BEFORE LAUNCH ALL URLS STARTING WITH /IMPORT ABSOLUTELY MUST BE RESTRICTED TO CERTAIN ACCOUNTS, BECAUSE IT ALLOWS WRITTING TECHNICALLY EXECUTABLE CODE TO THE SERVER
@@ -40,29 +35,16 @@ async def import_index(request : Request):
     return templates.TemplateResponse("import.html", context)
 
 
-@app.post("/uploadfile/")
-async def create_file(file: UploadFile = File("file")):
-
-    return {"file": file}
-
-
-@app.post("/item_images")
-async def create_upload_file(file: UploadFile = File(..., content_type = 'csv')):
-    print(file)
-    path = app_path / 'data' / f"{file.filename}"
-    print(file.file.readlines())
-    print(file.file.read())
-    path.write_bytes(file.file.write())
-    # url = f"https://{meta.url}/images/model.png"
-    return {
-        f"data/{file.filename}"
-    }
-
 @app.post("/import/handler/")
-async def import_handler(file: UploadFile = File('csvfile'), title : str = Form(...),  language : str = Form(...), subsections : int = Form(...)):
-    print(file)
+async def import_handler(file: UploadFile = File(...), title : str = Form(...), language : str = Form(...), subsections : int = Form(...)):
     add_new_text.import_(title, subsections, file.file, language)
-    return file
+    return "added a text"
+
+@app.post("/addingwords/")
+async def import_words(file: UploadFile = File(...), language : str = Form(...)):
+
+    return add_new_text.add_words(file.file, language)
+
 
 
 @app.get("/")
