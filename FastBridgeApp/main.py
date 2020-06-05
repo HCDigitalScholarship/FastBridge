@@ -6,7 +6,7 @@ import importlib
 import DefinitionTools
 from pathlib import Path
 from pydantic import BaseModel
-
+import add_new_text
 
 app = FastAPI()
 
@@ -16,10 +16,63 @@ app_path = Path.cwd()
 static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
+"""
+
+@app.get("/addwords")
+async def import_words(request : Request):
+    context = {"request" : request}
+    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
+    return templates.TemplateResponse("import-words.html", context)
+
+@app.post("/addingwords")
+async def import_words(language : Form(...), words : Form(...)):
+    context = {"request" : request}
+    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
+    return context
+
+"""
+
+
+@app.get("/import") #BEFORE LAUNCH ALL URLS STARTING WITH /IMPORT ABSOLUTELY MUST BE RESTRICTED TO CERTAIN ACCOUNTS, BECAUSE IT ALLOWS WRITTING TECHNICALLY EXECUTABLE CODE TO THE SERVER
+async def import_index(request : Request):
+    context = {"request" : request}
+    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
+    return templates.TemplateResponse("import.html", context)
+
+
+@app.post("/uploadfile/")
+async def create_file(file: UploadFile = File("file")):
+
+    return {"file": file}
+
+
+@app.post("/item_images")
+async def create_upload_file(file: UploadFile = File(..., content_type = 'csv')):
+    print(file)
+    path = app_path / 'data' / f"{file.filename}"
+    print(file.file.readlines())
+    print(file.file.read())
+    path.write_bytes(file.file.write())
+    # url = f"https://{meta.url}/images/model.png"
+    return {
+        f"data/{file.filename}"
+    }
+
+@app.post("/import/handler/")
+async def import_handler(file: UploadFile = File('csvfile'), title : str = Form(...),  language : str = Form(...), subsections : int = Form(...)):
+    print(file)
+    add_new_text.import_(title, subsections, file.file, language)
+    return file
+
+
 @app.get("/")
 async def index(request : Request):
     return templates.TemplateResponse("index.html", {"request": request})
     #buttons clicked on this page will take us to /select/{language}
+
+@app.get("/oracle")
+async def oracle_index(request : Request):
+    return templates.TemplateResponse("index-oracle.html", {"request": request})
 
 @app.get("/oracle/{language}")
 async def oracle_select(request : Request, language : str):
@@ -29,6 +82,7 @@ async def oracle_select(request : Request, language : str):
 @app.get("/oracle/result/{etexts}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
 async def oracle(request : Request, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str):
     context = {"request": request, "table_data" : []}
+
     table_data = []
     known = make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words= []
@@ -58,14 +112,14 @@ async def oracle(request : Request, etexts : str, e_section_size : str,  known_t
             known_words = len(known_words)
             total_words = len(total_words)
 
-            percent1 = abs((known_words - count_unknown_words)/total_words) * 100
+            percent1 = round(abs((known_words)/total_words) * 100, 2)
             percent_1 = f'{percent1}%'
-            percent2 = abs((known_tokens)/total_tokens) * 100
+            percent2 = round(abs((known_tokens)/total_tokens)* 100, 2)
             percent_2 = f'{percent2}%'
             link = f'/select/result/{text}/{sections[i]}-{sections[i+e_section_size]}/exclude/{known_texts}/{known_starts}-{known_ends}'
             table_data.append([section, total_words, total_tokens, known_words, known_tokens, percent_1, percent_2, link])
     context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
-
+    context["etexts"] = ", ".join([f'{text.replace("_", " ")}' for text in etexts])
 
     return templates.TemplateResponse("result-oracle.html", context)
 
@@ -128,7 +182,7 @@ def make_quads_or_trips(texts, starts, ends):
     return list(zip(texts, starts, ends))
 
 
-#full case, now that I worked out the simpler idea
+#full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
 @app.get("/select/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str):
     context = {"request": request}
