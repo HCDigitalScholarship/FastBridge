@@ -1,4 +1,4 @@
-Django==2.2.7
+Django==2.2.13
 gitdb2==2.0.6
 GitPython==3.0.5
 nltk==3.4.5
