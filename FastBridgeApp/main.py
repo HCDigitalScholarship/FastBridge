@@ -11,6 +11,8 @@ import sql_app
 import sql_app.user_login as login
 app = FastAPI()
 
+#sql_app is not on github intentionally
+
 #app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app_path = Path.cwd()
