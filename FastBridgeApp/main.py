@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, Request, File, Form, UploadFile
+from fastapi import FastAPI, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -7,7 +7,8 @@ import DefinitionTools
 from pathlib import Path
 from pydantic import BaseModel
 import add_new_text
-
+import sql_app
+import sql_app.user_login as login
 app = FastAPI()
 
 #app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -19,29 +20,67 @@ app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
 
 @app.get("/addwords")
-async def import_words(request : Request):
+async def import_words(request : Request, current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
     context = {"request" : request}
     #this one will take a csv of titles and the information we care about for them, and add it to the right dictionay when submitted.
     return templates.TemplateResponse("import-words.html", context)
 
 
 
+@app.get("/signup/")
+def signup_handler(request: Request):
+    context = {"request" : request}
+    return templates.TemplateResponse("signup.html", context)
+
+
+
+@app.get("/login")
+def login_handler(request: Request):
+    context = {"request" : request}
+    return templates.TemplateResponse("login.html", context)
+
+
+@app.post("/signup/")
+def create_user(request: Request, username: str = Form(...), password: str = Form(...), db: login.Session = Depends(login.get_db)):
+    context = {"request" : request}
+    user = sql_app.schema.UserCreate(username = username, password = password)
+    print(db)
+    db_user = sql_app.crud.get_user_by_username(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    sql_app.crud.create_user(db, user)
+    context['welcome'] = f'Welcome {username}!'
+    return templates.TemplateResponse("account_management.html", context)
+
+
+@app.post("/token", response_model=login.Token)
+async def login_user(request: Request, form_data: login.OAuth2PasswordRequestForm = Depends(), db: login.Session = Depends(login.get_db)):
+    return await login.login_for_access_token(form_data, db) #not sure where we save this safely. Currently, this just returns the token and the fact that it is a bearer... but it definately needs to returned somewhere, and I think if someone is signing up with a google account, it becomes it a different
+    #context["request"] = request
+    #other option for if they have a google account, then I think it uses that token?
+    #context["welcome"] = f"made access token ... maybe good? try <a href='/import'> adding texts </a> "
+    #return templates.TemplateResponse("account_management.html", context)
+
+
 
 
 @app.get("/import") #BEFORE LAUNCH ALL URLS STARTING WITH /IMPORT ABSOLUTELY MUST BE RESTRICTED TO CERTAIN ACCOUNTS, BECAUSE IT ALLOWS WRITTING TECHNICALLY EXECUTABLE CODE TO THE SERVER
-async def import_index(request : Request):
+async def import_index(request : Request, current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
     context = {"request" : request}
+    print(current_user.username)
+    if current_user.no_add_access:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Only some accounts may add texts")
+
     #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
     return templates.TemplateResponse("import.html", context)
 
-
 @app.post("/import/handler/")
-async def import_handler(file: UploadFile = File(...), title : str = Form(...), language : str = Form(...), subsections : int = Form(...)):
+async def import_handler(file: UploadFile = File(...), title : str = Form(...), language : str = Form(...), subsections : int = Form(...), current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
     add_new_text.import_(title, subsections, file.file, language)
     return "added a text"
 
 @app.post("/addingwords/")
-async def import_words(file: UploadFile = File(...), language : str = Form(...)):
+async def import_words(file: UploadFile = File(...), language : str = Form(...), current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
 
     return add_new_text.add_words(file.file, language)
 
@@ -207,3 +246,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     display_lemmas =([(word[0], word[3]) for word in words])
     context["display_lemmas"] = display_lemmas
     return templates.TemplateResponse("result.html", context)
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8000, log_level="info")

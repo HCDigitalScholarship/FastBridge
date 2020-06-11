@@ -1,0 +1,90 @@
+"""This App replaces the old Lemmatizer. Will take in a text, as either html text input or as a file. It will return a lemmatized sheet that will be ready to be sent to the importer once a human has resolved/deleted all the titles that resolved to NONE"""
+from fastapi import FastAPI, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+import importlib
+import tempfile
+from pathlib import Path
+from pydantic import BaseModel
+import re as regex
+from starlette.responses import FileResponse
+from typing import Optional
+import unidecode
+import string
+
+
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+app_path = Path.cwd()
+
+@app.get("/")
+def lemma_index(request : Request):
+    context= {"request" : request}
+    return templates.TemplateResponse("lemmatize.html", context)
+@app.post("/Lemmatizer")
+async def lemmatizing_handler(request : Request, language : str = Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : UploadFile = File("file")):
+    lemma_lex =  importlib.import_module(f'{language}_lemmata').LEMMATA #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
+    resulting_filename += ".csv"
+    work_file = tempfile.NamedTemporaryFile(suffix='.csv',dir='/tmp', delete =  False)
+    with work_file as outputfile:
+        location = "" #calculate location at the start of each new section.
+        #So for the start of the Metamorphoses, we want something like this: [1.1] In nova fert animus mutatas dicere formas [1.2] corpora; di, coeptis (nam vos mutastis et illas). Linebreaks should not matter
+        print(resulting_filename)
+        print(outputfile.name)
+        regex_go_brrr = regex.compile('[0-9]+(\_?[0-9]+)*')
+        if text and file.file.read():
+            #raise some error, they should only fill in one of these fields
+            print("got both")
+            return False
+        if text: #got the input as a string
+            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex).encode('utf-8'))
+        elif file:
+            text = file.file.read().decode("utf-8") #reads the file as a string. I don't think this will cause problems with large inputs, but it potentially could, and then makes all of this much cleaner.
+            print(text)
+            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex).encode('utf-8'))
+        else:
+            #neither were given, which is also bad
+            print(file)
+            print("got neither")
+            return False
+
+        return FileResponse(f'{outputfile.name}', media_type='application/octet-stream', filename = resulting_filename)
+
+
+
+def demacronize(text : str , language : str): #convert the text to it's unicode decomposition. This makes macrons (\\u0304) and various Greek accents appear seperate from the letters they to which they are attached.
+    text= unidecode.unidecode(text)
+    text = text.replace("v", "u")
+    text = text.replace("V", "U")
+    text = text.replace("j", "i")
+    text = text.replace("J", "I")
+
+    print(text)
+    return text
+def depunctuate(text : str):
+    text = regex.sub(f"[{string.punctuation}]","" ,text)
+    return text
+
+
+def lemmatize(text, location, regex_go_brrr, language, lemma_lex):
+    output = ""
+    text.replace(".", "_")
+    text =  text.split()
+    running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
+    for word in text:
+        if regex_go_brrr.match(word):
+            location = word
+        else:
+            location = location
+            word = demacronize(word, language)
+            word = depunctuate(word)
+            try:
+                title = lemma_lex[word]
+            except KeyError:
+                title =  "NONE" #humans will need to address this one!
+
+
+            output += f'{title},{location},{running_count},{word}\n'
+            running_count+=1
+    return output
