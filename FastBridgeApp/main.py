@@ -9,6 +9,8 @@ from pydantic import BaseModel
 import add_new_text
 import sql_app
 import sql_app.user_login as login
+import uvicorn
+
 app = FastAPI()
 
 #sql_app is not on github intentionally

@@ -53,13 +53,15 @@ async def lemmatizing_handler(request : Request, language : str = Form(...), res
 
 
 
-def demacronize(text : str , language : str): #convert the text to it's unicode decomposition. This makes macrons (\\u0304) and various Greek accents appear seperate from the letters they to which they are attached.
-    text= unidecode.unidecode(text)
-    text = text.replace("v", "u")
-    text = text.replace("V", "U")
-    text = text.replace("j", "i")
-    text = text.replace("J", "I")
-
+def demacronize(text : str , language : str):
+    if language == "Latin":
+        text= unidecode.unidecode(text) #the only magic left. This somehow removes all the macrons and greek weirdness.
+        text = text.replace("v", "u")
+        text = text.replace("V", "U")
+        text = text.replace("j", "i")
+        text = text.replace("J", "I")
+    elif language == "Greek":
+        print(text)
     print(text)
     return text
 def depunctuate(text : str):
