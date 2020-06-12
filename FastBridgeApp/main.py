@@ -12,8 +12,15 @@ import sql_app.user_login as login
 import uvicorn
 from fastapi.responses import RedirectResponse
 from typing import Optional
+from routers.ToolsApp import lemmatize
 
 app = FastAPI()
+app.include_router(lemmatize.router, prefix="/lemmatize",
+    tags=["lemmatize"])
+
+#going forward, the new apps should be added as routers, as explained here: https://fastapi.tiangolo.com/tutorial/bigger-applications/
+#comment from 6/12/2020:
+#When the redesign started, I lost track of just how many different apps there really are. It is likely that just about everything below this probably should be a router, imported the way the lemmatizer is. If you decide to change this, to minimize changes, give oracle the prefix "oracle," and copy-paste everything to do with oracle to that other file. All the user stuff probably should be a router too.  The "select" stuff is currently the default just because it is bridge's oldest functionality. It probably can be bundled up as a router too, if it is not by the time you read this.
 
 #sql_app is not on github intentionally
 
@@ -112,11 +119,8 @@ async def user_operation_with_known_words(user : sql_app.schema.User = Depends(l
 
     return RedirectResponse(search_url)
 
+#End of user management code
 
-@app.get("/")
-async def index(request : Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-    #buttons clicked on this page will take us to /select/{language}
 
 @app.get("/oracle")
 async def oracle_index(request : Request):
@@ -187,6 +191,12 @@ def list_intersection(list1, list2):
             return_list.append(item)
 
     return return_list
+#End of oracle code
+
+@app.get("/")
+async def index(request : Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+    #buttons clicked on this page will take us to /select/{language}
 
 
 @app.get("/select/{language}")
@@ -274,6 +284,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context["words"] = words
     return templates.TemplateResponse("result.html", context)
 
+ #End of select (or main?) code
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, log_level="info")
