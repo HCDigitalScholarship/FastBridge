@@ -10,6 +10,8 @@ import add_new_text
 import sql_app
 import sql_app.user_login as login
 import uvicorn
+from fastapi.responses import RedirectResponse
+from typing import Optional
 
 app = FastAPI()
 
@@ -88,6 +90,27 @@ async def import_words(file: UploadFile = File(...), language : str = Form(...),
 
     return add_new_text.add_words(file.file, language)
 
+
+#to finish once users can login
+@app.post("/my_known_words/")
+async def user_operation_with_known_words(user : sql_app.schema.User = Depends(login.get_current_active_user), function : str = Form(...), other_texts : list = Form(...), starts: Optional[list] = Form([]), ends: Optional[list] = Form([]), in_exclue : Optional[str] = Form(''), section_depth : Optional[list] = Form([])):
+    """
+    user: I think this really is the user. I hope. Then we can just do user.read_texts to get the first set of triples, and reformat them into the url.
+    Function: select or oracle
+    other texts: the texts to explore in oracle, or the ones being read for select (should be triplable)
+    conditional on what they choose for function:
+    if select:
+        starts: the list of start sections for those texts
+        ends: ditto but ends
+        in_exclude: just what it is in the select function
+    if oracle:
+        section_depth: how large of sections they want
+
+    Based on what we have, we will make the url for the search
+    """
+    search_url= ""
+
+    return RedirectResponse(search_url)
 
 
 @app.get("/")
@@ -170,9 +193,10 @@ def list_intersection(list1, list2):
 async def select(request : Request, language : str):
     book_name = importlib.import_module(language).texts
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
-    #when the form is submitted, we need to redirect to /result/{sourcetext}/{start}/{end}/{include}/{textstoinclude}/{sections}/{exclude}/{textstoexclude}/{sections}. For this week, we are just going to get /result/{sourcetext}/{start}/{end}/ working, although once i figure that out the rest should be pretty easy.
-#results page will depend on the selection. We will start with the simplest, just returning a section of a text, with no unions, intersections, or subtractions.
-#Currently, this can do multiple sections of multiple texts, but still not include/exclude anything.
+
+
+
+#this is the simple result, if they exclude nothing.
 @app.get("/select/result/{sourcetexts}/{starts}-{ends}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str):
     context = {"request": request}
@@ -189,8 +213,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["vocablist"]= words
     context["columnheaders"] = ["TITLE", "DISPLAYLEMMA", "DISPLAYLEMMAMACRONLESS", "SIMPLE", "SHORTDEF", "LONGDEF", "LASLACOMBINED", "DECL", "CONJ", "REGADJADV", "PROPER", "STOPWORD", "PARTOFSPEECH"]
 
-    display_lemmas =([(word[0], word[3]) for word in words])
-    context["display_lemmas"] = display_lemmas
+    #display_lemmas =([(word[0], word[3]) for word in words])
+    context["words"] = words
 
 
     context["section"] =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
@@ -244,11 +268,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     sextuple = list(zip(source, other))
     context["section"] =", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
-
+    context["columnheaders"] = ["TITLE", "DISPLAYLEMMA", "DISPLAYLEMMAMACRONLESS", "SIMPLE", "SHORTDEF", "LONGDEF", "LASLACOMBINED", "DECL", "CONJ", "REGADJADV", "PROPER", "STOPWORD", "PARTOFSPEECH"]
     context["vocablist"]= words
     context["len"] = len(words)
-    display_lemmas =([(word[0], word[3]) for word in words])
-    context["display_lemmas"] = display_lemmas
+    context["words"] = words
     return templates.TemplateResponse("result.html", context)
 
 

@@ -7,18 +7,50 @@
             <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
                 <table class="table table-striped">
                     <thead>
-                      <th style="color: rgb(255,255,255);">Dictionary Entry</th>
-                      <th style="color: rgb(255,255,255);">Basic English</th>
+                      {% for header in columnheaders %}
+                            <th style="color: rgb(255,255,255);"> header </th>
+                      {% endfor %}
                     </thead>
                     <tbody>
-                      {% for display_lemma, basic_def in display_lemmas %}
+                      {% for TITLE, DISPLAYLEMMA, DISPLAYLEMMAMACRONLESS, SIMPLE, SHORTDEF, LONGDEF, LASLACOMBINED, DECL, CONJ, REGADJADV, PROPER, STOPWORD, PARTOFSPEECH in words %}
                               <tr>
                                   <td style="color: rgb(255,255,255);">
-                                    {{ display_lemma }}
+                                    {{ DISPLAYLEMMA }}
                                   </td>
                                   <td style="color: rgb(255,255,255);">
-                                    {{ basic_def }}
+                                    {{ DISPLAYLEMMAMACRONLESS }}
                                   </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ SIMPLE }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ SHORTDEF }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ LONGDEF }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ LASLACOMBINED }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ DECL }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ CONJ }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ REGADJADV }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ PROPER }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ STOPWORD }}
+                                  </td>
+                                  <td style="color: rgb(255,255,255);">
+                                    {{ PARTOFSPEECH }}
+                                  </td>
+
                               </tr>
                           {% endfor %}
 

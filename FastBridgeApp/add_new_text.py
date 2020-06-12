@@ -19,12 +19,12 @@ def import_(title, section_level, csv, language):
         section_list ={"1.1.1": "start"}
 
     reader = csv.readlines()
-    #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF, where SHORTDEF is the local definition
+    #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF  LEMMA, where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences)
     for i in range(1, len(reader)-1):
         #print(reader[i])
         row = assumed_csv_data(reader[i])
         #print(row)
-        the_text.append((row[0], row[3], (int(row[2])-1))) #add the title, definition, array index triple to that list
+        the_text.append((row[0], row[3], (int(row[2])-1)), row[4]) #add the title, definition, array index, local lemma quad to that list
         section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections

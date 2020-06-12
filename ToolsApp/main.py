@@ -23,7 +23,8 @@ def lemma_index(request : Request):
     context= {"request" : request}
     return templates.TemplateResponse("lemmatize.html", context)
 @app.post("/Lemmatizer")
-async def lemmatizing_handler(request : Request, language : str = Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : UploadFile = File("file")):
+async def lemmatizing_handler(request : Request, format : str =  Form(...), language : str = Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : UploadFile = File("file")):
+    print(format)
     lemma_lex =  importlib.import_module(f'{language}_lemmata').LEMMATA #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
     resulting_filename += ".csv"
     work_file = tempfile.NamedTemporaryFile(suffix='.csv',dir='/tmp', delete =  False)
@@ -48,7 +49,8 @@ async def lemmatizing_handler(request : Request, language : str = Form(...), res
             print(file)
             print("got neither")
             return False
-
+        if format == "Bridge":
+            pass #convert format
         return FileResponse(f'{outputfile.name}', media_type='application/octet-stream', filename = resulting_filename)
 
 
