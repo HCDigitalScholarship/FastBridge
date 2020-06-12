@@ -29,8 +29,8 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 
-SECRET_KEY = "369cce7237dd24ebbbe8ba3c9ea4ce7568e63862383395c931b559c96dc1279c"
-ALGORITHM = "HS256"
+SECRET_KEY = ""
+ALGORITHM = ""
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
