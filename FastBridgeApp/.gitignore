@@ -1,8 +1,12 @@
 FastBridgeApp/data
 *
 
+
+FastBridgeApp/sql_app
+*.py
+
+
 __pycache__/
 *.py[cod]
 *$py.class
-
-database.py
+*.pyc
