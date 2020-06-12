@@ -187,7 +187,7 @@ def list_intersection(list1, list2):
     """AVOID USING THIS FUNCTION IF POSSIBLE. This does set intersection on lists, but is much, much, much slower (O(smallerset) vs O(list^2))"""
     return_list = []
     for item in list1: #O(len(list1))
-        if item in list2: #membership testing in lists is O(n), this is really another for loop!
+        if item in list2: #membership testing in lists is O(n), this is really another for loop over list2! Python sets are hash tables, so membership there is just O(1).
             return_list.append(item)
 
     return return_list
@@ -220,12 +220,11 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
 
     words = (DefinitionTools.get_definitions(titles, "Latin"))
-    context["vocablist"]= words
-    context["columnheaders"] = ["TITLE", "DISPLAYLEMMA", "DISPLAYLEMMAMACRONLESS", "SIMPLE", "SHORTDEF", "LONGDEF", "LASLACOMBINED", "DECL", "CONJ", "REGADJADV", "PROPER", "STOPWORD", "PARTOFSPEECH"]
+    context["columnheaders"] = ["DISPLAY LEMMA", "DISPLAY LEMMA MACRONLESS", "SIMPLE LEMMA", "SHORT DEFINITION", "LONG DEFINITION", "LOCAL DEFINITION", "PART OF SPEECH"]
 
     #display_lemmas =([(word[0], word[3]) for word in words])
     context["words"] = words
-
+    print(context["words"][0])
 
     context["section"] =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
@@ -278,7 +277,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     sextuple = list(zip(source, other))
     context["section"] =", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
-    context["columnheaders"] = ["TITLE", "DISPLAYLEMMA", "DISPLAYLEMMAMACRONLESS", "SIMPLE", "SHORTDEF", "LONGDEF", "LASLACOMBINED", "DECL", "CONJ", "REGADJADV", "PROPER", "STOPWORD", "PARTOFSPEECH"]
+    context["columnheaders"] = ["DISPLAY LEMMA", "DISPLAY LEMMA MACRONLESS", "SIMPLE LEMMA", "SHORT DEFINITION", "LONG DEFINITION", "LOCAL DEFINITION", "PART OF SPEECH"]
     context["vocablist"]= words
     context["len"] = len(words)
     context["words"] = words

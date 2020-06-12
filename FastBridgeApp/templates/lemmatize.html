@@ -1,4 +1,8 @@
 
+{% extends "base.html" %}
+
+
+{% block content %}
 <title>The Bridge: Lemmatizer</title>
 <body id="body" data-title="index" class = "home">
 	<div style="
@@ -12,7 +16,7 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 You can choose to either upload a text file, or just input text yourself. We will lemmatize all the words that have only one possible lemma, and will return a csv that is almost ready to import. All you have to do is replace the "text" column with location-specific definitions – or make it all empty!
 
 
-<form id="post_text" style="display:inline-block;" method="post" action="Lemmatizer" enctype="multipart/form-data" class="content-section">
+<form id="post_text" style="display:inline-block;" method="post" action="Lemmatizer" enctype="multipart/form-data">
 	<div id="PostBlock" style="text-align:center;">
 		<p>Put plain text you want lemmatized here: </p>
 		<br>
@@ -38,6 +42,8 @@ You can choose to either upload a text file, or just input text yourself. We wil
 
 
 
-      		<input type="submit" name="submit" value="Submit"> <br><p>To format a lemmatized text click <a href='/format'>here</a></div>
+      		<input type="submit" name="submit" value="Submit">
+					<br>
  		</form>
   	</div>
+{% endblock %}

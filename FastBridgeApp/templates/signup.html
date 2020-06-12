@@ -1,3 +1,8 @@
+
+{% extends "base.html" %}
+
+
+{% block content %}
 <form id = "signup form" action="/signup/" method="post" enctype= "multipart/form-data">
         <input type="text" name="username" value="">
         <br>
@@ -5,3 +10,5 @@
         <br>
         <input type="submit" id = "submit" name="submit" value="submit">
 </form>
+
+{% endblock content %}

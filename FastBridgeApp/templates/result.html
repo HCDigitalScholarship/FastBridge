@@ -4,59 +4,77 @@
     <section id="result" class="download-section content-section text-center" style="background-image: url('/assets/img/background-img-gray.png'); background-size: auto;background-position: top;">
         <div class="container" style="background-color: rgba(47,49,52,0.85);border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
             <h2> Now showing {{ section }}, which has {{ len }} words </h2>
+
             <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
                 <table class="table table-striped">
                     <thead>
                       {% for header in columnheaders %}
-                            <th style="color: rgb(255,255,255);"> header </th>
+                      <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_table(this.id);" checked>{{ header }}
+                            <th style="color: rgb(255,255,255);" id = "{{header}}_head" > {{ header }} </th>
                       {% endfor %}
                     </thead>
                     <tbody>
-                      {% for TITLE, DISPLAYLEMMA, DISPLAYLEMMAMACRONLESS, SIMPLE, SHORTDEF, LONGDEF, LASLACOMBINED, DECL, CONJ, REGADJADV, PROPER, STOPWORD, PARTOFSPEECH in words %}
-                              <tr>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ DISPLAYLEMMA }}
+                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has a class that is a sequence of numbers, that give us some word properties (ie,  conjugation, declension, if it is a stop word, or proper noun – things that can cause us to hide an entire row) inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php#:~:text=We%20create%20a%20function%20called,hidden%20table%20header%20and%20column-->
+                      {% for word in words %}
+
+                              <tr class = "{{ word[6] }}{{ word[7] }}{{ word[8] }}{{ word[9] }}{{ word[10] }}">
+                                  <td style="color: rgb(255,255,255);" class = "DISPLAY LEMMA">
+                                    {{ word[0] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ DISPLAYLEMMAMACRONLESS }}
+                                  <td style="color: rgb(255,255,255);" class = "DISPLAY LEMMA MACRONLESS">
+                                    {{ word[1] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ SIMPLE }}
+                                  <td style="color: rgb(255,255,255);" class = "SIMPLE LEMMA">
+                                    {{ word[2] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ SHORTDEF }}
+                                  <td style="color: rgb(255,255,255);" class = "SHORT DEFINITION">
+                                    {{ word[3] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ LONGDEF }}
+                                  <td style="color: rgb(255,255,255);" class = "LONG DEFINITION">
+                                    {{ word[4] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ LASLACOMBINED }}
+                                  <td style="color: rgb(255,255,255);" class = "LOCAL DEFINITION">
+                                    {{ word[14] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ DECL }}
+                                  <td style="color: rgb(255,255,255);" class = "PART OF SPEECH">
+                                    {{ word[11] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ CONJ }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ REGADJADV }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ PROPER }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ STOPWORD }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);">
-                                    {{ PARTOFSPEECH }}
-                                  </td>
+
+
 
                               </tr>
                           {% endfor %}
-
                     </tbody>
                 </table>
             </div><a class="btn btn-primary btn-lg btn-default" role="button" href="index.html" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a></div>
     </section>
+    <script type="text/javascript">
+function hide_show_table(col_name)
+{
+  console.log(col_name);
+ var checkbox_val=document.getElementById(col_name).value;
+ if(checkbox_val=="hide")
+ {
+  var all_col=document.getElementsByClassName(col_name);
+  for(var i=0;i<all_col.length;i++)
+  {
+   all_col[i].style.display="none";
+  }
+  document.getElementById(col_name+"_head").style.display="none";
+  document.getElementById(col_name).value="show";
+ }
+
+ else
+ {
+  var all_col=document.getElementsByClassName(col_name);
+  for(var i=0;i<all_col.length;i++)
+  {
+   all_col[i].style.display="table-cell";
+  }
+  document.getElementById(col_name+"_head").style.display="table-cell";
+  document.getElementById(col_name).value="hide";
+ }
+}
+</script>
 </body>
 {% endblock %}

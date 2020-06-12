@@ -1,3 +1,8 @@
+
+{% extends "base.html" %}
+
+
+{% block content %}
 <form id = "import form" action="/import/handler" method="post" enctype= "multipart/form-data">
         <div
         <label style="color: rgb(33,32,32);" for = "file">
@@ -25,3 +30,6 @@
 </form>
 
 <a href="/addwords"> Click here to add words to a language</a>
+
+
+{% endblock content %}
