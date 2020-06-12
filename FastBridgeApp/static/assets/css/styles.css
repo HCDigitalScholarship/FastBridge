@@ -1,0 +1,27 @@
+.tab {
+  display: none;
+}
+
+.step {
+  height: 15px;
+  width: 16px;
+  margin: 0 2px;
+  background-color: white;
+  border: none;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.5;
+}
+
+.step.active {
+  opacity: 1;
+}
+
+.step.finish {
+  background-color: #4CAF50;
+}
+
+
+.tab-oracle {
+  display: none;
+}
