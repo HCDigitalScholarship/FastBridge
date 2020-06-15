@@ -30,6 +30,7 @@ app_path = Path.cwd()
 static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
+POS_list =["Noun", "Adjective", "Verb", "Article", "Preposition", "Conjunction", "Pronoun", "Number", "Adverb", "Interjection", "Proper_Noun1", "Stop_Word1"]
 
 
 @app.get("/addwords")
@@ -220,8 +221,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
 
     words = (DefinitionTools.get_definitions(titles, "Latin"))
-    context["columnheaders"] = ["DISPLAY LEMMA", "DISPLAY LEMMA MACRONLESS", "SIMPLE LEMMA", "SHORT DEFINITION", "LONG DEFINITION", "LOCAL DEFINITION", "PART OF SPEECH"]
-
+    context["columnheaders"] = ["DISPLAY_LEMMA", "DISPLAY_LEMMA_MACRONLESS", "SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", "LOCAL_DEFINITION", "PART OF SPEECH"]
+    context["POS_list"] = POS_list
     #display_lemmas =([(word[0], word[3]) for word in words])
     context["words"] = words
     print(context["words"][0])
@@ -277,7 +278,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     sextuple = list(zip(source, other))
     context["section"] =", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
-    context["columnheaders"] = ["DISPLAY LEMMA", "DISPLAY LEMMA MACRONLESS", "SIMPLE LEMMA", "SHORT DEFINITION", "LONG DEFINITION", "LOCAL DEFINITION", "PART OF SPEECH"]
+    context["columnheaders"] = ["DISPLAY_LEMMA", "DISPLAY_LEMMA_MACRONLESS", "SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", "LOCAL_DEFINITION", "PART OF SPEECH"]
+    context["POS_list"] = POS_list
     context["vocablist"]= words
     context["len"] = len(words)
     context["words"] = words

@@ -1,40 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
 <body>
+  <!-- // SlideOut -->
+<div id="slideOut">
+<!--   // Tab -->
+  <div class="slideOutTab">
+    <div>
+      <p>Filters</p>
+    </div>
+  </div>
+  <div class="modal-content" style="background-color: rgba(119,120,120,0.77);">
+    <div class="modal-header">
+      <h4 class="modal-title">Table Filters!</h4> </div>
+    <div class="modal-body">
+      <div class = "POS filters">
+        {% for POS in POS_list %}
+
+        <input type="checkbox" value="hide" id="{{ POS }}" onchange="hide_show_row(this.id);" checked> {{ POS.replace("1", "").replace("_", " ") }}
+        <br>
+        {% endfor %}
+        {% for header in columnheaders %}
+            <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_column(this.id);" checked>
+              {{ header.replace("_", " ") }}
+            <br>
+        {% endfor %}
+      </div>
+
+    </div>
+    <div class="modal-footer"> </div>
+  </div>
+</div>
     <section id="result" class="download-section content-section text-center" style="background-image: url('/assets/img/background-img-gray.png'); background-size: auto;background-position: top;">
-        <div class="container" style="background-color: rgba(47,49,52,0.85);border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
+        <div class="container" style="background-color: rgba(47,49,52,0.85);border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;" >
             <h2> Now showing {{ section }}, which has {{ len }} words </h2>
+
+
 
             <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
                 <table class="table table-striped">
                     <thead>
+
+
                       {% for header in columnheaders %}
-                      <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_table(this.id);" checked>{{ header }}
-                            <th style="color: rgb(255,255,255);" id = "{{header}}_head" > {{ header }} </th>
+                          <th style="color: rgb(255,255,255);" id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
                       {% endfor %}
                     </thead>
                     <tbody>
-                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has a class that is a sequence of numbers, that give us some word properties (ie,  conjugation, declension, if it is a stop word, or proper noun – things that can cause us to hide an entire row) inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php#:~:text=We%20create%20a%20function%20called,hidden%20table%20header%20and%20column-->
+                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has classes that indicate its relations to the right filtres inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php#:~:text=We%20create%20a%20function%20called,hidden%20table%20header%20and%20column-->
                       {% for word in words %}
 
-                              <tr class = "{{ word[6] }}{{ word[7] }}{{ word[8] }}{{ word[9] }}{{ word[10] }}">
-                                  <td style="color: rgb(255,255,255);" class = "DISPLAY LEMMA">
+                              <tr class = "Proper_Noun{{ word[9] }} {{ word[11] }} Declension{{ word[6] }} Conjugation{{ word[7] }} RegAdjective{{ word[8] }}  Stop_Word{{ word[10] }}">
+                                  <td style="color: rgb(255,255,255);" class = "DISPLAY_LEMMA">
                                     {{ word[0] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);" class = "DISPLAY LEMMA MACRONLESS">
+                                  <td style="color: rgb(255,255,255);" class = "DISPLAY_LEMMA_MACRONLESS">
                                     {{ word[1] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);" class = "SIMPLE LEMMA">
+                                  <td style="color: rgb(255,255,255);" class = "SIMPLE_LEMMA">
                                     {{ word[2] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);" class = "SHORT DEFINITION">
+                                  <td style="color: rgb(255,255,255);" class = "SHORT_DEFINITION">
                                     {{ word[3] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);" class = "LONG DEFINITION">
+                                  <td style="color: rgb(255,255,255);" class = "LONG_DEFINITION">
                                     {{ word[4] }}
                                   </td>
-                                  <td style="color: rgb(255,255,255);" class = "LOCAL DEFINITION">
-                                    {{ word[14] }}
+                                  <td style="color: rgb(255,255,255);" class = "LOCAL_DEFINITION">
+                                    {{ word[-1] }}
                                   </td>
                                   <td style="color: rgb(255,255,255);" class = "PART OF SPEECH">
                                     {{ word[11] }}
@@ -48,33 +80,6 @@
                 </table>
             </div><a class="btn btn-primary btn-lg btn-default" role="button" href="index.html" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a></div>
     </section>
-    <script type="text/javascript">
-function hide_show_table(col_name)
-{
-  console.log(col_name);
- var checkbox_val=document.getElementById(col_name).value;
- if(checkbox_val=="hide")
- {
-  var all_col=document.getElementsByClassName(col_name);
-  for(var i=0;i<all_col.length;i++)
-  {
-   all_col[i].style.display="none";
-  }
-  document.getElementById(col_name+"_head").style.display="none";
-  document.getElementById(col_name).value="show";
- }
-
- else
- {
-  var all_col=document.getElementsByClassName(col_name);
-  for(var i=0;i<all_col.length;i++)
-  {
-   all_col[i].style.display="table-cell";
-  }
-  document.getElementById(col_name+"_head").style.display="table-cell";
-  document.getElementById(col_name).value="hide";
- }
-}
-</script>
+<script src=  "/assets/js/select-restult.js" ></script>
 </body>
 {% endblock %}
