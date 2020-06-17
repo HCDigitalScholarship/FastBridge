@@ -14,10 +14,6 @@ from typing import Optional
 from routers.ToolsApp import lemmatize
 from routers.sql_app import account
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
 
 app.include_router(lemmatize.router, prefix="/lemmatize",
