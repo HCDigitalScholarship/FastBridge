@@ -50,29 +50,12 @@
                       {% for word in words %}
 
                               <tr class = "Proper_Noun{{ word[9] }} {{ word[11] }} Declension{{ word[6] }} Conjugation{{ word[7] }} RegAdjective{{ word[8] }}  Stop_Word{{ word[10] }}">
-                                  <td style="color: rgb(255,255,255);" class = "DISPLAY_LEMMA">
-                                    {{ word[0] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "DISPLAY_LEMMA_MACRONLESS">
-                                    {{ word[1] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "SIMPLE_LEMMA">
-                                    {{ word[2] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "SHORT_DEFINITION">
-                                    {{ word[3] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "LONG_DEFINITION">
-                                    {{ word[4] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "LOCAL_DEFINITION">
-                                    {{ word[-1] }}
-                                  </td>
-                                  <td style="color: rgb(255,255,255);" class = "PART OF SPEECH">
-                                    {{ word[11] }}
-                                  </td>
 
-
+                                {% for header in columnheaders %}
+                                  <td style="color: rgb(255,255,255);" class = "{{ header }}">
+                                    {{ word[header] }}
+                                  </td>
+                                    {% endfor %}
 
                               </tr>
                           {% endfor %}

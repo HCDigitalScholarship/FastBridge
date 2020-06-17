@@ -71,10 +71,10 @@ function nextPrev(n, next) {
     other_starts = other_starts.toString().replace(",", "+")
     other_ends = other_ends.toString().replace(",", "+")
     if(in_exclude.length == 0){
-      window.location.href = "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
+      window.location.href = "/result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
     }
     else{
-        window.location.href = "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
+        window.location.href = "/result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
     }
     return false;
   }

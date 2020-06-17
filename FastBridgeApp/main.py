@@ -13,14 +13,14 @@ from fastapi.responses import RedirectResponse
 from typing import Optional
 from routers.ToolsApp import lemmatize
 from routers.sql_app import account
-from routers import oracle, Latin_select
+from routers import oracle, select
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 app = FastAPI()
 
 app.include_router(lemmatize.router, prefix="/lemmatize", tags=["lemmatize"])
 app.include_router(account.router, prefix = "/account", tags=["account"])
 app.include_router(oracle.router, prefix = "/oracle", tags=["oracle"])
-app.include_router(Latin_select.router, prefix = "/Latin/select", tags=["Latin/select"])
+app.include_router(select.router, prefix = "/select", tags=["select"])
 #sql_app is not on github intentionally
 
 templates = Jinja2Templates(directory="templates")

@@ -2,12 +2,15 @@ import csv
 import importlib
 import os.path
 from pathlib import Path
+from collections import OrderedDict, namedtuple
 app_path = Path.cwd()
 
 def import_(title, section_level, csv, language):
     tempfile = csv #FastAPI recieves it as a tempfile
     filename = title.lower().replace(" ", "_").replace(",","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
-    section_words = {"start" : -1, "end" : -2}
+    section_words = OrderedDict()
+    section_words["start"] = -1
+    section_words["end"] = -2
     completeName= f'{app_path}/data/{filename}.py'
     the_text = []
     section_list ={} #sections as a linked list, so that we can find the previous one really quickly
@@ -29,7 +32,7 @@ def import_(title, section_level, csv, language):
         section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
 
-    unique_sections = list(section_words.keys()) #hopefully they are still in order, but there is no guarntee because dictionaries are not ordered.
+    unique_sections = " ".join(section_words.keys()).split()
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
     section_list[unique_sections[-1]] = "end"
@@ -41,16 +44,17 @@ def import_(title, section_level, csv, language):
     file1.close()
 
 def add_words(file, language : str):
+    reader = file.readlines()
+    Word = namedtuple("Word", assumed_csv_data(reader[0]))
     try:
         #if the dictionary already exists
         lang = importlib.import_module(f'{language}')
         dict = lang.correct_dict
-        reader = file.readlines() #makes a list where each item is a line of the file
-        #if we can make sure this file is really read as a csv, the stuff should be unnecessarry.
+
         for row in reader:
             real_row = assumed_csv_data(row)
             #the first item should be the TITLE, the rest is all the data for it.
-            dict[row[0]] = row[1:]
+            dict[real_row[0]] = Word(*real_row[1:])
         #now we need to save over the old file with this new dict
         code =  f'correct_dict = {dict}'
         file1 = open(f'{language}.py', "w")
@@ -61,13 +65,16 @@ def add_words(file, language : str):
     except ModuleNotFoundError as e:
         #then the language does not exist in bridge yet
         dict =  {}
-        reader = file.readlines()
-        for row in reader:
-            real_row = assumed_csv_data(row)
-            #the first item should be the TITLE, the rest is all the data for it.
-            dict[row[0]] = row[1:]
 
-        code =  f'correct_dict = {dict}'
+        headers = assumed_csv_data(reader[0])[1:]
+        POS = set()
+        for row in reader[1:]:
+            real_row = Word(*assumed_csv_data(row))
+            #the first item should be the TITLE, the rest is all the data for it.
+            dict[real_row[0]] = real_row[1:]
+            POS.add(real_row.Part_Of_Speech)
+
+        code =  f'columnheaders = {headers}\nPOS_list = {POS}\ncorrect_dict = {dict}'
         file1 = open(f'{language}.py', "w")
         file1.write(code)
         file1.close()
@@ -77,9 +84,13 @@ def add_words(file, language : str):
 
 
 
-def assumed_csv_data(lst : list):
+def assumed_csv_data(lst):
     """Takes a list of bytestrings that we are pretty sure is a csv file, but is passed on without that information. Since the user can't upload non-csvs, this is a valid assumption"""
+    #print(lst)
     row = lst.decode("utf-8") #these are all bytes!
-    row.replace("\r\n", "") #with carriage return and new line included.
+    #print(row)
+    row = row.strip("\r\n") #with carriage return and new line included.
+    #print(row)
     row = row.split(",")
+    #print(row)
     return row

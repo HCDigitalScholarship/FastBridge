@@ -10,18 +10,17 @@ import DefinitionTools
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
-"""Expected Prefix: Latin/select"""
+"""Expected Prefix: /select"""
 
-POS_list =["Noun", "Adjective", "Verb", "Preposition", "Conjunction", "Pronoun", "Number", "Adverb", "Interjection", "Proper_Noun1", "Stop_Word1"]
 
-@router.get("/")
-async def select(request : Request):
-    book_name = importlib.import_module("Latin").texts
+@router.get("/{language}")
+async def select(request : Request, language : str):
+    book_name = importlib.import_module(language).texts
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 #this is the simple result, if they exclude nothing.
-@router.get("/result/{sourcetexts}/{starts}-{ends}/")
-async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str):
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/")
+async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str):
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     words = []
@@ -32,11 +31,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
 
 
-    words = (DefinitionTools.get_definitions(titles, "Latin"))
-    context["columnheaders"] = ["DISPLAY_LEMMA", "DISPLAY_LEMMA_MACRONLESS", "SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", "LOCAL_DEFINITION", "PART OF SPEECH"]
+    words, POS_list, columnheaders = (DefinitionTools.get_lang_data(titles, language))
+    context["columnheaders"] = columnheaders
     context["POS_list"] = POS_list
     #display_lemmas =([(word[0], word[3]) for word in words])
     context["words"] = words
+    
     #print(context["words"][0])
 
     context["section"] =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
@@ -46,8 +46,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     return templates.TemplateResponse("result.html", context)
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
-@router.get("/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}")
-async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str):
+@router.get("{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}")
+async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str):
     context = {"request": request}
     source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
@@ -78,11 +78,11 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(titles)
     titles = sorted(titles, key=lambda x: x[-1])
     ##print(titles)
-    words = (DefinitionTools.get_definitions(titles, book.language)) #this should be illegal because book should be out of scope, but it isn't.
+    words, POS_list = (DefinitionTools.get_lang_data(titles, language)) #this should be illegal because book should be out of scope, but it isn't.
 
     sextuple = list(zip(source, other))
     context["section"] =", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
-    context["columnheaders"] = ["DISPLAY_LEMMA", "DISPLAY_LEMMA_MACRONLESS", "SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", "LOCAL_DEFINITION", "PART OF SPEECH"]
+    context["columnheaders"] = columnheaders
     context["POS_list"] = POS_list
     context["vocablist"]= words
     context["len"] = len(words)
