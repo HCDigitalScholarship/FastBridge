@@ -34,3 +34,10 @@ def get_definitions(words : list, dictionary: str, local_defs = False):
             context[words[i][0]].append(local_defs[i])
 
     return list(context.values())
+
+def make_quads_or_trips(texts, starts, ends):
+    """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""
+    texts =  texts.split("+")
+    starts = starts.split("+")
+    ends = ends.split("+")
+    return list(zip(texts, starts, ends))

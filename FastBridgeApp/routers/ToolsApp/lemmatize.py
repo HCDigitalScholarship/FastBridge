@@ -14,8 +14,9 @@ import unidecode
 import string
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
 router_path = Path.cwd()
+templates = Jinja2Templates(directory="templates")
+
 
 @router.get("/Lemmatizer")
 def lemma_index(request : Request):
