@@ -161,8 +161,10 @@ $('#bridge-modal-form1-save').click(function(){
     // var book = $('#select-text #select1').val().trim();
 
     // if showing select label is better than value
+    var el = document.getElementById('bridge-modal-form1-select1');
+    var book = el.options[el.selectedIndex].innerHTML;
 
-    var book =  $('#bridge-select-text #bridge-modal-form1-select1').val();
+    //var book =  $('').val();
 
     var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
     var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
@@ -207,8 +209,9 @@ $("#bridge-modal-form2-select2").trigger("change");
 // modal 2 save
 $('#bridge-modal-form2-save').click(function(){
 
-
-    var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
+  var el = document.getElementById('bridge-modal-form2-select1');
+  var book = el.options[el.selectedIndex].innerHTML;
+    //var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
     console.log(book);
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();

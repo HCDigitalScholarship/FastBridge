@@ -7,7 +7,7 @@ app_path = Path.cwd()
 def import_(title, section_level, csv, language):
     tempfile = csv #FastAPI recieves it as a tempfile
     filename = title.lower().replace(" ", "_").replace(",","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
-    section_words = {"start" : -1}
+    section_words = {"start" : -1, "end" : -2}
     completeName= f'{app_path}/data/{filename}.py'
     the_text = []
     section_list ={} #sections as a linked list, so that we can find the previous one really quickly
@@ -32,6 +32,7 @@ def import_(title, section_level, csv, language):
     unique_sections = list(section_words.keys()) #hopefully they are still in order, but there is no guarntee because dictionaries are not ordered.
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
+    section_list[unique_sections[-1]] = "end"
 
 
     code = f'import text\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
