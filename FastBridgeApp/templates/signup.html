@@ -1,9 +1,8 @@
 
-{% extends "base.html" %}
 
+<section>
 
-{% block content %}
-<form id = "signup form" action="/signup/" method="post" enctype= "multipart/form-data">
+<form id = "signup form" action="/account/signup/" method="post" enctype= "multipart/form-data">
         <input type="text" name="username" value="">
         <br>
         <input type="password" name="password" value="">
@@ -11,4 +10,4 @@
         <input type="submit" id = "submit" name="submit" value="submit">
 </form>
 
-{% endblock content %}
+</section>

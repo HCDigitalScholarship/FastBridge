@@ -7,16 +7,22 @@ import DefinitionTools
 from pathlib import Path
 from pydantic import BaseModel
 import add_new_text
-import sql_app
-import sql_app.user_login as login
 import uvicorn
+import secrets
 from fastapi.responses import RedirectResponse
 from typing import Optional
 from routers.ToolsApp import lemmatize
+from routers.sql_app import account
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
+
 app.include_router(lemmatize.router, prefix="/lemmatize",
     tags=["lemmatize"])
+app.include_router(account.router, prefix = "/account", tags=["account"])
 
 #going forward, the new apps should be added as routers, as explained here: https://fastapi.tiangolo.com/tutorial/bigger-applications/
 #comment from 6/12/2020:
@@ -30,97 +36,7 @@ app_path = Path.cwd()
 static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
-POS_list =["Noun", "Adjective", "Verb", "Article", "Preposition", "Conjunction", "Pronoun", "Number", "Adverb", "Interjection", "Proper_Noun1", "Stop_Word1"]
-
-
-@app.get("/addwords")
-async def import_words(request : Request, current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
-    context = {"request" : request}
-    #this one will take a csv of titles and the information we care about for them, and add it to the right dictionay when submitted.
-    return templates.TemplateResponse("import-words.html", context)
-
-
-
-@app.get("/signup/")
-def signup_handler(request: Request):
-    context = {"request" : request}
-    return templates.TemplateResponse("signup.html", context)
-
-
-
-@app.get("/login")
-def login_handler(request: Request):
-    context = {"request" : request}
-    return templates.TemplateResponse("login.html", context)
-
-
-@app.post("/signup/")
-def create_user(request: Request, username: str = Form(...), password: str = Form(...), db: login.Session = Depends(login.get_db)):
-    context = {"request" : request}
-    user = sql_app.schema.UserCreate(username = username, password = password)
-    print(db)
-    db_user = sql_app.crud.get_user_by_username(db, username=user.username)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    sql_app.crud.create_user(db, user)
-    context['welcome'] = f'Welcome {username}!'
-    return templates.TemplateResponse("account_management.html", context)
-
-
-@app.post("/token", response_model=login.Token)
-async def login_user(request: Request, form_data: login.OAuth2PasswordRequestForm = Depends(), db: login.Session = Depends(login.get_db)):
-    return await login.login_for_access_token(form_data, db) #not sure where we save this safely. Currently, this just returns the token and the fact that it is a bearer... but it definately needs to returned somewhere, and I think if someone is signing up with a google account, it becomes it a different
-    #context["request"] = request
-    #other option for if they have a google account, then I think it uses that token?
-    #context["welcome"] = f"made access token ... maybe good? try <a href='/import'> adding texts </a> "
-    #return templates.TemplateResponse("account_management.html", context)
-
-
-
-
-@app.get("/import") #BEFORE LAUNCH ALL URLS STARTING WITH /IMPORT ABSOLUTELY MUST BE RESTRICTED TO CERTAIN ACCOUNTS, BECAUSE IT ALLOWS WRITTING TECHNICALLY EXECUTABLE CODE TO THE SERVER
-async def import_index(request : Request, current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
-    context = {"request" : request}
-    print(current_user.username)
-    if current_user.no_add_access:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Only some accounts may add texts")
-
-    #this html file will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
-    return templates.TemplateResponse("import.html", context)
-
-@app.post("/import/handler/")
-async def import_handler(file: UploadFile = File(...), title : str = Form(...), language : str = Form(...), subsections : int = Form(...), current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
-    add_new_text.import_(title, subsections, file.file, language)
-    return "added a text"
-
-@app.post("/addingwords/")
-async def import_words(file: UploadFile = File(...), language : str = Form(...), current_user: sql_app.schema.User = Depends(login.get_current_active_user)):
-
-    return add_new_text.add_words(file.file, language)
-
-
-#to finish once users can login
-@app.post("/my_known_words/")
-async def user_operation_with_known_words(user : sql_app.schema.User = Depends(login.get_current_active_user), function : str = Form(...), other_texts : list = Form(...), starts: Optional[list] = Form([]), ends: Optional[list] = Form([]), in_exclue : Optional[str] = Form(''), section_depth : Optional[list] = Form([])):
-    """
-    user: I think this really is the user. I hope. Then we can just do user.read_texts to get the first set of triples, and reformat them into the url.
-    Function: select or oracle
-    other texts: the texts to explore in oracle, or the ones being read for select (should be triplable)
-    conditional on what they choose for function:
-    if select:
-        starts: the list of start sections for those texts
-        ends: ditto but ends
-        in_exclude: just what it is in the select function
-    if oracle:
-        section_depth: how large of sections they want
-
-    Based on what we have, we will make the url for the search
-    """
-    search_url= ""
-
-    return RedirectResponse(search_url)
-
-#End of user management code
+POS_list =["Noun", "Adjective", "Verb", "Particle", "Article", "Preposition", "Conjunction", "Pronoun", "Number", "Adverb", "Interjection", "Proper_Noun1", "Stop_Word1"]
 
 
 @app.get("/oracle")
@@ -225,7 +141,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["POS_list"] = POS_list
     #display_lemmas =([(word[0], word[3]) for word in words])
     context["words"] = words
-    print(context["words"][0])
+    #print(context["words"][0])
 
     context["section"] =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
@@ -252,16 +168,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         book = DefinitionTools.get_text(text).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
     other_titles = set([(new[0], new[1]) for new in other_titles]) #remove ordering information, we don't need it in this set
-    #print(other_titles)
-    #print("\n")
+    ##print(other_titles)
+    ##print("\n")
     titles = set()
     for text, start, end in source:
         book = DefinitionTools.get_text(text).book
         titles = titles.union(set((book.get_words(start, end))))
     to_operate = set([(new[0], new[1]) for new in titles])
-    #print(to_operate)
-    #print("\n")
-    #print(in_exclude)
+    ##print(to_operate)
+    ##print("\n")
+    ##print(in_exclude)
     if in_exclude == "exclude":
         to_operate= to_operate.difference(other_titles)
     elif in_exclude == "include":
@@ -271,9 +187,9 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
     titles =  [title for title in titles if (title[0], title[1]) in to_operate]
 
-    #print(titles)
+    ##print(titles)
     titles = sorted(titles, key=lambda x: x[-1])
-    #print(titles)
+    ##print(titles)
     words = (DefinitionTools.get_definitions(titles, book.language)) #this should be illegal because book should be out of scope, but it isn't.
 
     sextuple = list(zip(source, other))
