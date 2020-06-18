@@ -13,10 +13,12 @@ templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
 
 
-@router.get("/{language}")
+@router.get("/{language}/")
 async def select(request : Request, language : str):
     book_name = importlib.import_module(language).texts
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
+
+
 
 #this is the simple result, if they exclude nothing.
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/")
@@ -31,12 +33,13 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
 
 
-    words, POS_list, columnheaders = (DefinitionTools.get_lang_data(titles, language))
+    words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
     context["columnheaders"] = columnheaders
     context["POS_list"] = POS_list
+    context["row_filters"] = row_filters
     #display_lemmas =([(word[0], word[3]) for word in words])
     context["words"] = words
-    
+
     #print(context["words"][0])
 
     context["section"] =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
@@ -46,7 +49,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     return templates.TemplateResponse("result.html", context)
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
-@router.get("{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}")
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str):
     context = {"request": request}
     source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
@@ -83,6 +86,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     sextuple = list(zip(source, other))
     context["section"] =", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
     context["columnheaders"] = columnheaders
+    context["row_filters"] = row_filters
     context["POS_list"] = POS_list
     context["vocablist"]= words
     context["len"] = len(words)

@@ -71,10 +71,10 @@ function nextPrev(n, next) {
     other_starts = other_starts.toString().replace(",", "+")
     other_ends = other_ends.toString().replace(",", "+")
     if(in_exclude.length == 0){
-      window.location.href = "/result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
+      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
     }
     else{
-        window.location.href = "/result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
+        window.location.href = "../result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
     }
     return false;
   }
@@ -171,7 +171,9 @@ $('#bridge-modal-form1-save').click(function(){
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
-        var sections = '';
+        sectionFrom = 'start'
+        sectionTo = 'end'
+        var sections = 'start-end';
     }
     // show the selection in a table
     var table = document.getElementById('bridge-result-table1');
@@ -218,7 +220,7 @@ $('#bridge-modal-form2-save').click(function(){
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
-        var sections = '';
+        var sections = 'start-end';
     }
     // show the selection in a table
     var table = document.getElementById('bridge-result-table2');

@@ -14,16 +14,33 @@
       <h4 class="modal-title">Table Filters!</h4> </div>
     <div class="modal-body">
       <div class = "POS filters">
+          <label for="POS filters"> Part of Speech Filters</label>
+        <div id = "POS filters">
         {% for POS in POS_list %}
 
         <input type="checkbox" value="hide" id="{{ POS }}" onchange="hide_show_row(this.id);" checked> {{ POS.replace("1", "").replace("_", " ") }}
         <br>
         {% endfor %}
+        </div>
+          <label for="row_filters"> More Specfic Part of Speech Filtres </label>
+        <div id = "row_filters">
+
+
+        {% for filter in row_filters %}
+        <input type="checkbox" value="hide" id="{{ filter }}" onchange="hide_show_row(this.id);" checked> {{ filter.replace("1", "").replace("_", " ") }}
+        <br>
+        {% endfor %}
+        </div>
+        <label for="column filters"> Column Filters</label>
+        <div id="column filters">
+
+
         {% for header in columnheaders %}
             <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_column(this.id);" checked>
               {{ header.replace("_", " ") }}
             <br>
         {% endfor %}
+          </div>
       </div>
 
     </div>
@@ -46,10 +63,10 @@
                       {% endfor %}
                     </thead>
                     <tbody>
-                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has classes that indicate its relations to the right filtres inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php#:~:text=We%20create%20a%20function%20called,hidden%20table%20header%20and%20column-->
-                      {% for word in words %}
+                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has classes that indicate its relations to the right filtres inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php-->
+                      {% for word, row_filter in words %}
 
-                              <tr class = "Proper_Noun{{ word[9] }} {{ word[11] }} Declension{{ word[6] }} Conjugation{{ word[7] }} RegAdjective{{ word[8] }}  Stop_Word{{ word[10] }}">
+                              <tr class = "{{ row_filter }}">
 
                                 {% for header in columnheaders %}
                                   <td style="color: rgb(255,255,255);" class = "{{ header }}">

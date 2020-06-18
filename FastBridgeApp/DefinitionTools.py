@@ -22,22 +22,33 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
     lang = importlib.import_module(dictionary) #import the appropriate dictionary.
     POS =  lang.POS_list
     columnheaders =  lang.columnheaders
+    row_filters =  lang.row_filters
     lang = lang.correct_dict
+    
     word_list = deque() #has more effieceint appends, and is just as good to iterate over later
     #if local_defs: #we want this to be protected because it will take an extra round of iterating over all the words in the INTIAL selction.
     #local definitions are hard, because the same word could show up in the section multiple times, so we can't use a dictionary, because then we would have multiple copies of the same key.
     local_defs =[word[1] for word in words]
         #in full version, text_list will be a list of tuples with the local definitions, for now it is not yet. Regardless of language, local_defs should be the second part of that tuple.
     #print(words)
-    Word = namedtuple("Word", columnheaders)
+    computed_row_filters = deque()
+    Word = namedtuple("Word", columnheaders + row_filters)
     for i in range(len(words)):
         #print(words[i][0])
-        word_list.append(Word(*lang[words[i][0]]))
+        to_add = f""
+        datum = Word(*lang[words[i][0]])
+        word_list.append(datum)
+        to_add+= datum.Part_Of_Speech + " "
+        for j in range(len(row_filters)):
+            to_add += f"{row_filters[j]}{datum[len(columnheaders) + j]} "
+
+
+        computed_row_filters.append(to_add)
         #if local_defs[i] != "":
             #in every language, we should have an empty final column for local definitions
             #context[words[i][0]][-1] = local_defs[i]
 
-    return word_list, POS, columnheaders
+    return list(zip(word_list, computed_row_filters)), POS, columnheaders, row_filters
 
 def make_quads_or_trips(texts, starts, ends):
     """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""

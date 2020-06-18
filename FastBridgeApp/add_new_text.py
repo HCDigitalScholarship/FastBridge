@@ -36,7 +36,7 @@ def import_(title, section_level, csv, language):
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
     section_list[unique_sections[-1]] = "end"
-
+    section_list["end"] = "start"
 
     code = f'import text\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
     file1 = open(completeName, "w")
@@ -74,7 +74,8 @@ def add_words(file, language : str):
             dict[real_row[0]] = real_row[1:]
             POS.add(real_row.Part_Of_Speech)
 
-        code =  f'columnheaders = {headers}\nPOS_list = {POS}\ncorrect_dict = {dict}'
+        columnheaders, _, row_filters = headers.partition("row_filter") #we expect the import language sheet to have this column header, but the column will be empty
+        code =  f'columnheaders = {headers}\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
         file1 = open(f'{language}.py', "w")
         file1.write(code)
         file1.close()
