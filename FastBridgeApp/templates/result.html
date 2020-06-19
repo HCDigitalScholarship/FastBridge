@@ -2,23 +2,23 @@
 {% block content %}
 <body>
   <!-- // SlideOut -->
-<div id="slideOut">
+<div id="slideOut" >
 <!--   // Tab -->
   <div class="slideOutTab">
     <div>
       <p>Filters</p>
     </div>
   </div>
-  <div class="modal-content" style="background-color: rgba(119,120,120,0.77);">
+  <div class="modal-content" style="background-color: rgba(119,120,120,0.77); ">
     <div class="modal-header">
       <h4 class="modal-title">Table Filters!</h4> </div>
-    <div class="modal-body">
+    <div class="modal-body" style="overflow-y: auto; height: 400px;">
       <div class = "POS filters">
           <label for="POS filters"> Part of Speech Filters</label>
         <div id = "POS filters">
         {% for POS in POS_list %}
 
-        <input type="checkbox" value="hide" id="{{ POS }}" onchange="hide_show_row(this.id);" checked> {{ POS.replace("1", "").replace("_", " ") }}
+        <input type="checkbox" value="hide" id="{{ POS }}" onchange="hide_show_row(this.id);" checked> {{ POS.replace("_", " ") }}
         <br>
         {% endfor %}
         </div>
@@ -26,9 +26,14 @@
         <div id = "row_filters">
 
 
-        {% for filter in row_filters %}
-        <input type="checkbox" value="hide" id="{{ filter }}" onchange="hide_show_row(this.id);" checked> {{ filter.replace("1", "").replace("_", " ") }}
+        {% for filter, POS_for_filter in row_filters %}
+        <div class="{{ POS_for_filter }}">
+
+
+        <input type="checkbox" class = "{{ POS_for_filter }}" value="hide" id="{{ filter }}" onchange="hide_show_row(this.id);" checked> {{ filter.replace("_", " ") }}
+
         <br>
+        </div>
         {% endfor %}
         </div>
         <label for="column filters"> Column Filters</label>
@@ -36,8 +41,16 @@
 
 
         {% for header in columnheaders %}
-            <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_column(this.id);" checked>
-              {{ header.replace("_", " ") }}
+        {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION" %}
+        <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_column(this.id);" checked>
+          {{ header.replace("_", " ") }}
+        {% else %}
+        <input type="checkbox" value="show" id="{{ header }}" onchange="hide_show_column(this.id);" >
+          {{ header.replace("_", " ") }}
+        {% endif %}
+
+
+
             <br>
         {% endfor %}
           </div>
@@ -54,12 +67,16 @@
 
 
             <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
-                <table class="table table-striped">
+                <table class="table table-striped" style = "height: 15em; overflow-y: scroll;">
                     <thead>
 
 
                       {% for header in columnheaders %}
-                          <th style="color: rgb(255,255,255);" id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
+                          {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION" %}
+                              <th style="color: rgb(255,255,255); display: table-cell;" id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
+                          {% else %}
+                          <th style="color: rgb(255,255,255); display: none;" id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
+                          {% endif %}
                       {% endfor %}
                     </thead>
                     <tbody>
@@ -69,10 +86,18 @@
                               <tr class = "{{ row_filter }}">
 
                                 {% for header in columnheaders %}
-                                  <td style="color: rgb(255,255,255);" class = "{{ header }}">
-                                    {{ word[header] }}
-                                  </td>
-                                    {% endfor %}
+
+                                  {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION"  %}
+                                    <td style="color: rgb(255,255,255); display: table-cell" class = "{{ header }}">
+                                      {{ word[header] }}
+                                    </td>
+                                  {% else %}
+                                    <td style="color: rgb(255,255,255); display: none;" class = "{{ header }}">
+                                      {{ word[header] }}
+                                    </td>
+
+                                  {% endif %}
+                                {% endfor %}
 
                               </tr>
                           {% endfor %}

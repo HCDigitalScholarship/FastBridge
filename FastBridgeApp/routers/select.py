@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 import importlib
 from pathlib import Path
 import DefinitionTools
-
+running_list = False
 
 router = APIRouter()
 router_path = Path.cwd()
@@ -22,7 +22,7 @@ async def select(request : Request, language : str):
 
 #this is the simple result, if they exclude nothing.
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/")
-async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str):
+def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str):
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     words = []
@@ -31,13 +31,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         book = DefinitionTools.get_text(text).book
         titles += (book.get_words(start, end))
 
-
-
+    if not running_list:
+        dups = set()
+        new_titles = []
+        for title in titles:
+            if (title[0], title[1]) not in dups:
+                dups.add((title[0], title[1]))
+                new_titles.append(title)
+                titles = sorted(new_titles, key=lambda x: x[-1])
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
+
+
     context["columnheaders"] = columnheaders
     context["POS_list"] = POS_list
     context["row_filters"] = row_filters
     #display_lemmas =([(word[0], word[3]) for word in words])
+
     context["words"] = words
 
     #print(context["words"][0])
@@ -88,7 +97,6 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context["columnheaders"] = columnheaders
     context["row_filters"] = row_filters
     context["POS_list"] = POS_list
-    context["vocablist"]= words
     context["len"] = len(words)
     context["words"] = words
     return templates.TemplateResponse("result.html", context)
