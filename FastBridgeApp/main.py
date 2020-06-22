@@ -40,4 +40,4 @@ async def index(request : Request):
  #End of select (or main?) code
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8000, log_level="info")
+    uvicorn.run("main:app", host="64.227.97.179", port=8000, forwarded_allow_ips= "107.204.214.0" , log_level="info")

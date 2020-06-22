@@ -21,6 +21,22 @@
   background-color: #4CAF50;
 }
 
+.table-responsive{
+  background-color: rgba(119,120,120,0.77);
+  border-radius: 5px;
+  padding: 20px;
+  margin-bottom: 15px;
+  width: 100%; height: 60vh;
+  overflow-y: scroll;
+}
+th{
+  color: rgb(255,255,255);
+  display: table-cell;
+}
+td{
+  color: rgb(255,255,255);
+  display: table-cell;
+}
 
 .tab-oracle {
   display: none;

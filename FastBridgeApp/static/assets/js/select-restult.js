@@ -54,3 +54,7 @@ function hide_show_row(row_value){
    document.getElementById(row_value).value="hide";
   }
 }
+
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById('main_table').style.display = "show"
+});

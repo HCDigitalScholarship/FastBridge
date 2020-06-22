@@ -41,9 +41,11 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
         word_list.append(datum)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
-            new = f"{row_filters[j]}{datum[len(columnheaders) + j]}"
-            to_add += f"{new} "
-            final_row_filters.add((new, datum.Part_Of_Speech+ " "))
+            in_case_multiple = datum[len(columnheaders) + j]
+            for case in in_case_multiple:
+                new = f"{row_filters[j]}{case}"
+                to_add += f"{new} "
+                final_row_filters.add((new, datum.Part_Of_Speech+ " "))
 
         computed_row_filters.append(to_add)
         #if local_defs[i] != "":
