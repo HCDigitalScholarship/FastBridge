@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<body style = "height: 70vh;" onload ='document.getElementById("main_table").style.display = "table"'>
+<body style = "height: 70vh; display: none;" id = "main" >
   <!-- // SlideOut -->
 <div id="slideOut" >
 <!--   // Tab -->
@@ -16,43 +16,18 @@
       <div class = "POS filters">
           <label for="POS filters"> Part of Speech Filters</label>
         <div id = "POS filters">
-        {% for POS in POS_list %}
-
-        <input type="checkbox" value="hide" id="{{ POS }}" onchange="hide_show_row(this.id);" checked> {{ POS.replace("_", " ") }}
-        <br>
-        {% endfor %}
+        {{ POS_list|safe }}
         </div>
           <label for="row_filters"> More Specfic Part of Speech Filtres </label>
         <div id = "row_filters">
 
+         
+        {{ filters|safe }}
 
-        {% for filter, POS_for_filter in row_filters %}
-        <div class="{{ POS_for_filter }}">
-
-
-        <input type="checkbox" class = "{{ POS_for_filter }}" value="hide" id="{{ filter }}" onchange="hide_show_row(this.id);" checked> {{ filter.replace("_", " ") }}
-
-        <br>
-        </div>
-        {% endfor %}
         </div>
         <label for="column filters"> Column Filters</label>
         <div id="column filters">
-
-
-        {% for header in columnheaders %}
-        {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION" %}
-        <input type="checkbox" value="hide" id="{{ header }}" onchange="hide_show_column(this.id);" checked>
-          {{ header.replace("_", " ") }}
-        {% else %}
-        <input type="checkbox" value="show" id="{{ header }}" onchange="hide_show_column(this.id);" >
-          {{ header.replace("_", " ") }}
-        {% endif %}
-
-
-
-            <br>
-        {% endfor %}
+        {{ headers|safe }}
           </div>
       </div>
 
@@ -67,40 +42,14 @@
 
 
             <div class="table-responsive mx-auto">
-                <table class="table table-striped" style= "display: none;" id = "main_table">
+                <table class="table table-striped">
                     <thead>
 
 
-                      {% for header in columnheaders %}
-                          {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION" %}
-                              <th id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
-                          {% else %}
-                          <th style="display: none;" id = "{{header}}_head" > {{ header.replace("_", " ") }} </th>
-                          {% endif %}
-                      {% endfor %}
+                      {{ other_headers|safe }}
                     </thead>
                     <tbody>
-                      <!--Alright, the mad genius of JS strikes again. It is pretty easy to hide element by class. Thus, each column is assigned a class (ie, DISPLAY LEMMA) so that whole columns can be hidden. Each row has classes that indicate its relations to the right filtres inspiration: http://talkerscode.com/webtricks/show-hide-table-column-using-javascript.php-->
-                      {% for word, row_filter in words %}
-
-                              <tr class = "{{ row_filter }}">
-
-                                {% for header in columnheaders %}
-
-                                  {% if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION"  %}
-                                    <td class = "{{ header }}">
-                                      {{ word[header] }}
-                                    </td>
-                                  {% else %}
-                                    <td style="display: none;" class = "{{ header }}">
-                                      {{ word[header] }}
-                                    </td>
-
-                                  {% endif %}
-                                {% endfor %}
-
-                              </tr>
-                          {% endfor %}
+                      {{ render_words|safe }}
                     </tbody>
                 </table>
             </div><a class="btn btn-primary btn-lg btn-default" role="button" href="index.html" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a></div>

@@ -1,9 +1,7 @@
 
-this.$slideOut = $('#slideOut');
 // Slideout show
-this.$slideOut.find('.slideOutTab').on('click', function() {
-  $("#slideOut").toggleClass('showSlideOut');
-});
+slideOut = document.getElementById('slideOut')
+slideOut.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
 function hide_show_column(col_name)
 {
   console.log(col_name);
@@ -56,5 +54,5 @@ function hide_show_row(row_value){
 }
 
 document.addEventListener("DOMContentLoaded", function(){
-  document.getElementById('main_table').style.display = "show"
+  document.getElementById('main').style.display = "contents";
 });
