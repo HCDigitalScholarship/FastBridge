@@ -1,8 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<body>
+  <section id="account_section" class="content-section" style="background-image: url('/assets/img/background-img-gray.png'); background-size: auto;background-position: top;">
+<div class="container" style="color: #ffffff;">
+
 {{ welcome }}
 <br>
-Save your known words so that you can make searches faster:
+Save your known words so that you can make searches faster <button class="myBtn" id="openModal2" type="button" data-toggle="modal" data-target="#bridge-change-list">
+            <i class="fas fa-plus" style="font-size: 16px;"></i></button>
 <br>
-You make a list with your known words  <a href="/account/my_known_words/"> here</a>
+Make a search based on your known words <a href="/account/my_known_words/"> here</a>
 <br>
 You can request permisson to import texts from Bret (bmulliga@haverford.edu)
 <br>
@@ -11,3 +21,47 @@ If you already have access, you can upload <a href="/account/import"> texts </a>
 <br>
  <a href="/account/logout/"> Logout</a>
 <br>
+
+
+</div>
+
+
+<!-- the second tab from select/oracle-->
+<div class="modal fade" role="dialog" tabindex="-1" id="bridge-change-list">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" style="color: black;"> add to my known texts</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span></button></div>
+            <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
+                <form id="bridge-modal-form2" action="/account/update_my_words/" method = "post" style="color: black;">
+                  <div>
+                        <div class="form-group"><label style="color: black;" for="select1">
+                            Please select the work(s) you have read.</label>
+                            <input type="text" name="title" id = "title">
+                                  </div>
+                        <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
+                            <label id="bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">
+                                Please select the section(s).</label>
+                            <div class="form-row">
+                                <div class="col"><input class="form-control" type="text" id="start" name = "start" style="color: black;" for="select2-hidden-label" placeholder="From" required=""></div>
+                                <div class="col"><input class="form-control" type="text" id="end" name = "end" style="color: black;" for="select2-hidden-label" placeholder="To" required=""></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding-bottom: 25px;padding-right: 20px;padding-left: 20px;">
+                        <button class="btn btn-light" type="button" data-dismiss="modal" style="border-radius: 35px;">
+                            Close</button>
+                        <input class="btn btn-primary" id="bridge-modal-form2-save" type="submit" style="border-radius: 35px;" value = "Submit">
+                            </input></div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+</section>
+</body>
+
+{% endblock %}

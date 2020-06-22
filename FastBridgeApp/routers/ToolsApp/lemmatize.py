@@ -12,7 +12,6 @@ from starlette.responses import FileResponse
 from typing import Optional
 import unidecode
 import string
-
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
@@ -25,7 +24,8 @@ def lemma_index(request : Request):
 @router.post("/Lemmatizer")
 async def lemmatizing_handler(request : Request, format : str =  Form(...), language : str = Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : UploadFile = File("file")):
     print(format)
-    lemma_lex =  importlib.import_module(f'{language}_lemmata').LEMMATA #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
+    lemma_lex =  importlib.import_module(f'routers.ToolsApp.{language}_lemmata').LEMMATA
+    #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
     resulting_filename += ".csv"
     work_file = tempfile.NamedTemporaryFile(suffix='.csv',dir='/tmp', delete =  False)
     with work_file as outputfile:

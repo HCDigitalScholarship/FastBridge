@@ -8,7 +8,7 @@
       target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
       if (target.length) {
         $('html, body').animate({
-          scrollTop: (target.offset().top - 48)
+          scrollTop: (target.top - 48)
         }, 1000, "easeInOutExpo");
         return false;
       }
@@ -28,7 +28,7 @@
 
   // Collapse Navbar
   var navbarCollapse = function() {
-    if ($("#main-nav").offset().top > 100) {
+    if ($("#main-nav").top > 100) {
       $("#main-nav").addClass("navbar-shrink");
     } else {
       $("#main-nav").removeClass("navbar-shrink");

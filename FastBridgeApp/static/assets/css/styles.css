@@ -25,7 +25,18 @@
 .tab-oracle {
   display: none;
 }
-
+.myBtn{
+    color: #7de8c2;
+    border-radius: 50%;
+    border-color: #7de8c2;
+    border: solid 2px;
+    margin: 0px 5px;
+    background-color: rgba(43,45,47,0.7);
+    font-size: 18px;
+    width: 43px;
+    height: 43px;
+    padding: 5px;
+  }
 
 #slideOut {
   position: fixed;
