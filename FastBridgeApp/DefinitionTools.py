@@ -65,7 +65,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
             new_filters[filter[0]] += filter[1]
 
     final_row_filters = [(k,v) for k,v in new_filters.items()]
-    final_row_filters.sort(key=lambda x: (x[0][0], int(x[0][-1])))
+    final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])) )
 
     return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters
 

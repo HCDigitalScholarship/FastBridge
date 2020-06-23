@@ -29,11 +29,11 @@
   width: 100%; height: 60vh;
   overflow-y: scroll;
 }
-th{
+#main th{
   color: rgb(255,255,255);
   display: none;
 }
-td{
+#main td{
   color: rgb(255,255,255);
   display: none;
 }

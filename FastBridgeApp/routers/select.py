@@ -6,6 +6,7 @@ import importlib
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
+import math
 running_list = True
 
 router = APIRouter()
@@ -47,15 +48,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #context["basic_defs"] = [word[3] for word in words]
     context["section"] = section
     context["len"] = len(words)
-
+    style = f""
     checks = f""
     for POS in POS_list:
         checks+= f'<input type="checkbox" value="hide" id="{POS}" onchange="hide_show_row(this.id);" checked>{POS.replace("_", " ")}<br>'
-
+        style+= f".{POS}_hide {{display:none!important;}}\n"
     filters = f""
-    for filter, POS_for_filter in row_filters:
-        filters+=f'<div class="{POS_for_filter }"><input type="checkbox" class="{POS_for_filter}" value="hide" id="{filter}" onchange="hide_show_row(this.id);" checked>{filter.replace("_", " ")}<br></div>'
+    ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
 
+    for filter, POS_for_filter in row_filters:
+        display_filter = filter.replace("_", " ")
+        if display_filter[-1] != "0":
+            display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
+        else:
+            display_filter = display_filter[:-1]
+        filters+=f'<div><input type="checkbox" value="hide" id="{filter}" onchange="hide_show_row(this.id);" checked>{display_filter}<br></div>'
+        style+= f".{filter}_hide {{display:none!important;}}\n"
     headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
@@ -79,8 +87,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             else:
                 render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
         render_words+= f'</tr>'
-
-
+    context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
     context["filters"] = filters
@@ -130,15 +137,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     context["section"] = section
     context["len"] = len(words)
-
+    style = f""
     checks = f""
     for POS in POS_list:
         checks+= f'<input type="checkbox" value="hide" id="{POS}" onchange="hide_show_row(this.id);" checked> {POS.replace("_", " ")}<br>'
-
+        style+= f".{POS}_hide {{display:none;}}\n"
     filters = f""
     for filter, POS_for_filter in row_filters:
-        filters+=f'<div class="{POS_for_filter }"> <input type="checkbox" class = "{POS_for_filter}" value="hide" id="{filter}" onchange="hide_show_row(this.id);" checked> {filter.replace("_", " ")}<br></div>'
+        filters+=f'<div > <input type="checkbox" value="hide" id="{filter}" onchange="hide_show_row(this.id);" checked> {filter.replace("_", " ")}<br></div>'
 
+    #check boxes to filter columns
     headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
@@ -146,6 +154,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         else:
             headers+= f'<input type="checkbox" value="show" id="{header}" class="btn btn-light action-button" onchange="hide_show_column(this.id);" > {header.replace("_", " ")}'
         headers+=f'<br>'
+    #actual column headers - sorry for the bad intial naming
     other_headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
@@ -155,6 +164,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     render_words = f""
     for word, row_filter in words:
         render_words+= f'<tr class = "{row_filter}">'
+        style+= f".{row_filter}_hide {{display:none;}}\n"
         for i in range(len(columnheaders)):
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 render_words+= f'<td class = "{columnheaders[i]}">{word[i]}</td>'
@@ -163,8 +173,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 render_words+= f'<td class = "{columnheaders[i]}">{word[i]}</td>'
         render_words+= f'</tr>'
 
-
-
+    context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
     context["filters"] = filters
