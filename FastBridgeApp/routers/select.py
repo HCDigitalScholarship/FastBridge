@@ -47,6 +47,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #context["basic_defs"] = [word[3] for word in words]
     context["section"] = section
     context["len"] = len(words)
+
     checks = f""
     for POS in POS_list:
         checks+= f'<input type="checkbox" value="hide" id="{POS}" onchange="hide_show_row(this.id);" checked>{POS.replace("_", " ")}<br>'
@@ -67,7 +68,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
             other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
         else:
-            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ")}</th>'
+            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
     render_words = f""
     for word, row_filter in words:
         render_words+= f'<tr class = "{row_filter}">'
@@ -76,15 +77,14 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
             else:
-                render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{word[i]}</td>'
+                render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
         render_words+= f'</tr>'
+
 
     context["headers"] = headers
     context["POS_list"] = checks
     context["filters"] = filters
     context["other_headers"]  = other_headers
-    #display_lemmas =([(word[0], word[3]) for word in words])
-
     context["render_words"] = render_words
 
     #print(context["words"][0])
@@ -142,16 +142,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>{header.replace("_", " ")}'
+            headers+= f'<input type="checkbox" value="hide" id="{header}" class="btn btn-light action-button" onchange="hide_show_column(this.id);" checked>{header.replace("_", " ")}'
         else:
-            headers+= f'<input type="checkbox" value="show" id="{header}" onchange="hide_show_column(this.id);" > {header.replace("_", " ")}'
+            headers+= f'<input type="checkbox" value="show" id="{header}" class="btn btn-light action-button" onchange="hide_show_column(this.id);" > {header.replace("_", " ")}'
         headers+=f'<br>'
     other_headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
             other_headers+=f' <th id = "{header}_head" > {header.replace("_", " ")} </th>'
         else:
-            other_headers+=f'<th style="display: none;" id = "{header}_head" > {header.replace("_", " ")} </th>'
+            other_headers+=f'<th id = "{header}_head" > {header.replace("_", " ")} </th>'
     render_words = f""
     for word, row_filter in words:
         render_words+= f'<tr class = "{row_filter}">'
@@ -160,8 +160,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 render_words+= f'<td class = "{columnheaders[i]}">{word[i]}</td>'
 
             else:
-                render_words+= f'<td style="display: none;" class = "{columnheaders[i]}">{word[i]}</td>'
+                render_words+= f'<td class = "{columnheaders[i]}">{word[i]}</td>'
         render_words+= f'</tr>'
+
+
 
     context["headers"] = headers
     context["POS_list"] = checks

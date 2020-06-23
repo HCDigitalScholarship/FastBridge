@@ -1,7 +1,9 @@
 
 // Slideout show
 slideOut = document.getElementById('slideOut')
-slideOut.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
+tab = document.getElementById('slideOutTab')
+tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
+
 function hide_show_column(col_name)
 {
   console.log(col_name);
@@ -34,12 +36,14 @@ function hide_show_row(row_value){
   var checkbox_val=document.getElementById(row_value).value
   if(checkbox_val=="hide")
   {
+
    var all_col=document.getElementsByClassName(row_value);
-   for(var i=0;i<all_col.length;i++)
-   {
+
+
+  for(var i=0;i<all_col.length;i++){
     all_col[i].style.display="none";
    }
-   document.getElementById(row_value).value="show";
+  document.getElementById(row_value).value="show";
   }
 
   else

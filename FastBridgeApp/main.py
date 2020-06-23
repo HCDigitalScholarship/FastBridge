@@ -36,5 +36,6 @@ async def index(request : Request):
     return templates.TemplateResponse("index.html", {"request": request})
     #buttons clicked on this page will take us to /select/{language}
 
-
+if __name__ == '__main__':
+    uvicorn.run("main:app", host = "64.227.97.179")
  #End of select (or main?) code

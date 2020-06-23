@@ -31,13 +31,27 @@
 }
 th{
   color: rgb(255,255,255);
-  display: table-cell;
+  display: none;
 }
 td{
   color: rgb(255,255,255);
-  display: table-cell;
+  display: none;
 }
 
+.DISPLAY_LEMMA{
+  display: table-cell !important;
+}
+#DISPLAY_LEMMA_head{
+  display: table-cell !important;
+}
+
+
+.SHORT_DEFINITION{
+  display: table-cell !important;
+}
+#SHORT_DEFINITION_head{
+  display: table-cell !important;
+}
 .tab-oracle {
   display: none;
 }
