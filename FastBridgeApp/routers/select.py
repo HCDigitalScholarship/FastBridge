@@ -51,7 +51,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     style = f""
     checks = f""
     for POS in POS_list:
-        checks+= f'<input type="checkbox" value="hide" id="{POS}" onchange="hide_show_row(this.id);" checked>{POS.replace("_", " ")}<br>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" value="hide" id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label></div></div>'
         style+= f".{POS}_hide {{display:none!important;}}\n"
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
