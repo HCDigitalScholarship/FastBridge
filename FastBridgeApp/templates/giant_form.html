@@ -1,0 +1,27 @@
+<form class="form-group" action="/account/my_known_words/" method="post">
+  <input type="radio" id= "oracle" name="function" value="oracle">
+  <label for="oracle">Oracle</label><br>
+  <input type="radio" id ="select" name="function" value="select">
+  <label for="select">Select</label><br>
+  <label for="lang"> Which language are you searching?</label>
+  <input type="text" name="lang" id ="lang" value="">
+  <br>
+
+  <label for="other_texts"> What are you reading/exploring? </label>
+  <input type="text" name="other_texts" id ="other_texts" value="">
+  <br>
+
+  <label for="starts"> (for select only) where do the sections you want begin? </label>
+  <input type="text" name="starts" id ="starts" value="">
+  <br>
+  <label for="ends"> (for select only) where do the sections you want end? </label>
+  <input type="text" name="ends" id ="ends" value="">
+  <br>
+  <label for="in_exclue"> (for select only) include or exclude your known words? </label>
+  <input type="text" name="in_exclue" id ="in_exclue" value="">
+  <br>
+  <label for="section_depth"> (for oracle only) what depth of sections do you want to explore? </label>
+  <input type="text" name="section_depth" id ="section_depth" value="">
+  <br>
+  <input type="submit" name="submit" value="Submit">
+</form>

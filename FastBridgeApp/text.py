@@ -15,6 +15,7 @@ class Text(object):
         Converts the human section citation of 1-3 sections to the keys of the section dictionary, and retrives the indices for self.words that the sections correspond to.
 
         """
+        print(range_start, range_end)
         if range_start == "start":
             internal_range_start =  range_start
         elif range_start.count(".") == 0 and self.subsections == 1:

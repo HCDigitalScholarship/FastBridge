@@ -72,7 +72,7 @@ function nextPrevOracle(n, next) {
   etexts = etexts.toString().replace(",", "+")
   e_section_size = e_section_size.toString().replace(",", "+")
 
-    window.location.href = window.location.href = "result/" + etexts + "/"+ e_section_size + "/" +  knowntexts + "/" + known_starts + "-" + known_ends;
+    window.location.href = window.location.href + "/result/" + etexts + "/"+ e_section_size + "/" +  knowntexts + "/" + known_starts + "-" + known_ends + "/";
     return false;
   }
   // Otherwise, display the correct tab:

@@ -74,7 +74,7 @@ function nextPrev(n, next) {
       window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
     }
     else{
-        window.location.href = "../result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
+        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
     }
     return false;
   }

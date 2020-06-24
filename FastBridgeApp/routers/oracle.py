@@ -18,7 +18,7 @@ async def oracle_select(request : Request, language : str):
     book_name = importlib.import_module(language).texts
     return templates.TemplateResponse("select-oracle.html", {"request": request, "book_name": book_name})
 
-@router.get("/result/{etexts}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
+@router.get("{language}/result/{etexts}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
 async def oracle(request : Request, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str):
     context = {"request": request, "table_data" : []}
 
@@ -34,7 +34,7 @@ async def oracle(request : Request, etexts : str, e_section_size : str,  known_t
     for text in etexts: #actually screw it, we will just crawl the whole text. Otherwise, we need to make sections thier own data type with their own comparison operators and that is a pain. Instead, we should have them specify a section size.
         book = DefinitionTools.get_text(text).book
         sections = list(book.section_linkedlist.keys())
-        for i in range(len(sections)-e_section_size):
+        for i in range((len(sections)-1)-e_section_size):
             section = f'{sections[i]} - {sections[i+e_section_size]}'
             section_words = book.get_words(sections[i], sections[i+e_section_size])
             total_tokens = set([(new[0], new[1]) for new in section_words])
