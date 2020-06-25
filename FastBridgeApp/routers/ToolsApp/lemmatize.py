@@ -37,7 +37,7 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
         if text and file.file.read():
             #raise some error, they should only fill in one of these fields
             print("got both")
-            return False
+            return "Please choose just one thank you"
         if text: #got the input as a string
             outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex, format).encode('utf-8'))
         elif file:
@@ -56,7 +56,7 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
 
 def demacronize(text : str , language : str):
     if language == "Latin":
-        text= unidecode.unidecode(text) #the only magic left. This somehow removes all the macrons and greek weirdness.
+        text= unidecode.unidecode(text) #the only magic left. This somehow removes all the macrons. It completely breaks Greek though
         text = text.replace("v", "u")
         text = text.replace("V", "U")
         text = text.replace("j", "i")

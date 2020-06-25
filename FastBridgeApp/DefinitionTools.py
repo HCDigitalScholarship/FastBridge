@@ -21,7 +21,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
 
     lang = importlib.import_module(dictionary) #import the appropriate dictionary.
     POS =  lang.POS_list
-    columnheaders = lang.columnheaders
+    columnheaders = lang.columnheaders[1:]
     row_filters =  lang.row_filters
     lang = lang.correct_dict
     final_row_filters = set()
@@ -38,6 +38,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
     for i in range(len(words)):
         #print(words[i][0])
         to_add = f""
+        print(lang[words[i][0]])
         datum = Word(*lang[words[i][0]], LOCAL_DEFINITION = local_defs[i])
         word_list.append(datum)
         #print(datum.LOCAL_DEFINITION)
@@ -46,7 +47,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
 
             in_case_multiple = datum[len(columnheaders) + j]
             if(in_case_multiple):
-                in_case_multiple = in_case_multiple.split(";")
+                in_case_multiple = in_case_multiple.split(",")
                 for case in in_case_multiple:
                     new = f"{row_filters[j]}{case}"
                     to_add += f"{new} "

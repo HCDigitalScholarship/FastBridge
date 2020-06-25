@@ -1,17 +1,21 @@
-import csv
+import pandas as pd
+from csv import reader
 import importlib
 import os.path
 from pathlib import Path
 from collections import OrderedDict, namedtuple
 app_path = Path.cwd()
-
+nan = ""
 def import_(title, section_level, csv, language):
-    tempfile = csv #FastAPI recieves it as a tempfile
+    print(csv.file)
+    dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
+    csv_reader=[list(row) for row in dataframe.values]
     filename = title.lower().replace(" ", "_").replace(",","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
     section_words["start"] = -1
     section_words["end"] = -2
     completeName= f'{app_path}/data/{filename}.py'
+    print(completeName)
     the_text = []
     section_list ={} #sections as a linked list, so that we can find the previous one really quickly
     if section_level == 1:
@@ -21,79 +25,77 @@ def import_(title, section_level, csv, language):
     elif section_level == 3:
         section_list ={"1.1.1": "start"}
 
-    reader = csv.readlines()
     #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF  LEMMA, where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences)
-    try:
-        pass
-    except Exception as e:
-        raise
-    for i in range(1, len(reader)-1):
-        #print(reader[i])
-        try:
-            row = assumed_csv_data(reader[i])
-        #print(row)
-            the_text.append((row[0], row[3], (int(row[2])-1)), row[4]) #add the title, definition, array index, local lemma quad to that list
-            section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
-            section_words.update({section : (int(row[2])-1)} )
+    for row in csv_reader:
+        the_text.append((row[0], row[3], (int(row[2])-1), row[4])) #add the title, definition, array index, local lemma quad to that list
+        section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
+        section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
-        except Exception as e:
-            return f"Error parsing data at line {i}, here is what I read: {row}. This should be a list of  [TITLE, LOCATION, RUNNINGCOUNT,  LOCALDEF, LEMMA]. My guesses at the issue: \n Is their a comma in a local definition? \n Is their an extra newline character in any column?"
+
     unique_sections = " ".join(section_words.keys()).split()
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
     section_list[unique_sections[-1]] = "end"
     section_list["end"] = "start"
-
-    code = f'import text\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
+    section_list["start"] = "start"
+    section_words=dict(section_words)
+    code = f'import text\nnan=""\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
     file1 = open(completeName, "w")
     file1.write(code)
     file1.close()
 
-def add_words(file, language : str):
-    reader = file.readlines()
-    try:
-        Word = namedtuple("Word", assumed_csv_data(reader[0]))
-    except Exception as e:
-        print(assumed_csv_data(reader[0]))
-        return "Some strange, raw unicode character in line 1... this should not happen in python3, and is likely an excel issue"
+    #and add text to language.texts
+    lang = importlib.import_module(f'{language}')
+    lang.texts.add(title)
+    print(lang.texts)
+    code = f'texts = {lang.texts}\ncolumnheaders = {lang.columnheaders}\nnan=""\nrow_filters = {lang.row_filters}\nPOS_list = {lang.POS_list}\ncorrect_dict = {lang.correct_dict}'
+    file1 = open(f'{language}.py', "w")
+    file1.write(code)
+    file1.close()
 
+def add_words(file, language : str):
+    dataframe = pd.read_csv(file, delimiter=',') #FastAPI recieves it as a tempfile
+    csv_reader=[list(row) for row in dataframe.values]
+    headers = dataframe.columns.to_list()
+    columnheaders, _, row_filters = " ".join(headers).partition("row_filters") #we expect the import language sheet to have this column header, but the column will be empty
+    columnheaders = columnheaders.split()
+    row_filters = row_filters.split()
+    print(columnheaders + row_filters)
+    Word = namedtuple("Word", columnheaders+row_filters)
     try:
         #if the dictionary already exists
         lang = importlib.import_module(f'{language}')
         dict = lang.correct_dict
+        POS = lang.POS_list
+        texts = lang.texts
 
-        for row in reader[1:]:
-            real_row = Word(*assumed_csv_data(row))
-            #the first item should be the TITLE, the rest is all the data for it.
-            dict[real_row[0]] = real_row[1:]
-        #now we need to save over the old file with this new dict
-        code =  f'correct_dict = {dict}'
-        file1 = open(f'{language}.py', "w")
-        file1.write(code)
-        file1.close()
-        return f"updated {language}"
 
     except ModuleNotFoundError as e:
         #then the language does not exist in bridge yet
         dict =  {}
-
-        headers = assumed_csv_data(reader[0])[1:]
         POS = set()
-        for row in reader[1:]:
-            args=assumed_csv_data(row)
-            print(args)
-            print(len(args))
-            real_row = Word(*args)
-            #the first item should be the TITLE, the rest is all the data for it.
-            dict[real_row[0]] = real_row[1:]
-            POS.add(real_row.Part_Of_Speech)
+        texts = set()
 
-        columnheaders, _, row_filters = " ".join(headers).partition("row_filters") #we expect the import language sheet to have this column header, but the column will be empty
-        code =  f'columnheaders = {columnheaders.split()}\nrow_filters = {row_filters.split()}\nPOS_list = {POS}\ncorrect_dict = {dict}'
-        file1 = open(f'{language}.py', "w")
-        file1.write(code)
-        file1.close()
-        return f"added {language}"
+
+
+    to_skip = headers.index("row_filters")
+    for row in csv_reader:
+        print(row)
+        new = row[:to_skip+1]+row[to_skip+2:]
+        print(new)
+        real_row = Word(*new)
+        #the first item should be the TITLE, the rest is all the data for it.
+        dict[real_row[0]] = real_row[1:]
+        POS.add(real_row.Part_Of_Speech)
+    #now we need to save over the old file with this new dict
+    code = f'texts = {texts}\ncolumnheaders = {columnheaders}\nnan=""\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
+    file1 = open(f'{language}.py', "w")
+    file1.write(code)
+    file1.close()
+    return f"updated {language}"
+
+    #nan is added by pandas for empty cells in a csv file. Normally, I think it means not a number. But it is undefined in Python. We want it to be a dummy value, and since everything else is a string, the empty string makes sense. An argument could be made to define it as None, but if we more fully embrace type hints (which we should – figuring out types on the fly is slower because it is harder for the interpreter), code else where will expect a string.
+
 
 
 
