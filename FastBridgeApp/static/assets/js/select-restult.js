@@ -34,20 +34,21 @@ function hide_show_column(col_name)
 function hide_show_row(row_value){
   console.log(row_value)
   var checkbox_val=document.getElementById(row_value).value
-  var to_toggle = row_value+"_hide"
   var all_col=document.getElementsByClassName(row_value);
 
   if(checkbox_val=="hide")
   {
     for(var i=0;i<all_col.length;i++){
-      all_col[i].classList.toggle(to_toggle);
+      all_col[i].classList.toggle(row_value+"_hide");
+      all_col[i].classList.remove(row_value+"_show");
      }
   document.getElementById(row_value).value="show";
   }
   else
   {
     for(var i=0;i<all_col.length;i++){
-      all_col[i].classList.remove(to_toggle);
+      all_col[i].classList.remove(row_value+"_hide");
+      all_col[i].classList.add(row_value+"_show");
      }
    document.getElementById(row_value).value="hide";
  }

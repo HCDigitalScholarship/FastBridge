@@ -21,7 +21,6 @@ async def oracle_select(request : Request, language : str):
 @router.get("{language}/result/{etexts}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
 async def oracle(request : Request, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str):
     context = {"request": request, "table_data" : []}
-
     table_data = []
     known = DefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words= []

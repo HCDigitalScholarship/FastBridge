@@ -1,27 +1,65 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<body>
+<section style = "height: auto; padding-top: 150px;">
+  <div class="container text-center">
+
 <form class="form-group" action="/account/my_known_words/" method="post">
-  <input type="radio" id= "oracle" name="function" value="oracle">
-  <label for="oracle">Oracle</label><br>
-  <input type="radio" id ="select" name="function" value="select">
-  <label for="select">Select</label><br>
+  <div class="form-group">
+    <input type="radio" id= "oracle" name="function" value="oracle">
+    <label for="oracle">Oracle</label><br>
+  </div>
+  <div class="form-group">
+    <input type="radio" id ="select" name="function" value="select">
+    <label for="select">Select</label><br>
+  </div>
+  <div class="form-group">
   <label for="lang"> Which language are you searching?</label>
   <input type="text" name="lang" id ="lang" value="">
   <br>
+  </div>
+
+<div class="form-group">
+
 
   <label for="other_texts"> What are you reading/exploring? </label>
   <input type="text" name="other_texts" id ="other_texts" value="">
   <br>
+</div>
+
+<div class="form-group">
 
   <label for="starts"> (for select only) where do the sections you want begin? </label>
   <input type="text" name="starts" id ="starts" value="">
   <br>
+  </div>
+  <div class="form-group">
+
   <label for="ends"> (for select only) where do the sections you want end? </label>
   <input type="text" name="ends" id ="ends" value="">
   <br>
+  </div>
+  <div class="form-group">
+
   <label for="in_exclue"> (for select only) include or exclude your known words? </label>
   <input type="text" name="in_exclue" id ="in_exclue" value="">
   <br>
+  </div>
+  <div class="form-group">
+
   <label for="section_depth"> (for oracle only) what depth of sections do you want to explore? </label>
   <input type="text" name="section_depth" id ="section_depth" value="">
   <br>
+  </div>
   <input type="submit" name="submit" value="Submit">
+
+
+
 </form>
+  </div>
+</section>
+</body>
+
+{% endblock %}

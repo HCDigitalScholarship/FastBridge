@@ -1,28 +1,42 @@
+{% extends "base.html" %}
 
+
+{% block content %}
+<body>
+<section style = "height: auto; padding-top: 150px;">
+  <div class="container text-center">
 <form id = "import form" action="/import/handler" method="post" enctype= "multipart/form-data">
-        <div
-        <label style="color: rgb(33,32,32);" for = "file">
+
+
+        <div class="form-group"
+        <label for = "file">
           Please add a file here </label>
           <input type="file" id = "file" name = "file" accept=".csv">
             </div>
-            <div
-            <label style="color: rgb(33,32,32);">
+            <div class="form-group"
+            <label for ="title" >
             Please add the name of the text, as you want it to appear to humans below </label>
-            <input class="form-control" type="text" name = "title" placeholder="title">
+            <input class="form-control" type="text" id = "title" name = "title" placeholder="title">
             </div>
 
-            <div
-           <label style="color: rgb(33,32,32);">
+            <div class="form-group"
+           <label for="language" >
              What language is this text in? (Please capitalize) </label>
-           <input class="form-control" type="text" name = "language" placeholder="language">
+           <input class="form-control" type="text" id = "language" name = "language" placeholder="language">
            </div>
-           <div
-         <label style="color: rgb(33,32,32);">
+           <div class="form-group"
+         <label for="subsection">
            Please enter the number of subsections the text has (eg. 1.1 = 2, 1.1.1 = 3) </label>
-         <input class="form-control" type="number" name = "subsections" placeholder="1">
+         <input class="form-control" id = "subsection" type="number" name = "subsections" placeholder="1">
          </div>
-
               <input type="submit" id = "submit" name="submit" value="submit">
+
+
 </form>
 
-<a href="/addwords"> Click here to add words to a language</a>
+<a href="/account/addwords"> Click here to add words to a language</a>
+  </div>
+</section>
+</body>
+
+{% endblock %}

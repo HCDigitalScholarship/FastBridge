@@ -21,7 +21,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
 
     lang = importlib.import_module(dictionary) #import the appropriate dictionary.
     POS =  lang.POS_list
-    columnheaders =  lang.columnheaders
+    columnheaders = lang.columnheaders
     row_filters =  lang.row_filters
     lang = lang.correct_dict
     final_row_filters = set()
@@ -33,12 +33,14 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
     #print(words)
     nums = re.compile('[0-9]')
     computed_row_filters = deque()
-    Word = namedtuple("Word", columnheaders + row_filters)
+    Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_DEFINITION"])
+
     for i in range(len(words)):
         #print(words[i][0])
         to_add = f""
-        datum = Word(*lang[words[i][0]])
+        datum = Word(*lang[words[i][0]], LOCAL_DEFINITION = local_defs[i])
         word_list.append(datum)
+        #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
 
@@ -66,7 +68,7 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
 
     final_row_filters = [(k,v) for k,v in new_filters.items()]
     final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])) )
-
+    #columnheaders.append("LOCAL_DEFINITION")
     return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters
 
 def make_quads_or_trips(texts, starts, ends):

@@ -7,7 +7,7 @@ from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
 import math
-running_list = True
+running_list = False
 
 router = APIRouter()
 router_path = Path.cwd()
@@ -70,10 +70,11 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     for header in columnheaders:
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>{header.replace("_", " ")}'
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
         else:
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
-        headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ")}</label></div></div>'
+
+        headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
     other_headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
@@ -87,6 +88,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
+            elif(columnheaders[i] == "LOCAL_DEFINITION"):
+                render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             else:
                 render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
         render_words+= f'</tr>'
@@ -156,8 +159,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
         else:
             display_filter = display_filter[:-1]
+            style+= f".{filter}_show {{display:table-cell!important;}}\n"
         filters+=f'<div><input type="checkbox" value="hide" id="{filter}" onchange="hide_show_row(this.id);" checked>{display_filter}<br></div>'
         style+= f".{filter}_hide {{display:none!important;}}\n"
+        style+= f".{filter}_show {{display:table-cell!important;}}\n"
     headers = f""
     for header in columnheaders:
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
