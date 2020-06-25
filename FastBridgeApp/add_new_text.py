@@ -23,15 +23,21 @@ def import_(title, section_level, csv, language):
 
     reader = csv.readlines()
     #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF  LEMMA, where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences)
+    try:
+        pass
+    except Exception as e:
+        raise
     for i in range(1, len(reader)-1):
         #print(reader[i])
-        row = assumed_csv_data(reader[i])
+        try:
+            row = assumed_csv_data(reader[i])
         #print(row)
-        the_text.append((row[0], row[3], (int(row[2])-1)), row[4]) #add the title, definition, array index, local lemma quad to that list
-        section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
-        section_words.update({section : (int(row[2])-1)} )
+            the_text.append((row[0], row[3], (int(row[2])-1)), row[4]) #add the title, definition, array index, local lemma quad to that list
+            section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
+            section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
-
+        except Exception as e:
+            return f"Error parsing data at line {i}, here is what I read: {row}. This should be a list of  [TITLE, LOCATION, RUNNINGCOUNT,  LOCALDEF, LEMMA]. My guesses at the issue: \n Is their a comma in a local definition? \n Is their an extra newline character in any column?"
     unique_sections = " ".join(section_words.keys()).split()
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
@@ -45,16 +51,21 @@ def import_(title, section_level, csv, language):
 
 def add_words(file, language : str):
     reader = file.readlines()
-    Word = namedtuple("Word", assumed_csv_data(reader[0]))
+    try:
+        Word = namedtuple("Word", assumed_csv_data(reader[0]))
+    except Exception as e:
+        print(assumed_csv_data(reader[0]))
+        return "Some strange, raw unicode character in line 1... this should not happen in python3, and is likely an excel issue"
+
     try:
         #if the dictionary already exists
         lang = importlib.import_module(f'{language}')
         dict = lang.correct_dict
 
-        for row in reader:
-            real_row = assumed_csv_data(row)
+        for row in reader[1:]:
+            real_row = Word(*assumed_csv_data(row))
             #the first item should be the TITLE, the rest is all the data for it.
-            dict[real_row[0]] = Word(*real_row[1:])
+            dict[real_row[0]] = real_row[1:]
         #now we need to save over the old file with this new dict
         code =  f'correct_dict = {dict}'
         file1 = open(f'{language}.py', "w")
@@ -69,13 +80,16 @@ def add_words(file, language : str):
         headers = assumed_csv_data(reader[0])[1:]
         POS = set()
         for row in reader[1:]:
-            real_row = Word(*assumed_csv_data(row))
+            args=assumed_csv_data(row)
+            print(args)
+            print(len(args))
+            real_row = Word(*args)
             #the first item should be the TITLE, the rest is all the data for it.
             dict[real_row[0]] = real_row[1:]
             POS.add(real_row.Part_Of_Speech)
 
-        columnheaders, _, row_filters = headers.partition("row_filter") #we expect the import language sheet to have this column header, but the column will be empty
-        code =  f'columnheaders = {headers}\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
+        columnheaders, _, row_filters = " ".join(headers).partition("row_filters") #we expect the import language sheet to have this column header, but the column will be empty
+        code =  f'columnheaders = {columnheaders.split()}\nrow_filters = {row_filters.split()}\nPOS_list = {POS}\ncorrect_dict = {dict}'
         file1 = open(f'{language}.py', "w")
         file1.write(code)
         file1.close()
@@ -87,11 +101,11 @@ def add_words(file, language : str):
 
 def assumed_csv_data(lst):
     """Takes a list of bytestrings that we are pretty sure is a csv file, but is passed on without that information. Since the user can't upload non-csvs, this is a valid assumption"""
-    #print(lst)
+    print(lst)
     row = lst.decode("utf-8") #these are all bytes!
     #print(row)
     row = row.strip("\r\n") #with carriage return and new line included.
-    #print(row)
+    print(row)
     row = row.split(",")
     #print(row)
     return row
