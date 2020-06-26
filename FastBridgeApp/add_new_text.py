@@ -36,7 +36,8 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 print("fine, null title")
             else:
                 print("VERY BAD")
-                return f'Error: {row[0]} is not defined as a word in {language}. Check line {i+2} of the import sheet if this looks like a typo, or add {row[0]} title to the {language}'
+                return f'Error: {row[0]} is not defined as a word in {language}. Check line {i+2} of the import sheet if this looks like a typo, or add {row[0]} to {language}'
+                #it is row i+2 because line numbers start at 1 and i starts at 0, and i does not have the headers
                 assert False
 
         if local_def and local_lem:

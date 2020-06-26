@@ -7,7 +7,7 @@ from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
 import math
-running_list = False
+running_list = True
 
 router = APIRouter()
 router_path = Path.cwd()
