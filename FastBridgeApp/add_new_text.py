@@ -6,7 +6,7 @@ from pathlib import Path
 from collections import OrderedDict, namedtuple
 app_path = Path.cwd()
 nan = ""
-def import_(title, section_level, csv, language):
+def import_(title, section_level, csv, language, local_def, local_lem):
     print(csv.file)
     dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
@@ -27,7 +27,14 @@ def import_(title, section_level, csv, language):
 
     #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF  LEMMA, where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences)
     for row in csv_reader:
-        the_text.append((row[0], row[3], (int(row[2])-1), row[4])) #add the title, definition, array index, local lemma quad to that list
+        if local_def and local_lem:
+            the_text.append((row[0], (int(row[2])-1), row[3], row[4])) #add the title, array index,  definition, local lemma quad to that list
+        elif local_def:
+            the_text.append((row[0],(int(row[2])-1), row[3])) #add the title, definition, array index,
+        elif local_lem:
+            the_text.append((row[0], (int(row[2])-1), '', row[4]))
+        else:
+            the_text.append((row[0], (int(row[2])-1), '', ''))
         section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections

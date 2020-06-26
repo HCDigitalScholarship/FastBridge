@@ -6,12 +6,14 @@
 <body>
     <section id="bridge-select" class="content-section" style="background-image: url('/assets/img/background-img-gray.jpg'); background-size: auto;background-position: top;">
         <div class="container" style="color: #ffffff;">
+
             <!-- First tab-->
             <div class="tab">
                 <div class="row" style="margin-bottom: 30px;">
                     <div class="col" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;">
                         <div class="row">
                             <div class="col-xl-7">
+
                                 <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">
                                     Select a vocab list</h4>
                             </div>
@@ -86,14 +88,24 @@
                 </div>
             </div>
             <!--Buttons-->
+
             <div class="row" style="margin-bottom: 50px;margin-top: 30px;">
                 <div class="col d-flex justify-content-center align-items-center" id="page-buttons" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;padding: 15px;">
-                    <button class="myBtn" id="myPrev" type="button"><i class="fas fa-angle-double-left"></i></button>
-                    <button class="myBtn" id="openModal1" type="button" data-toggle="modal" data-target="#bridge-select-text">
-                        <i class="fas fa-plus" style="font-size: 16px;"></i></button>
+
+                    <button class="myBtn" id="myPrev" type="button" data-placement="bottom" title="Go back to texts you are reading" data-toggle="tooltip"><i class="fas fa-angle-double-left"></i></button>
+
+
+                    <span data-toggle="modal" data-target="#bridge-select-text">
+                    <button class="myBtn" id="openModal1" type="button"  data-placement="bottom" title="Click me to add a text" data-toggle="tooltip" value="">
+                        <i class="fas fa-plus" style="font-size: 16px;"></i>
+                      </button>
+                      </span>
+
                     <button class="myBtn" id="openModal2" type="button" data-toggle="modal" data-target="#bridge-change-list">
                         <i class="fas fa-plus" style="font-size: 16px;"></i></button>
-                    <button class="myBtn" id="myNext" type="button"><i class="fas fa-angle-double-right"></i></button>
+
+                    <button class="myBtn" id="myNext" type="button" data-placement="bottom" title="Go on to the next step!" data-toggle="tooltip">
+                      <i class="fas fa-angle-double-right"></i></button>
                 </div>
             </div>
             <div style="text-align:center;margin-top:40px;">

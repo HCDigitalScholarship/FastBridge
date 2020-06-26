@@ -41,7 +41,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             if (title[0], title[1]) not in dups:
                 dups.add((title[0], title[1]))
                 new_titles.append(title)
-                titles = sorted(new_titles, key=lambda x: x[-1])
+                titles = sorted(new_titles, key=lambda x: x[1])
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
@@ -59,7 +59,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
     for filter, POS_for_filter in row_filters:
         display_filter = filter.replace("_", " ")
-        if display_filter[-1] != "0":
+        if display_filter[-1] != "0" or display_filter[-1] != "T":
             display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
         else:
             display_filter = display_filter[:-1]
@@ -136,7 +136,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles =  [title for title in titles if (title[0], title[1]) in to_operate]
 
     ##print(titles)
-    titles = sorted(titles, key=lambda x: x[-1])
+    titles = sorted(titles, key=lambda x: x[1])
     ##print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 

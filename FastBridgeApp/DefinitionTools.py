@@ -13,7 +13,7 @@ def get_text(form_request : str):
     """
     return importlib.import_module(f'data.{form_request}')
 
-def get_lang_data(words : list, dictionary: str, local_defs = False):
+def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False, local_lem : bool = False):
     """
     Gets the definitions,  and other information, about the titles in words, from the appropriate dictionary, also gets the Parts of Speech (POS) and column headers to display for this language.
     This should only be called on the FINAL word list that we are returning at the end, after all the set operations have been performed.
@@ -28,18 +28,35 @@ def get_lang_data(words : list, dictionary: str, local_defs = False):
     word_list = deque() #has more effieceint appends, and is just as good to iterate over later
     #if local_defs: #we want this to be protected because it will take an extra round of iterating over all the words in the INTIAL selction.
     #local definitions are hard, because the same word could show up in the section multiple times, so we can't use a dictionary, because then we would have multiple copies of the same key.
-    local_defs =[word[1] for word in words]
+    Word = namedtuple("Word", columnheaders + row_filters)
+    if local_defs_bool and local_lem:
+        local_defs =[word[2] for word in words]
+        local_lems =[word[3] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_DEFINITION", "LOCAL_LEMMA"])
+    elif local_defs_bool:
+        local_defs =[word[2] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_DEFINITION"])
+
+    elif local_lem:
+        local_lems =[word[4] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_LEMMA"])
+
+
         #in full version, text_list will be a list of tuples with the local definitions, for now it is not yet. Regardless of language, local_defs should be the second part of that tuple.
     #print(words)
     nums = re.compile('[0-9]')
     computed_row_filters = deque()
-    Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_DEFINITION"])
+
+
 
     for i in range(len(words)):
         #print(words[i][0])
         to_add = f""
         print(lang[words[i][0]])
-        datum = Word(*lang[words[i][0]], LOCAL_DEFINITION = local_defs[i])
+        datum = lang[words[i][0]]
+        if local_defs_bool:
+            datum.append(local_defs[i])
+        datum = Word(*datum)
         word_list.append(datum)
         #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
