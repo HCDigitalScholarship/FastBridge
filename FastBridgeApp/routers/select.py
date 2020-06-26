@@ -28,20 +28,23 @@ async def select(request : Request, language : str):
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str):
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
+    print("made trips")
     words = []
     titles =[]
     for text, start, end in triple:
         book = DefinitionTools.get_text(text).book
         titles += (book.get_words(start, end))
-
+    print("got titles")
     if not running_list:
         dups = set()
         new_titles = []
+
         for title in titles:
-            if (title[0], title[1]) not in dups:
-                dups.add((title[0], title[1]))
+            if (title[0]) not in dups:
+                dups.add((title[0]))
                 new_titles.append(title)
                 titles = sorted(new_titles, key=lambda x: x[1])
+        print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])

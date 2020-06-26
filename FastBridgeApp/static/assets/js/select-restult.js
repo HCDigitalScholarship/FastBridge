@@ -40,7 +40,7 @@ function hide_show_row(row_value){
   {
     for(var i=0;i<all_col.length;i++){
       all_col[i].classList.toggle(row_value+"_hide");
-      all_col[i].classList.remove(row_value+"_show");
+      //all_col[i].classList.remove(row_value+"_show");
      }
   document.getElementById(row_value).value="show";
   }
@@ -48,7 +48,7 @@ function hide_show_row(row_value){
   {
     for(var i=0;i<all_col.length;i++){
       all_col[i].classList.remove(row_value+"_hide");
-      all_col[i].classList.add(row_value+"_show");
+      //all_col[i].classList.add(row_value+"_show");
      }
    document.getElementById(row_value).value="hide";
  }

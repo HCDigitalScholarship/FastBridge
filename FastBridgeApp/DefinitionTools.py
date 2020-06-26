@@ -18,7 +18,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     Gets the definitions,  and other information, about the titles in words, from the appropriate dictionary, also gets the Parts of Speech (POS) and column headers to display for this language.
     This should only be called on the FINAL word list that we are returning at the end, after all the set operations have been performed.
     """
-
+    print("gettin language data")
     lang = importlib.import_module(dictionary) #import the appropriate dictionary.
     POS =  lang.POS_list
     columnheaders = lang.columnheaders[1:]
@@ -40,7 +40,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     elif local_lem:
         local_lems =[word[4] for word in words]
         Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_LEMMA"])
-
+    print("defined word tuple")
 
         #in full version, text_list will be a list of tuples with the local definitions, for now it is not yet. Regardless of language, local_defs should be the second part of that tuple.
     #print(words)
@@ -52,7 +52,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     for i in range(len(words)):
         #print(words[i][0])
         to_add = f""
-        print(lang[words[i][0]])
+        #print(lang[words[i][0]])
         datum = lang[words[i][0]]
         if local_defs_bool:
             datum.append(local_defs[i])
@@ -64,7 +64,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
 
             in_case_multiple = datum[len(columnheaders) + j]
             if(in_case_multiple):
-                in_case_multiple = in_case_multiple.split(",")
+                in_case_multiple = in_case_multiple.split(", ")
                 for case in in_case_multiple:
                     new = f"{row_filters[j]}{case}"
                     to_add += f"{new} "
@@ -87,6 +87,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     final_row_filters = [(k,v) for k,v in new_filters.items()]
     final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])) )
     #columnheaders.append("LOCAL_DEFINITION")
+    print("got lang data")
     return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters
 
 def make_quads_or_trips(texts, starts, ends):

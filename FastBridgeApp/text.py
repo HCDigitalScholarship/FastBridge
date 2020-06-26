@@ -58,7 +58,7 @@ class Text(object):
         elif range_end.count(".") == 2 and self.subsections == 3:
             internal_range_end = range_end
         #start ends up being the end of the previous section + 1
-
+        print(self.section_linkedlist[internal_range_start])
         return (self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1))
 
 
