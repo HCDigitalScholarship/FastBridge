@@ -29,10 +29,14 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
+    print(triple)
     words = []
     titles =[]
+    print("entering for")
     for text, start, end in triple:
+        print(text)
         book = DefinitionTools.get_text(text).book
+        print("loaded the book")
         titles += (book.get_words(start, end))
     print("got titles")
     if not running_list:

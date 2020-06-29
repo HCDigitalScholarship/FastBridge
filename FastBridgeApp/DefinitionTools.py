@@ -1,4 +1,4 @@
-import  importlib
+import importlib
 import text
 from collections import namedtuple, deque
 import re
