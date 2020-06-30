@@ -10,7 +10,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     #print(csv.file)
     dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
-    filename = title.lower().replace(" ", "_").replace(",","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
+    filename = title.lower().replace(" ", "_").replace(",","").replace(":","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
     section_words["start"] = -1
     lang = importlib.import_module(f'{language}')
@@ -41,23 +41,23 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 assert False
 
         if local_def and local_lem:
-            the_text.append((row[0], (int(row[2])-1), row[3], row[4])) #add the title, array index,  definition, local lemma quad to that list
+            the_text.append((row[0], i, row[3], row[4])) #add the title, array index,  definition, local lemma quad to that list
         elif local_def:
-            the_text.append((row[0],(int(row[2])-1), row[3])) #add the title, definition, array index,
+            the_text.append((row[0], i, row[3])) #add the title, definition, array index,
         elif local_lem:
-            the_text.append((row[0], (int(row[2])-1), '', row[4]))
+            the_text.append((row[0], i, '', row[4]))
         else:
-            the_text.append((row[0], (int(row[2])-1), '', ''))
+            
+            the_text.append((row[0], i, '', ''))
         section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
-        section_words.update({section : (int(row[2])-1)} )
+        section_words.update({section : i} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
     section_words["end"] = -2
     unique_sections = " ".join(section_words.keys()).split()
     for i in range(len(unique_sections) - 1):
         section_list[unique_sections[i+ 1]] =  unique_sections[i]
-    section_list[unique_sections[-1]] = "end"
-    section_list["end"] = "start"
-    section_list["start"] = "start"
+    section_list["end"] = unique_sections[-2]
+    section_list["start"] = "start" #unique_sections[0] = end of first section, not start of it
     section_words=dict(section_words)
     code = f'import text\nnan=""\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
     file1 = open(completeName, "w")

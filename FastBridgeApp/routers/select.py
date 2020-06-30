@@ -7,7 +7,7 @@ from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
 import math
-running_list = False
+running_list = True
 
 router = APIRouter()
 router_path = Path.cwd()
@@ -29,7 +29,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
-    print(triple)
+    #print(triple)
     words = []
     titles =[]
     print("entering for")
@@ -48,7 +48,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 dups.add((title[0]))
                 new_titles.append(title)
                 titles = sorted(new_titles, key=lambda x: x[1])
-        print(titles)
+        #print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
