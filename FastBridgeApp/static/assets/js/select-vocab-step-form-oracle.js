@@ -8,6 +8,8 @@ var knowntexts = [];
 var known_starts = [];
 var known_ends = [];
 var etexts = [];
+var estarts = [];
+var eends = [];
 var e_section_size = [];
 
 
@@ -70,9 +72,11 @@ function nextPrevOracle(n, next) {
   known_ends = known_ends.toString().replace(",", "+")
 
   etexts = etexts.toString().replace(",", "+")
+  estarts = estarts.toString().replace(",", "+")
+  eends = eends.toString().replace(",", "+")
   e_section_size = e_section_size.toString().replace(",", "+")
 
-    window.location.href = window.location.href + "/result/" + etexts + "/"+ e_section_size + "/" +  knowntexts + "/" + known_starts + "-" + known_ends + "/";
+    window.location.href = window.location.href + "/result/" + etexts + "/"+ estarts+ "/" + eends+ "/" + e_section_size + "/" +  knowntexts + "/" + known_starts + "-" + known_ends + "/";
     return false;
   }
   // Otherwise, display the correct tab:
@@ -110,6 +114,8 @@ function deleteRowOracle(r) {
   var i = r.parentNode.parentNode.rowIndex;
   var table = document.getElementById("oracle-result-table1");
   etexts.splice(i-3, 1);
+  estarts.splice(i-3, 1);
+  eends.splice(i-3, 1);
   e_section_size.splice(i-3, 1);
   table.deleteRow(i);
   if (table.rows.length <= 3){
@@ -215,18 +221,33 @@ $('#oracle-modal-form1-save').click(function(){
     var el = document.getElementById('oracle-modal-form1-select1');
     var book = el.options[el.selectedIndex].innerHTML;
 
+    var size = $('#oracle-modal-form1-select2-hidden-field3').val();
     var sectionFrom = $('#oracle-modal-form1-select2-hidden-field1').val();
+    var sectionTo = $('#oracle-modal-form1-select2-hidden-field2').val();
 
-    if (sectionFrom){ // if user specifies a section
-        var sections = `${sectionFrom}`;
-    } else {
-        var sections = '9';
+    if(sectionFrom == "")
+    {
+      alert("Please enter a section from which to start")
+      return false
     }
-    console.log(sections)
+    if(sectionTo == "")
+    {
+      alert("Please enter a section at which to end")
+      return false
+    }
+    if (size){ // if user specifies a section
+        var size = `${size}`;
+    } else {
+        var size = '9';
+    }
+    console.log(size)
     etexts.push(string_to_slug(book))
-    e_section_size.push(sections)
+    estarts.push(sectionFrom)
+    eends.push(sectionTo)
+    e_section_size.push(size)
 
     // show the selection in a table
+    sections=(sectionFrom + " - " + sectionTo + "; " + size)
     var table = document.getElementById('oracle-result-table1');
     var row = table.insertRow(-1);
     var cell1 = row.insertCell(0);

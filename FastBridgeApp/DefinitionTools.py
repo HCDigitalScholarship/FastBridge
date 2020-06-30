@@ -61,19 +61,21 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
-
+            print(row_filters[j])
             in_case_multiple = datum[len(columnheaders) + j]
+            print(in_case_multiple, "many")
             if(in_case_multiple):
+                if in_case_multiple == "T":
+                    in_case_multiple = "0"
                 in_case_multiple = in_case_multiple.split(", ")
+
                 for case in in_case_multiple:
                     new = f"{row_filters[j]}{case}"
                     to_add += f"{new} "
                     final_row_filters.add((new, datum.Part_Of_Speech+ " "))
 
         computed_row_filters.append(to_add)
-        #if local_defs[i] != "":
-            #in every language, we should have an empty final column for local definitions
-            #context[words[i][0]][-1] = local_defs[i]
+    print(computed_row_filters)
     dups = set()
     new_filters = {}
     final_row_filters = [filter for filter in final_row_filters if nums.match(filter[0][-1])]
