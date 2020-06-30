@@ -48,7 +48,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
             the_text.append((row[0], (int(row[2])-1), '', row[4]))
         else:
             the_text.append((row[0], (int(row[2])-1), '', ''))
-        section = row[1].replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
+        section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : (int(row[2])-1)} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
     section_words["end"] = -2

@@ -18,8 +18,8 @@ async def oracle_select(request : Request, language : str):
     book_name = importlib.import_module(language).texts
     return templates.TemplateResponse("select-oracle.html", {"request": request, "book_name": book_name})
 
-@router.get("{language}/result/{etexts}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
-async def oracle(request : Request, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str):
+@router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
+async def oracle(request : Request, language : str, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str, e_section_start : str, e_section_end : str):
     context = {"request": request, "table_data" : []}
     table_data = []
     known = DefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
@@ -27,24 +27,29 @@ async def oracle(request : Request, etexts : str, e_section_size : str,  known_t
     for text, start, end in known:
         book = DefinitionTools.get_text(text).book
         ogknown_words += (book.get_words(start, end))
-    ogknown_tokens = set([(new[0], new[1]) for new in ogknown_words])
+    ogknown_tokens = set([(new[0]) for new in ogknown_words])
     etexts =  etexts.split("+")
     e_section_size = int(e_section_size)
-    for text in etexts: #actually screw it, we will just crawl the whole text. Otherwise, we need to make sections thier own data type with their own comparison operators and that is a pain. Instead, we should have them specify a section size.
+    for text in etexts:
         book = DefinitionTools.get_text(text).book
-        sections = list(book.section_linkedlist.keys())
-        for i in range((len(sections)-1)-e_section_size):
-            section = f'{sections[i]} - {sections[i+e_section_size]}'
-            section_words = book.get_words(sections[i], sections[i+e_section_size])
-            total_tokens = set([(new[0], new[1]) for new in section_words])
+
+        #we can go through the section_linkedlist backwards
+        sections = book.section_linkedlist
+        indexable_sections = list(book.section_linkedlist.keys())
+        start = indexable_sections.index(e_section_end) - e_section_size
+        end = e_section_end
+        while indexable_sections[start] != e_section_start:
+            section = f'{indexable_sections[start]} - {end}'
+            section_words = book.get_words(indexable_sections[start], end)
+            total_tokens = set([(new[0]) for new in section_words])
             total_words =  (section_words) #need to filter the to get out the sorting info.
             known_tokens = total_tokens.intersection(ogknown_tokens)
             count_unknown_tokens = len(total_tokens.difference(known_tokens))
             known_tokens = len(total_tokens.intersection(ogknown_tokens))
 
             total_tokens = len(total_tokens)
-            total_words = [(new[0], new[1]) for new in total_words]
-            known_words = (list_intersection(total_words, [(new[0], new[1]) for new in ogknown_words]))
+            total_words = [(new[0], new[2]) for new in total_words]
+            known_words = (list_intersection(total_words, [(new[0], new[2]) for new in ogknown_words]))
             count_unknown_words = len(list_difference(total_words, known_words))
 
             known_words = len(known_words)
@@ -54,12 +59,17 @@ async def oracle(request : Request, etexts : str, e_section_size : str,  known_t
             percent_1 = f'{percent1}%'
             percent2 = round(abs((known_tokens)/total_tokens)* 100, 2)
             percent_2 = f'{percent2}%'
-            link = f'/select/result/{text}/{sections[i]}-{sections[i+e_section_size]}/exclude/{known_texts}/{known_starts}-{known_ends}'
+            link = f'/select/{language}/result/{text}/{indexable_sections[start]}-{end}/exclude/{known_texts}/{known_starts}-{known_ends}'
             table_data.append([section, total_words, total_tokens, known_words, known_tokens, percent_1, percent_2, link])
+            start =  start - 1
+            end = sections[end] #previous sections
     context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
-    context["etexts"] = ", ".join([f'{text.replace("_", " ")}' for text in etexts])
+    etexts = etexts[0].replace("_" , ", ").title()
+    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end} without your known words'
 
     return templates.TemplateResponse("result-oracle.html", context)
+
+
 
 def list_difference(list1, list2):
     return_list= []
