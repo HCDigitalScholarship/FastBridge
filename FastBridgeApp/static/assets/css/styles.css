@@ -72,6 +72,10 @@
     padding: 5px;
   }
 
+.btn{
+  border-radius: 35px;
+}
+
 #slideOut {
   position: fixed;
   width: 300px;
