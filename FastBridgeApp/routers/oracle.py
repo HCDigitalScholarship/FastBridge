@@ -66,7 +66,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
             end = sections[end] #previous sections
     context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
     etexts = etexts[0].replace("_" , ", ").title()
-    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end} without your known words'
+    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end}'
 
     return templates.TemplateResponse("result-oracle.html", context)
 
