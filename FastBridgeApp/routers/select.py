@@ -29,7 +29,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
-    print(triple)
+    #print(triple)
     words = []
     titles =[]
     print("entering for")
@@ -48,7 +48,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 dups.add((title[0]))
                 new_titles.append(title)
                 titles = sorted(new_titles, key=lambda x: x[1])
-        print(titles)
+        #print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
@@ -128,17 +128,32 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     for text, start, end in source:
         book = DefinitionTools.get_text(text).book
         titles = titles.union(set((book.get_words(start, end))))
+
     to_operate = set([(new[0]) for new in titles])
     ##print(to_operate)
     ##print("\n")
     ##print(in_exclude)
+    sextuple = list(zip(source, other))
+
     if in_exclude == "exclude":
         to_operate= to_operate.difference(other_titles)
+        section = ", ".join(["words in {text}: {start} - {end} and not in {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
     elif in_exclude == "include":
-        to_operate.intersection_update(other_titles)
+        to_operate= to_operate.intersection(other_titles)
 
+        section = ", ".join(["words in {text}: {start} - {end} and {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
+    print(to_operate)
     #if always_show: #if we add lists to always include, they would be added here
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
+    if not running_list:
+        dups = set()
+        new_titles = []
+
+        for title in titles:
+            if (title[0]) not in dups:
+                dups.add((title[0]))
+                new_titles.append(title)
+                titles = new_titles
     titles =  [title for title in titles if (title[0]) in to_operate]
 
     ##print(titles)
@@ -146,8 +161,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
-    sextuple = list(zip(source, other))
-    section = ", ".join(["{text}: {start} - {end} without {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
+
 
     context["section"] = section
     context["len"] = len(words)

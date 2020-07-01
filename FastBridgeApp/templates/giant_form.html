@@ -3,10 +3,12 @@
 
 {% block content %}
 <body>
-<section style = "height: auto; padding-top: 150px;">
+
+<section style = "height: auto; padding-top: 150px; background-image: url('/assets/img/background-img-gray.jpg'); background-size: auto;background-position: top;">
   <div class="container text-center">
 
-<form class="form-group" action="/account/my_known_words/" method="post">
+<form class="form-group" action="/account/my_known_words/" method="post" name = "giant_form" >
+
   <div class="form-group">
     <input type="radio" id= "oracle" name="function" value="oracle">
     <label for="oracle">Oracle</label><br>
@@ -16,7 +18,7 @@
     <label for="select">Select</label><br>
   </div>
   <div class="form-group">
-  <label for="lang"> Which language are you searching?</label>
+  <label for="lang"> Which language are you searching?</label><br>
   <input type="text" name="lang" id ="lang" value="">
   <br>
   </div>
@@ -24,40 +26,59 @@
 <div class="form-group">
 
 
-  <label for="other_texts"> What are you reading/exploring? </label>
+  <label for="other_texts"> What are you reading/exploring? </label><br>
   <input type="text" name="other_texts" id ="other_texts" value="">
   <br>
 </div>
 
 <div class="form-group">
 
-  <label for="starts"> (for select only) where do the sections you want begin? </label>
+  <label for="starts"> Where do the sections you want begin? </label><br>
   <input type="text" name="starts" id ="starts" value="">
   <br>
   </div>
   <div class="form-group">
 
-  <label for="ends"> (for select only) where do the sections you want end? </label>
+  <label for="ends"> Where do the sections you want end? </label><br>
   <input type="text" name="ends" id ="ends" value="">
   <br>
   </div>
-  <div class="form-group">
+  <div class="form-group" id = "select-stuff" style="display:none;">
 
-  <label for="in_exclue"> (for select only) include or exclude your known words? </label>
+  <label for="in_exclue"> Do you want to see only known words or only unkown words? </label><br>
   <input type="text" name="in_exclue" id ="in_exclue" value="">
   <br>
   </div>
-  <div class="form-group">
+  <div class="form-group" id = "oracle-stuff" style="display:none;">
 
-  <label for="section_depth"> (for oracle only) what depth of sections do you want to explore? </label>
+  <label for="section_depth"> What depth of sections do you want to explore? </label><br>
   <input type="text" name="section_depth" id ="section_depth" value="">
   <br>
   </div>
-  <input type="submit" name="submit" value="Submit">
 
+  <input class="btn btn-dark primary action-button" type="submit" name="submit" value="Create">
 
 
 </form>
+<script type="text/javascript">
+  var rad = document.giant_form.function;
+  var prev = null;
+  for (var i = 0; i < rad.length; i++) {
+      rad[i].addEventListener('change', function() {
+
+          if (this !== prev) {
+              prev = this;
+          }
+          if(this.value == "select"){
+            document.getElementById("select-stuff").style.display = "block"
+              document.getElementById("oracle-stuff").style.display = "none"
+          }else if(this.value == "oracle"){
+              document.getElementById("oracle-stuff").style.display = "block"
+              document.getElementById("select-stuff").style.display = "none"
+          }
+      });
+  }
+</script>
   </div>
 </section>
 </body>

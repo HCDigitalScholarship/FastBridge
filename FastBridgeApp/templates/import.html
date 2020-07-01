@@ -5,29 +5,29 @@
 <body>
 <section style = "height: auto; padding-top: 150px;">
   <div class="container text-center">
-<form id = "import form" action="/account/import/handler" method="post" enctype= "multipart/form-data">
+<form id = "import form" action="/account/import/handler/" method="post" enctype= "multipart/form-data">
 
 
         <div class="form-group"
         <label for = "file">
           Please add a file here </label>
-          <input type="file" id = "file" name = "file" accept=".csv">
+          <input type="file" id = "file" name = "file" accept=".csv" required>
             </div>
             <div class="form-group"
             <label for ="title" >
             Please add the name of the text, as you want it to appear to humans below </label>
-            <input class="form-control" type="text" id = "title" name = "title" placeholder="title">
+            <input class="form-control" type="text" id = "title" name = "title" placeholder="title" required>
             </div>
 
             <div class="form-group"
            <label for="language" >
              What language is this text in? (Please capitalize) </label>
-           <input class="form-control" type="text" id = "language" name = "language" placeholder="language">
+           <input class="form-control" type="text" id = "language" name = "language" placeholder="language" required>
            </div>
            <div class="form-group"
          <label for="subsection">
            Please enter the number of subsections the text has (eg. 1.1 = 2, 1.1.1 = 3) </label>
-         <input class="form-control" id = "subsection" type="number" name = "subsections" placeholder="1">
+         <input class="form-control" id = "subsection" type="number" name = "subsections" placeholder="123456789" required>
          </div>
               <input type="submit" id = "submit" name="submit" value="submit">
 

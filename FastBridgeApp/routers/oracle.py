@@ -36,6 +36,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         #we can go through the section_linkedlist backwards
         sections = book.section_linkedlist
         indexable_sections = list(book.section_linkedlist.keys())
+        print(e_section_end)
         start = indexable_sections.index(e_section_end) - e_section_size
         end = e_section_end
         while indexable_sections[start] != e_section_start:
@@ -65,7 +66,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
             end = sections[end] #previous sections
     context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
     etexts = etexts[0].replace("_" , ", ").title()
-    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end} without your known words'
+    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end}'
 
     return templates.TemplateResponse("result-oracle.html", context)
 

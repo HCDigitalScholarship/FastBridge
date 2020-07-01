@@ -61,9 +61,9 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
-            print(row_filters[j])
+            #print(row_filters[j])
             in_case_multiple = datum[len(columnheaders) + j]
-            print(in_case_multiple, "many")
+            #print(in_case_multiple, "many")
             if(in_case_multiple):
                 if in_case_multiple == "T":
                     in_case_multiple = "0"
@@ -75,7 +75,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
                     final_row_filters.add((new, datum.Part_Of_Speech+ " "))
 
         computed_row_filters.append(to_add)
-    print(computed_row_filters)
+    #print(computed_row_filters)
     dups = set()
     new_filters = {}
     final_row_filters = [filter for filter in final_row_filters if nums.match(filter[0][-1])]

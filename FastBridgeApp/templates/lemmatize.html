@@ -5,45 +5,55 @@
 {% block content %}
 <title>The Bridge: Lemmatizer</title>
 <body id="body" data-title="index" class = "home">
-	<div style="
-	text-align: left;
-    padding-left: 15px;
-    padding-right: 15px;">
-<h1 id="PostBlock" style="display:inline-block;"> Lemmatize a  Text </h1>
-<br>
-<p id="PostBlock">
-With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin or Greek text. <br>
-You can choose to either upload a text file, or just input text yourself. We will lemmatize all the words that have only one possible lemma, and will return a csv that is almost ready to import. All you have to do is replace the "text" column with location-specific definitions – or make it all empty!
+	<section class="content-section" style="background-image: url('/assets/img/background-img-gray.jpg'); background-size: auto;background-position: top;">
+		<div class="container" style = "text-align:center; width: 80%;">
+
+<p>
+With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin or Greek text. You can choose to either upload a text file, or just input text yourself. We will lemmatize all the words that have only one possible lemma, and will return a csv that is almost ready to import. All you have to do is disambiguate and replace the "text" column with location-specific definitions – or make it all empty! </p>
 
 
 <form id="post_text" style="display:inline-block;" method="post" action="Lemmatizer" enctype="multipart/form-data">
-	<div id="PostBlock" style="text-align:center;">
-		<p>Put plain text you want lemmatized here: </p>
-		<br>
-		<input type="text" id = "text" name="text" value="">
-		<p>Or upload a plain text file here: </p>
-		<br>
-		<input type="file" id = "file" name="file" value="">
-		<br>
-		<p>Tell us what language the text is in (currently supported: Latin, Greek)</p>
-		<input type="text" name="language" id = "language" value="">
-		<br>
-		<p>In which format would you like your lemmata?</p>
-		<label for="bridge_format"> Bridge </label>
-		<input type="radio" name="format" id = "bridge_format" value="Bridge">
-		<br>
+	<div id="PostBlock">
+		<div class="form-group">
+			<label for="text"> Put plain text you want lemmatized here, or add a file </label>	<br>
+			<input type="text" id = "text" name="text" value="">	<br>
+		</div>
+		<div class="input-group mb-3">
+		  <div class="custom-file">
+		    <input type="file" class="custom-file-input" id="file">
+		    <label class="custom-file-label" for="file">Choose file</label>
+		  </div>
+		  <div class="input-group-append">
+		    <span class="input-group-text" id="">Upload</span>
+		  </div>
+		</div>
+
+		<div class="form-group">
+			<label for="language">Tell us what language the text is in (currently supported: Latin, Greek)</label> <br>
+			<input type="text" name="language" id = "language" value="">
+			<br>
+		</div>
+		<div class="form-group">
+			<label for="radios">In which format would you like your lemmata?</label> <br>
+		</div>
+		<div class="form-group" id="radios">
+			<label for="bridge_format"> Bridge </label>
+			<input type="radio" name="format" id = "bridge_format" value="Bridge">
+			<br>
 			<label for="morpheus_format"> Morpheus </label>
-		<input type="radio" name="format" id = "morpheus_format" value="Morpheus">
-		<br>
-		<p>What do you want your csv file to be called? </p>
-		<input type="text" name="resulting_filename" id="resulting_filename" value="">
-		<br>
+			<input type="radio" name="format" id = "morpheus_format" value="Morpheus">
+			<br>
+		</div>
 
-
-
-
-      		<input type="submit" name="submit" value="Submit">
+		<div class="form-group">
+			<label for="resulting_filename"> What do you want your csv file to be called? </label> <br>
+			<input type="text" name="resulting_filename" id="resulting_filename" value="">
+			<br>
+		</div>
+		<input class= "btn btn-dark" type="submit" name="submit" value="Lemmatize!">
 					<br>
  		</form>
-  	</div>
+
+				</div>
+  	</section>
 {% endblock %}
