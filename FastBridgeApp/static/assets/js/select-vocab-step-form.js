@@ -11,6 +11,38 @@ var in_exclude = "exclude";
 var othertexts = [];
 var other_starts = [];
 var other_ends = [];
+var text_to_add = "";
+//dropdown menu
+function myFunction() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+
+
+function add_text(text_name){
+  text_to_add = text_name;
+  if (text_to_add == ""){
+    alert("please enter a valid text");
+    return false;
+  }
+  myFunction();
+  display = document.getElementById("chosen_text");
+  display.innerText = text_name
+}
+function filterFunction() {
+  var input, filter, ul, li, a, i;
+  input = document.getElementById("myInput");
+  filter = input.value.toUpperCase();
+  div = document.getElementById("myDropdown");
+  a = div.getElementsByTagName("a");
+  for (i = 0; i < a.length; i++) {
+    txtValue = a[i].textContent || a[i].innerText;
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      a[i].style.display = "";
+    } else {
+      a[i].style.display = "none";
+    }
+  }
+}
 // This function will display the specified tab of the form ...
 function showTab(n, isNext) {
   var x = document.getElementsByClassName("tab");
@@ -149,8 +181,12 @@ function deleteRow(r) {
 $("#bridge-modal-form1-select2").change(function() {
   if ($(this).val() == "yes") {
     $('#bridge-modal-form1-select2-hidden-div').show();
+    $('#bridge-modal-form1-select2-hidden-field1').required = true
+    $('#bridge-modal-form1-select2-hidden-field2').required = true
   } else {
     $('#bridge-modal-form1-select2-hidden-div').hide();
+    $('#bridge-modal-form1-select2-hidden-field1').required = false
+    $('#bridge-modal-form1-select2-hidden-field2').required = false
   }
 });
 $("#bridge-modal-form1-select2").trigger("change");
@@ -161,9 +197,11 @@ $('#bridge-modal-form1-save').click(function(){
     // var book = $('#select-text #select1').val().trim();
 
     // if showing select label is better than value
-    var el = document.getElementById('bridge-modal-form1-select1');
-    var book = el.options[el.selectedIndex].innerHTML;
-
+    var book = text_to_add;
+    if (text_to_add == ""){
+      alert("please enter a valid text");
+      return false;
+    }
     //var book =  $('').val();
 
     var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
@@ -202,8 +240,12 @@ $('#bridge-modal-form1-save').click(function(){
 $("#bridge-modal-form2-select2").change(function() {
   if ($(this).val() == "yes") {
     $('#bridge-modal-form2-select2-hidden-div').show();
+    $('#bridge-modal-form2-select2-hidden-field1').required = true
+    $('#bridge-modal-form2-select2-hidden-field2').required = true
   } else {
     $('#bridge-modal-form2-select2-hidden-div').hide();
+    $('#bridge-modal-form2-select2-hidden-field1').required = false
+    $('#bridge-modal-form2-select2-hidden-field2').required = false
   }
 });
 $("#bridge-modal-form2-select2").trigger("change");
@@ -211,8 +253,11 @@ $("#bridge-modal-form2-select2").trigger("change");
 // modal 2 save
 $('#bridge-modal-form2-save').click(function(){
 
-  var el = document.getElementById('bridge-modal-form2-select1');
-  var book = el.options[el.selectedIndex].innerHTML;
+  var book = text_to_add;
+  if (text_to_add == ""){
+    alert("please enter a valid text");
+    return false;
+  }
     //var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
     console.log(book);
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
