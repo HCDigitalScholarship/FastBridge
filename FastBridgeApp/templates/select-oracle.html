@@ -106,7 +106,7 @@
                               <div class="form-group"><label style="color: black;" for="chosen_text">
                                   Please select the work(s) you have read.</label>
                                   <div class="dropdown">
-                                    <button type="button" onclick="myFunction(myDropdown)" id = "chosen_text" class="form-control">Click Me</button>
+                                    <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
                                     <div id="myDropdown" class="dropdown-content" style="color: black;">
                                       <input type="text" placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
                                       {% for name in book_name %}
@@ -158,7 +158,7 @@
                               <div class="form-group"><label style="color: black;" for="chosen_text">
                                   Please select the work(s) you have read.</label>
                                   <div class="dropdown">
-                                    <button type="button" onclick="myFunction(myDropdown2)" id = "chosen_text2" class="form-control">Click Me</button>
+                                    <button type="button" onclick="myFunction('myDropdown2')" id = "chosen_text2" class="form-control">Click Me</button>
                                     <div id="myDropdown2" class="dropdown-content" style="color: black;">
                                       <input type="text" placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput2', 'myDropdown2')">
                                       {% for name in book_name %}
