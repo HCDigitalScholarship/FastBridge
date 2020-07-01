@@ -8,8 +8,8 @@ app_path = Path.cwd()
 nan = ""
 def import_(title, section_level, csv, language, local_def=False, local_lem=False):
     #print(csv.file)
-    dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
-    csv_reader=[list(row) for row in dataframe.values]
+    dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile, so we need to convert it to a csv to make it easier to handle
+    csv_reader=[list(row) for row in dataframe.values] #and this gets a csv as a nice 2D array. 
     filename = title.lower().replace(" ", "_").replace(",","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
     section_words["start"] = -1
