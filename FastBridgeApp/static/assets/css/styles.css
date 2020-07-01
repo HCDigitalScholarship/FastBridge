@@ -1,3 +1,14 @@
+
+footer{
+  height: 50px;
+}
+nav{
+  height: 80px;
+}
+section{
+min-height: calc(100vh - 130px);
+  padding-top: 150px;
+}
 .tab {
   display: none;
 }

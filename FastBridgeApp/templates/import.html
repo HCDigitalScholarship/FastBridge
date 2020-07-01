@@ -2,7 +2,7 @@
 
 
 {% block content %}
-<body>
+<body style = "background-image: url('/assets/img/The_School_of_Athens.jpg'); background-position: bottom; background-size: auto; filter: grayscale(100%);">
 <section style = "height: auto; padding-top: 150px;">
   <div class="container text-center">
 <form id = "import form" action="/account/import/handler/" method="post" enctype= "multipart/form-data">
@@ -14,7 +14,7 @@
           <input type="file" id = "file" name = "file" accept=".csv" required>
             </div>
             <div class="form-group"
-            <label for ="title" >
+            <label for ="title">
             Please add the name of the text, as you want it to appear to humans below </label>
             <input class="form-control" type="text" id = "title" name = "title" placeholder="title" required>
             </div>
@@ -29,12 +29,12 @@
            Please enter the number of subsections the text has (eg. 1.1 = 2, 1.1.1 = 3) </label>
          <input class="form-control" id = "subsection" type="number" name = "subsections" placeholder="123456789" required>
          </div>
-              <input type="submit" id = "submit" name="submit" value="submit">
+              <input class="btn btn-dark primary action-button" style="margin-bottom: 10vh" type="submit" id = "submit" name="submit" value="submit">
 
 
 </form>
 
-<a href="/account/addwords"> Click here to add words to a language</a>
+<a class= "btn btn-dark primary action-button" href="/account/addwords"> Click here to add words to a language</a>
   </div>
 </section>
 </body>

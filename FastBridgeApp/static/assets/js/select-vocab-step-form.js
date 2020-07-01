@@ -63,13 +63,13 @@ function nextPrev(n, next) {
   // if you have reached the end of the form... :
   if (currentTab >= x.length) {
     //...the form gets submitted:
-    sourcetexts = sourcetexts.toString().replace(",", "+")
-    source_starts = source_starts.toString().replace(",", "+")
-    source_ends = source_ends.toString().replace(",", "+")
+    sourcetexts = sourcetexts.join("+")
+    source_starts = source_starts.join("+")
+    source_ends = source_ends.join("+")
 
-    othertexts = othertexts.toString().replace(",", "+")
-    other_starts = other_starts.toString().replace(",", "+")
-    other_ends = other_ends.toString().replace(",", "+")
+    othertexts = othertexts.join("+")
+    other_starts = other_starts.join("+")
+    other_ends = other_ends.join("+")
     if(in_exclude.length == 0){
       window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
     }
