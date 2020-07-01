@@ -13,26 +13,26 @@ var other_starts = [];
 var other_ends = [];
 var text_to_add = "";
 //dropdown menu
-function myFunction() {
-  document.getElementById("myDropdown").classList.toggle("show");
+function myFunction(dropdown_id) {
+  document.getElementById(dropdown_id).classList.toggle("show");
 }
 
-
-function add_text(text_name){
+function add_text(text_name, dropdown_id){
   text_to_add = text_name;
   if (text_to_add == ""){
     alert("please enter a valid text");
     return false;
   }
-  myFunction();
-  display = document.getElementById("chosen_text");
+  myFunction(dropdown_id);
+  id =  document.getElementById(dropdown_id).previousElementSibling.id
+  display = document.getElementById(id);
   display.innerText = text_name
 }
-function filterFunction() {
+function filterFunction(input_id, dropdown_id) {
   var input, filter, ul, li, a, i;
-  input = document.getElementById("myInput");
+  input = document.getElementById(input_id);
   filter = input.value.toUpperCase();
-  div = document.getElementById("myDropdown");
+  div = document.getElementById(dropdown_id);
   a = div.getElementsByTagName("a");
   for (i = 0; i < a.length; i++) {
     txtValue = a[i].textContent || a[i].innerText;
@@ -259,12 +259,14 @@ $('#bridge-modal-form2-save').click(function(){
     return false;
   }
     //var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
-    console.log(book);
+
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
+        sectionFrom = 'start'
+        sectionTo = 'end'
         var sections = 'start-end';
     }
     // show the selection in a table

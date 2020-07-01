@@ -11,7 +11,38 @@ var etexts = [];
 var estarts = [];
 var eends = [];
 var e_section_size = [];
+var text_to_add = "";
+//dropdown menu
+function myFunction(dropdown_id) {
+  document.getElementById(dropdown_id).classList.toggle("show");
+}
 
+function add_text(text_name, dropdown_id){
+  text_to_add = text_name;
+  if (text_to_add == ""){
+    alert("please enter a valid text");
+    return false;
+  }
+  myFunction(dropdown_id);
+  id =  document.getElementById(dropdown_id).previousElementSibling.id
+  display = document.getElementById(id);
+  display.innerText = text_name
+}
+function filterFunction(input_id, dropdown_id) {
+  var input, filter, ul, li, a, i;
+  input = document.getElementById(input_id);
+  filter = input.value.toUpperCase();
+  div = document.getElementById(dropdown_id);
+  a = div.getElementsByTagName("a");
+  for (i = 0; i < a.length; i++) {
+    txtValue = a[i].textContent || a[i].innerText;
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      a[i].style.display = "";
+    } else {
+      a[i].style.display = "none";
+    }
+  }
+}
 
 showTabOracle(currentTab, true); // Display the current tab
 // This function will display the specified tab of the form ...
@@ -139,15 +170,21 @@ $('#oracle-modal-form2-save').click(function(){
     // var book = $('#select-text #select1').val().trim();
 
     // if showing select label is better than value
-    var el = document.getElementById('oracle-modal-form2-select1');
-    var book = el.options[el.selectedIndex].innerHTML;
+
+    var book = text_to_add
+    if (text_to_add == ""){
+      alert("please enter a valid text");
+      return false;
+    }
 
     var sectionFrom = $('#oracle-define-vocab #oracle-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#oracle-define-vocab #oracle-modal-form2-select2-hidden-field2').val();
     if (sectionFrom || sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
     } else {
-        var sections = '';
+        sectionFrom = 'start'
+        sectionTo = 'end'
+        var sections = 'start-end';
     }
     // show the selection in a table
     var table = document.getElementById('oracle-result-table2');
@@ -218,8 +255,12 @@ $('#oracle-modal-form1-save').click(function(){
     // var book = $('#select-text #select1').val().trim();
 
     // if showing select label is better than value
-    var el = document.getElementById('oracle-modal-form1-select1');
-    var book = el.options[el.selectedIndex].innerHTML;
+
+    var book = text_to_add
+    if (text_to_add == ""){
+      alert("please enter a valid text");
+      return false;
+    }
 
     var size = $('#oracle-modal-form1-select2-hidden-field3').val();
     var sectionFrom = $('#oracle-modal-form1-select2-hidden-field1').val();
