@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    book_name = importlib.import_module(language).texts #note – this imports the ENTIRE language, and takes a ton of RAM for a fraction of a second. Potentially, languages should be split up into multple files: a big one with the full lexicon (correct_dict), a huge one with the lemmata (already a seperate file) and a small one with the texts, and a small one with the filter infomration.  
+    book_name = importlib.import_module(language).texts #note – this imports the ENTIRE language, and takes a ton of RAM for a fraction of a second. Potentially, languages should be split up into multple files: a big one with the full lexicon (correct_dict), a huge one with the lemmata (already a seperate file) and a small one with the texts, and a small one with the filter infomration.
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
@@ -66,7 +66,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
     for filter, POS_for_filter in row_filters:
         display_filter = filter.replace("_", " ")
-        if display_filter[-1] != "0" or display_filter[-1] != "T":
+        if display_filter[-1] != "0":
+            print(filter, POS_for_filter)
             display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
         else:
             display_filter = display_filter[:-1]
