@@ -49,6 +49,7 @@
 .show {display:block;}
 footer{
   height: 50px;
+  background-color: inherit;
 }
 nav{
   height: 80px;
