@@ -21,7 +21,23 @@ async def select(request : Request, language : str):
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
+def filter_helper(row_filters, POS):
+    loc_style = ""
+    filters = f""
+    ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
+    for filter, POS_for_filter in row_filters:
+        #print(POS, POS_for_filter, "printing")
+        if POS+ " " == POS_for_filter:
+            display_filter = filter.replace("_", " ")
+            if display_filter[-1] != "0":
+                #print(filter, POS_for_filter, "printing")
+                display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
+            else:
+                display_filter = display_filter[:-1]
 
+            filters+=f'<li> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
+            loc_style+= f".{filter}_hide {{display:none!important;}}\n"
+    return filters, loc_style
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/")
@@ -50,30 +66,23 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 titles = sorted(new_titles, key=lambda x: x[1])
         #print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
-
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
+
     context["section"] = section
     context["len"] = len(words)
-    style = f""
     checks = f""
+    style =f""
+
     for POS in POS_list:
-        checks+= f'<div class="form-group"> <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value = "hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label></div></div>'
+        filters, new_style = filter_helper(row_filters, POS)
+        style+= new_style
+        checks+= f'<div class="form-group"> <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value = "hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
+        if filters:
+            checks+= f'<span class="dropdown-submenu"> <button class = "btn" onclick = "document.getElementById(\'{POS}extra\').classList.toggle(\'show\')" > Refine </button> <ul id= "{POS}extra" class="dropdown-menu" style = "position: static;">{filters} </ul> </span>'
+        checks+= f'</div></div>'
         style+= f".{POS}_hide {{display:none!important;}}\n"
-    filters = f""
-    ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
-
-    for filter, POS_for_filter in row_filters:
-        display_filter = filter.replace("_", " ")
-        if display_filter[-1] != "0":
-            print(filter, POS_for_filter)
-            display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
-        else:
-            display_filter = display_filter[:-1]
-
-        filters+=f'<div class="form-group"> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></div>'
-        style+= f".{filter}_hide {{display:none!important;}}\n"
     headers = f""
     for header in columnheaders:
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
@@ -112,6 +121,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     return templates.TemplateResponse("result.html", context)
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
+
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/")

@@ -42,7 +42,6 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         Word = namedtuple("Word", columnheaders + row_filters + ["LOCAL_LEMMA"])
     print("defined word tuple")
 
-        #in full version, text_list will be a list of tuples with the local definitions, for now it is not yet. Regardless of language, local_defs should be the second part of that tuple.
     #print(words)
     nums = re.compile('[0-9]')
     computed_row_filters = deque()
@@ -70,7 +69,8 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
                 in_case_multiple = in_case_multiple.split(", ")
 
                 for case in in_case_multiple:
-                    new = f"{row_filters[j]}{case}"
+                    new = f"{row_filters[j]}_{datum.Part_Of_Speech}_{case}"
+                    #print(new)
                     to_add += f"{new} "
                     final_row_filters.add((new, datum.Part_Of_Speech+ " "))
 
@@ -87,7 +87,10 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
             new_filters[filter[0]] += filter[1]
 
     final_row_filters = [(k,v) for k,v in new_filters.items()]
-    final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])) )
+    final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])))
+    print(final_row_filters)
+    POS = list(POS)
+    POS.sort()
     #columnheaders.append("LOCAL_DEFINITION")
     print("got lang data")
     return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters

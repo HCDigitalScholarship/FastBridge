@@ -23,7 +23,10 @@
   width: 100%
 }
 
-
+.dropdown-menu{
+  background-color: inherit !important;
+  color: inherit !important;
+}
 /* Dropdown Content (Hidden by Default) */
 .dropdown-content {
   display: none;
@@ -41,7 +44,11 @@
   text-decoration: none;
   display: block;
 }
-
+.custom-control-label {
+    position: relative;
+    margin-bottom: 0;
+    vertical-align: unset;
+}
 /* Change color of dropdown links on hover */
 .dropdown-content a:hover {background-color: #f1f1f1}
 
