@@ -12,12 +12,29 @@ var clusterize = new Clusterize({
   scrollId: 'scrollArea',
   contentId: 'contentArea',
 });
+
+
+function isHidden(el) {
+    return (el.offsetParent === null)
+}
+var first_visible_row = document.getElementById('main_table').rows[0]
+
+function get_first_visible_row() {
+  var rows = document.getElementById('main_table').rows;
+  var j = 0;
+  while (isHidden(rows[j])){
+    j++
+    first_visible_row = rows[j]
+    ;
+  }
+  return first_visible_row
+}
 //line up headers
 function line_up_header_columns()
 {
   headers = document.getElementsByTagName('th');
   for (var i = 0; i < headers.length; i++) {
-    width = document.getElementById('main_table').rows[0].cells[i].offsetWidth +"px"
+    width = get_first_visible_row().cells[i].offsetWidth +"px"
     headers[i].style.width = width
   }
 }
@@ -46,11 +63,11 @@ function hide_show_column(col_name)
   document.getElementById(col_name+"_head").style.display="table-cell";
   document.getElementById(col_name).value="hide";
  }
- line_up_header_columns()
+ setTimeout(line_up_header_columns,0);
 }
 
 function hide_show_row(row_value){
-  console.log(row_value)
+  //console.log(row_value)
   var checkbox_val=document.getElementById(row_value).value
   var all_col=document.getElementsByClassName(row_value);
   var children = false;
@@ -67,7 +84,7 @@ function hide_show_row(row_value){
       //all_col[i].classList.remove(row_value+"_show");
 
      }
-     for (var i = 0; i < children.length-1; i++) {
+     for (var i = 0; i < children.length; i++) {
        children[i].childNodes[1].childNodes[1].checked=""
        children[i].childNodes[1].childNodes[1].disabled="true"
      }
@@ -75,12 +92,11 @@ function hide_show_row(row_value){
   }
   else
   {
-    console.log(children)
     for(var i=0;i<all_col.length;i++){
       all_col[i].classList.remove(row_value+"_hide");
       //all_col[i].classList.add(row_value+"_show");
      }
-     for (var i = 0; i < children.length-1; i++) {
+     for (var i = 0; i < children.length; i++) {
        console.log(children[i].childNodes[1].childNodes[1])
        children[i].childNodes[1].childNodes[1].checked="true"
        children[i].childNodes[1].childNodes[1].disabled=""

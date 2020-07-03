@@ -80,7 +80,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         style+= new_style
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
-            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "position: static;">{filters}</ul></span>'
+            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "position: static; border: 0px; color:inherit;background-color:inherit;"">{filters}</ul></span>'
         checks+= f'</div></div>'
         style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
