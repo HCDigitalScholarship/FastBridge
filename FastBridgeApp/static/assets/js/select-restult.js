@@ -4,9 +4,26 @@ slideOut = document.getElementById('slideOut')
 tab = document.getElementById('slideOutTab')
 tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
 
+
+//clusterize, allows for the quick loading and scrolling.
+var clusterize = new Clusterize({
+  rows: data,
+  rows_in_block: 100,
+  scrollId: 'scrollArea',
+  contentId: 'contentArea',
+});
+//line up headers
+function line_up_header_columns()
+{
+  headers = document.getElementsByTagName('th');
+  for (var i = 0; i < headers.length; i++) {
+    width = document.getElementById('main_table').rows[0].cells[i].offsetWidth +"px"
+    headers[i].style.width = width
+  }
+}
+//row and column filter functions
 function hide_show_column(col_name)
 {
-  console.log(col_name);
  var checkbox_val=document.getElementById(col_name).value;
  if(checkbox_val=="hide")
  {
@@ -29,6 +46,7 @@ function hide_show_column(col_name)
   document.getElementById(col_name+"_head").style.display="table-cell";
   document.getElementById(col_name).value="hide";
  }
+ line_up_header_columns()
 }
 
 function hide_show_row(row_value){
@@ -70,14 +88,3 @@ function hide_show_row(row_value){
    document.getElementById(row_value).value="hide";
  }
 }
-
-document.addEventListener("DOMContentLoaded", function(){
-  document.getElementById('main').style.display = "contents";
-});
-
-$(document).ready( function() {
-    $('#main_table').dataTable({
-        /* No ordering applied by DataTables during initialisation */
-        "order": []
-    });
-})

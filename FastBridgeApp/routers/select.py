@@ -78,9 +78,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
         style+= new_style
-        checks+= f'<div class="form-group"> <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value = "hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
-            checks+= f'<span class="dropdown-submenu"> <button class = "btn" onclick = "document.getElementById(\'{POS}extra\').classList.toggle(\'show\')" > Refine </button> <ul id= "{POS}extra" class="dropdown-menu" style = "position: static;">{filters} </ul> </span>'
+            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "position: static;">{filters}</ul></span>'
         checks+= f'</div></div>'
         style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
@@ -98,18 +98,19 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
         else:
             other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
-    render_words = f""
+    render_words = []
     for word, row_filter in words:
-        render_words+= f'<tr class = "{row_filter}">'
+        to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)):
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-                render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             else:
-                render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
-        render_words+= f'</tr>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
+        to_add_to_render_words+= f'</tr>'
+        render_words.append(to_add_to_render_words)
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
