@@ -34,7 +34,7 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
         print(resulting_filename)
         print(outputfile.name)
         regex_go_brrr = regex.compile('[0-9]+(\_?[0-9]+)*')
-        if text and file.file.read():
+        if text and file != "file":
             #raise some error, they should only fill in one of these fields
             print("got both")
             return "Please choose just one thank you"
