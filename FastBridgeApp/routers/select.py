@@ -73,7 +73,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["section"] = section
     context["len"] = len(words)
     checks = f""
-    style =f""
+    length=len(columnheaders)+2 #just for some extra room
+    style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -86,18 +87,15 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     headers = f""
     for header in columnheaders:
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
-        else:
+        if header == "LOGEION_LINK" or header == "FORCELLINI_LINK":
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
+        else:
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
 
         headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
     other_headers = f""
     for header in columnheaders:
-        if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
-        else:
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
+        other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
     render_words = []
     for word, row_filter in words:
         to_add_to_render_words = f'<tr class = "{row_filter}">'

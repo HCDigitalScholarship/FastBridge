@@ -104,3 +104,4 @@ function hide_show_row(row_value){
    document.getElementById(row_value).value="hide";
  }
 }
+setTimeout(line_up_header_columns,0)

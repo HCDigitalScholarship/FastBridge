@@ -96,30 +96,31 @@ min-height: calc(100vh - 130px);
 
 
 
-/* these are just for the table elements in the select result table. It is so big it was causing issues to have it render as it was ready*/
+
 #main th{
   color: rgb(255,255,255);
-  display: none;
 }
 #main td{
   color: rgb(255,255,255);
+}
+
+.LOGEION_LINK{
   display: none;
 }
 
-.DISPLAY_LEMMA{
-  display: table-cell !important;
-}
-#DISPLAY_LEMMA_head{
-  display: table-cell !important;
+
+.FORCELLINI_LINK{
+  display: none;
 }
 
 
-.SHORT_DEFINITION{
-  display: table-cell !important;
+#FORCELLINI_LINK_head{
+  display: none;
 }
-#SHORT_DEFINITION_head{
-  display: table-cell !important;
+#LOGEION_LINK_head{
+  display: none;
 }
+
 .tab-oracle {
   display: none;
 }
