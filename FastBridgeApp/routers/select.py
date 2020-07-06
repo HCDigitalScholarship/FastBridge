@@ -105,19 +105,18 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)):
             lst.append(word[i])
-            print(columnheaders[i][:-5])
+            #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
-            elif(columnheaders[i][:-5] =="_LINK"):
-                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i]}"></a> </td>'
+            elif(columnheaders[i][-5:] =="_LINK"):
+                to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i]}"> </a></td>'
             else:
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
         to_add_to_render_words+= f'</tr>'
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
-        print(lst)
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
