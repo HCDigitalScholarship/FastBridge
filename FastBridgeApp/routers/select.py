@@ -7,7 +7,6 @@ from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
 import math
-running_list = True
 
 router = APIRouter()
 router_path = Path.cwd()
@@ -39,12 +38,16 @@ def filter_helper(row_filters, POS):
             loc_style+= f".{filter}_hide {{display:none!important;}}\n"
     return filters, loc_style
 #this is the simple result, if they exclude nothing.
-@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/")
-async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str):
+@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}")
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}")
+async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
+    if running_list == "running":
+        running_list = True
+    else:
+        running_list = False
     #print(triple)
     words = []
     titles =[]

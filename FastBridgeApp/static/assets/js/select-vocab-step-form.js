@@ -12,6 +12,7 @@ var othertexts = [];
 var other_starts = [];
 var other_ends = [];
 var text_to_add = "";
+var running_list = "running"
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
@@ -103,10 +104,10 @@ function nextPrev(n, next) {
     other_starts = other_starts.join("+")
     other_ends = other_ends.join("+")
     if(in_exclude.length == 0){
-      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends;
+      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + running_list;
     }
     else{
-        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends;
+        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends + "/" + running_list;
     }
     return false;
   }
@@ -155,6 +156,13 @@ $('#formCheck-3').click(function(){
     console.log(in_exclude);
 });
 
+$('#running_list_true').click(function(){
+  running_list = "running"
+});
+
+$('#running_list_false').click(function(){
+  running_list = "non_running"
+});
 
 /*
 SELECT WORK modal & table
