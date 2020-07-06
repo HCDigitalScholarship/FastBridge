@@ -1,17 +1,58 @@
+var rows = data,
+    search = document.getElementById('search');
+
+/* Fill array with data
+ *
+ * Params:
+ * values *array*  - value of each field (in case use of table)
+ *        example: ['1st TD content', '2nd TD content'] for table
+ *                 ['list's LI item content'] for list
+ * markup *string* - markup that will be added to the DOM
+ * active *bool*   - specifies if row is suitable by search phrase
+*/
+
+
+/*
+* Fetch suitable rows
+*/
+var filterRows = function(rows) {
+  var results = [];
+  for(var i = 0, ii = rows.length; i < ii; i++) {
+    if(rows[i].active) results.push(rows[i].markup)
+  }
+  return results;
+}
+
+/*
+* Init clusterize.js
+*/
+var clusterize = new Clusterize({
+  rows: filterRows(rows),
+  scrollId: 'scrollArea',
+  contentId: 'contentArea'
+});
+
+/*
+* Attach listener to search input tag and filter list on change
+*/
+var onSearch = function() {
+  for(var i = 0, ii = rows.length; i < ii; i++) {
+    var suitable = false;
+    for(var j = 0, jj = rows[i].values.length; j < jj; j++) {
+      if(rows[i].values[j].toString().indexOf(search.value) + 1)
+        suitable = true;
+    }
+    rows[i].active = suitable;
+  }
+  clusterize.update(filterRows(rows));
+}
+search.oninput = onSearch;
 
 // Slideout show
 slideOut = document.getElementById('slideOut')
 tab = document.getElementById('slideOutTab')
 tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
 
-
-//clusterize, allows for the quick loading and scrolling.
-var clusterize = new Clusterize({
-  rows: data,
-  rows_in_block: 100,
-  scrollId: 'scrollArea',
-  contentId: 'contentArea',
-});
 //from old bridge. Somethings weren't broken
 function printData()
 {

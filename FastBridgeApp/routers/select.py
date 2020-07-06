@@ -38,8 +38,8 @@ def filter_helper(row_filters, POS):
             loc_style+= f".{filter}_hide {{display:none!important;}}\n"
     return filters, loc_style
 #this is the simple result, if they exclude nothing.
-@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}")
+@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
@@ -101,8 +101,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
     render_words = []
     for word, row_filter in words:
+        lst = []
         to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)):
+            lst.append(word[i])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
@@ -111,7 +113,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             else:
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
         to_add_to_render_words+= f'</tr>'
-        render_words.append(to_add_to_render_words)
+        render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
+        print(lst)
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks

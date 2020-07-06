@@ -10,6 +10,7 @@
 
   <div class="container">
 <h2> Now showing {{ section }}, which has {{ len }} words </h2>
+<input type="text" id="search" placeholder="Search"/>
 <div id="export_wrapper">
 
 
@@ -36,6 +37,7 @@ style="margin-bottom: 0rem; overflow: hidden;">
   <a class="btn btn-primary btn-lg btn-default" role="button" href="/" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
 </div>
 </section></body><script type="text/javascript">
+  var True = true
   var data = {{ render_words|safe }}
 </script>
 <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"> </script>

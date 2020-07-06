@@ -104,10 +104,10 @@ function nextPrev(n, next) {
     other_starts = other_starts.join("+")
     other_ends = other_ends.join("+")
     if(in_exclude.length == 0){
-      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + running_list;
+      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + running_list + "/";
     }
     else{
-        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends + "/" + running_list;
+        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends + "/" + running_list + "/";
     }
     return false;
   }
