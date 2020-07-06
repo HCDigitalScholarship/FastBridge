@@ -104,22 +104,6 @@ min-height: calc(100vh - 130px);
   color: rgb(255,255,255);
 }
 
-.LOGEION_LINK{
-  display: none;
-}
-
-
-.FORCELLINI_LINK{
-  display: none;
-}
-
-
-#FORCELLINI_LINK_head{
-  display: none;
-}
-#LOGEION_LINK_head{
-  display: none;
-}
 
 .tab-oracle {
   display: none;

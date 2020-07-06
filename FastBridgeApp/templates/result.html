@@ -1,9 +1,18 @@
 <head><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Fast Bridge</title><link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css> <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css> <style media="screen">{{style|safe}}</style></head>
 {% include "navbar.html" %}
-<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab"><div><p>Filters</p></div></div><div class="modal-content" style="background-color:rgba(119,120,120,0.77)"><div class="modal-header"><h4 class="modal-title">Table Filters!</h4> </div><div class="modal-body" style="overflow-y:auto;height:80vh"><div class="POS filters"><label for="POS filters">Part of Speech Filters</label><div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Column Filters</label><div id="column filters">{{headers|safe}}</div></div></div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
+<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab"><div>
+  <p>Filters</p></div></div><div class="modal-content" style="background-color:rgba(119,120,120,0.77)"><div class="modal-header"><h4 class="modal-title">Table Filters</h4> </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
+    <button type="button" class="btn btn-default" onclick="download_table_as_csv('my_id_table_to_export');">Export as CSV</button>
+  </div>
+  <div class="modal-body" style="overflow-y:auto;height:80vh"><div class="POS filters"><label for="POS filters">Part of Speech Filters</label><div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Column Filters</label><div id="column filters">{{headers|safe}}</div></div></div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
 
   <div class="container">
 <h2> Now showing {{ section }}, which has {{ len }} words </h2>
+<div id="export_wrapper">
+
+
   <div class="clusterize table-responsive mx-auto">
     <table class="table table-striped"
 style="margin-bottom: 0rem; overflow: hidden;">
@@ -21,7 +30,10 @@ style="margin-bottom: 0rem; overflow: hidden;">
       </table>
 
     </div>
-  </div><a class="btn btn-primary btn-lg btn-default" role="button" href="/" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
+
+  </div>
+  </div>
+  <a class="btn btn-primary btn-lg btn-default" role="button" href="/" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
 </div>
 </section></body><script type="text/javascript">
   var data = {{ render_words|safe }}

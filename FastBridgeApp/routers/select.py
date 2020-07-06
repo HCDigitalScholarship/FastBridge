@@ -85,17 +85,17 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         checks+= f'</div></div>'
         style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
-    for header in columnheaders:
-        headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if header == "LOGEION_LINK" or header == "FORCELLINI_LINK":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
-        else:
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
-
-        headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
     other_headers = f""
     for header in columnheaders:
-        other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
+        headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
+        if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
+            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
+        else:
+            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
+            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ")}</th>'
+        headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
+
     render_words = []
     for word, row_filter in words:
         to_add_to_render_words = f'<tr class = "{row_filter}">'
@@ -106,7 +106,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             else:
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
         to_add_to_render_words+= f'</tr>'
         render_words.append(to_add_to_render_words)
     context["style"] = style
