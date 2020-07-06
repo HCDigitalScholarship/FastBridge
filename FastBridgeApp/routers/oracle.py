@@ -62,7 +62,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
             percent_1 = f'{percent1}%'
             percent2 = round(abs((known_tokens)/total_tokens)* 100, 2)
             percent_2 = f'{percent2}%'
-            link = f'/select/{language}/result/{text}/{indexable_sections[start]}-{end}/exclude/{known_texts}/{known_starts}-{known_ends}'
+            link = f'/select/{language}/result/{text}/{indexable_sections[start]}-{end}/exclude/{known_texts}/{known_starts}-{known_ends}/non_running/'
             table_data.append([section, total_words, total_tokens, known_words, known_tokens, percent_1, percent_2, link])
             start =  start - 1
             end = sections[end] #previous sections

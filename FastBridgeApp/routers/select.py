@@ -105,11 +105,14 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)):
             lst.append(word[i])
+            print(columnheaders[i][:-5])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
+            elif(columnheaders[i][:-5] =="_LINK"):
+                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i]}"></a> </td>'
             else:
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
         to_add_to_render_words+= f'</tr>'
@@ -181,56 +184,52 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     context["section"] = section
     context["len"] = len(words)
-    style = f""
     checks = f""
-    for POS in POS_list:
-        checks+= f'<div class="form-group"> <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value = "hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label></div></div>'
-        style+= f".{POS}_hide {{display:none!important;}}\n"
-    filters = f""
-    ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
-    print(row_filters)
-    for filter, POS_for_filter in row_filters:
-        display_filter = filter.replace("_", " ")
-        print(display_filter)
-        if display_filter[-1] != "0":
-            display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
-        else:
-            display_filter = display_filter[:-1]
-            print(display_filter)
+    length=len(columnheaders)+2 #just for some extra room
+    style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
-        filters+=f'<div class="form-group"> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></div>'
-        style+= f".{filter}_hide {{display:none!important;}}\n"
+    for POS in POS_list:
+        filters, new_style = filter_helper(row_filters, POS)
+        style+= new_style
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
+        if filters:
+            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "position: static; border: 0px; color:inherit;background-color:inherit;"">{filters}</ul></span>'
+        checks+= f'</div></div>'
+        style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
+    other_headers = f""
     for header in columnheaders:
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
+            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
         else:
-            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
-
+            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
+            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ")}</th>'
         headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
-    other_headers = f""
-    for header in columnheaders:
-        if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
-        else:
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
-    render_words = f""
+
+    render_words = []
     for word, row_filter in words:
-        render_words+= f'<tr class = "{row_filter}">'
+        lst = []
+        to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)):
+            lst.append(word[i])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-                render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
 
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             else:
-                render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
-        render_words+= f'</tr>'
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
+        to_add_to_render_words+= f'</tr>'
+        render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
+        print(lst)
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
     context["filters"] = filters
     context["other_headers"]  = other_headers
     context["render_words"] = render_words
+
+    #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
