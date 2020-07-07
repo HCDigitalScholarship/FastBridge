@@ -79,7 +79,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
     if not running_list:
-        columnheaders.append("Frequency")
+        columnheaders.append("Count in Selection")
     context["section"] = section
     context["len"] = len(words)
     checks = f""
@@ -120,7 +120,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             elif(columnheaders[i][-5:] =="_LINK"):
                 to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i]}"> </a></td>'
-            elif(columnheaders[i] == "Frequency"):
+            elif(columnheaders[i] == "Count in Selection"):
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
             else:
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'

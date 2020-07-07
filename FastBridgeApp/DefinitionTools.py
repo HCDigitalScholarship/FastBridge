@@ -56,7 +56,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         datum= (words[i][0],) + datum
         #print(datum)
         if local_defs_bool:
-            datum.append(local_defs[i])
+            datum = datum + (local_defs[i],)
         datum = Word(*datum)
         word_list.append(datum)
         #print(datum.LOCAL_DEFINITION)

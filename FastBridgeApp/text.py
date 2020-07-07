@@ -76,8 +76,9 @@ class Text(object):
         #really: Text.text_list(), a method to return the text list if present and error other wise
         start, end = self.get_section(user_start, user_end)
         print(start, end)
+        tmp = self.words
+
         if end == -1:
-            wordlist = self.words[start: ]
-        else:
-            wordlist = self.words[start: end]
+            end = len(tmp)        
+        wordlist = [tmp[i] + (self.name,) for i in range(start, end)]
         return wordlist
