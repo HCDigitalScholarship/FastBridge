@@ -21,7 +21,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     print("gettin language data")
     lang = importlib.import_module(dictionary) #import the appropriate dictionary.
     POS =  lang.POS_list
-    columnheaders = lang.columnheaders[1:]
+    columnheaders = lang.columnheaders
     row_filters =  lang.row_filters
     lang = lang.correct_dict
     final_row_filters = set()
@@ -53,6 +53,8 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         to_add = f""
         #print(lang[words[i][0]])
         datum = lang[words[i][0]]
+        datum= (words[i][0],) + datum
+        #print(datum)
         if local_defs_bool:
             datum.append(local_defs[i])
         datum = Word(*datum)

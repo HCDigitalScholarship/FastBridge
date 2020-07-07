@@ -15,7 +15,7 @@ from routers.ToolsApp import lemmatize
 from routers.sql_app import account
 from routers import oracle, select
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 app.include_router(lemmatize.router, prefix="/lemmatize", tags=["lemmatize"])
 app.include_router(account.router, prefix = "/account", tags=["account"])

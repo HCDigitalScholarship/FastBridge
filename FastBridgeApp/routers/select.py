@@ -60,19 +60,26 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     print("got titles")
     if not running_list:
         dups = set()
+        frequency_dict = {}
         new_titles = []
 
         for title in titles:
             if (title[0]) not in dups:
                 dups.add((title[0]))
                 new_titles.append(title)
-                titles = sorted(new_titles, key=lambda x: x[1])
+                frequency_dict[title[0]] = 1
+            else:
+                frequency_dict[title[0]] += 1
+
+
+        titles = sorted(new_titles, key=lambda x: x[1])
         #print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
-
+    if not running_list:
+        columnheaders.append("Frequency")
     context["section"] = section
     context["len"] = len(words)
     checks = f""
@@ -103,7 +110,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     for word, row_filter in words:
         lst = []
         to_add_to_render_words = f'<tr class = "{row_filter}">'
-        for i in range(len(columnheaders)):
+        for i in range(1, len(columnheaders)):
             lst.append(word[i])
             #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
@@ -113,6 +120,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
             elif(columnheaders[i][-5:] =="_LINK"):
                 to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i]}"> </a></td>'
+            elif(columnheaders[i] == "Frequency"):
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
             else:
                 to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
         to_add_to_render_words+= f'</tr>'
@@ -130,10 +139,14 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
 
 
-@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/")
-async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str):
+@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
+async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str, running_list: str):
     context = {"request": request}
+    if running_list == "running":
+        running_list = True
+    else:
+        running_list = False
     source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
     other_titles = set()
