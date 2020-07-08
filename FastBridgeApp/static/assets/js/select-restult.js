@@ -120,6 +120,20 @@ function line_up_header_columns()
     headers[i].style.width = width
   }
 }
+
+
+//sorting – not sure how compatible this is with clusterize
+
+function sortTable(n) {
+  console.log("resorting")
+  resorted_rows = rows
+  console.log(rows[n])
+  resorted_rows.sort(function(a, b) {
+     b.values[n]  - a.values[n]
+  })
+  clusterize.update(filterRows(resorted_rows));
+
+}
 //row and column filter functions
 function hide_show_column(col_name)
 {
@@ -159,30 +173,37 @@ function hide_show_row(row_value){
     children = document.getElementById(row_value+"extra").childNodes
     //console.log(children)
   }
+  console.log(children)
   if(checkbox_val=="hide")
   {
     for(var i=0;i<all_col.length;i++){
-      all_col[i].classList.toggle(row_value+"_hide");
-      //all_col[i].classList.remove(row_value+"_show");
+      all_col[i].style.display = "none"
 
      }
+     if (children){
      for (var i = 0; i < children.length; i++) {
        children[i].childNodes[1].childNodes[1].checked=""
+
+       children[i].childNodes[1].childNodes[1].value="show"
        children[i].childNodes[1].childNodes[1].disabled="true"
      }
+   }
   document.getElementById(row_value).value="show";
   }
   else
   {
     for(var i=0;i<all_col.length;i++){
-      all_col[i].classList.remove(row_value+"_hide");
+      all_col[i].style.display = "table-row"
       //all_col[i].classList.add(row_value+"_show");
      }
+     if(children){
      for (var i = 0; i < children.length; i++) {
        console.log(children[i].childNodes[1].childNodes[1])
        children[i].childNodes[1].childNodes[1].checked="true"
+       children[i].childNodes[1].childNodes[1].value="hide"
        children[i].childNodes[1].childNodes[1].disabled=""
      }
+   }
    document.getElementById(row_value).value="hide";
  }
 }

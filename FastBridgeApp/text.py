@@ -79,6 +79,6 @@ class Text(object):
         tmp = self.words
 
         if end == -1:
-            end = len(tmp)        
+            end = len(tmp)
         wordlist = [tmp[i] + (self.name,) for i in range(start, end)]
         return wordlist
