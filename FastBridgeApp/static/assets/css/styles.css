@@ -4,7 +4,6 @@ img {
   height: auto;
 }
 .footerImages{
-  margin-top: 5px;
   height: 60px;
   max-height: 60px;
   min-width: 28px;
@@ -62,8 +61,8 @@ img {
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
 .show {display:block;}
 footer{
-  height: 50px;
   background-color: inherit;
+  overflow: hidden;
 }
 nav{
   height: 80px;
