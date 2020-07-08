@@ -100,10 +100,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ")}</th>'
+            other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
             headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th style="display:none;" onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ")}</th>'
+            other_headers+=f'<th style="display:none;" onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = []
@@ -221,10 +221,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ")}</th>'
+            other_headers+=f'<th id="{header}_head">{header.replace("_", " ").title()}</th>'
         else:
             headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ")}</th>'
+            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
 
     render_words = []
