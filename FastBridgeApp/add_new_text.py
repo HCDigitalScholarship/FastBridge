@@ -79,9 +79,10 @@ def add_words(file, language : str):
     csv_reader=[list(row) for row in dataframe.values]
     headers = dataframe.columns.to_list()
     columnheaders, _, row_filters = " ".join(headers).partition("row_filters") #we expect the import language sheet to have this column header, but the column will be empty
+
     columnheaders = columnheaders.split()
     row_filters = row_filters.split()
-    #print(columnheaders + row_filters)
+    print(columnheaders + row_filters)
     Word = namedtuple("Word", columnheaders+row_filters)
     try:
         #if the dictionary already exists
@@ -102,8 +103,8 @@ def add_words(file, language : str):
     to_skip = headers.index("row_filters")
     for row in csv_reader:
         #print(row)
-        new = row[:to_skip+1]+row[to_skip+2:]
-        #print(new)
+        new = row[:to_skip]+row[to_skip+1:]
+        print(new)
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]

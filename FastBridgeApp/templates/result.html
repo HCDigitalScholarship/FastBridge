@@ -7,7 +7,7 @@
     <button type="button" class="btn btn-default" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
     <button type="button" class="btn btn-default" onclick="download_table_as_csv('my_id_table_to_export');">Export as CSV</button>
   </div>
-  <div class="modal-body" style="overflow-y:auto;height:80vh"><div class="POS filters"><label for="POS filters">Part of Speech Filters</label><div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Column Filters</label><div id="column filters">{{headers|safe}}</div></div></div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
+  <div class="modal-body" style="overflow-y:auto;height:75vh"><div class="POS filters"><label for="POS filters">Part of Speech Filters</label><div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Column Filters</label><div id="column filters">{{headers|safe}}</div></div></div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
 
   <div class="container">
 <h2> Now showing {{ section }}, which has {{ len }} words </h2>
