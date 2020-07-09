@@ -20,7 +20,7 @@ async def select(request : Request, language : str):
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
-async def filter_helper(row_filters, POS):
+def filter_helper(row_filters, POS):
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
@@ -226,23 +226,33 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
             other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
-
     render_words = []
     for word, row_filter in words:
         lst = []
         to_add_to_render_words = f'<tr class = "{row_filter}">'
-        for i in range(len(columnheaders)):
-            lst.append(word[i])
+        for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
+            lst.append(word[i+1])
+            #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i]}</td>'
-
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
+                lst.append(word[i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-2]}</td>'
+                lst.append(word[-2])
+            elif(columnheaders[i][-5:] =="_LINK"):
+                to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i+1]}"> </a></td>'
+                lst.append(word[i+1])
+            elif(columnheaders[i] == "Count_in_Selection"):
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
+                lst.append(frequency_dict[word[0]])
+            elif(columnheaders[i] == "Source_Text"):
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[-1]}</td>'
+                lst.append(word[-1])
             else:
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i]}</td>'
+                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i+1]}</td>'
+                lst.append(word[i+1])
         to_add_to_render_words+= f'</tr>'
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
-        print(lst)
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
