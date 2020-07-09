@@ -20,7 +20,7 @@ async def select(request : Request, language : str):
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
-def filter_helper(row_filters, POS):
+async def filter_helper(row_filters, POS):
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
@@ -87,7 +87,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
     for POS in POS_list:
-        filters, new_style = filter_helper(row_filters, POS)
+        filters, new_style = await filter_helper(row_filters, POS)
         style+= new_style
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
@@ -140,7 +140,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["other_headers"]  = other_headers
     context["render_words"] = render_words
 
-    #print(context["words"][0])
+    print("returning")
     return templates.TemplateResponse("result.html", context)
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
