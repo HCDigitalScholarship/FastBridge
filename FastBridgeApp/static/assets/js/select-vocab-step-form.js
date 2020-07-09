@@ -86,6 +86,34 @@ function showTab(n, isNext) {
   fixStepIndicator(n);
 }
 
+//hack to make a post request on submit because the input is a fake form
+function post(path, parameters) {
+    var form = $('<form></form>');
+
+    form.attr("method", "post");
+    form.attr("action", path);
+
+    $.each(parameters, function(key, value) {
+        if ( typeof value == 'object' || typeof value == 'array' ){
+            $.each(value, function(subkey, subvalue) {
+                var field = $('<input />');
+                field.attr("type", "hidden");
+                field.attr("name", key+'[]');
+                field.attr("value", subvalue);
+                form.append(field);
+            });
+        } else {
+            var field = $('<input />');
+            field.attr("type", "hidden");
+            field.attr("name", key);
+            field.attr("value", value);
+            form.append(field);
+        }
+    });
+    $(document.body).append(form);
+    form.submit();
+}
+
 // This function will figure out which tab to display
 function nextPrev(n, next) {
   var x = document.getElementsByClassName("tab");
@@ -96,20 +124,23 @@ function nextPrev(n, next) {
   // if you have reached the end of the form... :
   if (currentTab >= x.length) {
     //...the form gets submitted:
-    sourcetexts = sourcetexts.join("+")
-    source_starts = source_starts.join("+")
-    source_ends = source_ends.join("+")
+    str_sourcetexts = sourcetexts.join("+")
+    str_source_starts = source_starts.join("+")
+    str_source_ends = source_ends.join("+")
 
-    othertexts = othertexts.join("+")
-    other_starts = other_starts.join("+")
-    other_ends = other_ends.join("+")
+    str_othertexts = othertexts.join("+")
+    str_other_starts = other_starts.join("+")
+    str_other_ends = other_ends.join("+")
+
+
+
     if(in_exclude.length == 0){
-      window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + running_list + "/";
+      path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + running_list + "/";
     }
     else{
-        window.location.href = window.location.href + "result/" + sourcetexts + "/"+ source_starts + "-" + source_ends + "/" + in_exclude + "/" + othertexts + "/" + other_starts + "-" + other_ends + "/" + running_list + "/";
+        path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + in_exclude + "/" + str_othertexts + "/" + str_other_starts + "-" + str_other_ends + "/" + running_list + "/";
     }
-    return false;
+    post(path,[])
   }
   // Otherwise, display the correct tab:
   showTab(currentTab, next);
