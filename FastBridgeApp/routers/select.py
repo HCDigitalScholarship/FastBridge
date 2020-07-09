@@ -6,6 +6,7 @@ import importlib
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
+from itertools import zip_longest
 import math
 
 router = APIRouter()
@@ -87,7 +88,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
     for POS in POS_list:
-        filters, new_style = await filter_helper(row_filters, POS)
+        filters, new_style = filter_helper(row_filters, POS)
         style+= new_style
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
@@ -171,16 +172,20 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(to_operate)
     ##print("\n")
     ##print(in_exclude)
-    sextuple = list(zip(source, other))
-
+    sextuple = list(zip_longest(source, other, fillvalue=("","","")))
+    print(sextuple)
     if in_exclude == "exclude":
         to_operate= to_operate.difference(other_titles)
-        section = ", ".join(["words in {text}: {start} - {end} and not in {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
+        unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
+        known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
+        section = f"{unknown} and not in {known}"
+
+        #", ".join(["{text}: {start} - {end} and not in {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
     elif in_exclude == "include":
         to_operate= to_operate.intersection(other_titles)
 
-        section = ", ".join(["words in {text}: {start} - {end} and {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
-    print(to_operate)
+        section = ", ".join(["{text}: {start} - {end} and {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
+    #print(to_operate)
     #if always_show: #if we add lists to always include, they would be added here
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
     if not running_list:
