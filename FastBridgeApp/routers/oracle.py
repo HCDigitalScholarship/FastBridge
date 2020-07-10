@@ -28,9 +28,11 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         book = DefinitionTools.get_text(text).book
         ogknown_words += (book.get_words(start, end))
     ogknown_tokens = set([(new[0]) for new in ogknown_words])
-    etexts =  etexts.split("+")
-    e_section_size = int(e_section_size)
-    for text in etexts:
+    e_section_list = e_section_size.split("+")
+    to_explore = DefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
+
+    for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):
+        e_section_size = int(e_section_size)
         book = DefinitionTools.get_text(text).book
 
         #we can go through the section_linkedlist backwards

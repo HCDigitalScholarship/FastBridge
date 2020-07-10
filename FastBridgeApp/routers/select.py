@@ -184,7 +184,9 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     elif in_exclude == "include":
         to_operate= to_operate.intersection(other_titles)
 
-        section = ", ".join(["{text}: {start} - {end} and {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
+        unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
+        known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
+        section = f"{unknown} and in {known}"
     #print(to_operate)
     #if always_show: #if we add lists to always include, they would be added here
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
