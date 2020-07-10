@@ -29,11 +29,13 @@ def filter_helper(row_filters, POS):
         #print(POS, POS_for_filter, "printing")
         if POS+ " " == POS_for_filter:
             display_filter = filter.replace("_", " ")
-            if display_filter[-1] != "0":
+            if display_filter[-1] == "0":
                 #print(filter, POS_for_filter, "printing")
-                display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
-            else:
                 display_filter = display_filter[:-1]
+            elif display_filter[-2:] == "99":
+                display_filter = f"Irregular {display_filter[:-2]}"
+            else:
+                display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
 
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
             loc_style+= f".{filter}_hide {{display:none!important;}}\n"

@@ -15,7 +15,7 @@ class Text(object):
         Converts the human section citation of 1-3 sections to the keys of the section dictionary, and retrives the indices for self.words that the sections correspond to.
 
         """
-        print(range_start, range_end)
+        #print(range_start, range_end)
         if range_start == "start":
             internal_range_start =  range_start
         elif range_start.count(".") == 0 and self.subsections == 1:
@@ -58,12 +58,12 @@ class Text(object):
         elif range_end.count(".") == 2 and self.subsections == 3:
             internal_range_end = range_end
         #start ends up being the end of the previous section + 1
-        print(internal_range_start, " starting place")
-        print(internal_range_end, " ending place")
+        #print(internal_range_start, " starting place")
+        #print(internal_range_end, " ending place")
 
-        print(self.sections[self.section_linkedlist[internal_range_start]] +1)
-        print(self.sections[internal_range_end] +1)
-        print((self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1)))
+        #print(self.sections[self.section_linkedlist[internal_range_start]] +1)
+        #print(self.sections[internal_range_end] +1)
+        #print((self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1)))
         return (self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1))
 
 
@@ -75,7 +75,7 @@ class Text(object):
         #text will usually be a text class that is our target text, for this early demo/figuring things out phase we will not use one, it is hardcoded to Ovid Met 1.
         #really: Text.text_list(), a method to return the text list if present and error other wise
         start, end = self.get_section(user_start, user_end)
-        print(start, end)
+        #print(start, end)
         tmp = self.words
 
         if end == -1:
