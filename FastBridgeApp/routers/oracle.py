@@ -56,9 +56,6 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
 
             known_words = len(known_words)
             total_words = len(total_words)
-            if total_words==0 or total_tokens==0:
-                print(indexable_sections[start], end)
-                return f"{indexable_sections[start]} {end} invalid sections"
             percent1 = round(abs((known_words)/total_words) * 100, 2)
             percent_1 = f'{percent1}%'
             percent2 = round(abs((known_tokens)/total_tokens)* 100, 2)
