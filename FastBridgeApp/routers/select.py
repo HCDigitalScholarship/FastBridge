@@ -114,7 +114,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         lst = []
         to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
-            lst.append(word[i+1])
             #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
@@ -194,13 +193,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
     if not running_list:
         dups = set()
+        frequency_dict = {}
         new_titles = []
 
         for title in titles:
             if (title[0]) not in dups:
                 dups.add((title[0]))
                 new_titles.append(title)
-                titles = new_titles
+                frequency_dict[title[0]] = 1
+            else:
+                frequency_dict[title[0]] += 1
     titles =  [title for title in titles if (title[0]) in to_operate]
 
     ##print(titles)
@@ -208,7 +210,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(titles)
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
 
-
+    if not running_list:
+        columnheaders.append("Count_in_Selection")
 
     context["section"] = section
     context["len"] = len(words)
@@ -226,21 +229,21 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
     other_headers = f""
-    for header in columnheaders:
+    for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if header == "DISPLAY_LEMMA" or header == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{header}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{header}_head">{header.replace("_", " ").title()}</th>'
+        if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
+            other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
-            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{header}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th style="display:none;" id="{header}_head">{header.replace("_", " ").title()}</th>'
-        headers+=f'<label class="custom-control-label" for="{header}">{header.replace("_", " ").title()}</label></div></div>'
+            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
+            other_headers+=f'<th style="display:none;" onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
+        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
+
     render_words = []
     for word, row_filter in words:
         lst = []
         to_add_to_render_words = f'<tr class = "{row_filter}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
-            lst.append(word[i+1])
             #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'

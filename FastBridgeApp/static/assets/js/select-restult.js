@@ -127,10 +127,19 @@ function line_up_header_columns()
 function sortTable(n) {
   console.log("resorting")
   resorted_rows = rows
-  console.log(rows[n])
-  resorted_rows.sort(function(a, b) {
-     b.values[n]  - a.values[n]
-  })
+  console.log(n)
+  console.log(rows[0].values[n])
+
+  resorted_rows.sort(function(a, b){ if (parseInt(a.values[n]))
+     {
+       return (parseInt(a.values[n]) < parseInt(b.values[n])) ? 1 : -1
+     }
+    else
+     {
+        return (a.values[n] > b.values[n]) ? 1 : -1
+      }
+    }
+  )
   clusterize.update(filterRows(resorted_rows));
 
 }
