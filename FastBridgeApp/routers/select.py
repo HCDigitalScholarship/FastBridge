@@ -105,7 +105,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
-            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
+            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
             other_headers+=f'<th style="display:none;" onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
@@ -122,16 +122,16 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-2]}</td>'
                 lst.append(word[-2])
             elif(columnheaders[i][-5:] =="_LINK"):
-                to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i+1]}"> </a></td>'
+                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{word[i+1]}"> </a></td>'
                 lst.append(word[i+1])
             elif(columnheaders[i] == "Count_in_Selection"):
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
                 lst.append(frequency_dict[word[0]])
             elif(columnheaders[i] == "Source_Text"):
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
                 lst.append(word[-1])
             else:
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i+1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
                 lst.append(word[i+1])
         to_add_to_render_words+= f'</tr>'
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
