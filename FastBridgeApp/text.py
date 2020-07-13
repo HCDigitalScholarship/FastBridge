@@ -42,11 +42,10 @@ class Text(object):
                 internal_range_end = range_end
         elif range_end.count(".") == 0 and self.subsections == 2:
             #for input with one level and 2 level was expected
-            internal_range_end = range_end + ".1"
-                #sections should be another attribute of TEXT with an ordered list of sections, or maybe a dictionary. This is because we really want to go to the index  of the start of the next range -1, too keep the dictionary half the size. What is currently here will not work for lettered sections.
+            internal_range_end = self.section_linkedlist[str(int(range_end)+1) + ".1"] #this should make a search for  1.1 - 1 become a search for 1.1 - 2.1(previous section)
         elif range_end.count(".") == 0 and self.subsections == 3:
             #for things with one level and 3 level was expected
-            internal_range_end = range_end + ".1.1"
+            internal_range_end = self.section_linkedlist[str(int(range_end)+1) + ".1.1"]
 
         elif range_end.count(".") == 1 and self.subsections == 2:
                 #for things with two levels, and two were given
@@ -54,7 +53,9 @@ class Text(object):
 
         elif range_end.count(".") == 1 and self.subsections == 3:
             #for things with three levels, and two were given
-            internal_range_end = range_end + ".1"
+            range_end = range_end.split(".")
+            internal_range_end = self.section_linkedlist[".".join(range_end[0], str(int(range_end[1])+1), [".1"])]
+
         elif range_end.count(".") == 2 and self.subsections == 3:
             internal_range_end = range_end
         #start ends up being the end of the previous section + 1
