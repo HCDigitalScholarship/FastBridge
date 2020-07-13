@@ -172,9 +172,7 @@ function hide_show_column(col_name)
 }
 
 function hide_show_row(row_value){
-  //console.log(row_value)
-  var checkbox_val=document.getElementById(row_value).value
-  var all_col=document.getElementsByClassName(row_value);
+  var checkbox_val=document.getElementById(row_value).value;
   var children = false;
   var parent = document.getElementById(row_value+"extra");
   if (parent) {
@@ -182,38 +180,37 @@ function hide_show_row(row_value){
     children = document.getElementById(row_value+"extra").childNodes
     //console.log(children)
   }
-  console.log(children)
-  if(checkbox_val=="hide")
-  {
-    for(var i=0;i<all_col.length;i++){
-      all_col[i].style.display = "none"
 
-     }
-     if (children){
-     for (var i = 0; i < children.length; i++) {
-       children[i].childNodes[1].childNodes[1].checked=""
 
-       children[i].childNodes[1].childNodes[1].value="show"
-       children[i].childNodes[1].childNodes[1].disabled="true"
-     }
-   }
-  document.getElementById(row_value).value="show";
+  if(checkbox_val=="hide"){
+    rows = rows.filter(element => !element.values.includes(row_value))
+    if (children){
+      for (var i = 0; i < children.length; i++) {
+      children[i].childNodes[1].childNodes[1].checked=""
+
+      children[i].childNodes[1].childNodes[1].value="show"
+      children[i].childNodes[1].childNodes[1].disabled="true"
+      }
+    document.getElementById(row_value).value="show";
+
+    }
   }
-  else
-  {
-    for(var i=0;i<all_col.length;i++){
-      all_col[i].style.display = "table-row"
-      //all_col[i].classList.add(row_value+"_show");
-     }
-     if(children){
-     for (var i = 0; i < children.length; i++) {
-       console.log(children[i].childNodes[1].childNodes[1])
-       children[i].childNodes[1].childNodes[1].checked="true"
-       children[i].childNodes[1].childNodes[1].value="hide"
-       children[i].childNodes[1].childNodes[1].disabled=""
-     }
-   }
-   document.getElementById(row_value).value="hide";
- }
+  else{
+    rows =  data;
+    var checkedBoxes = document.querySelectorAll('input[name=filterChecks]:checked');
+    for (var i = 0; i < checkBoxes.length; i++) {
+      rows = rows.filter(element => !element.values.includes(checkBoxes[i]))
+    }
+    if(children){
+      for (var i = 0; i < children.length; i++) {
+        console.log(children[i].childNodes[1].childNodes[1])
+        children[i].childNodes[1].childNodes[1].checked="true"
+        children[i].childNodes[1].childNodes[1].value="hide"
+        children[i].childNodes[1].childNodes[1].disabled=""
+      }
+
+    }
+  document.getElementById(row_value).value="hide";
+  }
+  clusterize.update(filterRows(rows));
 }
-setTimeout(line_up_header_columns,0)
