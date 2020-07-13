@@ -203,7 +203,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 frequency_dict[title[0]] = 1
             else:
                 frequency_dict[title[0]] += 1
-    titles =  [title for title in titles if (title[0]) in to_operate]
+    titles =  [title for title in new_titles if (title[0]) in to_operate]
 
     ##print(titles)
     titles = sorted(titles, key=lambda x: x[1])

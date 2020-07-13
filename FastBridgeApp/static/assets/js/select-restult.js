@@ -136,7 +136,7 @@ function sortTable(n) {
      }
     else
      {
-        return (a.values[n] > b.values[n]) ? 1 : -1
+        return (a.values[n].toLowerCase() > b.values[n].toLowerCase()) ? 1 : -1
       }
     }
   )
