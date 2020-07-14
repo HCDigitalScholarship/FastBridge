@@ -27,11 +27,11 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     elif section_level == 3:
         section_list ={"1.1.1": "start"}
 
-    #rows are expected to be sanitzied to come in as :TITLE	LOCATION	RUNNING COUNT	SHORTDEF  LEMMA, where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences)
+    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION TEXT (SHORTDEF  LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
         print(row)
-        if not (row[0] in valid):
+        if not (row[0] in valid): #check that the title is valid
             if pd.isna(row[0]):
                 print("fine, null title")
             else:
@@ -41,14 +41,13 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 assert False
 
         if local_def and local_lem:
-            the_text.append((row[0], i, row[3], row[4])) #add the title, array index,  definition, local lemma quad to that list
+            the_text.append((row[0], i, row[3], row[4], row[5])) #add the title, array index,  text, definition, local lemma quad to that list
         elif local_def:
-            the_text.append((row[0], i, row[3])) #add the title, definition, array index,
+            the_text.append((row[0], i, row[3], row[4], '')) #add the title, array index, text, definition
         elif local_lem:
-            the_text.append((row[0], i, '', row[4]))
+            the_text.append((row[0], i, row[3], '', row[5]))
         else:
-
-            the_text.append((row[0], i, '', ''))
+            the_text.append((row[0], i, row[3], '', ''))
         section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : i} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
@@ -59,7 +58,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     section_list["end"] = unique_sections[-2]
     section_list["start"] = "start" #unique_sections[0] = end of first section, not start of it
     section_words=dict(section_words)
-    code = f'import text\nnan=""\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language)'
+    code = f'import text\nnan=""\nsection_words = {section_words}\nthe_text =  {the_text}\nsection_list ={section_list}\ntitle = "{title}"\nsection_level =  {section_level}\nlanguage = "{language}"\nbook = text.Text(title, section_words, the_text, section_list, section_level, language, {local_def}, {local_lem})'
     file1 = open(completeName, "w")
     file1.write(code)
     file1.close()

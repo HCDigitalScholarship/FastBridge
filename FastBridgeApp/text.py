@@ -1,13 +1,15 @@
 class Text(object):
     """A Text object. It really could just be a struct."""
 
-    def __init__(self, name : str, sections : dict, words : list, section_linkedlist : dict, subsections : int, language : str):
+    def __init__(self, name : str, sections : dict, words : list, section_linkedlist : dict, subsections : int, language : str, local_def: bool, local_lem: bool):
         self.name = name
         self.sections = sections
         self.words =  words
         self.section_linkedlist = section_linkedlist
         self.subsections = subsections
         self.language = language
+        self.local_def = local_def
+        self.local_lem = local_lem
 
 
     def get_section(self, range_start, range_end):

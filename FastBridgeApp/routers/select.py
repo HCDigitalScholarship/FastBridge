@@ -156,6 +156,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         running_list = True
     else:
         running_list = False
+    local_def = False
+    local_lem = False
     source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
     other_titles = set()
@@ -167,6 +169,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set()
     for text, start, end in source:
         book = DefinitionTools.get_text(text).book
+        if not local_def:
+            local_def = book.local_def
+        if not local_lem:
+            local_lem = book.local_lem #if any target works have them, we need it. 
         titles = titles.union(set((book.get_words(start, end))))
 
     to_operate = set([(new[0]) for new in titles])
@@ -208,7 +214,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(titles)
     titles = sorted(titles, key=lambda x: x[1])
     ##print(titles)
-    words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
+    words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
 
     if not running_list:
         columnheaders.append("Count_in_Selection")

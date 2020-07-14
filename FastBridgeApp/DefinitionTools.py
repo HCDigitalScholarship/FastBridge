@@ -30,15 +30,15 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     #local definitions are hard, because the same word could show up in the section multiple times, so we can't use a dictionary, because then we would have multiple copies of the same key.
     Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"])
     if local_defs_bool and local_lem:
-        local_defs =[word[2] for word in words]
-        local_lems =[word[3] for word in words]
+        local_defs =[word[4] for word in words]
+        local_lems =[word[5] for word in words]
         Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_DEFINITION", "LOCAL_LEMMA"])
     elif local_defs_bool:
-        local_defs =[word[2] for word in words]
+        local_defs =[word[4] for word in words]
         Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_DEFINITION"])
 
     elif local_lem:
-        local_lems =[word[4] for word in words]
+        local_lems =[word[5] for word in words]
         Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_LEMMA"])
     print("defined word tuple")
 
@@ -54,8 +54,13 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(lang[words[i][0]])
         datum= (words[i][0],) + lang[words[i][0]] + (words[i][-1],)
         #print(datum)
-        if local_defs_bool:
-            datum = datum + (local_defs[i],) + (words[i][-1],)
+        if local_defs_bool and local_lem:
+            datum = datum + (local_defs[i], local_lems[i])
+        elif local_defs_bool:
+            datum = datum + (local_defs[i],)
+        elif local_lem:
+            datum = datum + ('', local_lems[i])
+
 
         datum = Word(*datum)
         word_list.append(datum)
