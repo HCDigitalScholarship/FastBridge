@@ -360,7 +360,7 @@ function string_to_slug (str) {
 
     str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
         .replace(/\s+/g, '_') // collapse whitespace and replace by _
-        .replace(/-+/g, '_'); // collapse dashes
+        //.replace(/-+/g, '_'); // collapse dashes
 
     return str;
 }
