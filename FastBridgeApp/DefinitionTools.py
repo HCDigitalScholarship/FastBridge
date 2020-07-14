@@ -73,7 +73,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
             if(in_case_multiple):
                 if in_case_multiple == "T":
                     in_case_multiple = "0"
-                in_case_multiple = in_case_multiple.split(", ")
+                in_case_multiple = in_case_multiple.split(",")
 
                 for case in in_case_multiple:
                     new = f"{row_filters[j]}_{datum.Part_Of_Speech}_{case}"

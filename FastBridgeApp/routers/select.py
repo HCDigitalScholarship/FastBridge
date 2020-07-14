@@ -61,9 +61,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         print("loaded the book")
         titles += (book.get_words(start, end))
     print("got titles")
+    frequency_dict = {}
     if not running_list:
         dups = set()
-        frequency_dict = {}
         new_titles = []
 
         for title in titles:
@@ -77,70 +77,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
         titles = sorted(new_titles, key=lambda x: x[1])
         #print(titles)
+
     words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
     if not running_list:
         columnheaders.append("Count_in_Selection")
+    else:
+        columnheaders.append("Order_of_Appearance")
     context["section"] = section
     context["len"] = len(words)
-    checks = f""
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-
-    for POS in POS_list:
-        filters, new_style = filter_helper(row_filters, POS)
-        style+= new_style
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input name="filterChecks" type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
-        if filters:
-            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
-        checks+= f'</div></div>'
-        style+= f".{POS}_hide {{display:none!important;}}\n"
-    headers = f""
-    other_headers = f""
-    for i in range(len(columnheaders)):
-        headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
-        else:
-            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
-        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
-
-    render_words = []
-    for word, row_filter in words:
-        lst = []
-        to_add_to_render_words = f'<tr class="{row_filter}">'
-        for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
-            #print(columnheaders[i][-5:])
-            if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
-                lst.append(word[i+1])
-            elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-2]}</td>'
-                lst.append(word[-2])
-            elif(columnheaders[i][-5:] =="_LINK"):
-                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{word[i+1]}"> </a></td>'
-                lst.append(word[i+1])
-            elif(columnheaders[i] == "Count_in_Selection"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
-                lst.append(frequency_dict[word[0]])
-            elif(columnheaders[i] == "Source_Text"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-1]}</td>'
-                lst.append(word[-1])
-            else:
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
-                lst.append(word[i+1])
-        to_add_to_render_words+= f'</tr>'
-        render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
-    context["style"] = style
-    context["headers"] = headers
-    context["POS_list"] = checks
-    context["filters"] = filters
-    context["other_headers"]  = other_headers
-    context["render_words"] = render_words
+    blocks_in_cluster = context["len"] // 50
+    context["blocks_in_cluster"] = blocks_in_cluster
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles)
 
     print("returning")
     return templates.TemplateResponse("result.html", context)
@@ -172,7 +124,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         if not local_def:
             local_def = book.local_def
         if not local_lem:
-            local_lem = book.local_lem #if any target works have them, we need it. 
+            local_lem = book.local_lem #if any target works have them, we need it.
         titles = titles.union(set((book.get_words(start, end))))
 
     to_operate = set([(new[0]) for new in titles])
@@ -197,9 +149,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     #print(to_operate)
     #if always_show: #if we add lists to always include, they would be added here
         #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
+    frequency_dict = {}
     if not running_list:
         dups = set()
-        frequency_dict = {}
+
         new_titles = []
 
         for title in titles:
@@ -221,10 +174,17 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     context["section"] = section
     context["len"] = len(words)
-    checks = f""
+
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles)
+    #print(context["words"][0])
+    return templates.TemplateResponse("result.html", context)
+
+
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles):
+    checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
         style+= new_style
@@ -246,29 +206,32 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = []
-    for word, row_filter in words:
+    for j in range(len(words)):
         lst = []
-        to_add_to_render_words = f'<tr class="{row_filter}">'
+        to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[i+1]}</td>'
-                lst.append(word[i+1])
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
+                lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{word[-2]}</td>'
-                lst.append(word[-2])
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-2]}</td>'
+                lst.append(words[j][0][-2])
             elif(columnheaders[i][-5:] =="_LINK"):
-                to_add_to_render_words+=f'<td style = "display:none;"class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{word[i+1]}"> </a></td>'
-                lst.append(word[i+1])
+                to_add_to_render_words+=f'<td style="display:none;" class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
+                lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "Count_in_Selection"):
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{frequency_dict[word[0]]}</td>'
-                lst.append(frequency_dict[word[0]])
+                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
+                lst.append(frequency_dict[words[j][0][0]])
+            elif(columnheaders[i] == "Order_of_Appearance"):
+                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{titles[j][1]}</td>'
+                lst.append(titles[j][1])
             elif(columnheaders[i] == "Source_Text"):
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[-1]}</td>'
-                lst.append(word[-1])
+                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{words[j][0][-1]}</td>'
+                lst.append(words[j][0][-1])
             else:
-                to_add_to_render_words+= f'<td style = "display:none;" class="{columnheaders[i]}">{word[i+1]}</td>'
-                lst.append(word[i+1])
+                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
+                lst.append(words[j][0][i+1])
         to_add_to_render_words+= f'</tr>'
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
     context["style"] = style
@@ -277,6 +240,4 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context["filters"] = filters
     context["other_headers"]  = other_headers
     context["render_words"] = render_words
-
-    #print(context["words"][0])
-    return templates.TemplateResponse("result.html", context)
+    return context

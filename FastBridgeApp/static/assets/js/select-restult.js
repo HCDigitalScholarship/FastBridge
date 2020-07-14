@@ -29,7 +29,8 @@ var filterRows = function(rows) {
 var clusterize = new Clusterize({
   rows: filterRows(rows),
   scrollId: 'scrollArea',
-  contentId: 'contentArea'
+  contentId: 'contentArea',
+  blocks_in_cluster: blocks_in_cluster
 });
 
 /*
@@ -126,11 +127,10 @@ function line_up_header_columns()
 
 function sortTable(n) {
   console.log("resorting")
-  resorted_rows = rows
   console.log(n)
   console.log(rows[0].values[n])
 
-  resorted_rows.sort(function(a, b){ if (parseInt(a.values[n]))
+  rows.sort(function(a, b){ if (parseInt(a.values[n]))
      {
        return (parseInt(a.values[n]) < parseInt(b.values[n])) ? 1 : -1
      }
@@ -140,35 +140,47 @@ function sortTable(n) {
       }
     }
   )
-  clusterize.update(filterRows(resorted_rows));
+  console.log(rows)
+  clusterize.update(filterRows(rows));
 
 }
+
+
 //row and column filter functions
 function hide_show_column(col_name)
 {
+  rows_html = rows.map(x => x.markup)
  var checkbox_val=document.getElementById(col_name).value;
  if(checkbox_val=="hide")
  {
   var all_col=document.getElementsByClassName(col_name);
+    //console.log(all_col[0].parentElement.outerHTML)
   for(var i=0;i<all_col.length;i++)
   {
-   all_col[i].style.display="none";
+    all_col[i].style.display="none";
+    rows[i].markup = all_col[i].parentElement.outerHTML;
   }
+  console.log(i)
   document.getElementById(col_name+"_head").style.display="none";
   document.getElementById(col_name).value="show";
  }
 
  else
  {
+
   var all_col=document.getElementsByClassName(col_name);
+  console.log(all_col[0].parentElement.outerHTML)
   for(var i=0;i<all_col.length;i++)
   {
-   all_col[i].style.display="table-cell";
+    all_col[i].style.display="table-cell";
+    rows[i].markup = all_col[i].parentElement.outerHTML;
   }
+  console.log(i)
   document.getElementById(col_name+"_head").style.display="table-cell";
   document.getElementById(col_name).value="hide";
  }
- setTimeout(line_up_header_columns,0);
+ clusterize.update(filterRows(rows));
+ //setTimeout(line_up_header_columns,0);
 }
 
 function hide_show_row(row_value){
@@ -197,7 +209,7 @@ function hide_show_row(row_value){
   }
   else{
     rows =  data;
-    var checkedBoxes = document.querySelectorAll('input[name=filterChecks]:checked');
+    var checkBoxes = document.querySelectorAll('input[name=filterChecks]:checked');
     for (var i = 0; i < checkBoxes.length; i++) {
       rows = rows.filter(element => !element.values.includes(checkBoxes[i]))
     }
@@ -213,4 +225,7 @@ function hide_show_row(row_value){
   document.getElementById(row_value).value="hide";
   }
   clusterize.update(filterRows(rows));
+  //setTimeout(line_up_header_columns,0);
 }
+
+//setTimeout(line_up_header_columns,0);

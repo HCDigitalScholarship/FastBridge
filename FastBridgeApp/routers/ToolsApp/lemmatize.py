@@ -22,9 +22,10 @@ def lemma_index(request : Request):
     context= {"request" : request}
     return templates.TemplateResponse("lemmatize.html", context)
 @router.post("/Lemmatizer")
-async def lemmatizing_handler(request : Request, format : str =  Form(...), language : str = Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : Optional[UploadFile] = File(...)):
+async def lemmatizing_handler(request : Request, format : str =  Form(...), language : str = Form(...), poetry : str =  Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : Optional[UploadFile] = File(...)):
     lemma_lex =  importlib.import_module(f'routers.ToolsApp.{language}_lemmata').LEMMATA
     #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
+    poetry = poetry == 'Yes'
     resulting_filename += ".csv"
     work_file = tempfile.NamedTemporaryFile(suffix='.csv',dir='/tmp', delete =  False)
     with work_file as outputfile:
@@ -33,17 +34,17 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
         print(resulting_filename)
         print(outputfile.name)
         the_text = file.file.read()
-        regex_go_brrr = regex.compile('[0-9]+(\_?[0-9]+)*')
+        regex_go_brrr = regex.compile('\[[0-9]+(\_?[0-9]+)*\]')
         if text and the_text!= b'':
             #raise some error, they should only fill in one of these fields
             print("got both")
             return "Please choose just one thank you"
         if text: #got the input as a string
-            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex, format).encode('utf-8'))
+            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry).encode('utf-8'))
         elif the_text:
             text = the_text.decode("utf-8") #reads the file as a string. I don't think this will cause problems with large inputs, but it potentially could, and then makes all of this much cleaner.
             print(text)
-            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex, format).encode('utf-8'))
+            outputfile.write(lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry).encode('utf-8'))
         else:
             #neither were given, which is also bad
             print(file)
@@ -70,10 +71,28 @@ def depunctuate(text : str):
     return text
 
 
-def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format):
+def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
     output = "TITLE,SECTION,RUNNING COUNT,TEXT\n"
     text.replace(".", "_")
-    text =  text.split()
+    print(text)
+    if poetry:
+        text= text.split("\n") #splits poetry into lines, must be added as a file
+        print(text)
+        print(text[0])
+        location = 0
+        new_text = []
+        for line in text:
+            location += 1
+            line= f'[{location}] {line}'
+            print(line)
+            new_text.append(line)
+
+        text =  ' '.join(new_text)
+        print(text)
+
+
+    text = text.split()
+    print(text)
     running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
     conversion = False
     if format == "Bridge":
@@ -83,7 +102,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format):
         if regex_go_brrr.match(word):
             print("FOUND A SECTION/number")
             print(word)
-            location = word
+            location = word[1:-1] #remove the brackets around the word
         else:
             location = location
             word = demacronize(word, language)
