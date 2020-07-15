@@ -92,7 +92,7 @@ def add_words(file, language : str):
 
 
     except ModuleNotFoundError as e:
-        #then the language does not exist in bridge yet
+        #if the language does not exist in bridge yet
         dict =  {}
         POS = set()
         texts = set()
@@ -103,7 +103,7 @@ def add_words(file, language : str):
     for row in csv_reader:
         #print(row)
         new = row[:to_skip]+row[to_skip+1:]
-        print(new)
+        #print(new)
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]

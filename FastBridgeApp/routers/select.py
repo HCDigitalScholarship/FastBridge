@@ -36,8 +36,8 @@ def filter_helper(row_filters, POS):
                 display_filter = f"Irregular {display_filter[:-2]}"
             else:
                 display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
-
-            filters+=f'<li> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
+            cssclass = filter.split('_')[0]
+            filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -77,7 +77,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         titles = sorted(new_titles, key=lambda x: x[1])
         #print(titles)
 
-    words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language))
+    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language))
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
@@ -91,7 +91,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
     blocks_in_cluster = context["len"] // 50
     context["blocks_in_cluster"] = blocks_in_cluster
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles)
+
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
     emtpy = [0]*len(columnheaders)
     context["columnheaders"] = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     print("returning")
@@ -167,7 +168,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     ##print(titles)
     titles = sorted(titles, key=lambda x: x[1])
     ##print(titles)
-    words, POS_list, columnheaders, row_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
+    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
 
     if not running_list:
         columnheaders.append("Count_in_Selection")
@@ -177,21 +178,24 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
     #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles):
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
         style+= new_style
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" name="filterChecks" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
             checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
+    checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
+    for global_f in global_filters:
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(this.id);" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ")}</label></div></div>'
+    checks += '</div>'
     headers = f""
     other_headers = f""
     for i in range(len(columnheaders)):
@@ -232,6 +236,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
         to_add_to_render_words+= f'</tr>'
+        classes = words[j][1].split(' ')
+        [lst.append(c) for c in classes]
+
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
     context["style"] = style
     context["headers"] = headers

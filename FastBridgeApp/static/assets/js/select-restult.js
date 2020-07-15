@@ -149,6 +149,15 @@ function sortTable(n) {
 
 
 //row and column filter functions
+function global_filter(filter_id) {
+  var to_toggle = document.getElementsByClassName(filter_id)
+  for (var i = 0; i < to_toggle.length; i++) {
+    to_toggle[i].value = document.getElementById(filter_id).value
+    to_toggle[i].checked= document.getElementById(filter_id).checked
+    hide_show_row(to_toggle[i].id)
+  }
+}
+
 function hide_show_column(col_name)
 {
  var stylesheet = document.styleSheets[8]
@@ -166,7 +175,7 @@ function hide_show_column(col_name)
  else{
    stylesheet.deleteRule(columns[col_name])
 
-   if (columns[col_name] != end -1){ //-1 because len starts at 1 and indices start at 0, and -1 because we just removed one. Basically, if this rule was not the last one, we need to update all the other indices.
+   if (columns[col_name] != end -1){
      for (const [key, value] of Object.entries(columns)){
        if(value >= columns[col_name] ){
          columns[key] = value-1;
@@ -201,25 +210,27 @@ function hide_show_row(row_value){
       children[i].childNodes[1].childNodes[1].value="show"
       children[i].childNodes[1].childNodes[1].disabled="true"
       }
-    document.getElementById(row_value).value="show";
-
     }
+    document.getElementById(row_value).value="show";
   }
   else{
     rows =  data;
-    var checkBoxes = document.querySelectorAll('input[name=filterChecks]:checked');
-    for (var i = 0; i < checkBoxes.length; i++) {
-      rows = rows.filter(element => !element.values.includes(checkBoxes[i]))
-    }
     if(children){
       for (var i = 0; i < children.length; i++) {
-        console.log(children[i].childNodes[1].childNodes[1])
         children[i].childNodes[1].childNodes[1].checked="true"
         children[i].childNodes[1].childNodes[1].value="hide"
         children[i].childNodes[1].childNodes[1].disabled=""
       }
 
     }
+    var checkBoxes = document.querySelectorAll('input[name=filterChecks]:not(:checked)');
+    console.log(checkBoxes)
+    for (var i = 0; i < checkBoxes.length; i++) {
+      checkBoxes[i].value = "hide";
+      hide_show_row(checkBoxes[i].id);
+    }
+
+
   document.getElementById(row_value).value="hide";
   }
   clusterize.update(filterRows(rows));

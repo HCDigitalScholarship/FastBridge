@@ -44,10 +44,10 @@ class Text(object):
                 internal_range_end = range_end
         elif range_end.count(".") == 0 and self.subsections == 2:
             #for input with one level and 2 level was expected
-            internal_range_end = self.section_linkedlist[str(int(range_end)+1) + ".1"] #this should make a search for  1.1 - 1 become a search for 1.1 - 2.1(previous section)
+            internal_range_end = self.section_linkedlist[next_section(range_end) + ".1"] #this should make a search for  1.1 - 1 become a search for 1.1 - 2.1(previous section)
         elif range_end.count(".") == 0 and self.subsections == 3:
             #for things with one level and 3 level was expected
-            internal_range_end = self.section_linkedlist[str(int(range_end)+1) + ".1.1"]
+            internal_range_end = self.section_linkedlist[next_section(range_end) + ".1.1"]
 
         elif range_end.count(".") == 1 and self.subsections == 2:
                 #for things with two levels, and two were given
@@ -85,3 +85,13 @@ class Text(object):
             end = len(tmp)
         wordlist = [tmp[i] + (self.name,) for i in range(start, end)]
         return wordlist
+
+
+def next_section(section):
+    """Handles the case where a section has letters in it. This should only be used in the cases where: input with one level and 2 level was expected and  with one level and 3 level was expected """
+    working_section =  section.split(".") #so 1.1 = [1, 1],  2b.1 = [2b, 1], and 2b = [2b]
+    try:
+        target = str(int(working_section[0]) + 1)
+    except ValueError: #invalid conversion
+        target = f"{working_section[0][:-1]}{chr(ord(working_section[0][-1]) + 1)}"
+    return target

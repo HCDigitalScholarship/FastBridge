@@ -67,7 +67,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
-            #print(row_filters[j])
+            print(row_filters[j])
             in_case_multiple = datum[len(columnheaders) + j]
             #print(in_case_multiple, "many")
             if(in_case_multiple):
@@ -103,7 +103,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         columnheaders.append("LOCAL_DEFINITION")
     columnheaders.append("Source_Text")
     print("got lang data")
-    return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters
+    return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters, row_filters
 
 def make_quads_or_trips(texts, starts, ends):
     """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""
