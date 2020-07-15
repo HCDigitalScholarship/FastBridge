@@ -29,8 +29,8 @@ var filterRows = function(rows) {
 var clusterize = new Clusterize({
   rows: filterRows(rows),
   scrollId: 'scrollArea',
-  contentId: 'contentArea',
-  blocks_in_cluster: blocks_in_cluster
+  contentId: 'contentArea'//,
+  //blocks_in_cluster: blocks_in_cluster
 });
 
 /*
@@ -110,7 +110,7 @@ function get_first_visible_row() {
     first_visible_row = rows[j]
     ;
   }
-  return first_visible_row
+  return rows[0]
 }
 //line up headers
 function line_up_header_columns()
@@ -146,41 +146,28 @@ function sortTable(n) {
 }
 
 
+
 //row and column filter functions
 function hide_show_column(col_name)
 {
-  rows_html = rows.map(x => x.markup)
+ var stylesheet = document.styleSheets[8]
+ var end = stylesheet.cssRules.length
  var checkbox_val=document.getElementById(col_name).value;
  if(checkbox_val=="hide")
  {
-  var all_col=document.getElementsByClassName(col_name);
-    //console.log(all_col[0].parentElement.outerHTML)
-  for(var i=0;i<all_col.length;i++)
-  {
-    all_col[i].style.display="none";
-    rows[i].markup = all_col[i].parentElement.outerHTML;
-  }
-  console.log(i)
+   var rule =  `.${col_name} { display : none !important} `
+   stylesheet.insertRule(rule, end)
+   columns[col_name] = end;
   document.getElementById(col_name+"_head").style.display="none";
   document.getElementById(col_name).value="show";
- }
 
- else
- {
-
-  var all_col=document.getElementsByClassName(col_name);
-  console.log(all_col[0].parentElement.outerHTML)
-  for(var i=0;i<all_col.length;i++)
-  {
-    all_col[i].style.display="table-cell";
-    rows[i].markup = all_col[i].parentElement.outerHTML;
-  }
-  console.log(i)
-  document.getElementById(col_name+"_head").style.display="table-cell";
-  document.getElementById(col_name).value="hide";
  }
- clusterize.update(filterRows(rows));
- //setTimeout(line_up_header_columns,0);
+ else{
+   stylesheet.deleteRule(columns[col_name])
+   document.getElementById(col_name+"_head").style.display="table-cell";
+   document.getElementById(col_name).value="hide";
+ }
+ setTimeout(line_up_header_columns,0);
 }
 
 function hide_show_row(row_value){
@@ -225,7 +212,6 @@ function hide_show_row(row_value){
   document.getElementById(row_value).value="hide";
   }
   clusterize.update(filterRows(rows));
-  //setTimeout(line_up_header_columns,0);
+  setTimeout(line_up_header_columns,0);
 }
-
-//setTimeout(line_up_header_columns,0);
+setTimeout(line_up_header_columns,0);

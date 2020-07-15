@@ -38,7 +38,6 @@ def filter_helper(row_filters, POS):
                 display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
 
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input type="checkbox" value="hide" class="custom-control-input" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
-            loc_style+= f".{filter}_hide {{display:none!important;}}\n"
     return filters, loc_style
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -93,7 +92,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     blocks_in_cluster = context["len"] // 50
     context["blocks_in_cluster"] = blocks_in_cluster
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles)
-
+    emtpy = [0]*len(columnheaders)
+    context["columnheaders"] = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     print("returning")
     return templates.TemplateResponse("result.html", context)
 
@@ -192,7 +192,6 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         if filters:
             checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
-        style+= f".{POS}_hide {{display:none!important;}}\n"
     headers = f""
     other_headers = f""
     for i in range(len(columnheaders)):
@@ -201,8 +200,8 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
-            headers+= f'<input type="checkbox" style = "display:none;" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th style="display:none;" onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
+            other_headers+=f'<th onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = []
@@ -218,19 +217,19 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-2]}</td>'
                 lst.append(words[j][0][-2])
             elif(columnheaders[i][-5:] =="_LINK"):
-                to_add_to_render_words+=f'<td style="display:none;" class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
+                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
                 lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "Count_in_Selection"):
-                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Order_of_Appearance"):
-                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{titles[j][1]}</td>'
+                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{titles[j][1]}</td>'
                 lst.append(titles[j][1])
             elif(columnheaders[i] == "Source_Text"):
-                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{words[j][0][-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-1]}</td>'
                 lst.append(words[j][0][-1])
             else:
-                to_add_to_render_words+= f'<td style="display:none;" class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
         to_add_to_render_words+= f'</tr>'
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
