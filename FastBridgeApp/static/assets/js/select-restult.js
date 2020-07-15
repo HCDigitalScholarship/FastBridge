@@ -142,6 +142,7 @@ function sortTable(n) {
   )
   console.log(rows)
   clusterize.update(filterRows(rows));
+   setTimeout(line_up_header_columns,0);
 
 }
 
@@ -164,6 +165,16 @@ function hide_show_column(col_name)
  }
  else{
    stylesheet.deleteRule(columns[col_name])
+
+   if (columns[col_name] != end -1){ //-1 because len starts at 1 and indices start at 0, and -1 because we just removed one. Basically, if this rule was not the last one, we need to update all the other indices.
+     for (const [key, value] of Object.entries(columns)){
+       if(value >= columns[col_name] ){
+         columns[key] = value-1;
+       }
+     }
+
+   }
+   columns[col_name] = 0;
    document.getElementById(col_name+"_head").style.display="table-cell";
    document.getElementById(col_name).value="hide";
  }
