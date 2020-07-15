@@ -89,9 +89,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    blocks_in_cluster = context["len"] // 50
-    context["blocks_in_cluster"] = blocks_in_cluster
-
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
 
     print("returning")
@@ -198,19 +195,21 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     headers = f""
     other_headers = f""
     emtpy = [0]*len(columnheaders)
+    emtpy2 = [True]*len(columnheaders)
+    emtpy = [list(a) for a in zip(emtpy, emtpy2)]
     header_js_obj = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     rules_added = 1 #we set table data width in this stylesheet already
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
+            other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
             style+= f'.{columnheaders[i]} {{ display : none !important}}'
-            header_js_obj[columnheaders[i]] =rules_added
+            header_js_obj[columnheaders[i]][0] =rules_added
             rules_added +=1
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
-            other_headers+=f'<th onclick="sortTable({i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
+            other_headers+=f'<th onclick="sortTable(\'{columnheaders[i]}\',{i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = []
@@ -224,8 +223,8 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-2]}</td>'
-                lst.append(words[j][0][-2])
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][4]}</td>'
+                lst.append(words[j][0][-4])
             elif(columnheaders[i][-5:] =="_LINK"):
                 to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
                 lst.append(words[j][0][i+1])
@@ -233,8 +232,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Order_of_Appearance"):
-                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{titles[j][1]}</td>'
+                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{words[j][0][-2]}</td>'
                 lst.append(titles[j][1])
+                #the display is the human location, but the value – which the js uses to sort – is the word number
             elif(columnheaders[i] == "Source_Text"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-1]}</td>'
                 lst.append(words[j][0][-1])

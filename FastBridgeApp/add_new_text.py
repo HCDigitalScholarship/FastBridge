@@ -41,13 +41,13 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 assert False
 
         if local_def and local_lem:
-            the_text.append((row[0], i, row[3], row[4], row[5])) #add the title, array index,  text, definition, local lemma quad to that list
+            the_text.append((row[0], i, row[3], row[4], row[5], row[1])) #add the title, array index,  text, definition, local lemma quad to that list
         elif local_def:
-            the_text.append((row[0], i, row[3], row[4], '')) #add the title, array index, text, definition
+            the_text.append((row[0], i, row[3], row[4], '', row[1])) #add the title, array index, text, definition
         elif local_lem:
-            the_text.append((row[0], i, row[3], '', row[5]))
+            the_text.append((row[0], i, row[3], '', row[5], row[1]))
         else:
-            the_text.append((row[0], i, row[3], '', ''))
+            the_text.append((row[0], i, row[3], '', '', row[1]))
         section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : i} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections

@@ -28,18 +28,19 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     word_list = deque() #has more effieceint appends, and is just as good to iterate over later
     #if local_defs: #we want this to be protected because it will take an extra round of iterating over all the words in the INTIAL selction.
     #local definitions are hard, because the same word could show up in the section multiple times, so we can't use a dictionary, because then we would have multiple copies of the same key.
-    Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"])
+    Word = namedtuple("Word", columnheaders + row_filters + ["Appearance"] + ["Source_Text"])
+    apperances = [word[5].replace('_', ".") for word in words]
     if local_defs_bool and local_lem:
-        local_defs =[word[4] for word in words]
-        local_lems =[word[5] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_DEFINITION", "LOCAL_LEMMA"])
+        local_defs =[word[3] for word in words]
+        local_lems =[word[4] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance"] + ["Source_Text"] + ["LOCAL_DEFINITION", "LOCAL_LEMMA"])
     elif local_defs_bool:
-        local_defs =[word[4] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_DEFINITION"])
+        local_defs =[word[3] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance"] + ["Source_Text"] + ["LOCAL_DEFINITION"])
 
     elif local_lem:
-        local_lems =[word[5] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Source_Text"] + ["LOCAL_LEMMA"])
+        local_lems =[word[4] for word in words]
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance"] + ["Source_Text"] + ["LOCAL_LEMMA"])
     print("defined word tuple")
 
     #print(words)
@@ -49,10 +50,10 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
 
 
     for i in range(len(words)):
-        #print(words[i][0])
+        #print(words[i])
         to_add = f""
         #print(lang[words[i][0]])
-        datum= (words[i][0],) + lang[words[i][0]] + (words[i][-1],)
+        datum= (words[i][0],) + lang[words[i][0]] + (apperances[i], words[i][-1])
         #print(datum)
         if local_defs_bool and local_lem:
             datum = datum + (local_defs[i], local_lems[i])
@@ -67,7 +68,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(datum.LOCAL_DEFINITION)
         to_add+= datum.Part_Of_Speech + " "
         for j in range(len(row_filters)):
-            print(row_filters[j])
+            #print(row_filters[j])
             in_case_multiple = datum[len(columnheaders) + j]
             #print(in_case_multiple, "many")
             if(in_case_multiple):
@@ -95,7 +96,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
 
     final_row_filters = [(k,v) for k,v in new_filters.items()]
     final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])))
-    print(final_row_filters)
+    #print(final_row_filters)
     POS = list(POS)
     POS.sort()
     columnheaders = columnheaders[1:] #we don't want a filter for title, that is just to make accessing dicts easier

@@ -125,25 +125,50 @@ function line_up_header_columns()
 
 //sorting – not sure how compatible this is with clusterize
 
-function sortTable(n) {
+function sortTable(col, n) {
+  console.log(col)
+  asc = columns[col][1]
   console.log("resorting")
   console.log(n)
   console.log(rows[0].values[n])
-
-  rows.sort(function(a, b){ if (parseInt(a.values[n]))
-     {
-       return (parseInt(a.values[n]) < parseInt(b.values[n])) ? 1 : -1
-     }
-    else
-     {
+  if(rows[0].values[n] + 1 != `${rows[0].values[n]}1`){
+    console.log("int sort")
+    if (asc){
+    rows.sort(function(a, b){
+        {
+          return (a.values[n] > b.values[n]) ? 1 : -1
+        }
+      })
+    }
+    else{
+      rows.sort(function(a, b){
+          {
+            return (a.values[n] < b.values[n]) ? 1 : -1
+          }
+        })
+    }
+  }
+ else{
+   if(asc){
+     rows.sort(function(a, b)
+      {
         return (a.values[n].toLowerCase() > b.values[n].toLowerCase()) ? 1 : -1
       }
-    }
-  )
-  console.log(rows)
-  clusterize.update(filterRows(rows));
-   setTimeout(line_up_header_columns,0);
+    )
+   }
+   else{
+     rows.sort(function(a, b)
+        {
+          return (a.values[n].toLowerCase() < b.values[n].toLowerCase()) ? 1 : -1
+        }
+      )
 
+    }
+  }
+ console.log(rows)
+ columns[col][1] = !asc
+ clusterize.update(filterRows(rows));
+  setTimeout(line_up_header_columns,0);
 }
 
 
@@ -167,23 +192,23 @@ function hide_show_column(col_name)
  {
    var rule =  `.${col_name} { display : none !important} `
    stylesheet.insertRule(rule, end)
-   columns[col_name] = end;
+   columns[col_name][0] = end;
   document.getElementById(col_name+"_head").style.display="none";
   document.getElementById(col_name).value="show";
 
  }
  else{
-   stylesheet.deleteRule(columns[col_name])
+   stylesheet.deleteRule(columns[col_name][0])
 
-   if (columns[col_name] != end -1){
+   if (columns[col_name][0] != end -1){
      for (const [key, value] of Object.entries(columns)){
-       if(value >= columns[col_name] ){
-         columns[key] = value-1;
+       if(value >= columns[col_name][0] ){
+         columns[key][0] = value-1;
        }
      }
 
    }
-   columns[col_name] = 0;
+   columns[col_name][0] = 0;
    document.getElementById(col_name+"_head").style.display="table-cell";
    document.getElementById(col_name).value="hide";
  }
