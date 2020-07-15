@@ -28,7 +28,7 @@ def filter_helper(row_filters, POS):
     for filter, POS_for_filter in row_filters:
         #print(POS, POS_for_filter, "printing")
         if POS+ " " == POS_for_filter:
-            display_filter = filter.replace("_", " ")
+            display_filter = filter.replace("_", " ").title()
             if display_filter[-1] == "0":
                 #print(filter, POS_for_filter, "printing")
                 display_filter = display_filter[:-1]
@@ -93,8 +93,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["blocks_in_cluster"] = blocks_in_cluster
 
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
-    emtpy = [0]*len(columnheaders)
-    context["columnheaders"] = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
+
     print("returning")
     return templates.TemplateResponse("result.html", context)
 
@@ -194,21 +193,28 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         checks+= f'</div></div>'
     checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
     for global_f in global_filters:
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(this.id);" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ")}</label></div></div>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(this.id);" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
     checks += '</div>'
     headers = f""
     other_headers = f""
+    emtpy = [0]*len(columnheaders)
+    header_js_obj = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
+    rules_added = 1 #we set table data width in this stylesheet already
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th id="{columnheaders[i]}_head" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
+            other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable({i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
-            other_headers+=f'<th onclick="sortTable({i})" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
+            style+= f'.{columnheaders[i]} {{ display : none !important}}'
+            header_js_obj[columnheaders[i]] =rules_added
+            rules_added +=1
+            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
+            other_headers+=f'<th onclick="sortTable({i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = []
+
     for j in range(len(words)):
         lst = []
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
@@ -246,4 +252,5 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["filters"] = filters
     context["other_headers"]  = other_headers
     context["render_words"] = render_words
+    context["columnheaders"] = header_js_obj
     return context
