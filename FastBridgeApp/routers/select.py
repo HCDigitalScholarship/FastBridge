@@ -37,7 +37,7 @@ def filter_helper(row_filters, POS):
             else:
                 display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
             cssclass = filter.split('_')[0]
-            filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(this.id);" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
+            filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(\'{filter}\');" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -83,8 +83,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #context["basic_defs"] = [word[3] for word in words]
     if not running_list:
         columnheaders.append("Count_in_Selection")
-    else:
-        columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Order_of_Appearance")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
@@ -184,13 +183,14 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
         style+= new_style
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" name="filterChecks" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(this.id);" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" name="filterChecks" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(\'{POS}\');" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
             checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
     checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
+    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>'
     for global_f in global_filters:
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(this.id);" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
     checks += '</div>'
     headers = f""
     other_headers = f""
@@ -202,13 +202,13 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(this.id);" checked>'
+            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
             style+= f'.{columnheaders[i]} {{ display : none !important}}'
             header_js_obj[columnheaders[i]][0] =rules_added
             rules_added +=1
-            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(this.id);">'
+            headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
             other_headers+=f'<th onclick="sortTable(\'{columnheaders[i]}\',{i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 

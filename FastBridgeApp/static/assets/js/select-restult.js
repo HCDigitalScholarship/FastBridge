@@ -126,13 +126,13 @@ function line_up_header_columns()
 //sorting – not sure how compatible this is with clusterize
 
 function sortTable(col, n) {
-  console.log(col)
+  //console.log(col)
   asc = columns[col][1]
-  console.log("resorting")
-  console.log(n)
-  console.log(rows[0].values[n])
+  //console.log("resorting")
+  //console.log(n)
+  //console.log(rows[0].values[n])
   if(rows[0].values[n] + 1 != `${rows[0].values[n]}1`){
-    console.log("int sort")
+    //console.log("int sort")
     if (asc){
     rows.sort(function(a, b){
         {
@@ -165,7 +165,7 @@ function sortTable(col, n) {
 
     }
   }
- console.log(rows)
+ //console.log(rows)
  columns[col][1] = !asc
  clusterize.update(filterRows(rows));
   setTimeout(line_up_header_columns,0);
@@ -174,6 +174,26 @@ function sortTable(col, n) {
 
 
 //row and column filter functions
+function toggle_all_filters(id) {
+  var ths = document.getElementById(id);
+  //console.log(ths.value)
+  if (ths.value == 'hide'){
+    rows = []
+    ths.value = 'show'
+  }
+  else{
+    rows = data;
+    ths.value = 'hide'
+  }
+  var checkBoxes = document.querySelectorAll('input[name=filterChecks]')
+  for (var i = 0; i < checkBoxes.length; i++) {
+    checkBoxes[i].value = ths.value;
+    checkBoxes[i].checked = ths.checked;
+    }
+
+
+  clusterize.update(filterRows(rows));
+}
 function global_filter(filter_id) {
   var to_toggle = document.getElementsByClassName(filter_id)
   for (var i = 0; i < to_toggle.length; i++) {
@@ -181,7 +201,14 @@ function global_filter(filter_id) {
     to_toggle[i].checked= document.getElementById(filter_id).checked
     hide_show_row(to_toggle[i].id)
   }
+  if (document.getElementById(filter_id).value == 'hide'){
+  document.getElementById(filter_id).value = 'show';
+  }
+  else{
+    document.getElementById(filter_id).value = 'hide';
+  }
 }
+
 
 function hide_show_column(col_name)
 {
@@ -220,9 +247,9 @@ function hide_show_row(row_value){
   var children = false;
   var parent = document.getElementById(row_value+"extra");
   if (parent) {
-    //console.log(row_value+"extra", "success")
+    ////console.log(row_value+"extra", "success")
     children = document.getElementById(row_value+"extra").childNodes
-    //console.log(children)
+    ////console.log(children)
   }
 
 
@@ -249,7 +276,7 @@ function hide_show_row(row_value){
 
     }
     var checkBoxes = document.querySelectorAll('input[name=filterChecks]:not(:checked)');
-    console.log(checkBoxes)
+    //console.log(checkBoxes)
     for (var i = 0; i < checkBoxes.length; i++) {
       checkBoxes[i].value = "hide";
       hide_show_row(checkBoxes[i].id);
