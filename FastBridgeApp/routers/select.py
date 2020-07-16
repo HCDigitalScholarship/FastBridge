@@ -150,7 +150,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         dups = set()
 
         new_titles = []
-
+        titles  = sorted(titles, key=lambda x: x[1]) #because titles becomes a set when we in/exclude, the order we stored them in was lost
         for title in titles:
             if (title[0]) not in dups:
                 dups.add((title[0]))
@@ -158,7 +158,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 frequency_dict[title[0]] = 1
             else:
                 frequency_dict[title[0]] += 1
-    titles =  [title for title in new_titles if (title[0]) in to_operate]
+        titles = new_titles
+    titles =  [title for title in titles if (title[0]) in to_operate]
 
     ##print(titles)
     titles = sorted(titles, key=lambda x: x[1])
@@ -168,12 +169,15 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     if not running_list:
         columnheaders.append("Count_in_Selection")
 
+    columnheaders.append("Order_of_Appearance")
+
     context["section"] = section
     context["len"] = len(words)
 
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
+
     #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
 
@@ -188,7 +192,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
     checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
-    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>'
+    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/Non</label></div></div>'
     for global_f in global_filters:
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
     checks += '</div>'
