@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<body>
+  <section class="content-section" style="background-image: url('/assets/img/background-img-gray.jpg'); background-size: cover;background-position: top;">
+      <div class="container" style="color: #ffffff;">
+  {% for book in books %}
+    <p> {{ book }}</p>
+    {% endfor %}
+
+    </div>
+  </section>
+</body>
+{% endblock %}

@@ -16,7 +16,8 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     lang = importlib.import_module(f'{language}')
     valid =  set(lang.correct_dict.keys())
     valid.add(nan)
-    completeName= f'{app_path}/data/{filename}.py'
+    del lang
+    completeName= f'{app_path}/data/{language}/{filename}.py'
     print(completeName)
     the_text = []
     section_list ={} #sections as a linked list, so that we can find the previous one really quickly
@@ -30,7 +31,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
-        print(row)
+        #print(row)
         if not (row[0] in valid): #check that the title is valid
             if pd.isna(row[0]):
                 print("fine, null title")
@@ -63,12 +64,12 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     file1.write(code)
     file1.close()
 
-    #and add text to language.texts
-
-    lang.texts.add(title)
-    #print(lang.texts)
-    code = f'texts = {lang.texts}\ncolumnheaders = {lang.columnheaders}\nnan=""\nrow_filters = {lang.row_filters}\nPOS_list = {lang.POS_list}\ncorrect_dict = {lang.correct_dict}'
-    file1 = open(f'{language}.py', "w")
+    #and add text to language/texts
+    completeName= f'{app_path}/data/{language}/texts.py'
+    texts = importlib.import_module(f'{language}/texts')
+    new_set = texts.texts.add(title)
+    code = f'texts = {new_set}'
+    file1 = open(completeName, "w")
     file1.write(code)
     file1.close()
     return "added a text"
@@ -88,7 +89,6 @@ def add_words(file, language : str):
         lang = importlib.import_module(f'{language}')
         dict = lang.correct_dict
         POS = lang.POS_list
-        texts = lang.texts
 
 
     except ModuleNotFoundError as e:
@@ -109,7 +109,7 @@ def add_words(file, language : str):
         dict[real_row[0]] = real_row[1:]
         POS.add(real_row.Part_Of_Speech)
     #now we need to save over the old file with this new dict
-    code = f'texts = {texts}\ncolumnheaders = {columnheaders}\nnan=""\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
+    code = f'columnheaders = {columnheaders}\nnan=""\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
     file1 = open(f'{language}.py', "w")
     file1.write(code)
     file1.close()

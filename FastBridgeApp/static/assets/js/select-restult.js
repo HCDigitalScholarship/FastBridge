@@ -128,11 +128,9 @@ function line_up_header_columns()
 function sortTable(col, n) {
   //console.log(col)
   asc = columns[col][1]
-  //console.log("resorting")
-  //console.log(n)
-  //console.log(rows[0].values[n])
+  //checks if this is an int or a string. Thank you implicit typing
   if(rows[0].values[n] + 1 != `${rows[0].values[n]}1`){
-    //console.log("int sort")
+
     if (asc){
     rows.sort(function(a, b){
         {

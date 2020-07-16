@@ -15,7 +15,7 @@ async def oracle_index(request : Request):
 
 @router.get("/{language}")
 async def oracle_select(request : Request, language : str):
-    book_name = importlib.import_module(language).texts
+    book_name = importlib.import_module(f'data.{language}.texts').texts 
     return templates.TemplateResponse("select-oracle.html", {"request": request, "book_name": book_name})
 
 @router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
@@ -25,7 +25,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
     known = DefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words= []
     for text, start, end in known:
-        book = DefinitionTools.get_text(text).book
+        book = DefinitionTools.get_text(text, language).book
         ogknown_words += (book.get_words(start, end))
     ogknown_tokens = set([(new[0]) for new in ogknown_words])
     e_section_list = e_section_size.split("+")
@@ -33,7 +33,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
 
     for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):
         e_section_size = int(e_section_size)
-        book = DefinitionTools.get_text(text).book
+        book = DefinitionTools.get_text(text, language).book
 
         #we can go through the section_linkedlist backwards
         sections = book.section_linkedlist

@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    book_name = importlib.import_module(language).texts #note – this imports the ENTIRE language, and takes a ton of RAM for a fraction of a second. Potentially, languages should be split up into multple files: a big one with the full lexicon (correct_dict), a huge one with the lemmata (already a seperate file) and a small one with the texts, and a small one with the filter infomration.
+    book_name = importlib.import_module(f'data.{language}.texts').texts
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
@@ -55,7 +55,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     print("entering for")
     for text, start, end in triple:
         print(text)
-        book = DefinitionTools.get_text(text).book
+        book = DefinitionTools.get_text(text, language).book
         print("loaded the book")
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
@@ -112,41 +112,33 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
     other_titles = set()
     for text, start, end in other:
-        book = DefinitionTools.get_text(text).book
+        book = DefinitionTools.get_text(text, language).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
+        del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
     ##print("\n")
     titles = set()
     for text, start, end in source:
-        book = DefinitionTools.get_text(text).book
+        book = DefinitionTools.get_text(text, language).book
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         titles = titles.union(set((book.get_words(start, end))))
+        del book
 
     to_operate = set([(new[0]) for new in titles])
-    ##print(to_operate)
-    ##print("\n")
-    ##print(in_exclude)
-    sextuple = list(zip_longest(source, other, fillvalue=("","","")))
-    print(sextuple)
     if in_exclude == "exclude":
         to_operate= to_operate.difference(other_titles)
         unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
         known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
         section = f"{unknown} and not in {known}"
-
-        #", ".join(["{text}: {start} - {end} and not in {other}: {other_start} - {other_end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2], other = other[0].replace("_", " "), other_start= other[1], other_end = other[2]) for text, other in sextuple])
     elif in_exclude == "include":
         to_operate= to_operate.intersection(other_titles)
 
         unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
         known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
         section = f"{unknown} and in {known}"
-    #print(to_operate)
-    #if always_show: #if we add lists to always include, they would be added here
-        #titles = titles.union(commonly_confused) #if we make in_exclue more felxible (a list with elements in quads or trips) then we can specify for each text selected there what we do, and we can add this force show option more sensibly.
     frequency_dict = {}
     if not running_list:
         dups = set()

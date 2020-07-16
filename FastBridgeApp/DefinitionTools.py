@@ -7,11 +7,11 @@ import re
 #range_end = "1.11"
 #text would be a text object, but we have not built that yet
 
-def get_text(form_request : str):
+def get_text(form_request : str, language : str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
     """
-    return importlib.import_module(f'data.{form_request}')
+    return importlib.import_module(f'data.{language}.{form_request}')
 
 def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False, local_lem : bool = False):
     """
