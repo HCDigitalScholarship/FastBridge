@@ -11,6 +11,9 @@ img {
   padding: 1vh 1vh 1vh 1vh;
 }
 
+#page-top {
+  height: 85vh;
+}
 
 /* The search field */
 #myInput {
@@ -66,12 +69,14 @@ img {
 footer{
   background-color: inherit;
   overflow: hidden;
+
+  height: 15vh
 }
 nav{
   height: 80px;
 }
 section{
-min-height: calc(100vh - 130px);
+min-height: 85vh;
   padding-top: 150px;
 }
 .tab {
@@ -161,7 +166,7 @@ min-height: calc(100vh - 130px);
 /* Tab */
 
 .slideOutTab {
-  margin-top: 50px;
+  margin-top: 50vh;
   position: absolute;
   left: -40px;
   height: 200px;
