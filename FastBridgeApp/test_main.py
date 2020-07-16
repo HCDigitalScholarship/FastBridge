@@ -8,18 +8,18 @@ from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
-
+"""
 def test_text_integrity_oxford():
     response = client.get("oracle/Latin/result/oxford_latin_course_college/start/end/10/dcc_core_list/start-end")
     assert response.status_code == 200
 
 def test_text_integrity_dcc():
-    response = client.get("oracle/Latin/result/dcc_core_list/start/end/10/dcc_core_list/start-end")
+    response = client.get("oracle/Latin/result/dcc_latin_core_list/start/end/10/dcc_core_list/start-end")
     assert response.status_code == 200
 
 def test_text_integrity_wheelock():
     response = client.get("oracle/Latin/result/wheelock_textbook/start/end/10/dcc_core_list/start-end")
-    assert response.status_code == 200
+    assert response.status_code == 200"""
 
 def test_select_latin():
     response = client.get("select/Latin")
@@ -32,7 +32,7 @@ def test_select_greek():
     assert response.context["book_name"] == importlib.import_module('Greek').texts
 
 
-def test_result_OvidPresent():
+"""def test_result_OvidPresent():
     response = client.post("/select/Latin/result/ovid_metamorphoses/1.1-1.1/running/")
     assert response.status_code == 200
 
@@ -105,3 +105,18 @@ def test_text_integrity_ovid13end():
     response = client.get("oracle/Latin/result/ovid_metamorphoses/13.1/end/10/dcc_core_list/start-end")
     assert response.status_code == 200
     #since oracle goes through pretty much every subsection of the text, if part of the text breaks, it will fail the test
+
+
+def test_text_integrity_de_amacitia():
+    response = client.get("oracle/Latin/result/cicero_de_amicitia/start/end/10/dcc_core_list/start-end")
+
+"""
+def test_text_integrity_in_cat():
+    response = client.get("oracle/Latin/result/cicero_in_catilinam_1-4/start/end/10/cicero_in_catilinam_1-4/1.1.1-1.1.2")
+    assert response.status_code == 200
+
+def test_stress():
+    response = client.get('/select/Latin/result/cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4+cicero_in_catilinam_1-4/start+start+start+start+start+start+start+start+start-end+end+end+end+end+end+end+end+end/running/')
+    assert response.status_code == 200
+    assert response.template.name == 'result.html'
+    assert "request" in response.context
