@@ -6,7 +6,6 @@ import importlib
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
-from itertools import zip_longest
 import math
 
 router = APIRouter()
@@ -59,6 +58,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         book = DefinitionTools.get_text(text).book
         print("loaded the book")
         titles += (book.get_words(start, end))
+        del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     print("got titles")
     frequency_dict = {}
     if not running_list:
@@ -76,6 +76,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
         titles = sorted(new_titles, key=lambda x: x[1])
         #print(titles)
+        del dups
+        del new_titles
 
     words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language))
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])

@@ -27,7 +27,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     elif section_level == 3:
         section_list ={"1.1.1": "start"}
 
-    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION TEXT (SHORTDEF  LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
+    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
         print(row)

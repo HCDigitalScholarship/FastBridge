@@ -83,6 +83,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
                     final_row_filters.add((new, datum.Part_Of_Speech+ " "))
 
         computed_row_filters.append(to_add)
+    del lang #this is a huge dictionary, and python's garbage collector does not delete these well. It should be destroyed when the function returns
     #print(computed_row_filters)
     dups = set()
     new_filters = {}
