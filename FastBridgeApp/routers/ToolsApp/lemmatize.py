@@ -55,17 +55,9 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
 
 
 
-def demacronize(text : str , language : str):
-    if language == "Latin":
-        text= unidecode.unidecode(text) #the only magic left. This somehow removes all the macrons. It completely breaks Greek though
-        text = text.replace("v", "u")
-        text = text.replace("V", "U")
-        text = text.replace("j", "i")
-        text = text.replace("J", "I")
-    elif language == "Greek":
-        print(text)
-    #print(text)
-    return text
+def strip_accents(s: str):
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn') #Mn means 'Nonspacing_Mark'
+
 def depunctuate(text : str):
     text = regex.sub(f"[{string.punctuation}]","" ,text)
     return text
@@ -105,7 +97,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             location = word[1:-1] #remove the brackets around the word
         else:
             location = location
-            word = demacronize(word, language)
+            word = strip_accents(word)
             word = depunctuate(word)
             try:
                 title = lemma_lex[word]
