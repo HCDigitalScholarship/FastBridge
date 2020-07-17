@@ -1,17 +1,7 @@
 var rows = data,
     search = document.getElementById('search');
 
-/* Fill array with data
- *
- * Params:
- * values *array*  - value of each field (in case use of table)
- *        example: ['1st TD content', '2nd TD content'] for table
- *                 ['list's LI item content'] for list
- * markup *string* - markup that will be added to the DOM
- * active *bool*   - specifies if row is suitable by search phrase
-*/
-
-
+//Clusterize Stuff
 /*
 * Fetch suitable rows
 */
@@ -48,7 +38,7 @@ var onSearch = function() {
   clusterize.update(filterRows(rows));
 }
 search.oninput = onSearch;
-
+// end clusterize stuff
 // Slideout show
 slideOut = document.getElementById('slideOut')
 tab = document.getElementById('slideOutTab')
