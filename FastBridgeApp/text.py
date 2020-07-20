@@ -1,5 +1,5 @@
 class Text(object):
-    """A Text object. It really could just be a struct."""
+    """A Text object for storing all the data and getting sections nicely"""
 
     def __init__(self, name : str, sections : dict, words : list, section_linkedlist : dict, subsections : int, language : str, local_def: bool = False, local_lem: bool = False):
         self.name = name

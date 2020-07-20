@@ -221,8 +221,11 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][4]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-4]}</td>'
                 lst.append(words[j][0][-4])
+            elif(columnheaders[i] == "LOCAL_LEMMA"):
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-3]}</td>'
+                lst.append(words[j][0][-3])
             elif(columnheaders[i][-5:] =="_LINK"):
                 to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
                 lst.append(words[j][0][i+1])
