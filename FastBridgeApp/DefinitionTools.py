@@ -103,6 +103,8 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     columnheaders = columnheaders[1:] #we don't want a filter for title, that is just to make accessing dicts easier
     if local_defs_bool:
         columnheaders.append("LOCAL_DEFINITION")
+    if local_lem:
+        columnheaders.append("LOCAL_LEMMA")
     columnheaders.append("Source_Text")
     print("got lang data")
     return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters, row_filters

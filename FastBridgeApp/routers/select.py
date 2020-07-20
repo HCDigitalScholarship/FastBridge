@@ -17,6 +17,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/{language}/")
 async def select(request : Request, language : str):
     book_name = importlib.import_module(f'data.{language}.texts').texts
+    print(book_name)
     return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
 
 
@@ -49,6 +50,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         running_list = True
     else:
         running_list = False
+    local_def = False
+    local_lem = False
     #print(triple)
     words = []
     titles =[]
@@ -56,12 +59,16 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     for text, start, end in triple:
         print(text)
         book = DefinitionTools.get_text(text, language).book
+        if not local_def:
+            local_def = book.local_def
+        if not local_lem:
+            local_lem = book.local_lem #if any target works have them, we need it.
         print("loaded the book")
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     print("got titles")
     frequency_dict = {}
-    if not running_list:
+    if True:
         dups = set()
         new_titles = []
 
@@ -74,12 +81,18 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 frequency_dict[title[0]] += 1
 
 
-        titles = sorted(new_titles, key=lambda x: x[1])
+        titles_no_dups = new_titles
         #print(titles)
         del dups
         del new_titles
+    titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
+    titles = sorted(titles, key=lambda x: x[1])
 
-    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language))
+    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
+
+    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+
+
     section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
@@ -90,7 +103,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     print("returning")
     return templates.TemplateResponse("result.html", context)
@@ -140,11 +153,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
         section = f"{unknown} and in {known}"
     frequency_dict = {}
-    if not running_list:
+    if True: #return no duplicates. running_list was going to toggle this, but returning all duplicates violates a data sharing agreement
         dups = set()
 
         new_titles = []
-        titles  = sorted(titles, key=lambda x: x[1]) #because titles becomes a set when we in/exclude, the order we stored them in was lost
         for title in titles:
             if (title[0]) not in dups:
                 dups.add((title[0]))
@@ -152,31 +164,36 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 frequency_dict[title[0]] = 1
             else:
                 frequency_dict[title[0]] += 1
-        titles = new_titles
+        titles_no_dups = new_titles
+
+
+    titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
 
+
+
     ##print(titles)
+
+    titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
     ##print(titles)
     words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
 
-    if not running_list:
-        columnheaders.append("Count_in_Selection")
+    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
+    columnheaders.append("Count_in_Selection")
     columnheaders.append("Order_of_Appearance")
-
     context["section"] = section
     context["len"] = len(words)
-
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters):
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -203,13 +220,26 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
-            style+= f'.{columnheaders[i]} {{ display : none !important}}'
+            style+= f'.{columnheaders[i]} {{display : none !important}}'
             header_js_obj[columnheaders[i]][0] =rules_added
             rules_added +=1
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
             other_headers+=f'<th onclick="sortTable(\'{columnheaders[i]}\',{i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
+    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups)
+    render_words_optional = build_table(words, columnheaders, frequency_dict, titles) #needs to be optional to comply with LALSA
+    context["style"] = style
+    context["headers"] = headers
+    context["POS_list"] = checks
+    context["filters"] = filters
+    context["other_headers"]  = other_headers
+    context["render_words"] = render_words
+    context["render_words_optional"] = render_words_optional
+    context["columnheaders"] = header_js_obj
+    return context
+
+def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
     render_words = []
 
     for j in range(len(words)):
@@ -217,14 +247,15 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
+            #print(words[j])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-4]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].LOCAL_DEFINITION}</td>'
                 lst.append(words[j][0][-4])
             elif(columnheaders[i] == "LOCAL_LEMMA"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-3]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].LOCAL_LEMMA}</td>'
                 lst.append(words[j][0][-3])
             elif(columnheaders[i][-5:] =="_LINK"):
                 to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
@@ -233,11 +264,11 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Order_of_Appearance"):
-                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{words[j][0][-2]}</td>'
+                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{words[j][0].Appearance}</td>'
                 lst.append(titles[j][1])
                 #the display is the human location, but the value – which the js uses to sort – is the word number
             elif(columnheaders[i] == "Source_Text"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][-1]}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
             else:
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
@@ -247,11 +278,5 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         [lst.append(c) for c in classes]
 
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
-    context["style"] = style
-    context["headers"] = headers
-    context["POS_list"] = checks
-    context["filters"] = filters
-    context["other_headers"]  = other_headers
-    context["render_words"] = render_words
-    context["columnheaders"] = header_js_obj
-    return context
+
+    return render_words

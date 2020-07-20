@@ -18,7 +18,6 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     valid.add(nan)
     del lang
     completeName= f'{app_path}/data/{language}/{filename}.py'
-    print(completeName)
     the_text = []
     section_list ={} #sections as a linked list, so that we can find the previous one really quickly
     if section_level == 1:
@@ -28,7 +27,8 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     elif section_level == 3:
         section_list ={"1.1.1": "start"}
 
-    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
+    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION RUNNINGCOUNT TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
+    #we no longer use SECTION and RUNNINGCOUNT in imports
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
         #print(row)
@@ -42,13 +42,13 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 assert False
 
         if local_def and local_lem:
-            the_text.append((row[0], i, row[3], row[4], row[5], row[1])) #add the title, array index,  text, definition, local lemma quad to that list
+            the_text.append((row[0], i, row[4], row[5], row[6], str(row[1]))) #add the title, array index,  text, definition, local lemma quad to that list
         elif local_def:
-            the_text.append((row[0], i, row[3], row[4], '', row[1])) #add the title, array index, text, definition
+            the_text.append((row[0], i, row[4], row[5], '', str(row[1]))) #add the title, array index, text, definition
         elif local_lem:
-            the_text.append((row[0], i, row[3], '', row[5], row[1]))
+            the_text.append((row[0], i, row[4], '', row[6], str(row[1])))
         else:
-            the_text.append((row[0], i, row[3], '', '', row[1]))
+            the_text.append((row[0], i, row[4], '', '', str(row[1])))
         section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : i} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
@@ -66,9 +66,13 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
 
     #and add text to language/texts
     completeName= f'{app_path}/data/{language}/texts.py'
-    texts = importlib.import_module(f'{language}/texts')
-    new_set = texts.texts.add(title)
-    code = f'texts = {new_set}'
+    print(completeName)
+    texts = importlib.import_module(f'data.{language}.texts')
+    print(texts, " current content")
+    print(texts.texts)
+    texts.texts.add(title)
+    print(texts.texts)
+    code = f'texts = {texts.texts}'
     file1 = open(completeName, "w")
     file1.write(code)
     file1.close()

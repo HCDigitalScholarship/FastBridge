@@ -12,7 +12,7 @@ var othertexts = [];
 var other_starts = [];
 var other_ends = [];
 var text_to_add = "";
-var running_list = "running"
+var running_list = "non_running"
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");

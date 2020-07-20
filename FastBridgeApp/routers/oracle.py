@@ -15,7 +15,7 @@ async def oracle_index(request : Request):
 
 @router.get("/{language}")
 async def oracle_select(request : Request, language : str):
-    book_name = importlib.import_module(f'data.{language}.texts').texts 
+    book_name = importlib.import_module(f'data.{language}.texts').texts
     return templates.TemplateResponse("select-oracle.html", {"request": request, "book_name": book_name})
 
 @router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
@@ -38,8 +38,11 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         #we can go through the section_linkedlist backwards
         sections = book.section_linkedlist
         indexable_sections = list(book.section_linkedlist.keys())
+        print(indexable_sections)
         start = indexable_sections.index(e_section_end) - e_section_size
         end = e_section_end
+        print(start)
+        print(len(indexable_sections))
         while indexable_sections[start] != e_section_start:
             section = f'{indexable_sections[start]} - {end}'
             section_words = book.get_words(indexable_sections[start], end)

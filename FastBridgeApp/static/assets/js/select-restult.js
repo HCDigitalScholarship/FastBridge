@@ -44,6 +44,22 @@ slideOut = document.getElementById('slideOut')
 tab = document.getElementById('slideOutTab')
 tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
 
+
+
+function show_full_list(id) {
+  var ths = document.getElementById(id);
+  var value = ths.value;
+  if(value == "show"){
+  rows = full_data;
+  clusterize.update(filterRows(rows));
+  ths.value = "hide"
+  }
+  else if(value == "hide"){
+    rows =  data;
+    clusterize.update(filterRows(rows));
+    ths.value = "show"
+  }
+}
 //from old bridge. Somethings weren't broken
 function printData()
 {
@@ -119,7 +135,7 @@ function sortTable(col, n) {
   //console.log(col)
   asc = columns[col][1]
   //checks if this is an int or a string. Thank you implicit typing
-  if(rows[0].values[n] + 1 != `${rows[0].values[n]}1`){
+  if(typeof rows[0].values[n] == "number"){
 
     if (asc){
     rows.sort(function(a, b){
@@ -213,17 +229,24 @@ function hide_show_column(col_name)
 
  }
  else{
-   stylesheet.deleteRule(columns[col_name][0])
-
+   console.log(columns[col_name][0])
+   console.log(end-1)
    if (columns[col_name][0] != end -1){
+     //console.log("about to for")
      for (const [key, value] of Object.entries(columns)){
-       if(value >= columns[col_name][0] ){
-         columns[key][0] = value-1;
+       //console.log(value[0])
+       //console.log(columns[col_name][0])
+       if(value[0] > columns[col_name][0]){
+         console.log(key)
+         console.log(columns[key])
+         columns[key] =  [columns[key][0] - 1, true] //bool is for sorting, this makes is smallest to largest
        }
      }
 
    }
-   columns[col_name][0] = 0;
+   stylesheet.deleteRule(columns[col_name][0])
+
+   columns[col_name] = [0, true];
    document.getElementById(col_name+"_head").style.display="table-cell";
    document.getElementById(col_name).value="hide";
  }
