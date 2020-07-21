@@ -13,6 +13,9 @@ router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
 
+@router.get("/")
+async def index(request : Request):
+    return templates.TemplateResponse("list-index.html", {"request": request})
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):

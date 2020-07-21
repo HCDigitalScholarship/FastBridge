@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.btn {
+    border: 1px;
+    border-color: white;
+    border-radius: 35px;
+    border-style: solid;
+    color: #ffffff;
+    font-size: 20px;
+    font-family: Actor, sans-serif;
+    margin-right: 10px;
+    margin-left: 10px;
+    width: 120px;
+}
+</style>
+
+<body id="page-top">
+    <header class="masthead" style="background-image: url('/assets/img/background-img-gray.png') ;background-size: cover; background-position: top;">
+        <div class="intro-body">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px;">
+                      <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 34px;margin-bottom: 45px;font-weight: normal;">
+                          Get information about our texts</p>
+                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">
+                            Select a language to see our library!</p>
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(125,232,194,0.75);" href="/about/texts/Greek/">
+                            Greek</a>
+                        <a class="btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="/about/texts/Latin/">
+                            Latin</a>
+                    </div>
+                </div>
+            </div>
+          </div>
+    </header>
+</body>
+{% endblock %}

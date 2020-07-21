@@ -84,7 +84,7 @@ function showTabOracle(n, isNext) {
     next.innerHTML = '<i class="fas fa-angle-double-right"></i>';
   }
   // ... and run a function that displays the correct step indicator:
-  fixStepIndicator(n);
+  fixStepIndicator(n+1);
 }
 
 // This function will figure out which tab to display
@@ -323,7 +323,6 @@ function string_to_slug (str) {
 
     str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
         .replace(/\s+/g, '_') // collapse whitespace and replace by _
-        .replace(/-+/g, '_'); // collapse dashes
 
     return str;
 }

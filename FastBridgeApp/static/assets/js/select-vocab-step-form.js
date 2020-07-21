@@ -82,7 +82,7 @@ function showTab(n, isNext) {
     next.innerHTML = '<i class="fas fa-angle-double-right"></i>';
   }
   // ... and run a function that displays the correct step indicator:
-  fixStepIndicator(n);
+  fixStepIndicator(n+1);
 }
 
 //hack to make a post request on submit because the input is a fake form
@@ -140,7 +140,7 @@ function nextPrev(n, next) {
         path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + in_exclude + "/" + str_othertexts + "/" + str_other_starts + "-" + str_other_ends + "/" + 'non_running' + "/";
     }
     post(path,[])
-    return; 
+    return;
   }
   // Otherwise, display the correct tab:
   showTab(currentTab, next);
