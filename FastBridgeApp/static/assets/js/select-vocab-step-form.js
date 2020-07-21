@@ -12,7 +12,6 @@ var othertexts = [];
 var other_starts = [];
 var other_ends = [];
 var text_to_add = "";
-var running_list = "non_running"
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
@@ -135,12 +134,13 @@ function nextPrev(n, next) {
 
 
     if(in_exclude.length == 0){
-      path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + running_list + "/";
+      path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + 'non_running' + "/";
     }
     else{
-        path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + in_exclude + "/" + str_othertexts + "/" + str_other_starts + "-" + str_other_ends + "/" + running_list + "/";
+        path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + in_exclude + "/" + str_othertexts + "/" + str_other_starts + "-" + str_other_ends + "/" + 'non_running' + "/";
     }
     post(path,[])
+    return; 
   }
   // Otherwise, display the correct tab:
   showTab(currentTab, next);
@@ -185,14 +185,6 @@ $('#formCheck-3').click(function(){
     document.getElementById("openModal2").disabled = true;
     in_exclude = "";
     console.log(in_exclude);
-});
-
-$('#running_list_true').click(function(){
-  running_list = "running"
-});
-
-$('#running_list_false').click(function(){
-  running_list = "non_running"
 });
 
 /*
@@ -268,7 +260,7 @@ $('#bridge-modal-form1-save').click(function(){
     // hide modal when save
     $('#bridge-select-text').modal('hide');
     // reset form values
-    $('#bridge-select-text').find('#bridge-modal-form1')[0].reset();
+    //$('#bridge-select-text').find('#bridge-modal-form1')[0].reset();
     $('#bridge-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
@@ -323,7 +315,7 @@ $('#bridge-modal-form2-save').click(function(){
     // hide modal when save
     $('#bridge-change-list').modal('hide');
     // reset form values
-    $('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
+    //$('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
     $('#bridge-modal-form2-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;

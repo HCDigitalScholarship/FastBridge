@@ -33,7 +33,7 @@ def filter_helper(row_filters, POS):
                 #print(filter, POS_for_filter, "printing")
                 display_filter = display_filter[:-1]
             elif display_filter[-2:] == "99":
-                display_filter = f"Irregular {display_filter[:-2]}"
+                display_filter = f"Irregular"
             else:
                 display_filter = ordinal(int(filter[-1])) + f" {display_filter[:-1]}"
             cssclass = filter.split('_')[0]
