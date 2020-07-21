@@ -70,14 +70,14 @@ footer{
   background-color: inherit;
   overflow: hidden;
 
-  height: 15vh
+  height: 120px
+  padding: 0 0
 }
 nav{
-  height: 80px;
+  height: 120px;
 }
 section{
 min-height: 85vh;
-  padding-top: 150px;
 }
 .tab {
   display: none;
