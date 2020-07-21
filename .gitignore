@@ -121,3 +121,8 @@ venv.bak/
 
 #datafiles
 *.csv
+
+#google sheets api
+credentials.json
+quickstart.py
+*.pickle

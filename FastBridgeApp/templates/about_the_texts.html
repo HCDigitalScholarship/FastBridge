@@ -10,7 +10,7 @@
 <body>
   <section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
 <div class="container">
-<h2> Now Showing our books in {{ language }}</h2>
+<h2> Now Showing our books in our Library</h2>
 
 <input class="form-control" style="width:30%" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
 
@@ -20,7 +20,7 @@
   <table class="table table-striped"
 style="margin-bottom: 0rem; overflow: hidden;">
     <thead style="text-align:left">
-      <tr> <td onclick="sortTable('Title',0)" >Author, Title</td> <td onclick="sortTable('Subsection_Depth',1)">Subsection Depth </td> <td onclick="sortTable('local_def',2)">Has Local Definintions?</td> <td onclick="sortTable('local_lem',3)">Has Local Lemmata?</td> </tr>
+      <tr> {{headers|safe}} </tr>
   </thead>
   </table>
   <div class="clusterize-scroll" id="scrollArea">
