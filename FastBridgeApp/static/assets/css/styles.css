@@ -11,6 +11,18 @@ img {
   padding: 1vh 1vh 1vh 1vh;
 }
 
+.btn-nonbs {
+    border: 1px;
+    border-color: white;
+    border-radius: 35px;
+    border-style: solid;
+    color: #ffffff;
+    font-size: 20px;
+    margin-right: 10px;
+    margin-left: 10px;
+    width: 120px;
+}
+
 #page-top {
   height: 85vh;
 }

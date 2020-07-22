@@ -5,10 +5,19 @@
 <body>
   <section class="content-section" style="background-image: url('/assets/img/background-img-gray.jpg'); background-size: cover;background-position: top;">
       <div class="container" style="color: #ffffff;">
-  {% for book in books %}
-    <p> {{ book }}</p>
-    {% endfor %}
+        <div class="row">
+          <div class="col-sm">
+            {% for book in latin %}
+              <p> {{ book }}</p>
+              {% endfor %}
 
+          </div>
+          <div class="col-sm">
+            {% for book in greek %}
+              <p> {{ book }}</p>
+              {% endfor %}
+          </div>
+        </div>
     </div>
   </section>
 </body>
