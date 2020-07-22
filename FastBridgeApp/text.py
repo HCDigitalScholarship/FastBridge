@@ -44,10 +44,20 @@ class Text(object):
                 internal_range_end = range_end
         elif range_end.count(".") == 0 and self.subsections == 2:
             #for input with one level and 2 level was expected
-            internal_range_end = self.section_linkedlist[next_section(range_end) + ".1"] #this should make a search for  1.1 - 1 become a search for 1.1 - 2.1(previous section)
+            try:
+                internal_range_end = self.section_linkedlist[next_section(range_end) + ".1"]
+                #this should make a search for  1.1 - 1 become a search for 1.1 - 2.1(previous section). If the section has a letter (ie, 2b), this will convert it to 2c. If 2c does not exist, it will fail and go below
+            except Exception as e:
+                to_increment = range_end[:-1] #remove the letter
+                self.section_linkedlist[next_section(to_increment) + ".1"]
+
         elif range_end.count(".") == 0 and self.subsections == 3:
             #for things with one level and 3 level was expected
-            internal_range_end = self.section_linkedlist[next_section(range_end) + ".1.1"]
+            try:
+                internal_range_end = self.section_linkedlist[next_section(range_end) + ".1.1"]
+            except Exception as e:
+                to_increment = range_end[:-1] #remove the letter
+                self.section_linkedlist[next_section(to_increment) + ".1.1"]
 
         elif range_end.count(".") == 1 and self.subsections == 2:
                 #for things with two levels, and two were given
@@ -56,8 +66,10 @@ class Text(object):
         elif range_end.count(".") == 1 and self.subsections == 3:
             #for things with three levels, and two were given
             range_end = range_end.split(".")
-            internal_range_end = self.section_linkedlist[".".join(range_end[0], str(int(range_end[1])+1), [".1"])]
-
+            try:
+                internal_range_end = self.section_linkedlist[".".join(range_end[0], next_section(range_end[1]), ".1")]
+            except Exception as e:
+                internal_range_end = self.section_linkedlist[".".join(range_end[0], next_section(range_end[1][:-1]), ".1")]
         elif range_end.count(".") == 2 and self.subsections == 3:
             internal_range_end = range_end
         #start ends up being the end of the previous section + 1
