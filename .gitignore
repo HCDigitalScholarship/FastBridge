@@ -126,3 +126,4 @@ venv.bak/
 credentials.json
 quickstart.py
 *.pickle
+gunilog
