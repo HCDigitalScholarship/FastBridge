@@ -1,1 +1,1 @@
-texts = set()
+texts = {}

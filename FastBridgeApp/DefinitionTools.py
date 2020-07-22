@@ -13,6 +13,13 @@ def get_text(form_request : str, language : str):
     """
     return importlib.import_module(f'data.{language}.{form_request}')
 
+
+def render_titles(language: str, dropdown : str = ""):
+    book_names = importlib.import_module(f'data.{language}.texts').texts # a dict of Title: depth
+    titles = []
+    [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {book_names[key]})\"> {key} </a>") for key in book_names.keys()]
+    return "".join(titles)
+
 def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False, local_lem : bool = False):
     """
     Gets the definitions,  and other information, about the titles in words, from the appropriate dictionary, also gets the Parts of Speech (POS) and column headers to display for this language.

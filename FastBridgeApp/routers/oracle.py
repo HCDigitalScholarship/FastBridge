@@ -16,7 +16,7 @@ async def oracle_index(request : Request):
 @router.get("/{language}")
 async def oracle_select(request : Request, language : str):
     book_name = importlib.import_module(f'data.{language}.texts').texts
-    return templates.TemplateResponse("select-oracle.html", {"request": request, "book_name": book_name})
+    return templates.TemplateResponse("select-oracle.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
 
 @router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
 async def oracle(request : Request, language : str, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str, e_section_start : str, e_section_end : str):

@@ -135,9 +135,7 @@
                                       <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
                                       <div id="myDropdown" class="dropdown-content" style="color: black;">
                                         <input type="text" placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
-                                        {% for name in book_name %}
-                                        <a onclick="add_text('{{ name }}', 'myDropdown')"> {{name}} </a>
-                                        {% endfor %}
+                                      {{ titles|safe }}
                                       </div>
                                     </div>
 
@@ -185,9 +183,7 @@
                                   <button type="button" onclick="myFunction('myDropdown2')" id = "chosen_text2" class="form-control">Click Me</button>
                                   <div id="myDropdown2" class="dropdown-content" style="color: black;">
                                     <input type="text" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
-                                    {% for name in book_name %}
-                                    <a onclick="add_text('{{ name }}', 'myDropdown2')"> {{name}} </a>
-                                    {% endfor %}
+                                  {{ titles2|safe }}
                                   </div>
                                 </div>
 

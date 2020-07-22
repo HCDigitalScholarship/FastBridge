@@ -19,9 +19,8 @@ async def index(request : Request):
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    book_name = importlib.import_module(f'data.{language}.texts').texts
-    print(book_name)
-    return templates.TemplateResponse("select.html", {"request": request, "book_name": book_name})
+
+    return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 def filter_helper(row_filters, POS):

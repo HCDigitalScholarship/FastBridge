@@ -17,8 +17,22 @@ function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
 }
 
-function add_text(text_name, dropdown_id){
+function add_text(text_name, dropdown_id, depth){
   text_to_add = text_name;
+  var new_placeholder;
+  if(depth == 1){
+    new_placeholder = "1"
+  }
+  else if (depth == 2) {
+    new_placeholder = "1.1"
+  }
+  else if (depth == 3){
+    new_placeholder = "1.1.1"
+  }
+  document.getElementById('oracle-modal-form1-select2-hidden-field1').placeholder = new_placeholder
+  document.getElementById('oracle-modal-form1-select2-hidden-field2').placeholder = new_placeholder
+  document.getElementById('oracle-modal-form2-select2-hidden-field1').placeholder = new_placeholder
+  document.getElementById('oracle-modal-form2-select2-hidden-field2').placeholder = new_placeholder
   if (text_to_add == ""){
     alert("please enter a valid text");
     return false;

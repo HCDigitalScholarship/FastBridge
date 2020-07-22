@@ -70,7 +70,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     texts = importlib.import_module(f'data.{language}.texts')
     print(texts, " current content")
     print(texts.texts)
-    texts.texts.add(title)
+    texts.texts.update((title, section_level))
     print(texts.texts)
     code = f'texts = {texts.texts}'
     file1 = open(completeName, "w")
