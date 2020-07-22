@@ -40,5 +40,5 @@ def about_the_texts(request: Request):
     context["books_data"] = books_data
     context["columns"] = columns
     context["headers"] = headers
-    context["style"] = f'td{{max-width : 4vh; width: 4vh; color: white;}}'
+    context["style"] = f'td{{max-width : 10vh; width: 10vh; color: white;}}'
     return templates.TemplateResponse("about_the_texts.html", context)

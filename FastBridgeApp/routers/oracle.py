@@ -30,7 +30,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
     ogknown_tokens = set([(new[0]) for new in ogknown_words])
     e_section_list = e_section_size.split("+")
     to_explore = DefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
-
+    sections_display = ""
     for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):
         e_section_size = int(e_section_size)
         book = DefinitionTools.get_text(text, language).book
@@ -44,17 +44,19 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         print(start)
         print(len(indexable_sections))
         while indexable_sections[start] != e_section_start:
-            section = f'{indexable_sections[start]} - {end}'
+            section = f'{indexable_sections[start]} - {end}' #for each row of the table
             section_words = book.get_words(indexable_sections[start], end)
             total_tokens = set([(new[0]) for new in section_words])
-            total_words =  (section_words) #need to filter the to get out the sorting info.
+            total_words =  (section_words) #need to filter to get out the sorting info.
             known_tokens = total_tokens.intersection(ogknown_tokens)
             count_unknown_tokens = len(total_tokens.difference(known_tokens))
             known_tokens = len(total_tokens.intersection(ogknown_tokens))
 
             total_tokens = len(total_tokens)
-            total_words = [(new[0], new[2]) for new in total_words]
-            known_words = (list_intersection(total_words, [(new[0], new[2]) for new in ogknown_words]))
+            print(total_words[0])
+            total_words = [(new[0]) for new in total_words]
+            print(total_words[0])
+            known_words = (list_intersection(total_words, [(new[0]) for new in ogknown_words]))
             count_unknown_words = len(list_difference(total_words, known_words))
 
             known_words = len(known_words)
@@ -67,9 +69,10 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
             table_data.append([section, total_words, total_tokens, known_words, known_tokens, percent_1, percent_2, link])
             start =  start - 1
             end = sections[end] #previous sections
+        sections_display+= f"{book.name}: {e_section_start} - {e_section_end}, " #for the top part
     context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
-    etexts = etexts[0].replace("_" , ", ").title()
-    context["etexts"] = f'{etexts} {e_section_start} - {e_section_end}'
+
+    context["etexts"] = sections_display
 
     return templates.TemplateResponse("result-oracle.html", context)
 

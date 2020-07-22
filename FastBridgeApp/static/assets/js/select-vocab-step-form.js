@@ -214,6 +214,8 @@ $("#bridge-modal-form1-select2").change(function() {
     $('#bridge-modal-form1-select2-hidden-div').show();
     $('#bridge-modal-form1-select2-hidden-field1').required = true
     $('#bridge-modal-form1-select2-hidden-field2').required = true
+    $('#bridge-modal-form1-select2-hidden-field1').placeholder = "changed place1"
+    $('#bridge-modal-form1-select2-hidden-field2').placeholder = "changed place2"
   } else {
     $('#bridge-modal-form1-select2-hidden-div').hide();
     $('#bridge-modal-form1-select2-hidden-field1').required = false

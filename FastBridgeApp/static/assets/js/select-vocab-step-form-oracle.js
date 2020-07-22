@@ -299,8 +299,8 @@ $('#oracle-modal-form1-save').click(function(){
     cell3.innerHTML = '<button class="btn" onclick="deleteRowOracle(this)"><i class="fa fa-remove" style="font-size:25px;color:#e8837d;"></i></button>';
     // hide modal when save
     $('#oracle-select-text').modal('hide');
-    document.getElementById("computer").style.display="none";
-    document.getElementById("bridge").style.display="none";
+    //document.getElementById("computer").style.display="none";
+    //document.getElementById("bridge").style.display="none";
     // reset form values
     $('#oracle-select-text').find('#oracle-modal-form1')[0].reset();
     $('#oracle-modal-form1-select2-hidden-div').hide();
