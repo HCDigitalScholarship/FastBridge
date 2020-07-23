@@ -246,10 +246,11 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
 
     for j in range(len(words)):
         lst = []
+        print(words[j])
+
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
-            #print(words[j])
             if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
@@ -272,6 +273,9 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "Source_Text"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
+            elif(columnheaders[i] == "Total_Count_in_Text"):
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
+                lst.append(words[j][0].Total_Count_in_Text)
             else:
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])

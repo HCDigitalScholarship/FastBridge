@@ -95,7 +95,7 @@ class Text(object):
 
         if end == -1:
             end = len(tmp)
-        wordlist = [tmp[i] + (self.name,) for i in range(start, end)]
+        wordlist = [tmp[i] + (self.name,) for i in range(start, end)] #adds the source text
         return wordlist
 
 

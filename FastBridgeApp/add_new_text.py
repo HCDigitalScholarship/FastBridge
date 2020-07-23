@@ -29,6 +29,15 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
 
     #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION RUNNINGCOUNT TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
     #we no longer use SECTION and RUNNINGCOUNT in imports
+    total_frequency_dict ={}
+    for i in range(len(csv_reader)):
+        row =  csv_reader[i]
+        try:
+            total_frequency_dict[row[0]]+=1 #if it is there, increment
+        except KeyError:
+            total_frequency_dict[row[0]]=1
+
+
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
         #print(row)
@@ -40,15 +49,15 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 return f'Error: {row[0]} is not defined as a word in {language}. Check line {i+2} of the import sheet if this looks like a typo, or add {row[0]} to {language}'
                 #it is row i+2 because line numbers start at 1 and i starts at 0, and i does not have the headers
                 assert False
-
+        frequency = total_frequency_dict[row[0]]
         if local_def and local_lem:
-            the_text.append((row[0], i, row[4], row[5], row[6], str(row[1]))) #add the title, array index,  text, definition, local lemma quad to that list
+            the_text.append((row[0], i, row[4], row[5], row[6], str(row[1]), frequency)) #add the title, array index,  text, definition, local lemma quad to that list
         elif local_def:
-            the_text.append((row[0], i, row[4], row[5], '', str(row[1]))) #add the title, array index, text, definition
+            the_text.append((row[0], i, row[4], row[5], '', str(row[1]), frequency)) #add the title, array index, text, definition
         elif local_lem:
-            the_text.append((row[0], i, row[4], '', row[6], str(row[1])))
+            the_text.append((row[0], i, row[4], '', row[6], str(row[1]), frequency))
         else:
-            the_text.append((row[0], i, row[4], '', '', str(row[1])))
+            the_text.append((row[0], i, row[4], '', '', str(row[1]), frequency))
         section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
         section_words.update({section : i} )
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
@@ -111,7 +120,10 @@ def add_words(file, language : str):
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]
-        POS.add(real_row.Part_Of_Speech)
+        if len(real_row.Part_Of_Speech.split(" ")) == 1:
+            POS.add(real_row.Part_Of_Speech)
+        #else:
+            #this is some thing that fits multiple exisiting POS.
     #now we need to save over the old file with this new dict
     code = f'columnheaders = {columnheaders}\nnan=""\nrow_filters = {row_filters}\nPOS_list = {POS}\ncorrect_dict = {dict}'
     file1 = open(f'{language}.py', "w")
