@@ -60,7 +60,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         #print(words[i])
         to_add = f""
         #print(lang[words[i][0]])
-        datum= (words[i][0],) + lang[words[i][0]] + (apperances[i], words[i][-1])
+        datum= (words[i][0],) + lang[words[i][0]] + (apperances[i], words[i][-2], words[i][-1])
         #print(datum)
         if local_defs_bool and local_lem:
             datum = datum + (local_defs[i], local_lems[i])
@@ -68,6 +68,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
             datum = datum + (local_defs[i],)
         elif local_lem:
             datum = datum + ('', local_lems[i])
+
 
 
         datum = Word(*datum)

@@ -218,7 +218,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     rules_added = 1 #we set table data width in this stylesheet already
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
+        if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
@@ -246,12 +246,12 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
 
     for j in range(len(words)):
         lst = []
-        print(words[j])
+        #print(words[j])
 
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
-            if columnheaders[i] == "DISPLAY_LEMMA" or columnheaders[i] == "SHORT_DEFINITION":
+            if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION":
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
                 lst.append(words[j][0][i+1])
             elif(columnheaders[i] == "LOCAL_DEFINITION"):

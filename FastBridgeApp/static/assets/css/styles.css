@@ -81,9 +81,10 @@ img {
 footer{
   background-color: inherit;
   overflow: hidden;
-
-  height: 120px
-  padding: 0 0
+  max-height: 100px;
+  min-height: 90px;
+  height: 120px;
+  padding: 20px 0
 }
 nav{
   height: 120px;

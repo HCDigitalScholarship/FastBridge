@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import re as regex
 from starlette.responses import FileResponse
 from typing import Optional
-import unidecode
+import unicodedata
 import string
 router = APIRouter()
 router_path = Path.cwd()

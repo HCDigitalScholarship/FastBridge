@@ -79,7 +79,8 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     texts = importlib.import_module(f'data.{language}.texts')
     print(texts, " current content")
     print(texts.texts)
-    texts.texts.update((title, section_level))
+    print(title)
+    texts.texts[title] =  section_level
     print(texts.texts)
     code = f'texts = {texts.texts}'
     file1 = open(completeName, "w")
@@ -116,7 +117,7 @@ def add_words(file, language : str):
     for row in csv_reader:
         #print(row)
         new = row[:to_skip]+row[to_skip+1:]
-        #print(new)
+        print(new)
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]
