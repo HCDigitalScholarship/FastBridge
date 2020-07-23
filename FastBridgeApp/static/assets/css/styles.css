@@ -60,7 +60,13 @@ img {
   border: 1px solid #ddd;
   z-index: 1;
 }
-
+.btn-no-padding{
+  padding: 0 0 0 0;
+}
+.btn-no-padding:focus{
+  outline:0;
+  box-shadow: none;
+}
 /* Links inside the dropdown */
 .dropdown-content a {
   color: black;

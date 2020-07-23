@@ -202,10 +202,10 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         style+= new_style
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" name="filterChecks" class="custom-control-input" value="hide"  id="{POS}" onchange="hide_show_row(\'{POS}\');" checked><label class="custom-control-label" for="{POS}">{POS.replace("_", " ")}</label>'
         if filters:
-            checks+= f'<span class="dropdown-submenu"> <button class="btn" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
+            checks+= f'<span class="dropdown-submenu"> <button class="btn btn-no-padding" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
     checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
-    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/Non</label></div></div>'
+    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>'
     for global_f in global_filters:
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
     checks += '</div>'
