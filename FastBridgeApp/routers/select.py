@@ -12,6 +12,27 @@ router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
+import sys
+
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
 
 @router.get("/")
 async def index(request : Request):
@@ -68,6 +89,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         print("loaded the book")
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
+    try:
+        print(get_size(book))
+    except Exception as e:
+        print("GOOD! IT IS GONE")
     print("got titles")
     frequency_dict = {}
     if True:
@@ -87,6 +112,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         #print(titles)
         del dups
         del new_titles
+    print(get_size(frequency_dict))
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
 
@@ -108,8 +134,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     print("returning")
-    return templates.TemplateResponse("result.html", context)
-
+    response = templates.TemplateResponse("result.html", context)
+    print(get_size(response))
+    return response
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
 
 
