@@ -64,7 +64,7 @@ def depunctuate(text : str):
 
 
 def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
-    output = "TITLE,SECTION,RUNNING COUNT,TEXT\n"
+    output = "TITLE,LOCATION,SECTION,RUNNING COUNT,TEXT\n"
     text.replace(".", "_")
     print(text)
     if poetry:
@@ -87,14 +87,16 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
     print(text)
     running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
     conversion = False
+    section = 0
     if format == "Bridge":
         #the default lemma_lex is the perseus one, if we get the equivalnces stored nicely in an other file as a dictionary, it will be best to just import that file and look up the conversion.
         conversion =  importlib.import_module(f'routers.ToolsApp.{language}_morpheus_conversion').conversion_dict
     for word in text:
         if regex_go_brrr.match(word):
-            print("FOUND A SECTION/number")
+            print("FOUND A number")
             print(word)
             location = word[1:-1] #remove the brackets around the word
+            section +=1
         else:
             location = location
             word = strip_accents(word)
@@ -110,6 +112,6 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             except KeyError:
                 title =  "morpheus: NONE" #humans will need to address this one!
 
-            output += f'{title},{location},{running_count},{word}\n'
+            output += f'{title},{location},{section}{running_count},{word}\n'
             running_count+=1
     return output

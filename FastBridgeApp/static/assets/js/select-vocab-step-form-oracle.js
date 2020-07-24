@@ -193,9 +193,17 @@ $('#oracle-modal-form2-save').click(function(){
 
     var sectionFrom = $('#oracle-define-vocab #oracle-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#oracle-define-vocab #oracle-modal-form2-select2-hidden-field2').val();
-    if (sectionFrom || sectionTo){ // if user specifies a section
+    if (sectionFrom & sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    } else {
+    }else if (!sectionFrom) {
+      var sections = `start-${sectionTo}`;
+      sectionFrom = 'start'
+    }
+    else if (!sectionTo) {
+      var sections = `${sectionFrom}-end`;
+      sectionTo = 'end'
+    }
+     else {
         sectionFrom = 'start'
         sectionTo = 'end'
         var sections = 'start-end';
