@@ -30,7 +30,7 @@ var onSearch = function() {
   for(var i = 0, ii = rows.length; i < ii; i++) {
     var suitable = false;
     for(var j = 0, jj = rows[i].values.length; j < jj; j++) {
-      if(rows[i].values[j].toString().indexOf(search.value) + 1)
+      if(rows[i].values[j].toString().toLowerCase().indexOf(search.value) + 1)
         suitable = true;
     }
     rows[i].active = suitable;

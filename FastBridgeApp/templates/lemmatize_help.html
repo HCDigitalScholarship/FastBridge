@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<title>The Bridge: About</title>
+
+<body>
+      <section class="content-section">
+        <div class="container">
+<h2>0. What happens before you begin</h2>
+<p style="padding-left: 30px;">Someone (maybe you!) has processed&nbsp;a&nbsp;plain text file (*.txt) of your text using <a href="http://bridge.haverford.edu/lemmatizer">Bridge/Lemmatizer</a>. This will produce a .csv file (<a href="https://en.wikipedia.org/wiki/Comma-separated_values">comma-separated values</a>) that reformats your text vertically in a sheet and automatically lemmatizes any word that can be unambiguously linked to a single dictionary headword (lemma).&nbsp;</p>
+<p style="padding-left: 40px;">Note: there are a few ambiguous words that may be improperly lemmatized by the program; esp. multa- to MVLTA/1 (a noun, "punishment") instead of left unlemmatized as ambiguous.</p>
+
+<h2>1. Preparing Your Lemmatization Sheet</h2>
+<p style="padding-left: 40px;">1. Import the .csv for your TEXT into your spreadsheet program and save it as a spreadsheet (.xlsx). [<a href="https://youtu.be/0JfnloFwUY8">1-minute YouTube Tutoria</a>l]</p>
+<p style="padding-left: 40px;">2. Rename your sheet as TEXT (will be Sheet1 by default).</p>
+<p style="padding-left: 80px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif-2.gif"><img class="size-full wp-image-703 alignnone" src="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif-2.gif" alt="" width="480" height="256"></a></p>
+<p style="padding-left: 40px;">3. Import a DICTIONARY sheet into your Spreadsheet by dragging the DICTIONARY sheet into the sheet bar at the bottom of the TEXT Spreadsheet.&nbsp;</p>
+<p style="padding-left: 80px;">You can download Bridge DICTIONARY, as well as LIST spreadsheets at <a href="https://github.com/GitClassical/Bridge/tree/master/data">GitClassical/Bridge</a>.</p>
+<p style="padding-left: 80px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif.gif"><img class="size-full wp-image-702 alignnone" src="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif.gif" alt="" width="480" height="329"></a></p>
+<p style="padding-left: 40px;">4. Add column headers. Add at least PRINCIPAL_PARTS and SHORT_DEFINITION. You may also add the Bridge columns LONG_DEFINITION, LOCAL_DEFINITION, and LOCAL_PRINCIPAL_PARTS — as well as any other columns for personal use (e.g., QUESTIONS, PROBLEMS, etc.).</p>
+<p style="padding-left: 80px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.02.08-AM.png"><img class="wp-image-704 alignnone" src="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.02.08-AM.png" alt="" width="780" height="64"></a></p>
+<p style="padding-left: 40px;">5a. Link your TEXT sheet to the DICTIONARY by adding these formulae to the first row of data in the correct columns.</p>
+<p style="padding-left: 80px;">a. PRINCIPAL_PARTS: =VLOOKUP(A2,DICTIONARY!A:F,2,FALSE)
+b. SHORT_DEFINITION: =VLOOKUP(A2,DICTIONARY!A:F,5,FALSE)
+c. LONG_DEFINITIONS: =VLOOKUP(A2,DICTIONARY!A:F,6,FALSE)</p>
+<p style="padding-left: 40px;">5b. Populate the rest of the rows by selecting the cells and dragging to the end of the text. (you can also copy-paste the formulae). When you populate the spreadsheet, it will automatically bring in principal parts and definitions for words that have been lemmatized.</p>
+<p style="padding-left: 80px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif-3.gif"><img class="size-full wp-image-706 alignnone" src="https://iris.haverford.edu/bridge/files/2017/08/ezgif.com-video-to-gif-3.gif" alt="" width="480" height="417"></a></p>
+
+<h2>2. Getting to Know the Lemmatization Sheet</h2>
+<p style="padding-left: 30px;">You now have a lemmatization spreadsheet that can be worked on in Excel, Google Docs, or any major spreadsheet program. By default, unambiguous words (i.e. non-homonyms) will have been lemmatized by the Bridge Lemmatizer program, allowing you to focus on&nbsp;the real work that requires human judgment.</p>
+<p style="padding-left: 40px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.30.03-AM.png"><img class="alignnone wp-image-708 size-full" src="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.30.03-AM.png" alt="" width="2908" height="752"></a></p>
+<p style="padding-left: 30px;"><span style="text-decoration: underline;"><strong>The Columns</strong></span></p>
+<p style="padding-left: 30px;"><strong>TITLE</strong>: Where you will&nbsp;lemmatize the text by adding the UNIQUE ID that matches the inflected form in TEXT (Column C) with the word&nbsp;in the DICTIONARY.&nbsp;&nbsp;Blank cells (which need TITLEs) should appear yellow.</p>
+<p style="padding-left: 30px;"><strong>LOCATION</strong>: the book, chapter, poem, line, or section in which the word appears. This will be automatically created by the program that generated the spreadsheet but should be checked.</p>
+<p style="padding-left: 80px;">Note: the program has converted the periods in traditional locations (e.g. 1.1.1) to underscores (e.g., 1_1_1). This prevents data loss within the spreadsheet program (1.10 will quickly become 1.1)</p>
+<p style="padding-left: 30px;"><strong>SECTION: The lemmatizer will parse sentences in your text and creating a running count for the sentences.</strong></p>
+<p style="padding-left: 30px;"><strong>RUNNINGCOUNT</strong>: allows you to sort the spreadsheet back to text order. If you add any words, be sure to add a value between those in the rows above and below.</p>
+<p style="padding-left: 30px;"><strong>TEXT</strong>: your text runs down the sheet in this column.&nbsp;</p>
+<p style="padding-left: 70px;"><strong>NOTE: Latin words that end in -N or -QUE&nbsp;</strong>might have been split into multiple rows. If you, lemmatize the actual form and delete the superfluous row. For example, if "relinque" has been split into rows with "relin" and "que", recombine and lemmatize the proper form. But also note that enclitics (-que ~ et) should be lemmatized separately; so if, conversely, you have a TEXT form of iustamque, please split that into two rows, lemmatize, and&nbsp;<em>add an intermediate entry for the Running Count </em>(e.g.,&nbsp;1014, 1014.5).</p>
+<p style="padding-left: 30px;"><strong>PRINCIPAL_PARTS</strong>: the principal parts of the word; this will automatically fill for valid TITLEs when you save the file.<strong> DO NOT MODIFY THIS ENTRY.</strong></p>
+<p style="padding-left: 30px;"><strong>SHORT_DEFINITION</strong>: a succinct definition of the word; ; this will automatically fill for valid TITLEs when you save the file.&nbsp;<strong>DO NOT MODIFY THIS ENTRY.</strong></p>
+<p style="padding-left: 30px;"><strong>LONG_DEFINITION</strong>: a more expansive definition of the word; ; this will automatically fill for valid TITLEs when you save the file.&nbsp;<strong>DO NOT MODIFY THIS ENTRY.</strong></p>
+<p style="padding-left: 30px;"><strong>LOCAL_DEFINITION</strong>: [optional, but if you are adding custom definitions for your text, they will display here; ; this will automatically fill for valid TITLEs when you save the file.&nbsp;<strong>DO NOT MODIFY THIS ENTRY in the "TEXT" page.&nbsp;</strong>Instead you will create new definitions after you have lemmatized the text and <a href="http://bridge.haverford.edu/format">formatted</a> it into a Glossary</p>
+
+<h2>2.&nbsp;Lemmatize your passage by identifying each word and adding new vocabulary to the&nbsp;DICTIONARY<i>.</i></h2>
+<p style="padding-left: 30px;">Read through every entry, manually checking those words that have been lemmatized and lemmatizing the ambiguous forms that were not auto-lemmatized.</p>
+<p style="padding-left: 30px;"><strong>BEFORE YOU BEGIN <a href="https://youtu.be/yum-qlHFMSg">WATCH THIS SHORT (SILENT) VIDEO </a>TO SEE&nbsp;LEMMATIZATION&nbsp;IN ACTION</strong></p>
+https://youtu.be/yum-qlHFMSg
+<p style="padding-left: 30px;">&nbsp;Lemmatizing requires you to add the correct TITLE to the TITLE Column (A). A TITLE is either a Known Lemma or a New Lemma. First we will discuss <strong>Known Lemmas</strong>, then how to handle <strong>New&nbsp;Lemmas</strong>.</p>
+<p style="padding-left: 30px;">At the start you'll need to find the correct TITLEs in the DICTIONARY sheet. When you start typing in a cell in Column A, possibilities will be suggested if that TITLE already appears in the TEXT sheet.&nbsp; After a little while you'll have a sense of what form a TITLE may take and the process can move quite quickly.</p>
+<p style="padding-left: 30px;">Note that TITLES follow a standard orthography and format:</p>
+
+<ul>
+ 	<li style="list-style-type: none;">
+<ul>
+ 	<li>TITLES are always ALL-CAPS</li>
+ 	<li>U's are always&nbsp;V's; J’s are I’s; e.g., the TITLE for “abjuro” is ABIVRO.</li>
+ 	<li>homonyms are distinguished by /1, /2, etc. These are&nbsp;<strong>usually</strong> ranked in a rational order (nouns, adjectives, numbers, pronouns, verbs, adverbs, prepositions, other) but unless you are absolutely certain about the TITLE, please verify it by looking at the DISPLAY LEMMA and DEFs (after you save your file, these will populate automatically)</li>
+ 	<li>There are a few other suffixes to distinguish homonyms: e.g., /N for proper names; /A for proper adjectives.</li>
+</ul>
+</li>
+</ul>
+<h2 style="padding-left: 30px;"><em>General principal: lemmatize to&nbsp;<strong>the most general form that will be accessible to a novice reader.</strong></em></h2>
+<p style="padding-left: 60px;">For example, say you encounter this word, <em>legente</em>; it's possible that it could be used substantively to indicate a reader (and is a handful of times in common ancient texts) but even if you were lemmatizing one of those moments, if would be&nbsp;<strong><em>better for developing the reader's lexical competency&nbsp;</em></strong>to lemmatize to the verb (LEGO/2).&nbsp;</p>
+<p style="padding-left: 60px;"><strong>From this general principal, a few general practices:</strong></p>
+<p style="padding-left: 90px;">* participles, supines, etc. to their verbs
+* substantives to their adjectives
+* rare orthographies to the more typical form (if somewhat common, we can add a note to the DISPLAYLEMMA, indicate this in PROBLEM)</p>
+<p style="padding-left: 60px;">For more details about Bridge lemmatization principals, please visit <a href="http://iris.haverford.edu/bridge/collaboration-tools/lemmatization-process-principles/">this page</a>.</p>
+<p style="padding-left: 30px;"><strong>You can find complete instructions for lemmatizing your text <a href="https://www.dropbox.com/s/5a2lggavbirn0po/Lemmatization_Instructions_Public.pdf?dl=0">here</a>.</strong></p>
+<p style="padding-left: 30px;"><strong>ADDING NEW&nbsp;LEMMAS</strong>: if a&nbsp;word is not in the DICTIONARY, first check and triple check that it is not in the DICTIONARY. Consider different spellings; try searching for a principal part (without macrons). If you are certain that the word is not in the DICTIONARY, then add it&nbsp;<span style="text-decoration: underline;">at the bottom</span> of DICTIONARY. Fill in the PRINCIPAL_PARTS, SHORT_DEFINITION, LONG_DEFINITION, and PART_OF_SPEECH
+. Don't worry about the other columns, they will be generated automatically or must be added by the Project Director. E.g. if the proper name "Bevis" appeared in your text but there is no BEVIS/N entry in the DICTIONARY. At the bottom of the DICTIONARY sheet, add:</p>
+<p style="padding-left: 80px;"><a href="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.31.25-AM.png"><img class="alignnone wp-image-709 size-full" src="https://iris.haverford.edu/bridge/files/2017/08/Screen-Shot-2020-07-24-at-11.31.25-AM.png" alt="" width="3354" height="680"></a></p>
+<p style="padding-left: 70px;"><strong>ADDING DATA TO BLANK TITLES (this is VERY UNLIKELY)</strong>: if a word appears in the DICTIONARY&nbsp;but without any other information (i.e. the TITLE is there, but it lacks dictionary entries and definitions), you can add the DISPLAY LEMMA <span style="text-decoration: underline;">(with</span> macrons)<span style="text-decoration: underline;">,</span> SHORTDEF, and LONGDEF. I'll be able to harvest these. But note, if there is already information present, if cannot be harvested. You must make a note in the PROBLEM Column of DICTIONARY (Column N)</p>
+<p style="padding-left: 100px;">E.g. if the proper name "Bretus" appeared in your text and BRETVS/N appears in the DICTIONARY&nbsp;but without any other information you would add the dictionary entry and definition in the row.</p>
+<p style="padding-left: 60px;"><strong>If you need to add dictionary entries for Latin texts, the&nbsp;fastest and most accurate way to do so is to copy them from LaNe*&nbsp;</strong>which is available on <a href="http://logeion.uchicago.edu">Logeion</a>.&nbsp;</p>
+
+
+[caption id="attachment_1752" align="aligncenter" width="625"]<img class="wp-image-1752 size-large" src="http://iris.haverford.edu/postclassical/files/2017/02/Screen-Shot-2017-03-03-at-10.02.52-AM-1024x673.png" alt="" width="625" height="411"> <strong>Figure 4. Logion</strong>[/caption]
+<p style="padding-left: 60px;"><strong>* &nbsp;</strong>LaNe =<strong>&nbsp;</strong>Woordenboek Latijn/Nederlands, 6th revised edition 2014,&nbsp;a Latin-Dutch translation dictionary, originally based on <em>Pons Globalwörterbuch Lateinisch-Deutsch</em> (Klett) but with full coverage of all entries also contained in the <em>Oxford Latin Dictionary. &nbsp;</em>It is the current gold standard for Latin vowel quantities.</p>
+<p style="padding-left: 20px;"><b>ADDING CUSTOM DEFINITIONS [Optional]</b>: if you are adding custom definitions for your text, be&nbsp;sure that the LOCAL_DEFINITION for each word is the best definition for the word. Modify these as needed.</p>
+<p style="padding-left: 60px;"><a href="http://logeion.uchicago.edu">Logeion</a> is also a great place to find/copy definitions (but be thoughtful about this; make sure that you include definitions relevant to your text).</p>
+<p style="padding-left: 20px;"><b>ADDING CUSTOM PRINCIPAL PARTS [Optional]</b>: if you are adding custom principal parts for your text, be&nbsp;sure that the LOCAL_PRINCIPAL_PARTS for each word is the best definition for the word. Modify these as needed.</p>
+
+<h2>3.&nbsp;Submit your lemmatization sheet</h2>
+<p style="padding-left: 30px;">When you have finished lemmatizing your text, submit it to The Bridge. We will harvest the new information in your local DICTIONARY and add your text information to The Bridge!</p>
+
+Lemmatization Principles</strong></h4>
+<div>
+<ol>
+ 	<li>Substantives are lemmatized to the adjective TITLE unless the substantive has an independent&nbsp;meaning that is unintelligible from the adjective. This includes ethnonymns (e.g. ACARNANIS/A &gt; ACARNANES/N; ROMANVS/A &gt; ROMANI/N), even if the adjective form is unattested.</li>
+ 	<li>Participles (including perfect passiave) are lemmatized to the verb TITLE unless the participle has an independent meaning that is unintelligible from the verb or if the verb is not extant independently</li>
+ 	<li>Cardinal &amp; ordinal numbers on <span style="text-decoration: underline;">cardinal</span>&nbsp;TITLE for numbers greater than 3.</li>
+ 	<li>For compound numbers, lemmatize each component, e.g. 72 = two words&nbsp;SEPTVAGINTA and DVO</li>
+ 	<li>Collatoral forms (e.g. different spellings, deponent forms with the same meaning) are lemmatized to main TITLE where possible</li>
+ 	<li>Abstractions (e.g. "Luxury") are not generally lemmatized as a separate proper name TITLE but the general TITLE for the noun.</li>
+</ol>
+<h4><strong>Morphological Categories for Latin Data</strong></h4>
+<ol>
+ 	<li>Noun
+<ol>
+ 	<li>First Declension</li>
+ 	<li>Second Declension</li>
+ 	<li>Third Declension</li>
+ 	<li>Fourth Declension</li>
+ 	<li>Fifth Declension</li>
+ 	<li>Irregular or Indeclinable</li>
+</ol>
+</li>
+ 	<li>Adjective
+<ol>
+ 	<li>1st/2nd Declension</li>
+ 	<li>&nbsp;</li>
+ 	<li>Third Declension</li>
+</ol>
+</li>
+ 	<li>Number</li>
+ 	<li>Pronoun</li>
+ 	<li>Verb
+<ol>
+ 	<li>First Conjugation</li>
+ 	<li>Second Conjugation</li>
+ 	<li>Third Conjugation and Third Conjugation -io</li>
+ 	<li>Fourth Conjugation</li>
+ 	<li>Irregular</li>
+</ol>
+</li>
+ 	<li>Adverb</li>
+ 	<li>Preposition</li>
+ 	<li>Conjugation</li>
+ 	<li>Interjection</li>
+ 	<li>Idioms</li>
+ 	<li>Prefixes &amp; Suffixes</li>
+ 	<li>Abbreviations</li>
+</ol>
+<h4><strong>Outstanding Editorial Questions/Data inconsistencies</strong></h4>
+<ol>
+ 	<li>Provide full principal parts (amo amare amavi amatus) or abbreviated (amo -are -avi -atus)?</li>
+ 	<li>What to do about fourth principle parts of verbs: -us or -um?</li>
+ 	<li>Should non-idiomatic but common entries like those for salve or vale or XAIPE receive their own entry or be combined into main entry for verb? With salve, etc. mentioned in definition?</li>
+</div>
+</section>
+</body>
+{% endblock %}

@@ -1,4 +1,12 @@
+{% extends "base.html" %}
 
+{% block content %}
+
+<title>The Bridge: About</title>
+
+<body>
+      <section class="content-section">
+        <div class="container">
 <h2>How to Use<em>&nbsp;Bridge/Lists</em></h2>
 Making your customized list is as easy as selecting your&nbsp;<strong>language </strong>and&nbsp;your&nbsp;<strong>target work(s)&nbsp;</strong>("what are you reading"?). You can then chose a <strong>selection</strong> from the target work(s). If you wish, you can <strong>exclude</strong> or <strong>match</strong>&nbsp;words from one or more<em>&nbsp;</em><em>lists, textbooks,&nbsp;</em>or&nbsp;<em>texts.</em> Excluding yields the words in your target work(s)&nbsp;that do not appear in the excluded work(s); matching&nbsp;yields only those words that appear in your target work(s)&nbsp;and one or more other work(s)&nbsp;you have selected. Once you have your list, you can add information (frequency, part of speech, links to Logeion, etc.), filter by morphology (e.g. part of speech, conjugation, declension, etc.), and then use&nbsp;<strong>on-line<em>,&nbsp;</em></strong><strong>print</strong>,&nbsp;or <strong>export</strong> your list.
 <h1>Table of Contents</h1>
@@ -24,26 +32,31 @@ Making your customized list is as easy as selecting your&nbsp;<strong>language <
 
 <strong>Texts</strong>: vocabularies for continuous ancient and&nbsp;modern&nbsp;Latin and Greek texts.
 <h2>Detailed Information about Texts</h2>
-Details about texts, including their structure (i.e. how small a piece can you select--a book? a line? a poem? a sentence), any special attributes of the texts (e.g. how irregular numbering is handled), and how the vocabulary data was created, is available on the <a href="http://iris.haverford.edu/bridge/details-about-texts/">Details About Texts</a> page.
+Details about texts, including their structure (i.e. how small a piece can you select--a book? a line? a poem? a sentence), any special attributes of the texts (e.g. how irregular numbering is handled), and how the vocabulary data was created, is available on the <a href="href=/about/texts">Details About Texts</a> page.
 <h2>FAQs</h2>
 <h4 style="padding-left: 30px;">How can I add a work to&nbsp;<em>The Bridge?</em></h4>
-<p style="padding-left: 60px;">Visit the "<a href="http://iris.haverford.edu/bridge/collaboration-tools/">Create</a>" page for information, tool, and guidelines.</p>
+<p style="padding-left: 60px;">Visit the "<a href="collaborate/">Collaborate</a>" page for information, tool, and guidelines.</p>
 
 <h4 style="padding-left: 30px;">If my text has irregular chapters (e.g. 2b), how do I indicate a section of the text?</h4>
 <p style="padding-left: 60px;">If you want to select lettered sections within a chapter, simply append these to the chapter after a period: e.g. 1a = 1.a.</p>
 
 <h2>How-To Videos</h2>
-<h3>How to&nbsp;Make a List (Overview)</h3>
-https://youtu.be/UvkfN6RsfvY
-<h3>How to Select a Target Text</h3>
-https://www.youtube.com/watch?v=8ZL31FLuObs
-<h3>How to&nbsp;Exclude or Include Texts</h3>
-https://www.youtube.com/watch?v=EAjLfWBW5M8
 
-https://youtu.be/gCambANhxtI
-<h3>How to Create a List with Words from Two (or More) Works</h3>
-https://www.youtube.com/watch?v=hL0a5vqXJEU
-<h3>Sorting, Modifying, and Filtering&nbsp;Your Results</h3>
-https://www.youtube.com/watch?v=ue_nXzRg_lg
-<h3>Exporting Your List and Importing It Into a Spreadsheet</h3>
-https://youtu.be/dmFgQUyWUxE
+<a class="How_to_link" href="https://youtu.be/UvkfN6RsfvY">How to Make a List (Overview)</a> <br>
+
+<a class="How_to_link" href="https://www.youtube.com/watch?v=8ZL31FLuObs">How to Select a Target Text</a> <br>
+
+<a class="How_to_link" href="https://www.youtube.com/watch?v=EAjLfWBW5M8">How to Exclude Texts</a><br>
+
+<a class="How_to_link" href="https://youtu.be/gCambANhxtI"> How to Include Texts</a><br>
+
+<a class="How_to_link" href="https://www.youtube.com/watch?v=hL0a5vqXJEU" >How to Create a List with Words from Two (or More) Works</a><br>
+
+<a class="How_to_link" href="https://www.youtube.com/watch?v=ue_nXzRg_lg">Sorting, Modifying, and Filtering&nbsp;Your Results</a><br>
+
+<a class="How_to_link" href="https://youtu.be/dmFgQUyWUxE">Exporting Your List and Importing It Into a Spreadsheet</a><br>
+</div>
+
+</section>
+</body>
+{% endblock %}

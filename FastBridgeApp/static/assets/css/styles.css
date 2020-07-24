@@ -1,4 +1,8 @@
-
+.How_to_link {
+  width: 100%;
+  font-size: 2em;
+  padding-left: 10px;
+}
 img {
   max-width: 100%;
   height: auto;
@@ -62,6 +66,7 @@ img {
 }
 .btn-no-padding{
   padding: 0 0 0 0;
+  color: white;
 }
 .btn-no-padding:focus{
   outline:0;
