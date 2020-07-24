@@ -108,7 +108,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     print("returning")
-    return templates.TemplateResponse("result.html", context)
+    response = templates.TemplateResponse("result.html", context)
+    print("response made")
+    return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
 

@@ -252,9 +252,17 @@ $('#bridge-modal-form1-save').click(function(){
 
     var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
     var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
-    if (sectionFrom || sectionTo){ // if user specifies a section
+    if (sectionFrom & sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    } else {
+    }else if (!sectionFrom) {
+      var sections = `start-${sectionTo}`;
+      sectionFrom = 'start'
+    }
+    else if (!sectionTo) {
+      var sections = `${sectionFrom}-end`;
+      sectionTo = 'end'
+    }
+     else {
         sectionFrom = 'start'
         sectionTo = 'end'
         var sections = 'start-end';
@@ -308,9 +316,17 @@ $('#bridge-modal-form2-save').click(function(){
 
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
-    if (sectionFrom || sectionTo){ // if user specifies a section
+    if (sectionFrom & sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    } else {
+    }else if (!sectionFrom) {
+      var sections = `start-${sectionTo}`;
+      sectionFrom = 'start'
+    }
+    else if (!sectionTo) {
+      var sections = `${sectionFrom}-end`;
+      sectionTo = 'end'
+    }
+     else {
         sectionFrom = 'start'
         sectionTo = 'end'
         var sections = 'start-end';
