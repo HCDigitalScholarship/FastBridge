@@ -195,11 +195,11 @@ $('#oracle-modal-form2-save').click(function(){
     var sectionTo =$('#oracle-define-vocab #oracle-modal-form2-select2-hidden-field2').val();
     if (sectionFrom & sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    }else if (!sectionFrom) {
+    }else if (!sectionFrom & sectionTo) {
       var sections = `start-${sectionTo}`;
       sectionFrom = 'start'
     }
-    else if (!sectionTo) {
+    else if (!sectionTo & sectionFrom) {
       var sections = `${sectionFrom}-end`;
       sectionTo = 'end'
     }
