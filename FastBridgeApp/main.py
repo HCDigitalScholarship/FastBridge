@@ -39,5 +39,5 @@ async def index(request : Request):
     #buttons clicked on this page will take us to /select/{language}
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", reload = True, host="64.227.97.179")
+    uvicorn.run("main:app", reload = True)#, host="64.227.97.179")
  #End of select (or main?) code

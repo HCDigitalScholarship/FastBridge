@@ -50,16 +50,20 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
                 #it is row i+2 because line numbers start at 1 and i starts at 0, and i does not have the headers
                 assert False
         frequency = total_frequency_dict[row[0]]
-        if local_def and local_lem:
-            the_text.append((row[0], i, row[4], row[5], row[6], str(row[1]), frequency)) #add the title, array index,  text, definition, local lemma quad to that list
-        elif local_def:
-            the_text.append((row[0], i, row[4], row[5], '', str(row[1]), frequency)) #add the title, array index, text, definition
-        elif local_lem:
-            the_text.append((row[0], i, row[4], '', row[6], str(row[1]), frequency))
-        else:
-            the_text.append((row[0], i, row[4], '', '', str(row[1]), frequency))
-        section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
-        section_words.update({section : i} )
+        try:
+            if local_def and local_lem:
+                the_text.append((row[0], i, row[4], row[5], row[6], str(row[1]), frequency)) #add the title, array index,  text, definition, local lemma quad to that list
+            elif local_def:
+                the_text.append((row[0], i, row[4], row[5], '', str(row[1]), frequency)) #add the title, array index, text, definition
+            elif local_lem:
+                the_text.append((row[0], i, row[4], '', row[6], str(row[1]), frequency))
+            else:
+                the_text.append((row[0], i, row[4], '', '', str(row[1]), frequency))
+            section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
+            section_words.update({section : i} )
+        except Exception as e:
+            return f"Error: the row: {row} seems to be missing something. Does it have all of: TITLE, LOCATION, SECTION, RUNNINGCOUNT, TEXT and what you specified of: LOCAL_DEF, LOCAL_LEMMA"
+
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
     section_words["end"] = -2
     unique_sections = " ".join(section_words.keys()).split()

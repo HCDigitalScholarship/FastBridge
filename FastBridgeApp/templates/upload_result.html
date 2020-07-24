@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<title>The Bridge: About</title>
+
+<body>
+      <section class="content-section">
+        <div class="container">
+          <p>{{ result }} upload!!!</p><br>
+          <p> To {{next_action }} <a href="{{link_back|safe}}"> click here</a></p>
+        </div>
+      </section>
+</body>
+{% endblock %}
