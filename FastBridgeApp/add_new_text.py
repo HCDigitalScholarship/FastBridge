@@ -41,7 +41,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     for i in range(len(csv_reader)):
         row =  csv_reader[i]
         #print(row)
-        if not (row[0] in valid): #check that the title is valid
+        if not (row[0] in valid): #check that the title is valid. This should be O(1)
             if pd.isna(row[0]):
                 print("fine, null title")
             else:
@@ -125,8 +125,8 @@ def add_words(file, language : str):
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]
-        if len(real_row.Part_Of_Speech.split(" ")) == 1:
-            POS.add(real_row.Part_Of_Speech)
+        if len(real_row.PART_OF_SPEECH.split(" ")) == 1:
+            POS.add(real_row.PART_OF_SPEECH)
         #else:
             #this is some thing that fits multiple exisiting POS.
     #now we need to save over the old file with this new dict

@@ -9,22 +9,22 @@
 
 <h2>{{ welcome }}!</h2>
 <div class="form-group">
-  <button class="btn" style= "text-transform: unset; color:white;" id="openModal2" type="button" data-toggle="modal" data-target="#bridge-change-list"> Save your known words so that you can make searches faster
+  <button class="btn" style= "text-transform: unset; color:#42dca3; font-size: 24px;" id="openModal2" type="button" data-toggle="modal" data-target="#bridge-change-list"> Save your known words so that you can make searches faster
               </button>
 
 </div>
 
 <div class="form-group">
-<button class="btn" style= "color:white; text-transform: unset;" onclick="location.href = '/account/search/'">Make a search based on your known words </button>
+<button class="btn" style= "color:#42dca3; text-transform: unset; font-size: 24px;" onclick="location.href = '/account/search/'">Make a search based on your known words </button>
 </div>
 <div class="form-group">
-You can request permisson to import texts from Bret (bmulliga@haverford.edu)
+You can request permisson to import texts from <a  href="https://docs.google.com/forms/d/e/1FAIpQLSfqSe8ynZjkNF2yitncOJ2vd82kFK5kABYMUR-pWywfdyEtgA/viewform?embedded=true#start=embed">Bret Mulligan</a>
 </div>
 <div class="form-group">
 If you already have access, you can upload <a href="/account/import"> texts </a> and <a href="/account/addwords"> languages </a>
 </div>
 <div class="form-group">
-<button class="btn" style="color:white; text-transform: unset;" onclick="location.href = '/account/logout/'">Logout</button>
+<button class="btn" style="color:#42dca3; text-transform: unset;" onclick="location.href = '/account/logout/'">Logout</button>
 </div>
 
 
@@ -43,7 +43,7 @@ If you already have access, you can upload <a href="/account/import"> texts </a>
                 <form id="bridge-modal-form2" action="/account/update_my_words/" method = "post" style="color: black;">
                   <div>
                         <div class="form-group"><label style="color: black;" for="select1">
-                            Please enter the work(s) you have read. Consult the About the Texts page, or the Oracle and Vocabular List apps to see what we have. </label>
+                            Please enter the work(s) you have read. Consult the <a style="color:#0768cc" href="/about/the_texts">About the Texts page</a>, or the Oracle and Vocabulary List apps to see what we have in our Library. (NB: About the Texts may contain some texts from previous versions of this project which have not yet been transfered) </label>
                             <input type="text" class="form-control" name="title" id = "title">
                                   </div>
                         <div class="form-group" id="bridge-modal-form2-select2-hidden-div">

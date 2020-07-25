@@ -15,11 +15,11 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 <form id="post_text" style="display:inline-block;" method="post" action="Lemmatizer" enctype="multipart/form-data">
 	<div id="PostBlock">
 		<div class="form-group">
-			<label for="text"> Put plain text you want lemmatized here, or add a file </label>	<br>
+			<label for="text"> Paste plain text to lemmatize below or upload a .txt file </label>	<br>
 			<input type="text" id = "text" name="text" value="">	<br>
 		</div>
 		<div class="input-group mb-3">
-		    <input type="file" name = "file" id="file">
+		    <input type="file" accept = ".txt" name = "file" id="file">
 
 
 		</div>
@@ -43,13 +43,11 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 		<div class="form-group">
 			<label for="radios">In which format would you like your lemmata?</label> <br>
 		</div>
-		<div class="form-group" id="radios">
-			<label for="bridge_format"> Bridge </label>
-			<input type="radio" name="format" id = "bridge_format" value="Bridge">
-			<br>
-			<label for="morpheus_format"> Morpheus </label>
-			<input type="radio" name="format" id = "morpheus_format" value="Morpheus">
-			<br>
+		<div class="form-group">
+			<select name="format" id="format" class="form-control">
+				<option>Bridge</option>
+				<option>Morpheus</option>
+			</select>
 		</div>
 
 		<div class="form-group">
