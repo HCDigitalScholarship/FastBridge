@@ -42,10 +42,25 @@ If you already have access, you can upload <a href="/account/import"> texts </a>
             <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
                 <form id="bridge-modal-form2" action="/account/update_my_words/" method = "post" style="color: black;">
                   <div>
-                        <div class="form-group"><label style="color: black;" for="select1">
-                            Please enter the work(s) you have read. Consult the <a style="color:#0768cc" href="/about/the_texts">About the Texts page</a>, or the Oracle and Vocabulary List apps to see what we have in our Library. (NB: About the Texts may contain some texts from previous versions of this project which have not yet been transfered) </label>
-                            <input type="text" class="form-control" name="title" id = "title">
-                                  </div>
+                    <div class="form-group"><label style="color: black;" for="chosen_text">
+                        What have you read?</label>
+                        <div class="dropdown">
+                          <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
+                          <div id="myDropdown" class="dropdown-content" style="color: black;">
+                            <input type="text" placeholder="Search..." id="myInput" name="text" onkeyup="filterFunction('myInput', 'myDropdown')">
+                          {{ texts|safe }}
+                          </div>
+                        </div>
+
+                          </div>
+
+                          <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
+                              <label id="bridge-modal-form2-select1-hidden-label" style="color: black;" for="select1-hidden-field">
+                                  Which language is it in?</label>
+                              <div class="form-row">
+                                  <div class="col"><input class="form-control" type="text" id="language" name = "language" style="color: black;" for="select1-hidden-label" placeholder="Latin or Greek" required=""></div>
+                              </div>
+                          </div>
                         <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
                             <label id="bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">
                                 Please select the section(s).</label>

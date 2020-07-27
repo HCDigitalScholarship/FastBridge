@@ -23,14 +23,17 @@
   <br>
   </div>
 
-<div class="form-group">
+  <div class="form-group"><label style="color: black;" for="chosen_text">
+      What are you reading or exploring?.</label>
+      <div class="dropdown">
+        <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
+        <div id="myDropdown" class="dropdown-content" style="color: black;">
+          <input type="text" placeholder="Search..." id="myInput" name="other_texts" onkeyup="filterFunction('myInput', 'myDropdown')">
+        {{ texts|safe }}
+        </div>
+      </div>
 
-
-  <label for="other_texts"> What are you reading/exploring? </label><br>
-  <input type="text" name="other_texts" id ="other_texts" value=""><br>
-  <a id ="collection" class="btn btn-dark" href='/about/texts'> Not sure what we have? Click here</a>
-  <br>
-</div>
+        </div>
 
 <div class="form-group">
 
@@ -80,6 +83,7 @@
       });
   }
 </script>
+<script src=  "/assets/js/select-account.js"></script>
   </div>
 </section>
 </body>
