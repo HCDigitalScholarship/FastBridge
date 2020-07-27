@@ -47,7 +47,7 @@ If you already have access, you can upload <a href="/account/import"> texts </a>
                         <div class="dropdown">
                           <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
                           <div id="myDropdown" class="dropdown-content" style="color: black;">
-                            <input type="text" placeholder="Search..." id="myInput" name="text" onkeyup="filterFunction('myInput', 'myDropdown')">
+                            <input type="text" autocomplete="off"  placeholder="Search..." id="myInput" name="title" onkeyup="filterFunction('myInput', 'myDropdown')">
                           {{ texts|safe }}
                           </div>
                         </div>
@@ -81,6 +81,7 @@ If you already have access, you can upload <a href="/account/import"> texts </a>
         </div>
     </div>
 </div>
+<script src=  "/assets/js/select-account.js"></script>
 </section>
 </body>
 
