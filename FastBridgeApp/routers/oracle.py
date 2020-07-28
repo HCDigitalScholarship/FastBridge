@@ -38,11 +38,11 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         #we can go through the section_linkedlist backwards
         sections = book.section_linkedlist
         indexable_sections = list(book.section_linkedlist.keys())
-        print(indexable_sections)
+        #print(indexable_sections)
         start = indexable_sections.index(e_section_end) - e_section_size
         end = e_section_end
-        print(start)
-        print(len(indexable_sections))
+        #print(start)
+        #print(len(indexable_sections))
         while indexable_sections[start] != e_section_start:
             section = f'{indexable_sections[start]} - {end}' #for each row of the table
             section_words = book.get_words(indexable_sections[start], end)
@@ -53,9 +53,9 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
             known_tokens = len(total_tokens.intersection(ogknown_tokens))
 
             total_tokens = len(total_tokens)
-            print(total_words[0])
+            #print(total_words[0])
             total_words = [(new[0]) for new in total_words]
-            print(total_words[0])
+            #print(total_words[0])
             known_words = (list_intersection(total_words, [(new[0]) for new in ogknown_words]))
             count_unknown_words = len(list_difference(total_words, known_words))
 
