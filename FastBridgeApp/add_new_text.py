@@ -96,7 +96,7 @@ def add_words(file, language : str):
     dataframe = pd.read_csv(file, delimiter=',') #FastAPI recieves it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
     headers = dataframe.columns.to_list()
-    columnheaders, _, row_filters = " ".join(headers).partition("row_filters") #we expect the import language sheet to have this column header, but the column will be empty
+    columnheaders, _, row_filters = " ".join(headers).partition("ROW_FILTERS") #we expect the import language sheet to have this column header, but the column will be empty
 
     columnheaders = columnheaders.split()
     row_filters = row_filters.split()
@@ -117,7 +117,7 @@ def add_words(file, language : str):
 
 
 
-    to_skip = headers.index("row_filters")
+    to_skip = headers.index("ROW_FILTERS")
     for row in csv_reader:
         #print(row)
         new = row[:to_skip]+row[to_skip+1:]
