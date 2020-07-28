@@ -74,7 +74,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
         datum = Word(*datum)
         word_list.append(datum)
         #print(datum.LOCAL_DEFINITION)
-        to_add+= datum.Part_Of_Speech + " "
+        to_add+= datum.PART_OF_SPEECH + " "
         for j in range(len(row_filters)):
             #print(row_filters[j])
             in_case_multiple = datum[len(columnheaders) + j]
@@ -85,10 +85,10 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
                 in_case_multiple = in_case_multiple.split(",")
 
                 for case in in_case_multiple:
-                    new = f"{row_filters[j]}_{datum.Part_Of_Speech}_{case}"
+                    new = f"{row_filters[j]}_{datum.PART_OF_SPEECH}_{case}"
                     #print(new)
                     to_add += f"{new} "
-                    final_row_filters.add((new, datum.Part_Of_Speech+ " "))
+                    final_row_filters.add((new, datum.PART_OF_SPEECH+ " "))
 
         computed_row_filters.append(to_add)
     del lang #this is a huge dictionary, and python's garbage collector does not delete these well. It should be destroyed when the function returns
