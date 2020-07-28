@@ -203,7 +203,7 @@ $('#formCheck-3').click(function(){
 });
 
 /*
-SELECT WORK modal & table
+SELECT WORK modal &&table
 */
 
 // delete row from table
@@ -252,13 +252,13 @@ $('#bridge-modal-form1-save').click(function(){
 
     var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
     var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
-    if (sectionFrom & sectionTo){ // if user specifies a section
+    if (sectionFrom &&sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    }else if (!sectionFrom & sectionTo) {
+    }else if (!sectionFrom &&sectionTo) {
       var sections = `start-${sectionTo}`;
       sectionFrom = 'start'
     }
-    else if (!sectionTo & sectionFrom) {
+    else if (!sectionTo &&sectionFrom) {
       var sections = `${sectionFrom}-end`;
       sectionTo = 'end'
     }
@@ -316,13 +316,13 @@ $('#bridge-modal-form2-save').click(function(){
 
     var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
     var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
-    if (sectionFrom & sectionTo){ // if user specifies a section
+    if (sectionFrom &&sectionTo){ // if user specifies a section
         var sections = `${sectionFrom}-${sectionTo}`;
-    }else if (!sectionFrom & sectionTo) {
+    }else if (!sectionFrom &&sectionTo) {
       var sections = `start-${sectionTo}`;
       sectionFrom = 'start'
     }
-    else if (!sectionTo & sectionFrom) {
+    else if (!sectionTo &&sectionFrom) {
       var sections = `${sectionFrom}-end`;
       sectionTo = 'end'
     }
@@ -353,7 +353,7 @@ $('#bridge-modal-form2-save').click(function(){
 });
 
 /*
-DEFINE VOCAB modal & table
+DEFINE VOCAB modal &&table
 */
 
 // delete row from table

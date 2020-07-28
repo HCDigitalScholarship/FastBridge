@@ -1,6 +1,6 @@
 var rows = data,
     search = document.getElementById('search');
-
+var display_len = document.getElementById('len')
 //Clusterize Stuff
 /*
 * Fetch suitable rows
@@ -9,6 +9,9 @@ var filterRows = function(rows) {
   var results = [];
   for(var i = 0, ii = rows.length; i < ii; i++) {
     if(rows[i].active) results.push(rows[i].markup)
+  }
+  if(display_len){
+    display_len.innerText = rows.length
   }
   return results;
 }

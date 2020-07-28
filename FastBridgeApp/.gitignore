@@ -45,3 +45,4 @@ docker-stack.yml
 
 /routers/sql_app
 /sql_app
+*.json

@@ -10,7 +10,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     #print(csv.file)
     dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
-    filename = title.lower().replace(" ", "_").replace(",","").replace(":","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
+    filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
     section_words["start"] = -1
     lang = importlib.import_module(f'{language}')

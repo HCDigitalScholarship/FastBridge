@@ -1,1 +1,1 @@
-texts = {'DCC Latin Core List': 1, 'Cicero, In Catilinam 1-4': 3, 'Testamentum Porcelli': 1, 'Caesar, Bellum Gallicum': 3, 'DCC Core Latin List': 1}
+texts = {'38 Latin Stories (Groton)': 1, '50 Most Important Latin Verbs': 1, 'Abelard, Historia Calamitatum 5–6': 1}
