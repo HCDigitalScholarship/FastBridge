@@ -5,8 +5,8 @@
 {% block content %}
 <title>The Bridge: Lemmatizer</title>
 <body id="body" data-title="index" class = "home">
-	<section class="content-section" style="background-image: url('/assets/img/background-img-gray.jpg'); background-size: cover;background-position: top;">
-		<div class="container" style = "text-align:center; width: 80%;">
+	<section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover;background-position: top;">
+		<div class="container" style = "text-align:center; width: 80%; background-color:rgb(28,28,28,.7); padding: 20px;">
 
 <p>
 With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin or Greek text. You can choose to either upload a text file, or just input text yourself. We will lemmatize all the words that have only one possible lemma, and will return a csv that is almost ready to import. All you have to do is disambiguate and replace the "text" column with location-specific definitions – or make it all empty! </p>
@@ -15,17 +15,18 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 <form id="post_text" style="display:inline-block;" method="post" action="Lemmatizer" enctype="multipart/form-data">
 	<div id="PostBlock">
 		<div class="form-group">
-			<label for="text"> Paste plain text to lemmatize below or upload a .txt file </label>	<br>
-			<input type="text" id = "text" name="text" value="">	<br>
+			<label for="text"> 1. Paste plain text to lemmatize below or upload a .txt file </label>	<br>
+			<textarea name="text" id="text" rows="8" cols="80"></textarea>	<br>
 		</div>
-		<div class="input-group mb-3">
-		    <input type="file" accept = ".txt" name = "file" id="file">
 
 
-		</div>
+		<div class="custom-file">
+	 <input type="file" class="custom-file-input" accept = ".txt" name = "file" id="file">
+	 <label class="custom-file-label" id = "file_lable" for="customFile">Choose file</label>
+ 		</div>
 
 		<div class="form-group">
-			<label for="language">Tell us what language the text is in</label> <br>
+			<label for="language">2. Tell us what language the text is in</label> <br>
 			<select name="language" id = "language"  class="form-control">
 			  <option>Latin</option>
 			  <option>Greek</option>
@@ -33,7 +34,7 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 			<br>
 		</div>
 		<div class="form-group">
-			<label for="poetry">Does this text use line breaks for locations? (i.e, is it a poem, play, or song?)</label> <br>
+			<label for="poetry">3. Does this text use line breaks for locations? (i.e, is it a poem, play, or song?)</label> <br>
 			<select name="poetry" id = "poetry"  class="form-control">
 				<option>Yes</option>
 				<option>No</option>
@@ -41,7 +42,7 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 			<br>
 		</div>
 		<div class="form-group">
-			<label for="radios">In which format would you like your lemmata?</label> <br>
+			<label for="radios">4. In which format would you like your lemmata?</label> <br>
 		</div>
 		<div class="form-group">
 			<select name="format" id="format" class="form-control">
@@ -51,7 +52,7 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 		</div>
 
 		<div class="form-group">
-			<label for="resulting_filename"> What do you want your csv file to be called? </label> <br>
+			<label for="resulting_filename">5. What do you want your csv file to be called? </label> <br>
 			<input type="text" name="resulting_filename" id="resulting_filename" value="">
 			<br>
 		</div>
@@ -61,4 +62,13 @@ With <i>Bridge/Tools</i> you can create a lemmatization spreadsheet for a Latin 
 
 				</div>
   	</section>
+		<script type="text/javascript">
+			var el = document.getElementById("file")
+			var lab = document.getElementById("file_lable")
+			var onFileAdd= function(){
+
+				lab.innerText = `You chose: ${el.value}`;
+			}
+			el.oninput = onFileAdd;
+		</script>
 {% endblock %}

@@ -33,7 +33,7 @@ var onSearch = function() {
   for(var i = 0, ii = rows.length; i < ii; i++) {
     var suitable = false;
     for(var j = 0, jj = rows[i].values.length; j < jj; j++) {
-      if(rows[i].values[j].toString().toLowerCase().indexOf(search.value) + 1)
+      if(rows[i].values[j].toString().toLowerCase().indexOf(search.value.toLowerCase()) + 1)
         suitable = true;
     }
     rows[i].active = suitable;
@@ -45,8 +45,9 @@ search.oninput = onSearch;
 // Slideout show
 slideOut = document.getElementById('slideOut')
 tab = document.getElementById('slideOutTab')
-tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
-
+if(tab){
+  tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
+}
 
 
 function show_full_list(id) {

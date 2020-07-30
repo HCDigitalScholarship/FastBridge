@@ -90,6 +90,14 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     file1 = open(completeName, "w")
     file1.write(code)
     file1.close()
+
+    f = open("test_main.py", "a")
+    test = f"""def test_integrity_{filename}():
+        response = client.get("oracle/Latin/result/{filename}/start/end/10/50_most_important_latin_verbs/start-end")
+        assert response.status_code == 200
+    """
+    f.write(test)
+    f.close()
     return "added a text"
 
 def add_words(file, language : str):
@@ -97,6 +105,7 @@ def add_words(file, language : str):
     csv_reader=[list(row) for row in dataframe.values]
     headers = dataframe.columns.to_list()
     columnheaders, _, row_filters = " ".join(headers).partition("ROW_FILTERS") #we expect the import language sheet to have this column header, but the column will be empty
+
 
     columnheaders = columnheaders.split()
     row_filters = row_filters.split()
@@ -107,6 +116,8 @@ def add_words(file, language : str):
         lang = importlib.import_module(f'{language}')
         dict = lang.correct_dict
         POS = lang.POS_list
+        assert columnheaders == lang.columnheaders
+        assert row_filters == lang.row_filters
 
 
     except ModuleNotFoundError as e:
@@ -114,14 +125,19 @@ def add_words(file, language : str):
         dict =  {}
         POS = set()
         texts = set()
+    except AssertionError as e:
+        return f"Error: {columnheaders} is not the same as {lang.columnheaders} or {row_filters} is not the same as {lang.row_filters}"
+
 
 
 
     to_skip = headers.index("ROW_FILTERS")
+    print(to_skip)
+    assert to_skip != 0
     for row in csv_reader:
         #print(row)
         new = row[:to_skip]+row[to_skip+1:]
-        print(new)
+        #print(new)
         real_row = Word(*new)
         #the first item should be the TITLE, the rest is all the data for it.
         dict[real_row[0]] = real_row[1:]

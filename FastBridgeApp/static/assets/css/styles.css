@@ -1,3 +1,4 @@
+
 .How_to_link {
   width: 100%;
   font-size: 2em;
@@ -166,17 +167,25 @@ min-height: 85vh;
   border-radius: 35px;
 }
 
+.select-btn{
+  font-size: 4rem;
+  width: 40%;
+  line-height: 2;
+}
+
 #slideOut {
   position: fixed;
   width: 300px;
   height: 800px;
-  top: 70px;
+  top: 170px; /*should be a bit more than the height of the nav bar*/
   right: -300px;
-  background-color: #4CAF50
+  background-color: rgb(81,81,81,.9);
+  z-index: 100000000;
   /* Animation  */
   transition-property: all;
   transition-duration: .5s;
   transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+
 }
 
 
@@ -199,7 +208,8 @@ min-height: 85vh;
   box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
   background-color: #228383;
   color: #ffffff;
-  border-radius: 15px 0px 0px 15px
+  border-radius: 15px 0px 0px 15px;
+  z-index: 100000000;
 }
 
 .slideOutTab div {

@@ -64,7 +64,7 @@ def depunctuate(text : str):
 
 
 def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
-    output = "TITLE,LOCATION,SECTION,RUNNING COUNT,TEXT\n"
+    output = "TITLE,LOCATION,SECTION,RUNNINGCOUNT,TEXT\n"
     text.replace(".", "_")
     print(text)
     if poetry:

@@ -73,6 +73,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         print(get_size(book))
     except Exception as e:
         print("GOOD! IT IS GONE")
+    print(local_def, local_lem)
+
     print("got titles")
     frequency_dict = {}
     if True:
@@ -212,7 +214,6 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             checks+= f'<span class="dropdown-submenu"> <button class="btn btn-no-padding" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
     checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
-    checks+=f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters(\'toggle_all\');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>'
     for global_f in global_filters:
         checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
     checks += '</div>'
@@ -225,7 +226,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     rules_added = 1 #we set table data width in this stylesheet already
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION":
+        if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "LOCAL_DEFINITION":
             headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
             other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         else:
@@ -250,7 +251,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
 
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
     render_words = []
-
+    print(columnheaders)
     for j in range(len(words)):
         lst = []
         #print(words[j])
@@ -258,10 +259,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
-            if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION":
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
-                lst.append(words[j][0][i+1])
-            elif(columnheaders[i] == "LOCAL_DEFINITION"):
+            if(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].LOCAL_DEFINITION}</td>'
                 lst.append(words[j][0][-4])
             elif(columnheaders[i] == "LOCAL_LEMMA"):
@@ -274,18 +272,21 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Order_of_Appearance"):
-                to_add_to_render_words+= f'<td  class="{columnheaders[i]}">{words[j][0].Appearance}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Appearance}</td>'
                 lst.append(titles[j][1])
                 #the display is the human location, but the value – which the js uses to sort – is the word number
-            elif(columnheaders[i] == "Source_Text"):
+            elif(columnheaders[i] == "SOURCE_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
-            elif(columnheaders[i] == "Total_Count_in_Text"):
+            elif(columnheaders[i] == "TOTAL_COUNT_IN_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
                 lst.append(words[j][0].Total_Count_in_Text)
             else:
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0][i+1]}</td>'
-                lst.append(words[j][0][i+1])
+                tuple_id = columnheaders[i]
+                value = getattr(words[j][0], tuple_id)
+                to_add_to_render_words+= f'<td class="{tuple_id}">{value}</td>'
+                lst.append(value)
+
         to_add_to_render_words+= f'</tr>'
         classes = words[j][1].split(' ')
         [lst.append(c) for c in classes]

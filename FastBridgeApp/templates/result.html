@@ -1,4 +1,4 @@
-<head>
+<head lang="en">
   <script type="text/javascript">
     console.log("rendering template")
   </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Fast Bridge</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
@@ -7,10 +7,10 @@
  </head>
 {% include "navbar.html" %}
 <body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab"><div>
-  <p>Filters</p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)"><div class="modal-header"><h4 class="modal-title">Customize your list further</h4> </div>
+  <p>Filters</p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)"><div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
   <div class="btn-group">
-    <button type="button" class="btn btn-default" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
-    <button type="button" class="btn btn-default" onclick="download_table_as_csv('my_id_table_to_export');">Export as CSV</button>
+    <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
+    <button type="button" class="btn btn-default" style="width:50%" onclick="download_table_as_csv('my_id_table_to_export');">Export as CSV</button>
   </div>
   <div class="modal-body" style="overflow-y:auto;height:65vh">
     <div class="form-group">
@@ -19,11 +19,12 @@
         <label class="custom-control-label" for="running">Toggle Running List</label>
       </div>
     </div>
+    <div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters('toggle_all');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>
 
     <div class="POS filters"><label for="POS filters">Part of Speech Filters</label>
       <div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Column Filters</label><div id="column filters">{{headers|safe}}</div></div>
 
-  </div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;">
+  </div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
 
   <div class="container">
 <h2> Now showing <span id = "len"> {{ len }} </span> words in {{ section }} </h2>

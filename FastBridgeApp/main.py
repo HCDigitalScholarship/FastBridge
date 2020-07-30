@@ -35,9 +35,9 @@ app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
 @app.get("/")
 async def index(request : Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("list-index.html", {"request": request})
     #buttons clicked on this page will take us to /select/{language}
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", reload = True)#, host="64.227.97.179")
+    uvicorn.run("main:app", reload = True, host="64.227.97.179")
  #End of select (or main?) code
