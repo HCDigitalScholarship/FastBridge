@@ -1,1 +1,1 @@
-texts = {}
+texts = {'Sophocles, Ajax ': 1, 'Sophocles, Antigone ': 1, 'Sophocles, Antigone': 1, 'Sophocles, Ajax': 1, 'Sophocles, Oedipus Tyrannus': 1, 'Plato, Euthyphro (all, 2a-16b)': 1, 'DCC Greek Core': 1, 'BiCo Elementary Core: Fundamental 400': 1, 'BiCo Third Semester Core: Fine 555': 1, 'National Collegiate Greek Exam Core': 1, 'Aeschylus, Prometheus Bound': 1, 'Introduction to Attic Greek (Mastronarde 2013)': 1, 'Learn to Read Greek (Keller-Russell)': 1, 'Introduction to Ancient Greek (Luschnig)': 1}

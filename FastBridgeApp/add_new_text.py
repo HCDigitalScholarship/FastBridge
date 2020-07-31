@@ -10,7 +10,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     #print(csv.file)
     dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
-    filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
+    filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","").replace(".","").replace("’","").replace("&","and") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
     section_words["start"] = -1
     lang = importlib.import_module(f'{language}')
@@ -92,9 +92,11 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     file1.close()
 
     f = open("test_main.py", "a")
-    test = f"""def test_integrity_{filename}():
-        response = client.get("oracle/Latin/result/{filename}/start/end/10/50_most_important_latin_verbs/start-end")
-        assert response.status_code == 200
+    #this basic test will not catch small file name errors, like trailing spaces, but will catch big ones.
+    test = f"""
+def test_integrity_{filename}():
+    response = client.get("oracle/{language}/result/{filename}/start/end/1/{filename}/start-end")
+    assert response.status_code == 200
     """
     f.write(test)
     f.close()

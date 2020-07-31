@@ -4,8 +4,8 @@
 <body>
     <section id="result" class="download-section content-section text-center" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
         <div class="container" style="border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
-            <h2> Now showing sections of {{ etexts }} by readablity </h2>
-            <div class="table-responsive mx-auto" style="background-color: rgba(119,120,120,0.77);border-radius: 5px;padding: 20px;margin-bottom: 15px;width: 100%;">
+            <h2> Now showing sections of {{ etexts }} by lexical readablity </h2>
+            <div class="table-responsive mx-auto">
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -24,13 +24,13 @@
 
                       {% for section, total_words, total_tokens, known_words, known_tokes, percent_1, percent_2, link in table_data %}
                               <tr>
-                                <td style="color: #d8d9da;">{{section}}</td>
-                                <td style="color: #d8d9da;">{{total_words}}</td>
-                                <td style="color: #d8d9da;">{{total_tokens}}</td>
-                                <td style="color: #d8d9da;">{{known_words}}</td>
-                                <td style="color: #d8d9da;">{{known_tokes}}</td>
-                                <td style="color: #d8d9da;">{{percent_1}}</td>
-                                <td style="color: #d8d9da;">{{percent_2}}</td>
+                                <td style="color:white;">{{section}}</td>
+                                <td style="color: white;">{{total_words}}</td>
+                                <td style="color: white;">{{total_tokens}}</td>
+                                <td style="color: white;">{{known_words}}</td>
+                                <td style="color: white;">{{known_tokes}}</td>
+                                <td style="color: white;">{{percent_1}}</td>
+                                <td style="color: white;">{{percent_2}}</td>
 
                                 <td style="color: #d8d9da;"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{{ link }} "></a>  </td>
                               </tr>
@@ -42,7 +42,7 @@
                         </tr>
                     </tbody>
                 </table>
-            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="url('index-oracle.html')" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a></div>
+            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="/oracle" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a></div>
     </section>
 </body>
 {% endblock %}

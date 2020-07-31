@@ -283,7 +283,7 @@ $('#bridge-modal-form1-save').click(function(){
     // hide modal when save
     $('#bridge-select-text').modal('hide');
     // reset form values
-    //$('#bridge-select-text').find('#bridge-modal-form1')[0].reset();
+    document.getElementById('modal-bridge-form1').reset();
     $('#bridge-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
@@ -346,7 +346,7 @@ $('#bridge-modal-form2-save').click(function(){
     // hide modal when save
     $('#bridge-change-list').modal('hide');
     // reset form values
-    //$('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
+    $('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
     $('#bridge-modal-form2-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;

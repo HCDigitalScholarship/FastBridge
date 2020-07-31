@@ -128,7 +128,7 @@ min-height: 85vh;
 }
 
 .table-responsive{
-  background-color: rgba(119,120,120,0.77);
+  background-color: rgba(51,51,51,0.77);
   border-radius: 5px;
   padding: 20px;
   margin-bottom: 15px;
@@ -168,16 +168,16 @@ min-height: 85vh;
 }
 
 .select-btn{
-  font-size: 4rem;
-  width: 40%;
+  font-size: 2rem;
+  width: 30%;
+  min-width: fit-content;
   line-height: 2;
 }
 
 #slideOut {
   position: fixed;
   width: 300px;
-  height: 800px;
-  top: 170px; /*should be a bit more than the height of the nav bar*/
+  top: 120px; /*should the height of the nav bar*/
   right: -300px;
   background-color: rgb(81,81,81,.9);
   z-index: 100000000;
@@ -199,7 +199,7 @@ min-height: 85vh;
 /* Tab */
 
 .slideOutTab {
-  margin-top: 50vh;
+  top: 8vh;
   position: absolute;
   left: -40px;
   height: 200px;

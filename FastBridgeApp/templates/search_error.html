@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<title>The Bridge</title>
+
+<body>
+      <section class="content-section">
+        <div class="container">
+          <p> Sorry, that search didn't work :(</p><br>
+          <p> if this is a section error, make sure the section you requested is in this text </p>
+          <p> Please tell us your selection (or even copy the URL) by clicking the envolope in the bottom right corner. </p>
+          <p> Then to search again, <a href="{{link_back|safe}}"> click here</a></p>
+        </div>
+      </section>
+</body>
+{% endblock %}

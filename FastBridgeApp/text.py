@@ -17,7 +17,8 @@ class Text(object):
         Converts the human section citation of 1-3 sections to the keys of the section dictionary, and retrives the indices for self.words that the sections correspond to.
 
         """
-        #print(range_start, range_end)
+        print(range_start, "start")
+        print(range_end, "end")
         if range_start == "start":
             internal_range_start =  range_start
         elif range_start.count(".") == 0 and self.subsections == 1:
@@ -30,8 +31,10 @@ class Text(object):
             #for things with one level and 3 level was expected
                 internal_range_start = range_start + ".1.1"
         elif range_start.count(".") == 1 and self.subsections == 2:
+            print("start of depth 2, as expected")
             #for things with two levels, and two were given
             internal_range_start = range_start
+            print(internal_range_start)
         elif range_start.count(".") == 1 and self.subsections == 3:
             #for things with three levels, and two were given
             internal_range_start = range_start + ".1"
@@ -60,9 +63,10 @@ class Text(object):
                 self.section_linkedlist[next_section(to_increment) + ".1.1"]
 
         elif range_end.count(".") == 1 and self.subsections == 2:
+            print("end of depth 2, as expected")
                 #for things with two levels, and two were given
             internal_range_end =  range_end
-
+            print(internal_range_end)
         elif range_end.count(".") == 1 and self.subsections == 3:
             #for things with three levels, and two were given
             range_end = range_end.split(".")
@@ -79,6 +83,8 @@ class Text(object):
         #print(self.sections[self.section_linkedlist[internal_range_start]] +1)
         #print(self.sections[internal_range_end] +1)
         #print((self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1)))
+        print(self.sections[internal_range_end]) #should be the end list index
+        print(self.section_linkedlist[internal_range_start])
         return (self.sections[self.section_linkedlist[internal_range_start]] + 1, (self.sections[internal_range_end]+1))
 
 

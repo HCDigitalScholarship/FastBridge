@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -25,6 +24,8 @@ async def select(request : Request, language : str):
 
 
 def filter_helper(row_filters, POS):
+    print(row_filters)
+    print(POS)
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
@@ -59,6 +60,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     words = []
     titles =[]
     print("entering for")
+    display_triple =[]
     for text, start, end in triple:
         print(text)
         book = DefinitionTools.get_text(text, language).book
@@ -66,11 +68,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
+        display_triple.append((book.name, start, end))
         print("loaded the book")
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     try:
-        print(get_size(book))
+        print(book)
     except Exception as e:
         print("GOOD! IT IS GONE")
     print(local_def, local_lem)
@@ -102,12 +105,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
 
-    section =", ".join(["{text}: {start} - {end}".format(text = text.replace("_", " "), start = start, end = end) for text, start, end in triple])
+    section =", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
-    if not running_list:
-        columnheaders.append("Count_in_Selection")
+    columnheaders.append("Count_in_Selection")
     columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Source_Text")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
@@ -135,33 +138,35 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
     other_titles = set()
+    display_triple_other =[]
     for text, start, end in other:
         book = DefinitionTools.get_text(text, language).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
+        display_triple_other.append((book.name, start, end))
         del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
     ##print("\n")
     titles = set()
+    display_triple =[]
     for text, start, end in source:
         book = DefinitionTools.get_text(text, language).book
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
+        display_triple.append((book.name, start, end))
         titles = titles.union(set((book.get_words(start, end))))
         del book
 
     to_operate = set([(new[0]) for new in titles])
+    unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0], start = text[1], end = text[2]) for text in display_triple])
+    known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0], start = text[1], end = text[2]) for text in display_triple_other])
     if in_exclude == "exclude":
         to_operate= to_operate.difference(other_titles)
-        unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
-        known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
+
         section = f"{unknown} and not in {known}"
     elif in_exclude == "include":
         to_operate= to_operate.intersection(other_titles)
-
-        unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in source])
-        known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0].replace("_", " "), start = text[1], end = text[2]) for text in other])
         section = f"{unknown} and in {known}"
     frequency_dict = {}
     if True: #return no duplicates. running_list was going to toggle this, but returning all duplicates violates a data sharing agreement
@@ -194,6 +199,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Source_Text")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
@@ -213,9 +219,14 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         if filters:
             checks+= f'<span class="dropdown-submenu"> <button class="btn btn-no-padding" onclick="document.getElementById(\'{POS}extra\').classList.toggle(\'show\')">Refine</button><ul id= "{POS}extra" class="dropdown-menu" style = "border: 0px; color:inherit;background-color:gray;"">{filters}</ul> </span>'
         checks+= f'</div></div>'
-    checks+= f'<label for="global filters"> Utility Row Filters</label><div id="global filters">'
+    checks+= f'<label for="global filters"> Shortcut Row Filters</label><div id="global filters">'
     for global_f in global_filters:
-        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{global_f.replace("_", " ").title()}</label></div></div>'
+        display_globalf = global_f.replace("_", " ").title()
+        if display_globalf == "Proper":
+            display_globalf = "Proper Noun & Adjective"
+        elif display_globalf == "Regular":
+            display_globalf = "Regular Adjective/Adverb"
+        checks+= f'<div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="{global_f}" onchange="global_filter(\'{global_f}\');" checked><label class="custom-control-label" for="{global_f}">{display_globalf}</label></div></div>'
     checks += '</div>'
     headers = f""
     other_headers = f""
@@ -227,14 +238,22 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "LOCAL_DEFINITION":
-            headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
-            other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
+            if columnheaders[i] == "SHORT_DEFINITION" and "LOCAL_DEFINITION" in columnheaders:
+                style+= f'.{columnheaders[i]} {{display : none !important}}'
+                header_js_obj[columnheaders[i]][0] =rules_added
+                rules_added +=1
+                headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
+            else:
+                headers+= f'<input type="checkbox" class="custom-control-input" value="hide" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');" checked>'
+
+
         else:
             style+= f'.{columnheaders[i]} {{display : none !important}}'
             header_js_obj[columnheaders[i]][0] =rules_added
             rules_added +=1
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
-            other_headers+=f'<th onclick="sortTable(\'{columnheaders[i]}\',{i})" class="{columnheaders[i]}" id="{columnheaders[i]}_head">{columnheaders[i].replace("_", " ").title()}</th>'
+
+        other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
     render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups)

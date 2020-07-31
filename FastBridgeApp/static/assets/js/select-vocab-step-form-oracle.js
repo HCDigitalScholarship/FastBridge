@@ -225,7 +225,7 @@ $('#oracle-modal-form2-save').click(function(){
     $('#oracle-define-vocab').modal('hide');
     // reset form values
 
-    $('#oracle-define-vocab').find('#oracle-modal-form2')[0].reset();
+    document.getElementById('oracle-modal-form2').reset();
     $('#oracle-modal-form2-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext-oracle").disabled = false;
@@ -325,7 +325,7 @@ $('#oracle-modal-form1-save').click(function(){
     //document.getElementById("computer").style.display="none";
     //document.getElementById("bridge").style.display="none";
     // reset form values
-    $('#oracle-select-text').find('#oracle-modal-form1')[0].reset();
+    document.getElementById('oracle-modal-form1').reset();
     $('#oracle-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext-oracle").disabled = false;

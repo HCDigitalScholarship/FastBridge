@@ -123,24 +123,18 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     columnheaders = [head.upper() for head in reorder]
     [columnheaders.append(link) for link in links]
     columnheaders.append("Total_Count_in_Text")
-    columnheaders.append("Source_Text")
+    
     print(columnheaders)
     filtered_global_filters = []
     for filterl in row_filters:
         if filterl=="CONJUGATION" or filterl=="DECLENSION":
             pass
-
-        elif filterl=="PROPER":
-            filtered_global_filters.append(f"{filterl} Nouns and Adjectives")
-
-        elif filterl=="REGULAR":
-            filtered_global_filters.append(f"{filterl} Adverbs and Adjectives")
         else:
             filtered_global_filters.append(f"{filterl}")
 
     #print(computed_row_filters)
     print(final_row_filters)
-    return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters, filtered_global_filters
+    return list(zip(word_list, computed_row_filters)), POS, columnheaders, final_row_filters, row_filters
 
 def make_quads_or_trips(texts, starts, ends):
     """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""

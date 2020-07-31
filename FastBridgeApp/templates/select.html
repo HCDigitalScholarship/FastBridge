@@ -15,7 +15,7 @@
                             <div class="col-xl-7">
 
                                 <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">
-                                    Select a vocab list</h4>
+                                    Select text(s) you are reading </h4>
                             </div>
                         </div>
                         <div id="result">
@@ -126,7 +126,10 @@
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">×</span></button></div>
                     <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
-                        <form id="bridge-modal-form1" method = "GET">
+                      <form class="fake" id="fake" action="index.html" method="post">
+    <!-- TEMP SOLUTION: the form "modal-bridge-form1" was not building. with this above it, it does. -->
+                      </form>
+                        <form id="modal-bridge-form1">
                             <div>
 
                                 <div class="form-group"><label style="color: black;" for="chosen_text">

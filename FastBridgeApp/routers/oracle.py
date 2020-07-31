@@ -45,6 +45,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         #print(len(indexable_sections))
         while indexable_sections[start] != e_section_start:
             section = f'{indexable_sections[start]} - {end}' #for each row of the table
+            print(section, " oracle section")
             section_words = book.get_words(indexable_sections[start], end)
             total_tokens = set([(new[0]) for new in section_words])
             total_words =  (section_words) #need to filter to get out the sorting info.

@@ -112,6 +112,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             except KeyError:
                 title =  "morpheus: NONE" #humans will need to address this one!
 
-            output += f'{title},{location},{section}{running_count},{word}\n'
+            output += f'{title},{location},{section},{running_count},{word}\n'
+            print(running_count)
             running_count+=1
     return output
