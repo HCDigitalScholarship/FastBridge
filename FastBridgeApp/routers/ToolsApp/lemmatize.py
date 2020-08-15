@@ -34,7 +34,7 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
         print(resulting_filename)
         print(outputfile.name)
         the_text = file.file.read()
-        regex_go_brrr = regex.compile('\[[0-9]+(\_?[0-9]+)*\]')
+        regex_go_brrr = regex.compile('\[[0-9]+(\_|\.?[0-9]+)*\]')
         if text and the_text!= b'':
             #raise some error, they should only fill in one of these fields
             print("got both")
@@ -95,7 +95,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         if regex_go_brrr.match(word):
             print("FOUND A number")
             print(word)
-            location = word[1:-1] #remove the brackets around the word
+            location = word[1:-1].replace(".", "_") #remove the brackets around the word
             section +=1
         else:
             location = location

@@ -123,7 +123,7 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     columnheaders = [head.upper() for head in reorder]
     [columnheaders.append(link) for link in links]
     columnheaders.append("Total_Count_in_Text")
-    
+
     print(columnheaders)
     filtered_global_filters = []
     for filterl in row_filters:
