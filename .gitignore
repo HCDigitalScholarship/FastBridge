@@ -5,6 +5,7 @@ __pycache__
 *.pyo
 .mypy_cache
 
+
 /static_collected
 *.log
 *.sqlite3
@@ -118,3 +119,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+#datafiles
+*.csv
+
+#google sheets api
+credentials.json
+quickstart.py
+*.pickle
+gunilog

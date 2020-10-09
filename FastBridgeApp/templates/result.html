@@ -1,0 +1,71 @@
+<head lang="en">
+  <script type="text/javascript">
+    console.log("rendering template")
+  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Fast Bridge</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
+   <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css>
+   <style id = "local_styling" media="screen">{{style|safe}}</style>
+ </head>
+{% include "navbar.html" %}
+<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab"><div>
+  <p>Filters</p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)"><div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
+    <button type="button" class="btn btn-default" style="width:50%" onclick="download_table_as_csv('my_id_table_to_export');">Export as CSV</button>
+  </div>
+  <div class="modal-body" style="overflow-y:auto;height:65vh">
+    <div class="form-group">
+      <div class="custom-control custom-checkbox">
+        <input id = "running" type="checkbox"  class="custom-control-input" value= "show" onclick="show_full_list('running');"></input>
+        <label class="custom-control-label" for="running">Toggle Running List</label>
+      </div>
+    </div>
+    <div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters('toggle_all');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>
+
+    <div class="POS filters"><label for="POS filters">Part of Speech Filters</label>
+      <div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Add or Remove Columns</label><div id="column filters">{{headers|safe}}</div></div>
+
+  </div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
+
+  <div class="container">
+<h2> Now showing <span id = "len"> {{ len }} </span> words in {{ section }} </h2>
+
+  <input class="form-control" style="width:30%" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
+
+<div id="export_wrapper">
+
+  <div class="clusterize table-responsive mx-auto">
+    <table class="table table-striped"
+style="margin-bottom: 0rem; overflow: hidden;">
+      <thead style="text-align:left">
+        <tr>{{other_headers|safe}}</tr>
+    </thead>
+    </table>
+    <div class="clusterize-scroll" id="scrollArea">
+      <table class="table table-striped" id = "main_table">
+        <tbody id="contentArea" class="clusterize-content">
+          <tr class="clusterize-no-data">
+          <td>Loading data…</td>
+        </tr>
+        </tbody>
+      </table>
+
+    </div>
+
+  </div>
+  </div>
+  <a class="btn btn-primary btn-lg btn-default" role="button" href="/select" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
+  <div style="text-align:center;margin-top:40px;"><span class="step"></span><span class="step"></span><span class="step"></span><span class="step active"></span></div>
+</div>
+</section></body><script type="text/javascript">
+  var True = true
+  var columns = {{ columnheaders|safe }}
+  var full_data = {{ render_words_optional|safe }}
+  var data = {{ render_words|safe }}
+
+</script>
+<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"> </script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js></script>
+<script src="/assets/js/clusterize.min.js"></script>
+<script src="/assets/js/select-restult.js"></script>
+
+{% include "footer.html" %}

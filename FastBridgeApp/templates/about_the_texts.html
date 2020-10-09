@@ -1,0 +1,53 @@
+
+<head>
+  <script type="text/javascript">
+    console.log("rendering template")
+  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Fast Bridge</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
+   <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css>
+   <style id = "local_styling" media="screen"> {{style|safe}} </style>
+</head>
+{% include "navbar.html" %}
+<body>
+  <section id="result" class="download-section content-section text-center" style="background-image:url('/assets/img/background-img-gray.jpg');background-size:cover;background-position:top">
+<div class="container">
+<h2> INFORMATION ABOUT WORKS IN THE BRIDGE LIBRARY</h2>
+
+<input class="form-control" style="width:30%" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
+
+<div id="export_wrapper">
+
+<div class="clusterize table-responsive mx-auto">
+  <table class="table table-striped"
+style="margin-bottom: 0rem; overflow: hidden;">
+    <thead style="text-align:left">
+      <tr> {{headers|safe}} </tr>
+  </thead>
+  </table>
+  <div class="clusterize-scroll" id="scrollArea">
+    <table class="table table-striped" id = "main_table">
+      <tbody id="contentArea" class="clusterize-content">
+        <tr class="clusterize-no-data">
+        <td>Loading data…</td>
+      </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+</div>
+<a class="btn btn-primary btn-lg btn-default" role="button" href="/" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Home</a>
+</div>
+</section></body><script type="text/javascript">
+var True = true
+var False = false
+var columns = {{ columns|safe }}
+var full_data = {{ books_data|safe }}
+var data = {{ books_data|safe }}
+
+</script>
+<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"> </script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js></script>
+<script src="/assets/js/clusterize.min.js"></script>
+<script src="/assets/js/select-restult.js"></script>
+{% include "footer.html" %}
