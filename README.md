@@ -1,4 +1,5 @@
-# FastBridge
+# FastBridge [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/HCDigitalScholarship/FastBridge/tree/backend_in_FastAPI)
+
 A newer faster Bridge 
 Full reference documentation is here: https://docs.google.com/document/d/1OLF_AXg8-KjiQozGNCCo6V-dmIm8jeIk8udHJ8xuvkI/
 Bridge provides several tools to help students of Ancient Languages – currently Latin and Greek, but hopefully Sanskrit, Armaiac, and Coptic will be added soon. 
