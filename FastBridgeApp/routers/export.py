@@ -136,7 +136,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             row['Appearance'] = word[0].Appearance
             row['Total_Count_in_Text'] = word[0].Total_Count_in_Text
             row['Source_Text'] = word[0].Source_Text
-            row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
+            try: # not all words have a local definition
+                row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
+            except AttributeError:
+                pass
             data.append(row)
             
     if language == 'Latin':
