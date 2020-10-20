@@ -116,35 +116,45 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     # each dict is a word appearance and its attributes
     data = []
     df = pd.DataFrame(data)
-    # df.columns = ["TITLE", 
-    #             "PRINCIPAL_PARTS",
-    #             "PRINCIPAL_PARTS_NO_DIACRITICALS",
-    #             "SHORT_DEFINITION",
-    #             "LONG_DEFINITION",
-    #             "SIMPLE_LEMMA",
-    #             "PART_OF_SPEECH",
-    #             "LOGEION_LINK",
-    #             "FORCELLINI_LINK",
-    #             "Total_Count_in_Text",
-    #             "Source_Text"]
+    
+    if language == 'Greek':
+        for word in words:
+            row = {}
+            row['TITLE'] = word[0].TITLE #, ,  LOCAL_DEFINITION='report, tell'
+            row['PRINCIPAL_PARTS'] = word[0].PRINCIPAL_PARTS
+            row['PRINCIPAL_PARTS_NO_DIACRITICALS'] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
+            row['SIMPLE_LEMMA'] = word[0].SIMPLE_LEMMA
+            row['SHORT_DEFINITION'] = word[0].SHORT_DEFINITION
+            row['LONG_DEFINITION'] = word[0].LONG_DEFINITION
+            row['PART_OF_SPEECH'] = word[0].PART_OF_SPEECH
+            row['LOGEION_LINK'] = word[0].LOGEION_LINK
+            row['CONJUNCTION'] = word[0].CONJUNCTION
+            row['DECLENSION'] = word[0].DECLENSION
+            row['PROPER'] = word[0].PROPER
+            row['REGULAR'] = word[0].REGULAR
+            row['STOPWORD'] = word[0].STOPWORD
+            row['Appearance'] = word[0].Appearance
+            row['Total_Count_in_Text'] = word[0].Total_Count_in_Text
+            row['Source_Text'] = word[0].Source_Text
+            row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
+            data.append(row)
+            
+    if language == 'Latin':
+        for word in words:
+            row = {}
+            row["TITLE"] = word[0].TITLE
+            row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
+            row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
+            row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
+            row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
+            row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
+            row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
+            row["LOGEION_LINK"] = word[0].LOGEION_LINK
+            row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
+            row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
+            row["Source_Text"] = word[0].Source_Text
+            data.append(row)
 
-    # columnheaders
-    #["PRINCIPAL_PARTS_NO_DIACRITICALS","PRINCIPAL_PARTS","SHORT_DEFINITION","LONG_DEFINITION","SIMPLE_LEMMA","PART_OF_SPEECH","LOGEION_LINK","FORCELLINI_LINK","Total_Count_in_Text","Count_in_Selection","Order_of_Appearance","Source_Text"]
-    #<class 'tuple'> (Word(TITLE='VOLO/3', PRINCIPAL_PARTS='volō velle voluī', PRINCIPAL_PARTS_NO_DIACRITICALS='volo velle volui', SIMPLE_LEMMA='volo', SHORT_DEFINITION='to wish', LONG_DEFINITION='to be willing, want, wish; mean, signify', PART_OF_SPEECH='Verb', LOGEION_LINK='http://logeion.uchicago.edu/index.html#volo', FORCELLINI_LINK='http://www.lexica.linguax.com/forc.php?searchedLG=volo', CONJUNCTION='99', DECLENSION='', PROPER='', REGULAR='', STOPWORD='', Appearance='49', Total_Count_in_Text=1, Source_Text='50 Most Important Latin Verbs'), 'Verb CONJUNCTION_Verb_99 ')
-    for word in words:
-        row = {}
-        row["TITLE"] = word[0].TITLE
-        row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
-        row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-        row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
-        row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
-        row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
-        row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
-        row["LOGEION_LINK"] = word[0].LOGEION_LINK
-        row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
-        row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
-        row["Source_Text"] = word[0].Source_Text
-        data.append(row)
     df = pd.DataFrame(data)
     # in memory variation, not sure how to set filename
     #csv= df.to_csv()
@@ -232,38 +242,48 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Order_of_Appearance")
     columnheaders.append("Source_Text")
     data = []
-    df = pd.DataFrame(data)
-    # df.columns = ["TITLE", 
-    #             "PRINCIPAL_PARTS",
-    #             "PRINCIPAL_PARTS_NO_DIACRITICALS",
-    #             "SHORT_DEFINITION",
-    #             "LONG_DEFINITION",
-    #             "SIMPLE_LEMMA",
-    #             "PART_OF_SPEECH",
-    #             "LOGEION_LINK",
-    #             "FORCELLINI_LINK",
-    #             "Total_Count_in_Text",
-    #             "Source_Text"]
+    
+     
+    if language == 'Greek':
+        for word in words:
+            row = {}
+            row['TITLE'] = word[0].TITLE #, ,  LOCAL_DEFINITION='report, tell'
+            row['PRINCIPAL_PARTS'] = word[0].PRINCIPAL_PARTS
+            row['PRINCIPAL_PARTS_NO_DIACRITICALS'] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
+            row['SIMPLE_LEMMA'] = word[0].SIMPLE_LEMMA
+            row['SHORT_DEFINITION'] = word[0].SHORT_DEFINITION
+            row['LONG_DEFINITION'] = word[0].LONG_DEFINITION
+            row['PART_OF_SPEECH'] = word[0].PART_OF_SPEECH
+            row['LOGEION_LINK'] = word[0].LOGEION_LINK
+            row['CONJUNCTION'] = word[0].CONJUNCTION
+            row['DECLENSION'] = word[0].DECLENSION
+            row['PROPER'] = word[0].PROPER
+            row['REGULAR'] = word[0].REGULAR
+            row['STOPWORD'] = word[0].STOPWORD
+            row['Appearance'] = word[0].Appearance
+            row['Total_Count_in_Text'] = word[0].Total_Count_in_Text
+            row['Source_Text'] = word[0].Source_Text
+            row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
+            data.append(row)
 
-    # columnheaders
-    #["PRINCIPAL_PARTS_NO_DIACRITICALS","PRINCIPAL_PARTS","SHORT_DEFINITION","LONG_DEFINITION","SIMPLE_LEMMA","PART_OF_SPEECH","LOGEION_LINK","FORCELLINI_LINK","Total_Count_in_Text","Count_in_Selection","Order_of_Appearance","Source_Text"]
-    #<class 'tuple'> (Word(TITLE='VOLO/3', PRINCIPAL_PARTS='volō velle voluī', PRINCIPAL_PARTS_NO_DIACRITICALS='volo velle volui', SIMPLE_LEMMA='volo', SHORT_DEFINITION='to wish', LONG_DEFINITION='to be willing, want, wish; mean, signify', PART_OF_SPEECH='Verb', LOGEION_LINK='http://logeion.uchicago.edu/index.html#volo', FORCELLINI_LINK='http://www.lexica.linguax.com/forc.php?searchedLG=volo', CONJUNCTION='99', DECLENSION='', PROPER='', REGULAR='', STOPWORD='', Appearance='49', Total_Count_in_Text=1, Source_Text='50 Most Important Latin Verbs'), 'Verb CONJUNCTION_Verb_99 ')
-    for word in words:
-        row = {}
-        row["TITLE"] = word[0].TITLE
-        row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
-        row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-        row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
-        row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
-        row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
-        row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
-        row["LOGEION_LINK"] = word[0].LOGEION_LINK
-        row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
-        row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
-        row["Source_Text"] = word[0].Source_Text
-        data.append(row)
-    df = pd.DataFrame(data)
 
+    if language == 'Latin':
+        for word in words:
+            row = {}
+            row["TITLE"] = word[0].TITLE
+            row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
+            row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
+            row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
+            row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
+            row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
+            row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
+            row["LOGEION_LINK"] = word[0].LOGEION_LINK
+            row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
+            row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
+            row["Source_Text"] = word[0].Source_Text
+            data.append(row)
+
+    df = pd.DataFrame(data)
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
