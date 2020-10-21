@@ -118,44 +118,15 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     df = pd.DataFrame(data)
     
     if language == 'Greek':
-        for word in words:
-            row = {}
-            row['TITLE'] = word[0].TITLE #, ,  LOCAL_DEFINITION='report, tell'
-            row['PRINCIPAL_PARTS'] = word[0].PRINCIPAL_PARTS
-            row['PRINCIPAL_PARTS_NO_DIACRITICALS'] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-            row['SIMPLE_LEMMA'] = word[0].SIMPLE_LEMMA
-            row['SHORT_DEFINITION'] = word[0].SHORT_DEFINITION
-            row['LONG_DEFINITION'] = word[0].LONG_DEFINITION
-            row['PART_OF_SPEECH'] = word[0].PART_OF_SPEECH
-            row['LOGEION_LINK'] = word[0].LOGEION_LINK
-            row['CONJUNCTION'] = word[0].CONJUNCTION
-            row['DECLENSION'] = word[0].DECLENSION
-            row['PROPER'] = word[0].PROPER
-            row['REGULAR'] = word[0].REGULAR
-            row['STOPWORD'] = word[0].STOPWORD
-            row['Appearance'] = word[0].Appearance
-            row['Total_Count_in_Text'] = word[0].Total_Count_in_Text
-            row['Source_Text'] = word[0].Source_Text
-            try: # not all words have a local definition
-                row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
-            except AttributeError:
-                pass
+        for word in words: # Word is a namedtuple  
+            word= word[0]._asdict()   
+            row = dict(word)
             data.append(row)
             
     if language == 'Latin':
         for word in words:
-            row = {}
-            row["TITLE"] = word[0].TITLE
-            row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
-            row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-            row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
-            row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
-            row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
-            row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
-            row["LOGEION_LINK"] = word[0].LOGEION_LINK
-            row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
-            row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
-            row["Source_Text"] = word[0].Source_Text
+            word= word[0]._asdict() 
+            row = dict(word)
             data.append(row)
 
     df = pd.DataFrame(data)
@@ -165,8 +136,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     csv_file_path = f'{sourcetexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
-
-#full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
+    #TODO file still exists, need to delete after FileResponse
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
@@ -246,44 +216,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Source_Text")
     data = []
     
-     
     if language == 'Greek':
-        for word in words:
-            row = {}
-            row['TITLE'] = word[0].TITLE #, ,  LOCAL_DEFINITION='report, tell'
-            row['PRINCIPAL_PARTS'] = word[0].PRINCIPAL_PARTS
-            row['PRINCIPAL_PARTS_NO_DIACRITICALS'] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-            row['SIMPLE_LEMMA'] = word[0].SIMPLE_LEMMA
-            row['SHORT_DEFINITION'] = word[0].SHORT_DEFINITION
-            row['LONG_DEFINITION'] = word[0].LONG_DEFINITION
-            row['PART_OF_SPEECH'] = word[0].PART_OF_SPEECH
-            row['LOGEION_LINK'] = word[0].LOGEION_LINK
-            row['CONJUNCTION'] = word[0].CONJUNCTION
-            row['DECLENSION'] = word[0].DECLENSION
-            row['PROPER'] = word[0].PROPER
-            row['REGULAR'] = word[0].REGULAR
-            row['STOPWORD'] = word[0].STOPWORD
-            row['Appearance'] = word[0].Appearance
-            row['Total_Count_in_Text'] = word[0].Total_Count_in_Text
-            row['Source_Text'] = word[0].Source_Text
-            row['LOCAL_DEFINITION'] = word[0].LOCAL_DEFINITION
+        for word in words: # Word is a namedtuple  
+            word= word[0]._asdict()   
+            row = dict(word)
             data.append(row)
-
-
+            
     if language == 'Latin':
         for word in words:
-            row = {}
-            row["TITLE"] = word[0].TITLE
-            row["PRINCIPAL_PARTS"] = word[0].PRINCIPAL_PARTS
-            row["PRINCIPAL_PARTS_NO_DIACRITICALS"] = word[0].PRINCIPAL_PARTS_NO_DIACRITICALS
-            row["SHORT_DEFINITION"] = word[0].SHORT_DEFINITION
-            row["LONG_DEFINITION"] = word[0].LONG_DEFINITION
-            row["SIMPLE_LEMMA"] = word[0].SIMPLE_LEMMA
-            row["PART_OF_SPEECH"] = word[0].PART_OF_SPEECH
-            row["LOGEION_LINK"] = word[0].LOGEION_LINK
-            row["FORCELLINI_LINK"] = word[0].FORCELLINI_LINK
-            row["Total_Count_in_Text"] = word[0].Total_Count_in_Text
-            row["Source_Text"] = word[0].Source_Text
+            word= word[0]._asdict() 
+            row = dict(word)
             data.append(row)
 
     df = pd.DataFrame(data)
