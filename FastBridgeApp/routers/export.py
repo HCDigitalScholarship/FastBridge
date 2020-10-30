@@ -18,17 +18,13 @@ import io
 
 
 def filter_helper(row_filters, POS):
-    print(row_filters)
-    print(POS)
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
     for filter, POS_for_filter in row_filters:
-        #print(POS, POS_for_filter, "printing")
         if POS+ " " == POS_for_filter:
             display_filter = filter.replace("_", " ").title()
             if display_filter[-1] == "0":
-                #print(filter, POS_for_filter, "printing")
                 display_filter = display_filter[:-1]
             elif display_filter[-2:] == "99":
                 display_filter = f"Irregular"
@@ -43,8 +39,12 @@ def filter_helper(row_filters, POS):
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
+    data = await request.json()
+    data = data['data']
 
-    #parse the URL, create a list of tuples with each (text, start, end)
+    # Get columns to show, remove those marked 'hide'
+    display =[key for key in data.keys() if data[key] == 'show']  
+        
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
         running_list = True
@@ -52,31 +52,27 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         running_list = False
     local_def = False
     local_lem = False
-    #print(triple)
     words = []
     titles =[]
-    print("entering for")
+    
     display_triple =[]
 
     # iterate over each text, in triple
     for text, start, end in triple:
-        print(text)
+        
         book = DefinitionTools.get_text(text, language).book
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
-        print("loaded the book")
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     try:
         print(book)
     except Exception as e:
         print("GOOD! IT IS GONE")
-    print(local_def, local_lem)
 
-    print("got titles")
 
     # what does this section do? 
     frequency_dict = {}
@@ -94,7 +90,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
 
         titles_no_dups = new_titles
-        #print(titles)
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
@@ -112,37 +107,49 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     columnheaders.append("Order_of_Appearance")
     columnheaders.append("Source_Text")
 
+    #TODO AJ revisit this, these values can be found in the frequency_dict, to add back later
+    #now removing to get to working exporter
+    display.remove('Count_in_Selection')
+    display.remove('Order_of_Appearance')
+
     # create a list of dictionaries 
     # each dict is a word appearance and its attributes
-    data = []
-    df = pd.DataFrame(data)
-    
-    if language == 'Greek':
-        for word in words: # Word is a namedtuple  
+    data = []    
+    if 'running' in display:
+        for word in words:   
+            word= word[0]._asdict()  
+            #TODO add logic to drop from results without match to current filters 
+            row = dict(word)
+            data.append(row)
+        
+        display.remove('running')
+        
+    else: 
+        for word in words_no_dups:
             word= word[0]._asdict()   
             row = dict(word)
             data.append(row)
-            
-    if language == 'Latin':
-        for word in words:
-            word= word[0]._asdict() 
-            row = dict(word)
-            data.append(row)
-
+                    
     df = pd.DataFrame(data)
+    # include only columns that were selected by the user
+    df = df[display] 
+
     # in memory variation, not sure how to set filename
     #csv= df.to_csv()
     #return Response(content=csv, media_type="text/csv")
     csv_file_path = f'{sourcetexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
-    #TODO file still exists, need to delete after FileResponse
+    #TODO file still exists, need to delete after FileResponse, scheduled task, clear files once a month
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str, running_list: str):
     context = {"request": request}
+    data = await request.json()
+    data = data['data']
+    display =[key for key in data.keys() if data[key] == 'show']  
     if running_list == "running":
         running_list = True
     else:
@@ -159,7 +166,6 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         display_triple_other.append((book.name, start, end))
         del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
-    ##print("\n")
     titles = set()
     display_triple =[]
     for text, start, end in source:
@@ -202,11 +208,9 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
 
 
-    ##print(titles)
 
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
-    ##print(titles)
     words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
 
     words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
@@ -229,6 +233,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             data.append(row)
 
     df = pd.DataFrame(data)
+    df = df[display] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
