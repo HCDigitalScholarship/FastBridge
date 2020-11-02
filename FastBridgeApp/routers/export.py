@@ -218,21 +218,30 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Order_of_Appearance")
     columnheaders.append("Source_Text")
-    data = []
     
-    if language == 'Greek':
-        for word in words: # Word is a namedtuple  
+    display.remove('Count_in_Selection')
+    display.remove('Order_of_Appearance')
+
+    # create a list of dictionaries 
+    # each dict is a word appearance and its attributes
+    data = []    
+    if 'running' in display:
+        for word in words:   
+            word= word[0]._asdict()  
+            #TODO add logic to drop from results without match to current filters 
+            row = dict(word)
+            data.append(row)
+        
+        display.remove('running')
+        
+    else: 
+        for word in words_no_dups:
             word= word[0]._asdict()   
             row = dict(word)
             data.append(row)
-            
-    if language == 'Latin':
-        for word in words:
-            word= word[0]._asdict() 
-            row = dict(word)
-            data.append(row)
-
+                    
     df = pd.DataFrame(data)
+    # include only columns that were selected by the user
     df = df[display] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
