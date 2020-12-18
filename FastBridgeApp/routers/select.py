@@ -135,8 +135,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         running_list = False
     local_def = False
     local_lem = False
-    source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
-    other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
+    source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends) #returns a list
+    other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends) #anotherList
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
