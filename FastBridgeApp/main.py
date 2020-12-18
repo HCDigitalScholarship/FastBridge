@@ -17,7 +17,7 @@ from routers import oracle, select, about, user_help,export
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-app.include_router(lemmatize.router, prefix="/lemmatize", tags=["lemmatize"])
+app.include_router(lemmatize.router, prefix="/lemmatizer", tags=["lemmatize"])
 app.include_router(account.router, prefix = "/account", tags=["account"])
 app.include_router(oracle.router, prefix = "/oracle", tags=["oracle"])
 app.include_router(select.router, prefix = "/select", tags=["select"])

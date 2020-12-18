@@ -1644,3 +1644,187 @@ def test_integrity_seneca_quaestiones_naturales_dcc_selections():
     response = client.get("oracle/Latin/result/seneca_quaestiones_naturales_dcc_selections/start/end/1/seneca_quaestiones_naturales_dcc_selections/start-end")
     assert response.status_code == 200
     
+def test_integrity_claudian_de_bello_gothico():
+    response = client.get("oracle/Latin/result/claudian_de_bello_gothico/start/end/1/claudian_de_bello_gothico/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_in_eutropium():
+    response = client.get("oracle/Latin/result/claudian_in_eutropium/start/end/1/claudian_in_eutropium/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_de_bello_gothico_preface():
+    response = client.get("oracle/Latin/result/claudian_de_bello_gothico_preface/start/end/1/claudian_de_bello_gothico_preface/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface():
+    response = client.get("oracle/Latin/result/claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface/start/end/1/claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_abelard_historia_calamitatum_5-6():
+    response = client.get("oracle/Latin/result/abelard_historia_calamitatum_5-6/start/end/1/abelard_historia_calamitatum_5-6/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apuleius_de_mundo():
+    response = client.get("oracle/Latin/result/apuleius_de_mundo/start/end/1/apuleius_de_mundo/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apuleius_de_mundo_prologus():
+    response = client.get("oracle/Latin/result/apuleius_de_mundo_prologus/start/end/1/apuleius_de_mundo_prologus/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apuleius_de_platone():
+    response = client.get("oracle/Latin/result/apuleius_de_platone/start/end/1/apuleius_de_platone/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apuleius_metamorphoses_finkelpearl_edition():
+    response = client.get("oracle/Latin/result/apuleius_metamorphoses_finkelpearl_edition/start/end/1/apuleius_metamorphoses_finkelpearl_edition/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apuleius_de_deo_socratis():
+    response = client.get("oracle/Latin/result/apuleius_de_deo_socratis/start/end/1/apuleius_de_deo_socratis/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_cato_de_agricultura():
+    response = client.get("oracle/Latin/result/cato_de_agricultura/start/end/1/cato_de_agricultura/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_cato_distichs():
+    response = client.get("oracle/Latin/result/cato_distichs/start/end/1/cato_distichs/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_hyginus_fabulae():
+    response = client.get("oracle/Latin/result/hyginus_fabulae/start/end/1/hyginus_fabulae/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_marie_de_france_fables_1-22():
+    response = client.get("oracle/Latin/result/marie_de_france_fables_1-22/start/end/1/marie_de_france_fables_1-22/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ruaeus_aeneid_summaries():
+    response = client.get("oracle/Latin/result/ruaeus_aeneid_summaries/start/end/1/ruaeus_aeneid_summaries/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_de_romanis_radice():
+    response = client.get("oracle/Latin/result/de_romanis_radice/start/end/1/de_romanis_radice/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_cambridge_latin_course():
+    response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_classical_latin_mckeown():
+    response = client.get("oracle/Latin/result/classical_latin_mckeown/start/end/1/classical_latin_mckeown/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_disce_kitchell-sienkewicz():
+    response = client.get("oracle/Latin/result/disce_kitchell-sienkewicz/start/end/1/disce_kitchell-sienkewicz/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ecce_romani_chs_1-54():
+    response = client.get("oracle/Latin/result/ecce_romani_chs_1-54/start/end/1/ecce_romani_chs_1-54/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_introduction_to_latin_shelmerdine():
+    response = client.get("oracle/Latin/result/introduction_to_latin_shelmerdine/start/end/1/introduction_to_latin_shelmerdine/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_jenney_first_year_latin_purple_jenney-scudder-baade():
+    response = client.get("oracle/Latin/result/jenney_first_year_latin_purple_jenney-scudder-baade/start/end/1/jenney_first_year_latin_purple_jenney-scudder-baade/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_jenney_first_year_latin_red():
+    response = client.get("oracle/Latin/result/jenney_first_year_latin_red/start/end/1/jenney_first_year_latin_red/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_latin_for_americans_vol_1_and_2_ullman-henderson():
+    response = client.get("oracle/Latin/result/latin_for_americans_vol_1_and_2_ullman-henderson/start/end/1/latin_for_americans_vol_1_and_2_ullman-henderson/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_latin_an_intensive_course_moreland-fleischer():
+    response = client.get("oracle/Latin/result/latin_an_intensive_course_moreland-fleischer/start/end/1/latin_an_intensive_course_moreland-fleischer/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova():
+    response = client.get("oracle/Latin/result/latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova/start/end/1/latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_learn_to_read_latin_keller-russell():
+    response = client.get("oracle/Latin/result/learn_to_read_latin_keller-russell/start/end/1/learn_to_read_latin_keller-russell/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_lingua_latina_per_se_illustrata_pars_i_oerberg():
+    response = client.get("oracle/Latin/result/lingua_latina_per_se_illustrata_pars_i_oerberg/start/end/1/lingua_latina_per_se_illustrata_pars_i_oerberg/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_new_latin_primer_english-irby():
+    response = client.get("oracle/Latin/result/new_latin_primer_english-irby/start/end/1/new_latin_primer_english-irby/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_oxford_latin_course_balme-morwood():
+    response = client.get("oracle/Latin/result/oxford_latin_course_balme-morwood/start/end/1/oxford_latin_course_balme-morwood/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_oxford_latin_course_college():
+    response = client.get("oracle/Latin/result/oxford_latin_course_college/start/end/1/oxford_latin_course_college/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_wheelock_latin_lafleur():
+    response = client.get("oracle/Latin/result/wheelock_latin_lafleur/start/end/1/wheelock_latin_lafleur/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_wiley_real_latin_maltby-belcher():
+    response = client.get("oracle/Latin/result/wiley_real_latin_maltby-belcher/start/end/1/wiley_real_latin_maltby-belcher/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_hrotswitha_dulcitius():
+    response = client.get("oracle/Latin/result/hrotswitha_dulcitius/start/end/1/hrotswitha_dulcitius/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ceinos_de_riofrio_centonicum_virgilianum_monimentum():
+    response = client.get("oracle/Latin/result/ceinos_de_riofrio_centonicum_virgilianum_monimentum/start/end/1/ceinos_de_riofrio_centonicum_virgilianum_monimentum/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_panegyricus_de_vi_consulatu_honorii_augusti():
+    response = client.get("oracle/Latin/result/claudian_panegyricus_de_vi_consulatu_honorii_augusti/start/end/1/claudian_panegyricus_de_vi_consulatu_honorii_augusti/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface():
+    response = client.get("oracle/Latin/result/claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface/start/end/1/claudian_panegyricus_de_vi_consulatu_honorii_augusti_preface/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_petronius_satyricon():
+    response = client.get("oracle/Latin/result/petronius_satyricon/start/end/1/petronius_satyricon/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_horace_epistles():
+    response = client.get("oracle/Latin/result/horace_epistles/start/end/1/horace_epistles/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_lhomond_de_viris_illustribus_1-18_exordium_to_coriolanus():
+    response = client.get("oracle/Latin/result/lhomond_de_viris_illustribus_1-18_exordium_to_coriolanus/start/end/1/lhomond_de_viris_illustribus_1-18_exordium_to_coriolanus/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_tacitus_annales():
+    response = client.get("oracle/Latin/result/tacitus_annales/start/end/1/tacitus_annales/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_tacitus_historiae():
+    response = client.get("oracle/Latin/result/tacitus_historiae/start/end/1/tacitus_historiae/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_vergil_aeneid():
+    response = client.get("oracle/Latin/result/vergil_aeneid/start/end/1/vergil_aeneid/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_panegyricus_de_iii_consulatu_honorii_augusti_preface():
+    response = client.get("oracle/Latin/result/claudian_panegyricus_de_iii_consulatu_honorii_augusti_preface/start/end/1/claudian_panegyricus_de_iii_consulatu_honorii_augusti_preface/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_panegyricus_de_iii_consulatu_honorii_augusti():
+    response = client.get("oracle/Latin/result/claudian_panegyricus_de_iii_consulatu_honorii_augusti/start/end/1/claudian_panegyricus_de_iii_consulatu_honorii_augusti/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_alpha_to_omega_groton():
+    response = client.get("oracle/Greek/result/alpha_to_omega_groton/start/end/1/alpha_to_omega_groton/start-end")
+    assert response.status_code == 200
+    
