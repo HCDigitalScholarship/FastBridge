@@ -1828,3 +1828,15 @@ def test_integrity_alpha_to_omega_groton():
     response = client.get("oracle/Greek/result/alpha_to_omega_groton/start/end/1/alpha_to_omega_groton/start-end")
     assert response.status_code == 200
     
+def test_integrity_collins_latin_text():
+    response = client.get("oracle/Latin/result/collins_latin_text/start/end/1/collins_latin_text/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_collins_latin_textbook():
+    response = client.get("oracle/Latin/result/collins_latin_textbook/start/end/1/collins_latin_textbook/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_claudian_de_consulatu_stilichonis():
+    response = client.get("oracle/Latin/result/claudian_de_consulatu_stilichonis/start/end/1/claudian_de_consulatu_stilichonis/start-end")
+    assert response.status_code == 200
+    
