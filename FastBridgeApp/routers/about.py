@@ -45,3 +45,8 @@ def about_the_texts(request: Request):
     context["headers"] = headers
     context["style"] = f'td{{max-width : 10vh; width: 10vh; color: white;}}'
     return templates.TemplateResponse("about_the_texts.html", context)
+
+@router.get("/people")
+def render_about(request: Request):
+    context = {'request': request}
+    return templates.TemplateResponse("people.html", context)
