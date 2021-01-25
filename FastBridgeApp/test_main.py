@@ -1840,3 +1840,39 @@ def test_integrity_claudian_de_consulatu_stilichonis():
     response = client.get("oracle/Latin/result/claudian_de_consulatu_stilichonis/start/end/1/claudian_de_consulatu_stilichonis/start-end")
     assert response.status_code == 200
     
+def test_integrity_collins_latin_textbook():
+    response = client.get("oracle/Latin/result/collins_latin_textbook/start/end/1/collins_latin_textbook/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova():
+    response = client.get("oracle/Latin/result/latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova/start/end/1/latin_for_the_new_millennium_vols_1_and_2_tunberg-minkova/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_hrotswitha_dulcitius():
+    response = client.get("oracle/Latin/result/hrotswitha_dulcitius/start/end/1/hrotswitha_dulcitius/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_tacitus_agricola():
+    response = client.get("oracle/Latin/result/tacitus_agricola/start/end/1/tacitus_agricola/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_tacitus_annales():
+    response = client.get("oracle/Latin/result/tacitus_annales/start/end/1/tacitus_annales/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_tacitus_historiae():
+    response = client.get("oracle/Latin/result/tacitus_historiae/start/end/1/tacitus_historiae/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_seneca_naturales_quaestiones_dcc_selections():
+    response = client.get("oracle/Latin/result/seneca_naturales_quaestiones_dcc_selections/start/end/1/seneca_naturales_quaestiones_dcc_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ruaeus_aeneid_summaries():
+    response = client.get("oracle/Latin/result/ruaeus_aeneid_summaries/start/end/1/ruaeus_aeneid_summaries/start-end")
+    assert response.status_code == 200
+    
