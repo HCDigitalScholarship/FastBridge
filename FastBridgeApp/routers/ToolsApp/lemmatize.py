@@ -17,11 +17,11 @@ router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/Lemmatizer")
+@router.get("/")
 def lemma_index(request : Request):
     context= {"request" : request}
     return templates.TemplateResponse("lemmatize.html", context)
-@router.post("/Lemmatizer")
+@router.post("/")
 async def lemmatizing_handler(request : Request, format : str =  Form(...), language : str = Form(...), poetry : str =  Form(...), resulting_filename : str =  Form("tempfile"), text : str = Form(""), file : Optional[UploadFile] = File(...)):
     lemma_lex =  importlib.import_module(f'routers.ToolsApp.{language}_lemmata').LEMMATA
     #I think there is a nice way to pickle and unpickle this to save space, but i am not sure how to do that. Pickle was complaining for me.
