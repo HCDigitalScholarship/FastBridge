@@ -6,12 +6,13 @@
    <style id = "local_styling" media="screen">{{style|safe}}</style>
  </head>
 {% include "navbar.html" %}
-<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab"><div>
-  <p style="font-family: sans-serif; font-size:2rem;">Options</p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)"><div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
+<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab">
   <div class="btn-group">
     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
     <button type="button" class="btn btn-default" style="width:50%" onclick="get_csv();">Export as CSV</button>
   </div>
+  <div>
+  <p style="font-family: sans-serif; font-size:2rem;">Options</p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)"><div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
   <div class="modal-body" style="overflow-y:auto;height:65vh">
     <div class="form-group">
       <div class="custom-control custom-checkbox">
