@@ -235,7 +235,6 @@ texts = {
     "Wheelock Latin (LaFleur)": 1,
     "Wheelock Latin, Sententiae Antiquae": 2,
     "Wheelock Latin: Practice and Review": 2,
-    "Wheelock’s Latin (LaFleur)": 1,
     "Wiley Real Latin (Maltby-Belcher)": 1,
     "Williams, Rena Rhinoceros": 1,
     "Williams, Ursus et Porcus": 1,
