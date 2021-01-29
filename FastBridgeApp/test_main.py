@@ -1880,3 +1880,7 @@ def test_integrity_cambridge_latin_course():
     response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
     assert response.status_code == 200
     
+def test_integrity_cambridge_latin_course():
+    response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
+    assert response.status_code == 200
+    
