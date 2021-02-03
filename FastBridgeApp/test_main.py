@@ -1884,3 +1884,27 @@ def test_integrity_cambridge_latin_course():
     response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
     assert response.status_code == 200
     
+def test_integrity_cambridge_latin_course():
+    response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_title_test():
+    response = client.get("oracle/Latin/result/title_test/start/end/1/title_test/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_cambridge_latin_course():
+    response = client.get("oracle/Latin/result/cambridge_latin_course/start/end/1/cambridge_latin_course/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_200_essential_latin_words_list_mahoney():
+    response = client.get("oracle/Latin/result/200_essential_latin_words_list_mahoney/start/end/1/200_essential_latin_words_list_mahoney/start-end")
+    assert response.status_code == 200
+    
