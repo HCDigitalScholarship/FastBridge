@@ -1908,3 +1908,19 @@ def test_integrity_200_essential_latin_words_list_mahoney():
     response = client.get("oracle/Latin/result/200_essential_latin_words_list_mahoney/start/end/1/200_essential_latin_words_list_mahoney/start-end")
     assert response.status_code == 200
     
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_keep_going_with_latin_linney():
+    response = client.get("oracle/Latin/result/keep_going_with_latin_linney/start/end/1/keep_going_with_latin_linney/start-end")
+    assert response.status_code == 200
+    
