@@ -1924,3 +1924,19 @@ def test_integrity_keep_going_with_latin_linney():
     response = client.get("oracle/Latin/result/keep_going_with_latin_linney/start/end/1/keep_going_with_latin_linney/start-end")
     assert response.status_code == 200
     
+def test_integrity_epictetus_enchiridion_heyne():
+    response = client.get("oracle/Latin/result/epictetus_enchiridion_heyne/start/end/1/epictetus_enchiridion_heyne/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_getting_started_with_latin_linney():
+    response = client.get("oracle/Latin/result/getting_started_with_latin_linney/start/end/1/getting_started_with_latin_linney/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_keep_going_with_latin_linney():
+    response = client.get("oracle/Latin/result/keep_going_with_latin_linney/start/end/1/keep_going_with_latin_linney/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_pseudo-sallust_invective_against_cicero():
+    response = client.get("oracle/Latin/result/pseudo-sallust_invective_against_cicero/start/end/1/pseudo-sallust_invective_against_cicero/start-end")
+    assert response.status_code == 200
+    
