@@ -245,7 +245,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                     
     df = pd.DataFrame(data)
     # include only columns that were selected by the user
-    #df = df[display] 
+    df = df[display] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
