@@ -144,7 +144,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #TODO file still exists, need to delete after FileResponse, scheduled task, clear files once a month
 
 
-https://fastbridge-dev.herokuapp.com/select/Latin/result/38_latin_stories_groton/start-end/non_running/
+#https://fastbridge-dev.herokuapp.com/select/Latin/result/38_latin_stories_groton/start-end/non_running/
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
