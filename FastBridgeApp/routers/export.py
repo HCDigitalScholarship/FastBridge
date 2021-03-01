@@ -243,11 +243,12 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             row = dict(word)
             data.append(row)
                     
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(data, columns = display)
     # include only columns that were selected by the user
-    df = df[display] 
+    #df = df[display] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
+    display = [] #setting the display list to an empty list
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
 
 
