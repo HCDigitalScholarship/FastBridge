@@ -11,7 +11,7 @@ def get_text(form_request : str, language : str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
     """
-    return importlib.import_module(f'data.{language}.{form_request}')
+    return importlib.import_module(f'data.{language}.{form_request}') #point to the data folder
 
 
 def render_titles(language: str, dropdown : str = ""):

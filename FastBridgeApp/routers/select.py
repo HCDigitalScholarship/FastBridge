@@ -146,7 +146,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
     ##print("\n")
-    titles = set()
+    titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
         book = DefinitionTools.get_text(text, language).book
@@ -155,10 +155,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
-        titles = titles.union(set((book.get_words(start, end))))
+        titles = titles.union(set((book.get_words(start, end)))) #get a list and then append the list to other list
         del book
 
-    to_operate = set([(new[0]) for new in titles])
+    to_operate = set([(new[0]) for new in titles]) #another set
     unknown = ", ".join(["{text}: {start} - {end}".format(text = text[0], start = text[1], end = text[2]) for text in display_triple])
     known =  starts = ", ".join(["{text}: {start} - {end}".format(text = text[0], start = text[1], end = text[2]) for text in display_triple_other])
     if in_exclude == "exclude":
@@ -180,7 +180,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
                 frequency_dict[title[0]] = 1
             else:
                 frequency_dict[title[0]] += 1
-        titles_no_dups = new_titles
+        titles_no_dups = new_titles #no duplicates
 
 
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
