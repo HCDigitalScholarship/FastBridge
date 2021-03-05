@@ -40,9 +40,11 @@ function current_selections() {
     let result = '{'
     for (i = 0; i < filters.length -1; i++) {
         
-        let filter = "#" + filters[i] 
+        let filter = "#" + filters[i]
         let value = $(filter).val();
+        console.log(filter, value);
         result +=  '"'+filters[i] + '":"' + value + '",'
+        console.log(result);
     }
     let filter = "#" + filters[filters.length-1] 
     let value = $(filter).val();

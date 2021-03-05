@@ -196,6 +196,7 @@ function toggle_all_filters(id) {
   var checkBoxes = document.querySelectorAll('input[name=filterChecks]')
   for (var i = 0; i < checkBoxes.length; i++) {
     checkBoxes[i].value = ths.value;
+    console.log(checkBoxes[i].value);
     checkBoxes[i].checked = ths.checked;
     }
 
@@ -228,10 +229,9 @@ function hide_show_column(col_name)
    var rule =  `.${col_name} { display : none !important} `
    stylesheet.insertRule(rule, end)
    columns[col_name][0] = end;
-  document.getElementById(col_name+"_head").style.display="none";
-  document.getElementById(col_name).value="show";
-
- }
+   document.getElementById(col_name+"_head").style.display="none";
+   document.getElementById(col_name).value="show";
+  }
  else{
    console.log(columns[col_name][0])
    console.log(end-1)

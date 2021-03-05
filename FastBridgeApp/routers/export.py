@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depen
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse,FileResponse
 import importlib
+import pdb
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
@@ -40,10 +41,14 @@ def filter_helper(row_filters, POS):
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     data = await request.json()
+    print(data)
     data = data['data']
+    #here is the problem the selected column value is till 'hide' though they arew selected on the web
 
     # Get columns to show, remove those marked 'hide'
     display =[key for key in data.keys() if data[key] == 'show']  
+    print("display at line 48 export .py")
+    print(display)
         
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
@@ -118,10 +123,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     if 'running' in display:
         for word in words:   
             word= word[0]._asdict() 
-
             #TODO add logic to drop from results without match to current filters 
             row = dict(word)
             data.append(row)
+            
         
         display.remove('running')
         
@@ -130,11 +135,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             word= word[0]._asdict()   
             row = dict(word)
             data.append(row)
-                    
+
+    print('display at line 134')  #added print  
+    print(display)           
     df = pd.DataFrame(data)
     # include only columns that were selected by the user
     df = df[display] 
-
     # in memory variation, not sure how to set filename
     #csv= df.to_csv()
     #return Response(content=csv, media_type="text/csv")
@@ -152,7 +158,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context = {"request": request}
     data = await request.json()
     data = data['data']
-    display =[key for key in data.keys() if data[key] == 'show']  
+    display = [key for key in data.keys() if data[key] == 'show']  
     if running_list == "running":
         running_list = True
     else:
@@ -227,7 +233,12 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     # create a list of dictionaries 
     # each dict is a word appearance and its attributes
-    data = []    
+    data = []  
+    ####"what is the significance of 'running'?"  
+    #display containg the column names and since it also has the unselected colunms I think there is some problem with display?
+    # I tried to follow the display but not I have question about where do we store the selected filters and how are they stored?
+    # I need those to decide how I want to store the column headers which I then use to render the csv the way it is displayed to the user.
+    
     if 'running' in display:
         for word in words:   
             word= word[0]._asdict()  
@@ -237,18 +248,20 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         
         display.remove('running')
         
+        
     else: 
         for word in words_no_dups:
             word= word[0]._asdict()   
             row = dict(word)
             data.append(row)
-                    
+
+    print('display at line 254') 
+    print(display)  ## added print               
     df = pd.DataFrame(data)
     # include only columns that were selected by the user
     df = df[display] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
-    display = [] #setting the display list to an empty list
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
 
 

@@ -10,7 +10,7 @@
   <div>
   <p style="font-family: sans-serif; font-size:1.5rem;"> Options </p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)">
   <div class="btn-group">
-     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData()" title="Print table">Print Page</button>
+     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
     <button type="button" class="btn btn-default" style="width:50%" onclick="get_csv();">Export as CSV</button>
   </div>
   
@@ -85,6 +85,8 @@ style="margin-bottom: 0rem; overflow: hidden;">
 
     // Read current filter settings in the page
     let data = current_selections();
+    print("at line 88 in result.html")
+    print(data)
     let xhr = new XMLHttpRequest();
     xhr.open("POST", url, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
