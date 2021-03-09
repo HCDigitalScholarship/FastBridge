@@ -230,9 +230,11 @@ function hide_show_column(col_name)
    stylesheet.insertRule(rule, end)
    columns[col_name][0] = end;
    document.getElementById(col_name+"_head").style.display="none";
+   console.log(document.getElementById(col_name+"_head").style.display="none");
    document.getElementById(col_name).value="show";
   }
  else{
+  /*
    console.log(columns[col_name][0])
    console.log(end-1)
    if (columns[col_name][0] != end -1){
@@ -254,6 +256,7 @@ function hide_show_column(col_name)
    document.getElementById(col_name+"_head").style.display="table-cell";
    document.getElementById(col_name).value="hide";
  }
+ */
  setTimeout(line_up_header_columns,0);
 }
 

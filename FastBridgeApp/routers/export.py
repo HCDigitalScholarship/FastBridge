@@ -41,14 +41,15 @@ def filter_helper(row_filters, POS):
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     data = await request.json()
-    print(data)
+    print("print data at line 44 export.py")
+    #print(data)
     data = data['data']
     #here is the problem the selected column value is till 'hide' though they arew selected on the web
 
     # Get columns to show, remove those marked 'hide'
     display =[key for key in data.keys() if data[key] == 'show']  
     print("display at line 48 export .py")
-    print(display)
+    #print(display)
         
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
@@ -137,7 +138,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             data.append(row)
 
     print('display at line 134')  #added print  
-    print(display)           
+    #print(display)           
     df = pd.DataFrame(data)
     # include only columns that were selected by the user
     df = df[display] 
@@ -256,7 +257,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             data.append(row)
 
     print('display at line 254') 
-    print(display)  ## added print               
+    #print(display)  ## added print               
     df = pd.DataFrame(data)
     # include only columns that were selected by the user
     df = df[display] 
