@@ -234,7 +234,7 @@ function hide_show_column(col_name)
    document.getElementById(col_name).value="show";
   }
  else{
-  /*
+ 
    console.log(columns[col_name][0])
    console.log(end-1)
    if (columns[col_name][0] != end -1){
@@ -256,8 +256,8 @@ function hide_show_column(col_name)
    document.getElementById(col_name+"_head").style.display="table-cell";
    document.getElementById(col_name).value="hide";
  }
- */
- setTimeout(line_up_header_columns,0);
+
+  setTimeout(line_up_header_columns,0);
 }
 
 function hide_show_row(row_value){
@@ -301,9 +301,12 @@ function hide_show_row(row_value){
     }
 
 
-  document.getElementById(row_value).value="hide";
+    document.getElementById(row_value).value="hide";
   }
   clusterize.update(filterRows(rows));
   setTimeout(line_up_header_columns,0);
 }
-setTimeout(line_up_header_columns,0);
+setTimeout(line_up_header_columns,0)
+
+};
+
