@@ -5,6 +5,7 @@ var display_len = document.getElementById('len')
 /*
 * Fetch suitable rows
 */
+
 var filterRows = function(rows) {
   var results = [];
   for(var i = 0, ii = rows.length; i < ii; i++) {
@@ -15,7 +16,6 @@ var filterRows = function(rows) {
   }
   return results;
 }
-​
 /*
 * Init clusterize.js
 */
@@ -25,7 +25,6 @@ var clusterize = new Clusterize({
   contentId: 'contentArea'//,
   //blocks_in_cluster: blocks_in_cluster
 });
-​
 /*
 * Attach listener to search input tag and filter list on change
 */
@@ -48,8 +47,6 @@ tab = document.getElementById('slideOutTab')
 if(tab){
   tab.onclick = (function() {slideOut.classList.toggle('showSlideOut'); });
 }
-​
-​
 function show_full_list(id) {
   var ths = document.getElementById(id);
   var value = ths.value;
@@ -73,8 +70,6 @@ function printData()
    newWin.print();
    newWin.close();
 }
-​
-​
 // Quick and simple export target #table_id into a csv
 function download_table_as_csv() {
     // Select rows from table_id
@@ -105,13 +100,10 @@ function download_table_as_csv() {
     link.click();
     document.body.removeChild(link);
 }
-​
-​
 function isHidden(el) {
     return (el.offsetParent === null)
 }
 var first_visible_row = document.getElementById('main_table').rows[0]
-​
 function get_first_visible_row() {
   var rows = document.getElementById('main_table').rows;
   var j = 0;
@@ -131,10 +123,7 @@ function line_up_header_columns()
     headers[i].style.width = width
   }
 }
-​
-​
 //sorting – not sure how compatible this is with clusterize
-​
 function sortTable(col, n) {
   //console.log(col)
   asc = columns[col][1]
@@ -178,9 +167,6 @@ function sortTable(col, n) {
  clusterize.update(filterRows(rows));
   setTimeout(line_up_header_columns,0);
 }
-​
-​
-​
 //row and column filter functions
 function toggle_all_filters(id) {
   var ths = document.getElementById(id);
@@ -199,8 +185,6 @@ function toggle_all_filters(id) {
     console.log(checkBoxes[i].value);
     checkBoxes[i].checked = ths.checked;
     }
-​
-​
   clusterize.update(filterRows(rows));
 }
 function global_filter(filter_id) {
@@ -217,8 +201,6 @@ function global_filter(filter_id) {
     document.getElementById(filter_id).value = 'hide';
   }
 }
-​
-​
 function hide_show_column(col_name)
 {
  var stylesheet = document.styleSheets[8]
@@ -259,7 +241,6 @@ function hide_show_column(col_name)
  */
  setTimeout(line_up_header_columns,0);
 }
-​
 function hide_show_row(row_value){
   var checkbox_val=document.getElementById(row_value).value;
   var children = false;
@@ -310,7 +291,6 @@ function hide_show_row(row_value){
 setTimeout(line_up_header_columns,0);
 ​
 };
-Collapse
 
 
 
