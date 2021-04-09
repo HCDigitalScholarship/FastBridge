@@ -129,7 +129,6 @@ function sortTable(col, n) {
   asc = columns[col][1]
   //checks if this is an int or a string. Thank you implicit typing
   if(typeof rows[0].values[n] == "number"){
-​
     if (asc){
     rows.sort(function(a, b){
         {
@@ -159,7 +158,6 @@ function sortTable(col, n) {
           return (a.values[n].toLowerCase() < b.values[n].toLowerCase()) ? 1 : -1
         }
       )
-​
     }
   }
  //console.log(rows)
@@ -250,14 +248,11 @@ function hide_show_row(row_value){
     children = document.getElementById(row_value+"extra").childNodes
     ////console.log(children)
   }
-​
-​
   if(checkbox_val=="hide"){
     rows = rows.filter(element => !element.values.includes(row_value))
     if (children){
       for (var i = 0; i < children.length; i++) {
       children[i].childNodes[1].childNodes[1].checked=""
-​
       children[i].childNodes[1].childNodes[1].value="show"
       children[i].childNodes[1].childNodes[1].disabled="true"
       }
@@ -272,7 +267,6 @@ function hide_show_row(row_value){
         children[i].childNodes[1].childNodes[1].value="hide"
         children[i].childNodes[1].childNodes[1].disabled=""
       }
-​
     }
     var checkBoxes = document.querySelectorAll('input[name=filterChecks]:not(:checked)');
     //console.log(checkBoxes)
@@ -280,19 +274,16 @@ function hide_show_row(row_value){
       checkBoxes[i].value = "hide";
       hide_show_row(checkBoxes[i].id);
     }
-​
-​
+  
   document.getElementById(row_value).value="hide";
   }
   clusterize.update(filterRows(rows));
   setTimeout(line_up_header_columns,0);
 }
-​
 setTimeout(line_up_header_columns,0);
-​
 };
 
-
+console.log('this is Andy saying hello!')
 
 
 
