@@ -1940,3 +1940,7 @@ def test_integrity_pseudo-sallust_invective_against_cicero():
     response = client.get("oracle/Latin/result/pseudo-sallust_invective_against_cicero/start/end/1/pseudo-sallust_invective_against_cicero/start-end")
     assert response.status_code == 200
     
+def test_integrity_seneca_apocolocyntosis():
+    response = client.get("oracle/Latin/result/seneca_apocolocyntosis/start/end/1/seneca_apocolocyntosis/start-end")
+    assert response.status_code == 200
+    
