@@ -1944,3 +1944,7 @@ def test_integrity_seneca_apocolocyntosis():
     response = client.get("oracle/Latin/result/seneca_apocolocyntosis/start/end/1/seneca_apocolocyntosis/start-end")
     assert response.status_code == 200
     
+def test_integrity_alpha_to_omega_groton():
+    response = client.get("oracle/Greek/result/alpha_to_omega_groton/start/end/1/alpha_to_omega_groton/start-end")
+    assert response.status_code == 200
+    
