@@ -1948,3 +1948,15 @@ def test_integrity_alpha_to_omega_groton():
     response = client.get("oracle/Greek/result/alpha_to_omega_groton/start/end/1/alpha_to_omega_groton/start-end")
     assert response.status_code == 200
     
+def test_integrity_apollonius_king_of_tyre():
+    response = client.get("oracle/Latin/result/apollonius_king_of_tyre/start/end/1/apollonius_king_of_tyre/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eutropius_breviarium_book_6():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_book_6/start/end/1/eutropius_breviarium_book_6/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
