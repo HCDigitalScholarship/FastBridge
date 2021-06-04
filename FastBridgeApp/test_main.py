@@ -1960,3 +1960,31 @@ def test_integrity_ovid_heroides():
     response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
     assert response.status_code == 200
     
+def test_integrity_livy_ab_urbe_condita_ib_list_2_selections():
+    response = client.get("oracle/Latin/result/livy_ab_urbe_condita_ib_list_2_selections/start/end/1/livy_ab_urbe_condita_ib_list_2_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_international_baccalaureate_vocabulary_ib_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_hl_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_international_baccalaureate_vocabulary_ib_sl_and_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_international_baccalaureate_vocabulary_ib_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_hl_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_international_baccalaureate_vocabulary_ib_sl_and_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_international_baccalaureate_vocabulary_ib_sl_and_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start-end")
+    assert response.status_code == 200
+    
