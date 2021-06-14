@@ -202,6 +202,7 @@ function toggle_all_filters(id) {
 
   clusterize.update(filterRows(rows));
 }
+
 function global_filter(filter_id) {
   var to_toggle = document.getElementsByClassName(filter_id)
   console.log(filter_id)
