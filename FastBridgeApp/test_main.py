@@ -1988,3 +1988,19 @@ def test_integrity_international_baccalaureate_vocabulary_ib_sl_and_hl_selection
     response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start-end")
     assert response.status_code == 200
     
+def test_integrity_international_baccalaureate_vocabulary_ib_sl_and_hl_selections():
+    response = client.get("oracle/Latin/result/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start/end/1/international_baccalaureate_vocabulary_ib_sl_and_hl_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_horace_odes_garrison_edition():
+    response = client.get("oracle/Latin/result/horace_odes_garrison_edition/start/end/1/horace_odes_garrison_edition/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_lingua_latina_per_se_illustrata_pars_i_oerberg():
+    response = client.get("oracle/Latin/result/lingua_latina_per_se_illustrata_pars_i_oerberg/start/end/1/lingua_latina_per_se_illustrata_pars_i_oerberg/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_lingua_latina_per_se_illustrata_pars_i_oerberg():
+    response = client.get("oracle/Latin/result/lingua_latina_per_se_illustrata_pars_i_oerberg/start/end/1/lingua_latina_per_se_illustrata_pars_i_oerberg/start-end")
+    assert response.status_code == 200
+    
