@@ -41,15 +41,14 @@ def filter_helper(row_filters, POS):
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     data = await request.json()
-    print("print data at line 44 export.py")
+    # print("print data at line 44 export.py")
     #print(data)
     data = data['data']
-    #here is the problem the selected column value is till 'hide' though they arew selected on the web
 
     # Get columns to show, remove those marked 'hide'
-    display =[key for key in data.keys() if data[key] == 'show']  
-    print("display at line 48 export .py")
-    #print(display)
+    display =[key for key in data.keys() if data[key] == 'hide']  
+    print("display at line 48 export.py")
+    print(display)
         
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
@@ -78,7 +77,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         print(book)
     except Exception as e:
         print("GOOD! IT IS GONE")
-
 
     # what does this section do? 
     frequency_dict = {}
@@ -112,36 +110,53 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Order_of_Appearance")
     columnheaders.append("Source_Text")
-
-    #TODO AJ revisit this, these values can be found in the frequency_dict, to add back later
-    #now removing to get to working exporter
-    display.remove('Count_in_Selection')
-    display.remove('Order_of_Appearance')
-
+   
     # create a list of dictionaries 
     # each dict is a word appearance and its attributes
     data = []    
     if 'running' in display:
         for word in words:   
-            word= word[0]._asdict() 
+            word = word[0]._asdict() 
             #TODO add logic to drop from results without match to current filters 
+            print("at line 135 in export.py")
+            # print(word)
             row = dict(word)
+            # print(row)
+            row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
+            row['Order_of_Appearance'] = row['Appearance']
+            del row['Appearance']
+            print(row)
             data.append(row)
             
-        
         display.remove('running')
         
     else: 
         for word in words_no_dups:
-            word= word[0]._asdict()   
+            word= word[0]._asdict() 
             row = dict(word)
+            # print(row)  
+            print("at line 135 in export.py")
+            row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
+            row['Order_of_Appearance'] = row['Appearance']
+            del row['Appearance']
+            # print(word)
+            print(row)
             data.append(row)
 
-    print('display at line 134')  #added print  
-    #print(display)           
+    # print('display at line 149') 
+    # print(frequency_dict)     
     df = pd.DataFrame(data)
+    display_column_list = [] #final render list which will help export correct csv
+    lenDisplay = len(display)
+    for i in range(lenDisplay):
+        if (display[i] in columnheaders):
+            display_column_list.append(display[i])
+    print("print at line 157 export.py")
+    print(display_column_list)
+
+
     # include only columns that were selected by the user
-    df = df[display] 
+    df = df[display_column_list] 
     # in memory variation, not sure how to set filename
     #csv= df.to_csv()
     #return Response(content=csv, media_type="text/csv")
@@ -159,7 +174,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context = {"request": request}
     data = await request.json()
     data = data['data']
-    display = [key for key in data.keys() if data[key] == 'show']  
+    display = [key for key in data.keys() if data[key] == 'hide']  
     if running_list == "running":
         running_list = True
     else:
@@ -216,9 +231,6 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
 
-
-
-
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
     words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
@@ -229,38 +241,52 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Order_of_Appearance")
     columnheaders.append("Source_Text")
     
-    display.remove('Count_in_Selection')
-    display.remove('Order_of_Appearance')
 
     # create a list of dictionaries 
     # each dict is a word appearance and its attributes
     data = []  
-    ####"what is the significance of 'running'?"  
-    #display containg the column names and since it also has the unselected colunms I think there is some problem with display?
-    # I tried to follow the display but not I have question about where do we store the selected filters and how are they stored?
-    # I need those to decide how I want to store the column headers which I then use to render the csv the way it is displayed to the user.
-    
     if 'running' in display:
         for word in words:   
-            word= word[0]._asdict()  
+            word = word[0]._asdict() 
             #TODO add logic to drop from results without match to current filters 
+            # print("at line 266 in export.py")
+            # print(word)
             row = dict(word)
+            # print(row)
+            row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
+            row['Order_of_Appearance'] = row['Appearance']
+            del row['Appearance']
+            # print(row)
             data.append(row)
-        
+            
         display.remove('running')
-        
         
     else: 
         for word in words_no_dups:
-            word= word[0]._asdict()   
+            word= word[0]._asdict() 
             row = dict(word)
+            # print(row)  
+            # print("at line 281 in export.py")
+            row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
+            row['Order_of_Appearance'] = row['Appearance']
+            del row['Appearance']
+            # # print(word)
+            # print(row)
             data.append(row)
 
-    print('display at line 254') 
-    #print(display)  ## added print               
+    print('display at line 287') 
+    print(data[0])  ## added print               
     df = pd.DataFrame(data)
+    display_column_list = [] #final render list which will help export correct csv
+    lenDisplay = len(display)
+    for i in range(lenDisplay):
+        if (display[i] in columnheaders):
+            display_column_list.append(display[i])
+    print("print at line 295 export.py")
+    print(display_column_list)
+
     # include only columns that were selected by the user
-    df = df[display] 
+    df = df[display_column_list] 
     csv_file_path = f'{sourcetexts}_{in_exclude}_{othertexts}.csv'
     df.to_csv(csv_file_path, index=False)
     return FileResponse(csv_file_path, media_type="text/csv",filename=csv_file_path)
