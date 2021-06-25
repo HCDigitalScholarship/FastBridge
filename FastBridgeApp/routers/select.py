@@ -22,7 +22,7 @@ async def select(request : Request, language : str):
 
     return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
-@router.get("/select/{language}/book/sections/{textname}")
+@router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
     print("reaching section endpoint")
     sectionDict = DefinitionTools.get_sections(language)
