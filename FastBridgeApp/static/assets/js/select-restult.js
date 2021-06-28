@@ -110,6 +110,7 @@ function download_table_as_csv() {
 function isHidden(el) {
     return (el.offsetParent === null)
 }
+
 var first_visible_row = document.getElementById('main_table').rows[0]
 
 function get_first_visible_row() {

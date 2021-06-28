@@ -33,8 +33,6 @@ static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
 
 
-
-
 @app.get("/")
 async def index(request : Request):
     return templates.TemplateResponse("list-index.html", {"request": request})

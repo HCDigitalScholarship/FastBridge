@@ -12,37 +12,171 @@ var othertexts = [];
 var other_starts = [];
 var other_ends = [];
 var text_to_add = "";
+var sectionfrom1='start';
+var sectionto1 = 'end';
+var sectionfrom2 = 'start';
+var sectionto2 ='end';
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
 }
 
-function add_text(text_name, dropdown_id, depth){
-  text_to_add = text_name;
-  var new_placeholder;
-  if(depth == 1){
-    new_placeholder = "1"
-  }
-  else if (depth == 2) {
-    new_placeholder = "1.1"
-  }
-  else if (depth == 3){
-    new_placeholder = "1.1.1"
-  }
+//dropdown function for first (main) text
+function dropdownSectionStart(){
+  document.getElementById('sectionstartdropdown').classList.toggle('show');
+}
 
-  document.getElementById('bridge-modal-form1-select2-hidden-field1').placeholder = new_placeholder
-  document.getElementById('bridge-modal-form1-select2-hidden-field2').placeholder = new_placeholder
-  document.getElementById('bridge-modal-form2-select2-hidden-field1').placeholder = new_placeholder
-  document.getElementById('bridge-modal-form2-select2-hidden-field2').placeholder = new_placeholder
+function dropdownSectionEnd(){
+  document.getElementById('sectionenddropdown').classList.toggle('show');
+}
+
+
+//dropdown function for second text 
+function dropdownSectionStart2(){
+  document.getElementById('sectionstartdropdown2').classList.toggle('show');
+}
+
+function dropdownSectionEnd2(){
+  document.getElementById('sectionenddropdown2').classList.toggle('show');
+}
+
+
+function add_text(text_name, dropdown_id, depth){
+  console.log(dropdown_id)
+  text_to_add = text_name;
   if (text_to_add == ""){
     alert("please enter a valid text");
     return false;
   }
+
+  if(dropdown_id === "myDropdown2")
+  {
+    if (window.location.href.includes('Latin')){
+      languageselected = "Latin"
+    }
+    else{
+      languageselected = "Greek"
+    }
+    
+    //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
+    $.get("/select/sections/"+ text_to_add + "/" + languageselected+ "/", function(data){
+      let elementS = document.getElementById("sectionstartdropdown2");
+      let elementE = document.getElementById("sectionenddropdown2");
+      let sorteddata = sort_object(data);
+      console.log(elementS);
+      for(var key in sorteddata){
+        let a = document.createElement("a");
+        let b = document.createElement("a");
+        a.innerHTML = key;
+        b.innerHTML = key;
+        console.log(a.innerHTML);
+  
+        a.id = key + dropdown_id + 's';
+        b.id = key + dropdown_id + 'e';
+  
+        a.classList.add("dropdown-item")
+        b.classList.add("dropdown-item")
+        
+        elementS.appendChild(a);
+        elementE.appendChild(b);
+        // console.log(key);
+
+        //end section button onclick function
+        b.addEventListener('click', function(){
+          sectionto2 = this.innerHTML;
+          // console.log("id of the dropdown" + this.id);
+          dropdownSectionEnd2();
+          display = document.getElementById('bridge-modal-form2-select2-hidden-field2');
+          display.innerText = sectionto2
+        });
+        //start section button onclick function
+        a.addEventListener('click', function(){
+          sectionfrom2 = this.innerHTML;
+          // console.log("id of the dropdown" + this.id);
+          dropdownSectionStart2();
+          display = document.getElementById('bridge-modal-form2-select2-hidden-field1');
+          display.innerText = sectionfrom2
+        });      
+      } 
+    });
+  }
+  else
+  {
+    if (window.location.href.includes('Latin')){
+      languageselected = "Latin"
+    }
+    else{
+      languageselected = "Greek"
+    }
+    
+    //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
+    $.get("/select/sections/"+ text_to_add + "/" + languageselected+ "/", function(data){
+      let elementS = document.getElementById("sectionstartdropdown");
+      let elementE = document.getElementById("sectionenddropdown");
+      let sorteddata = sort_object(data);
+      console.log(elementS);
+      for(var key in sorteddata){
+        let a = document.createElement("a");
+        let b = document.createElement("a");
+        a.innerHTML = key;
+        b.innerHTML = key;
+  
+        a.id = key + 's';
+        b.id = key + 'e';
+  
+        a.classList.add("dropdown-item")
+        b.classList.add("dropdown-item")
+        
+        elementS.appendChild(a);
+        elementE.appendChild(b);
+        // console.log(key);
+       
+        //end section button onclick function
+        b.addEventListener('click', function(){
+          sectionto1 = this.innerHTML;
+          // console.log("id of the dropdown" + this.id);
+          dropdownSectionEnd();
+          display = document.getElementById('bridge-modal-form1-select2-hidden-field2');
+          display.innerText = sectionto1
+        });
+        //start section button onclick function
+        a.addEventListener('click', function(){
+          sectionfrom1 = this.innerHTML;
+          // console.log("id of the dropdown" + this.id);
+          dropdownSectionStart();
+          display = document.getElementById('bridge-modal-form1-select2-hidden-field1');
+          display.innerText = sectionfrom1
+        });      
+      } 
+    });
+  }
+
   myFunction(dropdown_id);
   id =  document.getElementById(dropdown_id).previousElementSibling.id
+  // console.log(id);
   display = document.getElementById(id);
   display.innerText = text_name
+
 }
+
+
+//https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript got the function from here
+function sort_object(obj) {
+  items = Object.keys(obj).map(function(key) {
+      return [key, obj[key]];
+  });
+  items.sort(function(first, second) {
+      return second[1] - first[1];
+  });
+  sorted_obj={}
+  $.each(items, function(k, v) {
+      use_key = v[0]
+      use_value = v[1]
+      sorted_obj[use_key] = use_value
+  })
+  return(sorted_obj)
+}
+
 function filterFunction(input_id, dropdown_id) {
   var input, filter, ul, li, a, i;
   input = document.getElementById(input_id);
@@ -147,7 +281,6 @@ function nextPrev(n, next) {
     str_other_ends = other_ends.join("+")
 
 
-
     if(in_exclude.length == 0){
       path = window.location.href + "result/" + str_sourcetexts + "/"+ str_source_starts + "-" + str_source_ends + "/" + 'non_running' + "/";
     }
@@ -220,9 +353,6 @@ function deleteRow(r) {
 }
 //include/exclude choice
 
-
-
-
 // yes triggers hidden fields
 $("#bridge-modal-form1-select2").change(function() {
   if ($(this).val() == "yes") {
@@ -248,25 +378,37 @@ $('#bridge-modal-form1-save').click(function(){
       alert("please enter a valid text");
       return false;
     }
-    //var book =  $('').val();
 
-    var sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
-    var sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
-    if (sectionFrom &&sectionTo){ // if user specifies a section
-        var sections = `${sectionFrom}-${sectionTo}`;
-    }else if (!sectionFrom &&sectionTo) {
-      var sections = `start-${sectionTo}`;
-      sectionFrom = 'start'
+    selectionvalue = $('#bridge-modal-form1-select2').val()
+    if(selectionvalue == "yes")
+    {
+      if (sectionto1 < sectionfrom1 || sectionto1 == sectionfrom1 ){
+        alert("please select a valid range");
+        return false;
+      }
     }
-    else if (!sectionTo &&sectionFrom) {
-      var sections = `${sectionFrom}-end`;
-      sectionTo = 'end'
-    }
-     else {
-        sectionFrom = 'start'
-        sectionTo = 'end'
-        var sections = 'start-end';
-    }
+    var sections = `${sectionfrom1}-${sectionto1}`;
+    console.log(book);
+    // var book =  $('').val();
+    // }else if (!sectionFrom &&sectionTo) {
+    // sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
+    // sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
+    // if (sectionFrom &&sectionTo){ // if user specifies a section
+        // var sections = `${sectionfrom1}-${sectionto1}`;
+    // }else if (!sectionFrom &&sectionTo) {
+    //   var sections = `start-${sectionTo}`;
+    //   sectionFrom = 'start'
+    // }
+    // else if (!sectionTo &&sectionFrom) {
+    //   var sections = `${sectionFrom}-end`;
+    //   sectionTo = 'end'
+    // }
+    //  else {
+    //     sectionFrom = 'start'
+    //     sectionTo = 'end'
+    //     var sections = 'start-end';
+    // }
+
     // show the selection in a table
     var table = document.getElementById('bridge-result-table1');
     var row = table.insertRow(-1);
@@ -277,8 +419,8 @@ $('#bridge-modal-form1-save').click(function(){
     sourcetexts.push(string_to_slug(book))
     console.log(sourcetexts)
     cell2.innerHTML = '<span style="color:white">' + sections + '</span>';
-    source_starts.push(sectionFrom)
-    source_ends.push(sectionTo)
+    source_starts.push(sectionfrom1)
+    source_ends.push(sectionto1)
     cell3.innerHTML = '<button class="btn" onclick="deleteRow(this)"><i class="fa fa-remove" style="font-size:25px;color:#e8837d;"></i></button>';
     // hide modal when save
     $('#bridge-select-text').modal('hide');
@@ -312,25 +454,39 @@ $('#bridge-modal-form2-save').click(function(){
     alert("please enter a valid text");
     return false;
   }
-    //var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
 
-    var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
-    var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
-    if (sectionFrom &&sectionTo){ // if user specifies a section
-        var sections = `${sectionFrom}-${sectionTo}`;
-    }else if (!sectionFrom &&sectionTo) {
-      var sections = `start-${sectionTo}`;
-      sectionFrom = 'start'
+  selectionvalue = $('#bridge-modal-form2-select2').val()
+  if(selectionvalue == "yes")
+  {
+    if (sectionto2 < sectionfrom2 || sectionto2 == sectionfrom2 ){
+      alert("please select a valid range");
+      return false;
     }
-    else if (!sectionTo &&sectionFrom) {
-      var sections = `${sectionFrom}-end`;
-      sectionTo = 'end'
-    }
-     else {
-        sectionFrom = 'start'
-        sectionTo = 'end'
-        var sections = 'start-end';
-    }
+  }
+  
+  var sections = `${sectionfrom2}-${sectionto2}`;
+  console.log(book);
+
+    // var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
+
+    // var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
+    // var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
+    // if (sectionFrom &&sectionTo){ // if user specifies a section
+    //     var sections = `${sectionFrom}-${sectionTo}`;
+    // }else if (!sectionFrom &&sectionTo) {
+    //   var sections = `start-${sectionTo}`;
+    //   sectionFrom = 'start'
+    // }
+    // else if (!sectionTo &&sectionFrom) {
+    //   var sections = `${sectionFrom}-end`;
+    //   sectionTo = 'end'
+    // }
+    //  else {
+    //     sectionFrom = 'start'
+    //     sectionTo = 'end'
+    //     var sections = 'start-end';
+    // }
+
     // show the selection in a table
     var table = document.getElementById('bridge-result-table2');
     var row = table.insertRow(-1);
@@ -340,8 +496,8 @@ $('#bridge-modal-form2-save').click(function(){
     cell1.innerHTML = '<span style="color:white">' + book + '</span>';
     othertexts.push(string_to_slug(book))
     cell2.innerHTML = '<span style="color:white">' + sections + '</span>';
-    other_starts.push(sectionFrom)
-    other_ends.push(sectionTo)
+    other_starts.push(sectionfrom2)
+    other_ends.push(sectionto2)
     cell3.innerHTML = '<button class="btn" onclick="deleteRow(this)"><i class="fa fa-remove" style="font-size:25px;color:#e8837d;"></i></button>';
     // hide modal when save
     $('#bridge-change-list').modal('hide');

@@ -56,6 +56,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
+    print(sourcetexts)
     if running_list == "running":
         running_list = True
     else:
@@ -70,6 +71,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     for text, start, end in triple:
         print(text)
         book = DefinitionTools.get_text(text, language).book
+        print(book)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
