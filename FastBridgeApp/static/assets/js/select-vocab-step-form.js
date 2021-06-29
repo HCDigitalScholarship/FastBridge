@@ -16,6 +16,7 @@ var sectionfrom1='start';
 var sectionto1 = 'end';
 var sectionfrom2 = 'start';
 var sectionto2 ='end';
+var holdsectiondata;
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
@@ -42,29 +43,50 @@ function dropdownSectionEnd2(){
 
 
 function add_text(text_name, dropdown_id, depth){
-  console.log(dropdown_id)
+  // if(text_to_add != text_name && text_to_add ===" ")
+  // {
+
+  // }
   text_to_add = text_name;
+  console.log(text_name);
   if (text_to_add == ""){
     alert("please enter a valid text");
     return false;
   }
 
+  if (window.location.href.includes('Latin')){
+    languageselected = "Latin"
+  }
+  else{
+    languageselected = "Greek"
+  }
+
+  myFunction(dropdown_id);
+  id =  document.getElementById(dropdown_id).previousElementSibling.id
+  // console.log(id);
+  display = document.getElementById(id);
+  $(display).change(createDropdown(text_name, dropdown_id));
+  display.innerText = text_name;
+
+}
+
+function createDropdown(text, dropdown_id){
+
   if(dropdown_id === "myDropdown2")
   {
-    if (window.location.href.includes('Latin')){
-      languageselected = "Latin"
-    }
-    else{
-      languageselected = "Greek"
-    }
-    
+    document.getElementById('bridge-modal-form2-select2-hidden-field1').innerHTML = "Start"
+    document.getElementById('bridge-modal-form2-select2-hidden-field2').innerHTML = "End"
+    $('#sectionstartdropdown2').empty();
+    $('#sectionenddropdown2').empty();
+   
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
-    $.get("/select/sections/"+ text_to_add + "/" + languageselected+ "/", function(data){
+    $.get("/select/sections/"+ text + "/" + languageselected+ "/", function(data){
       let elementS = document.getElementById("sectionstartdropdown2");
       let elementE = document.getElementById("sectionenddropdown2");
-      let sorteddata = sort_object(data);
+      holdsectiondata = data;
+      // let sorteddata = sort_object(holdsectiondata);
       console.log(elementS);
-      for(var key in sorteddata){
+      for(var key in holdsectiondata){
         let a = document.createElement("a");
         let b = document.createElement("a");
         a.innerHTML = key;
@@ -76,6 +98,16 @@ function add_text(text_name, dropdown_id, depth){
   
         a.classList.add("dropdown-item")
         b.classList.add("dropdown-item")
+        if(key % 2 == 0)
+        {
+          a.classList.add("even")
+          b.classList.add("even")
+        }
+        else
+        {
+          a.classList.add("odd")
+          b.classList.add("odd")
+        }
         
         elementS.appendChild(a);
         elementE.appendChild(b);
@@ -102,22 +134,21 @@ function add_text(text_name, dropdown_id, depth){
   }
   else
   {
-    if (window.location.href.includes('Latin')){
-      languageselected = "Latin"
-    }
-    else{
-      languageselected = "Greek"
-    }
-    
+    document.getElementById('bridge-modal-form1-select2-hidden-field1').innerHTML = "Start"
+    document.getElementById('bridge-modal-form1-select2-hidden-field2').innerHTML = "End"
+    $('#sectionstartdropdown').empty();
+    $('#sectionenddropdown').empty();
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
-    $.get("/select/sections/"+ text_to_add + "/" + languageselected+ "/", function(data){
+    $.get("/select/sections/"+ text + "/" + languageselected+ "/", function(data){
       let elementS = document.getElementById("sectionstartdropdown");
       let elementE = document.getElementById("sectionenddropdown");
-      let sorteddata = sort_object(data);
+      holdsectiondata = data;
+      // let sorteddata = sort_object(holdsectiondata);
       console.log(elementS);
-      for(var key in sorteddata){
+      for(var key in holdsectiondata){
         let a = document.createElement("a");
         let b = document.createElement("a");
+
         a.innerHTML = key;
         b.innerHTML = key;
   
@@ -126,7 +157,17 @@ function add_text(text_name, dropdown_id, depth){
   
         a.classList.add("dropdown-item")
         b.classList.add("dropdown-item")
-        
+        if(key % 2 == 0)
+        {
+          a.classList.add("even")
+          b.classList.add("even")
+        }
+        else
+        {
+          a.classList.add("odd")
+          b.classList.add("odd")
+        }
+  
         elementS.appendChild(a);
         elementE.appendChild(b);
         // console.log(key);
@@ -150,15 +191,7 @@ function add_text(text_name, dropdown_id, depth){
       } 
     });
   }
-
-  myFunction(dropdown_id);
-  id =  document.getElementById(dropdown_id).previousElementSibling.id
-  // console.log(id);
-  display = document.getElementById(id);
-  display.innerText = text_name
-
 }
-
 
 //https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript got the function from here
 function sort_object(obj) {
@@ -425,7 +458,12 @@ $('#bridge-modal-form1-save').click(function(){
     // hide modal when save
     $('#bridge-select-text').modal('hide');
     // reset form values
+    document.getElementById('bridge-modal-form1-select2-hidden-field1').innerText = "Start";
     document.getElementById('modal-bridge-form1').reset();
+    document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
+    $('#sectionstartdropdown').empty();
+    $('#sectionenddropdown').empty();
+
     $('#bridge-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
@@ -463,7 +501,7 @@ $('#bridge-modal-form2-save').click(function(){
       return false;
     }
   }
-  
+
   var sections = `${sectionfrom2}-${sectionto2}`;
   console.log(book);
 
@@ -503,6 +541,11 @@ $('#bridge-modal-form2-save').click(function(){
     $('#bridge-change-list').modal('hide');
     // reset form values
     $('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
+    $('#myDropdown').html("Click Me");
+    document.getElementById('bridge-modal-form2-select2-hidden-field1').innerText = "Start";
+    document.getElementById('bridge-modal-form2-select2-hidden-field2').innerText = "End";
+    $('#sectionstartdropdown2').empty();
+    $('#sectionenddropdown2').empty();
     $('#bridge-modal-form2-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
