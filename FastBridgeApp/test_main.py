@@ -2004,3 +2004,27 @@ def test_integrity_lingua_latina_per_se_illustrata_pars_i_oerberg():
     response = client.get("oracle/Latin/result/lingua_latina_per_se_illustrata_pars_i_oerberg/start/end/1/lingua_latina_per_se_illustrata_pars_i_oerberg/start-end")
     assert response.status_code == 200
     
+def test_integrity_ocr_gsce_defined_vocabulary_list():
+    response = client.get("oracle/Latin/result/ocr_gsce_defined_vocabulary_list/start/end/1/ocr_gsce_defined_vocabulary_list/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ocr_gsce_defined_vocabulary_list():
+    response = client.get("oracle/Latin/result/ocr_gsce_defined_vocabulary_list/start/end/1/ocr_gsce_defined_vocabulary_list/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ocr_as_level_defined_vocabulary_list():
+    response = client.get("oracle/Latin/result/ocr_as_level_defined_vocabulary_list/start/end/1/ocr_as_level_defined_vocabulary_list/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ocr_gsce_restricted_vocabulary_list():
+    response = client.get("oracle/Latin/result/ocr_gsce_restricted_vocabulary_list/start/end/1/ocr_gsce_restricted_vocabulary_list/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eduqas_gsce_defined_vocablary_list():
+    response = client.get("oracle/Latin/result/eduqas_gsce_defined_vocablary_list/start/end/1/eduqas_gsce_defined_vocablary_list/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ocr_as_level_defined_vocabulary_list():
+    response = client.get("oracle/Latin/result/ocr_as_level_defined_vocabulary_list/start/end/1/ocr_as_level_defined_vocabulary_list/start-end")
+    assert response.status_code == 200
+    
