@@ -67,6 +67,7 @@ function add_text(text_name, dropdown_id, depth){
   display = document.getElementById(id);
   $(display).change(createDropdown(text_name, dropdown_id));
   display.innerText = text_name;
+  console.log(document.getElementById('myInput'));
 
 }
 
@@ -83,6 +84,10 @@ function createDropdown(text, dropdown_id){
     $.get("/select/sections/"+ text + "/" + languageselected+ "/", function(data){
       let elementS = document.getElementById("sectionstartdropdown2");
       let elementE = document.getElementById("sectionenddropdown2");
+
+      elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction(`start2`,`sectionstartdropdown2`)">'
+      elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction(`end2`,`sectionenddropdown2`)">'
+
       holdsectiondata = data;
       // let sorteddata = sort_object(holdsectiondata);
       console.log(elementS);
@@ -142,6 +147,10 @@ function createDropdown(text, dropdown_id){
     $.get("/select/sections/"+ text + "/" + languageselected+ "/", function(data){
       let elementS = document.getElementById("sectionstartdropdown");
       let elementE = document.getElementById("sectionenddropdown");
+
+      elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start" onkeyup="filterFunction(`start`,`sectionstartdropdown`)">'
+      elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end" onkeyup="filterFunction(`end`,`sectionenddropdown`)">'
+
       holdsectiondata = data;
       // let sorteddata = sort_object(holdsectiondata);
       console.log(elementS);
@@ -188,10 +197,11 @@ function createDropdown(text, dropdown_id){
           display = document.getElementById('bridge-modal-form1-select2-hidden-field1');
           display.innerText = sectionfrom1
         });      
-      } 
+      }
     });
   }
 }
+
 
 //https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript got the function from here
 function sort_object(obj) {
@@ -213,6 +223,7 @@ function sort_object(obj) {
 function filterFunction(input_id, dropdown_id) {
   var input, filter, ul, li, a, i;
   input = document.getElementById(input_id);
+
   filter = input.value.toUpperCase();
   div = document.getElementById(dropdown_id);
   a = div.getElementsByTagName("a");
@@ -415,33 +426,40 @@ $('#bridge-modal-form1-save').click(function(){
     selectionvalue = $('#bridge-modal-form1-select2').val()
     if(selectionvalue == "yes")
     {
-      if (sectionto1 < sectionfrom1 || sectionto1 == sectionfrom1 ){
+      console.log("start: " + sectionfrom1);
+      console.log("end: " + sectionto1);
+      if(sectionfrom1 == 'end' || sectionto1 == 'start'){
         alert("please select a valid range");
         return false;
+      } else if(sectionto1 == 'end' || sectionfrom1 == 'start'){
+        var sections = `${sectionfrom1}-${sectionto1}`;
+      } else if(!isNaN(sectionto1) &&  !isNaN(sectionfrom1)){
+        console.log("both floats");
+        if(Number(sectionfrom1) > Number(sectionto1) || Number(sectionto1) === Number(sectionfrom1 ) ) {
+          alert("please select a valid range");
+        return false;
+        }
+        else{
+          var sections = `${sectionfrom1}-${sectionto1}`;
+        } 
+      }else if (!isNaN(sectionto1) ||  !isNaN(sectionfrom1)){
+        console.log("one float");
+        if(sectionfrom1 > sectionto1 || sectionto1 === sectionfrom1  ) {
+          alert("please select a valid range");
+        return false;
+        }
+        else{
+          var sections = `${sectionfrom1}-${sectionto1}`;
+        } 
+      }else{
+        console.log("else clause");
+        var sections = `${sectionfrom1}-${sectionto1}`;
       }
     }
-    var sections = `${sectionfrom1}-${sectionto1}`;
-    console.log(book);
-    // var book =  $('').val();
-    // }else if (!sectionFrom &&sectionTo) {
-    // sectionFrom = $('#bridge-select-text #bridge-modal-form1-select2-hidden-field1').val();
-    // sectionTo =$('#bridge-select-text #bridge-modal-form1-select2-hidden-field2').val();
-    // if (sectionFrom &&sectionTo){ // if user specifies a section
-        // var sections = `${sectionfrom1}-${sectionto1}`;
-    // }else if (!sectionFrom &&sectionTo) {
-    //   var sections = `start-${sectionTo}`;
-    //   sectionFrom = 'start'
-    // }
-    // else if (!sectionTo &&sectionFrom) {
-    //   var sections = `${sectionFrom}-end`;
-    //   sectionTo = 'end'
-    // }
-    //  else {
-    //     sectionFrom = 'start'
-    //     sectionTo = 'end'
-    //     var sections = 'start-end';
-    // }
-
+    else
+    {
+      var sections = `${sectionfrom1}-${sectionto1}`;
+    }
     // show the selection in a table
     var table = document.getElementById('bridge-result-table1');
     var row = table.insertRow(-1);
@@ -463,6 +481,8 @@ $('#bridge-modal-form1-save').click(function(){
     document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
     $('#sectionstartdropdown').empty();
     $('#sectionenddropdown').empty();
+    sectionfrom1='start';
+    sectionto1 = 'end';
 
     $('#bridge-modal-form1-select2-hidden-div').hide();
     // enable 'next' button
@@ -496,17 +516,41 @@ $('#bridge-modal-form2-save').click(function(){
   selectionvalue = $('#bridge-modal-form2-select2').val()
   if(selectionvalue == "yes")
   {
-    if (sectionto2 < sectionfrom2 || sectionto2 == sectionfrom2 ){
+    console.log("start: " + sectionfrom2);
+    console.log("end: " + sectionto2);
+    if(sectionfrom2 == 'end' || sectionto2 == 'start'){
       alert("please select a valid range");
       return false;
+    } else if(sectionto2 == 'end' || sectionfrom2 == 'start'){
+      var sections = `${sectionfrom2}-${sectionto2}`;
+    } else if(!isNaN(sectionto2) &&  !isNaN(sectionfrom2)){
+      console.log("both floats");
+      if(Number(sectionfrom2) > Number(sectionto2) || Number(sectionto2) === Number(sectionfrom2 ) ) {
+        alert("please select a valid range");
+      return false;
+      }
+      else{
+        var sections = `${sectionfrom2}-${sectionto2}`;
+      } 
+    }else if (!isNaN(sectionto2) ||  !isNaN(sectionfrom2)){
+      console.log("one float");
+      if(sectionfrom2 > sectionto2 || sectionto2 === sectionfrom2  ) {
+        alert("please select a valid range");
+      return false;
+      }
+      else{
+        var sections = `${sectionfrom2}-${sectionto2}`;
+      } 
+    }else{
+      console.log("else clause");
+      var sections = `${sectionfrom2}-${sectionto2}`;
     }
   }
-
-  var sections = `${sectionfrom2}-${sectionto2}`;
-  console.log(book);
-
+  else
+    {
+      var sections = `${sectionfrom2}-${sectionto2}`;
+    }
     // var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
-
     // var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
     // var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
     // if (sectionFrom &&sectionTo){ // if user specifies a section
@@ -546,6 +590,8 @@ $('#bridge-modal-form2-save').click(function(){
     document.getElementById('bridge-modal-form2-select2-hidden-field2').innerText = "End";
     $('#sectionstartdropdown2').empty();
     $('#sectionenddropdown2').empty();
+    sectionfrom2 = 'start';
+    sectionto2 ='end';
     $('#bridge-modal-form2-select2-hidden-div').hide();
     // enable 'next' button
     document.getElementById("myNext").disabled = false;
