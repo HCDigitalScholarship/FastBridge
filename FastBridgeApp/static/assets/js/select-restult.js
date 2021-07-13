@@ -64,11 +64,12 @@ function show_full_list(id) {
     ths.value = "show"
   }
 }
+
 //from old bridge. Somethings weren't broken
 function printData()
 {
-   var divToPrint=document.getElementById("export_wrapper");
-   newWin= window.open("");
+   var divToPrint = document.getElementById("export_wrapper");
+   newWin = window.open("");
    newWin.document.write(divToPrint.outerHTML);
    newWin.print();
    newWin.close();

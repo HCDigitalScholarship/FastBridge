@@ -88,12 +88,29 @@ function createDropdown(text, dropdown_id){
       elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction(`start2`,`sectionstartdropdown2`)">'
       elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction(`end2`,`sectionenddropdown2`)">'
 
-      holdsectiondata = data;
-      // let sorteddata = sort_object(holdsectiondata);
+      keyholder = []
+      for(var key in data){
+        if(key == 'start' || key == 'end'){
+          
+        }
+        else{
+          keyholder.push(key);
+        }
+       
+      }
+      keyholder.push('end');
+      // holdsectiondata = keyholder.sort();
+      holdsectiondata = keyholder;
+      holdsectiondata.unshift('start');
+      console.log(holdsectiondata);
+
       console.log(elementS);
-      for(var key in holdsectiondata){
+      for(var i = 0 ; i < holdsectiondata.length; i++){
         let a = document.createElement("a");
         let b = document.createElement("a");
+
+        key = holdsectiondata[i];
+
         a.innerHTML = key;
         b.innerHTML = key;
         console.log(a.innerHTML);
@@ -151,12 +168,28 @@ function createDropdown(text, dropdown_id){
       elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start" onkeyup="filterFunction(`start`,`sectionstartdropdown`)">'
       elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end" onkeyup="filterFunction(`end`,`sectionenddropdown`)">'
 
-      holdsectiondata = data;
-      // let sorteddata = sort_object(holdsectiondata);
+      keyholder = []
+      for(var key in data){
+        if(key == 'start' || key == 'end'){
+          
+        }
+        else{
+          keyholder.push(key);
+        }
+      }
+      keyholder.push('end');
+      keyholder.unshift('start')
+      // holdsectiondata = keyholder.sort();
+      holdsectiondata = keyholder;
+      // holdsectiondata.unshift('start');
+      console.log(holdsectiondata);
+
       console.log(elementS);
-      for(var key in holdsectiondata){
+      for(var i = 0 ; i < holdsectiondata.length; i++){
         let a = document.createElement("a");
         let b = document.createElement("a");
+
+        key = holdsectiondata[i];
 
         a.innerHTML = key;
         b.innerHTML = key;
@@ -394,6 +427,14 @@ function deleteRow(r) {
   if (table.rows.length <= 3){
       document.getElementById('myNext').disabled = true;
   }
+  document.getElementById('bridge-modal-form1-select2-hidden-field1').innerText = "Start";
+  document.getElementById('modal-bridge-form1').reset();
+  document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
+  $('#sectionstartdropdown').empty();
+  $('#sectionenddropdown').empty();
+  sectionfrom1='start';
+  sectionto1 = 'end';
+
 }
 //include/exclude choice
 
@@ -481,6 +522,7 @@ $('#bridge-modal-form1-save').click(function(){
     document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
     $('#sectionstartdropdown').empty();
     $('#sectionenddropdown').empty();
+    console.log(document.getElementById('myInput').val);
     sectionfrom1='start';
     sectionto1 = 'end';
 
