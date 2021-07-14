@@ -43,10 +43,7 @@ function dropdownSectionEnd2(){
 
 
 function add_text(text_name, dropdown_id, depth){
-  // if(text_to_add != text_name && text_to_add ===" ")
-  // {
-
-  // }
+  
   text_to_add = text_name;
   console.log(text_name);
   if (text_to_add == ""){
@@ -98,10 +95,9 @@ function createDropdown(text, dropdown_id){
         }
        
       }
-      keyholder.push('end');
-      // holdsectiondata = keyholder.sort();
-      holdsectiondata = keyholder;
-      holdsectiondata.unshift('start');
+      holdsectiondata = keyholder.sort(sortAlphaNum);
+      holdsectiondata.push('end');
+      holdsectiondata.unshift('start')
       console.log(holdsectiondata);
 
       console.log(elementS);
@@ -113,7 +109,6 @@ function createDropdown(text, dropdown_id){
 
         a.innerHTML = key;
         b.innerHTML = key;
-        console.log(a.innerHTML);
   
         a.id = key + dropdown_id + 's';
         b.id = key + dropdown_id + 'e';
@@ -177,11 +172,10 @@ function createDropdown(text, dropdown_id){
           keyholder.push(key);
         }
       }
-      keyholder.push('end');
-      keyholder.unshift('start')
-      // holdsectiondata = keyholder.sort();
-      holdsectiondata = keyholder;
-      // holdsectiondata.unshift('start');
+      
+      holdsectiondata = keyholder.sort(sortAlphaNum);
+      holdsectiondata.push('end');
+      holdsectiondata.unshift('start')
       console.log(holdsectiondata);
 
       console.log(elementS);
@@ -235,23 +229,50 @@ function createDropdown(text, dropdown_id){
   }
 }
 
+// https://stackoverflow.com/questions/4340227/sort-mixed-alpha-numeric-array  <- source for the belowe used method
 
-//https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript got the function from here
-function sort_object(obj) {
-  items = Object.keys(obj).map(function(key) {
-      return [key, obj[key]];
-  });
-  items.sort(function(first, second) {
-      return second[1] - first[1];
-  });
-  sorted_obj={}
-  $.each(items, function(k, v) {
-      use_key = v[0]
-      use_value = v[1]
-      sorted_obj[use_key] = use_value
-  })
-  return(sorted_obj)
+var reA = /[^a-zA-Z]/g;
+var reN = /[^0-9]/g;
+function sortAlphaNum(a,b) {
+    var AInt = parseInt(a, 10);
+    var BInt = parseInt(b, 10);
+
+    if(isNaN(AInt) && isNaN(BInt)){
+        var aA = a.replace(reA, "");
+        var bA = b.replace(reA, "");
+        if(aA === bA) {
+            var aN = parseInt(a.replace(reN, ""), 10);
+            var bN = parseInt(b.replace(reN, ""), 10);
+            return aN === bN ? 0 : aN > bN ? 1 : -1;
+        } else {
+            return aA > bA ? 1 : -1;
+        }
+    }else if(isNaN(AInt)){//A is not an Int
+        return 1;//to make alphanumeric sort first return -1 here
+    }else if(isNaN(BInt)){//B is not an Int
+        return -1;//to make alphanumeric sort first return 1 here
+    }else{
+        return AInt > BInt ? 1 : -1;
+    }
 }
+
+
+// //https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript belowe function sorts in descending order
+// function sort_object(obj) {
+//   items = Object.keys(obj).map(function(key) {
+//       return [key, obj[key]];
+//   });
+//   items.sort(function(first, second) {
+//       return second[1] - first[1];
+//   });
+//   sorted_obj={}
+//   $.each(items, function(k, v) {
+//       use_key = v[0]
+//       use_value = v[1]
+//       sorted_obj[use_key] = use_value
+//   })
+//   return(sorted_obj)
+// }
 
 function filterFunction(input_id, dropdown_id) {
   var input, filter, ul, li, a, i;
@@ -432,6 +453,7 @@ function deleteRow(r) {
   document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
   $('#sectionstartdropdown').empty();
   $('#sectionenddropdown').empty();
+  document.getElementById('chosen_text').innerText = "Select Text";
   sectionfrom1='start';
   sectionto1 = 'end';
 
@@ -627,9 +649,10 @@ $('#bridge-modal-form2-save').click(function(){
     $('#bridge-change-list').modal('hide');
     // reset form values
     $('#bridge-change-list').find('#bridge-modal-form2')[0].reset();
-    $('#myDropdown').html("Click Me");
+    // $('#myDropdown').html("Click Me");
     document.getElementById('bridge-modal-form2-select2-hidden-field1').innerText = "Start";
     document.getElementById('bridge-modal-form2-select2-hidden-field2').innerText = "End";
+    // document.getElementById('modal-bridge-form2').reset();
     $('#sectionstartdropdown2').empty();
     $('#sectionenddropdown2').empty();
     document.getElementById('chosen_text2').innerText = "Select Text";
@@ -655,6 +678,14 @@ function deleteRow2(r)   {
   if (table.rows.length <= 3){
       document.getElementById('myNext').disabled = true;
   }
+  document.getElementById('bridge-modal-form2-select2-hidden-field1').innerText = "Start";
+  document.getElementById('modal-bridge-form2').reset();
+  document.getElementById('bridge-modal-form2-select2-hidden-field2').innerText = "End";
+  $('#sectionstartdropdown2').empty();
+  $('#sectionenddropdown2').empty();
+  document.getElementById('chosen_text2').innerText = "Select Text";
+  sectionfrom1='start';
+  sectionto1 = 'end';
 }
 
 // from: https://gist.github.com/codeguy/6684588. modified to make whitespace a _ instead of a -
