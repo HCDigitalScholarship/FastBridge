@@ -522,7 +522,7 @@ $('#bridge-modal-form1-save').click(function(){
     document.getElementById('bridge-modal-form1-select2-hidden-field2').innerText = "End";
     $('#sectionstartdropdown').empty();
     $('#sectionenddropdown').empty();
-    console.log(document.getElementById('myInput').val);
+    document.getElementById('chosen_text').innerText = "Select Text";
     sectionfrom1='start';
     sectionto1 = 'end';
 
@@ -632,6 +632,7 @@ $('#bridge-modal-form2-save').click(function(){
     document.getElementById('bridge-modal-form2-select2-hidden-field2').innerText = "End";
     $('#sectionstartdropdown2').empty();
     $('#sectionenddropdown2').empty();
+    document.getElementById('chosen_text2').innerText = "Select Text";
     sectionfrom2 = 'start';
     sectionto2 ='end';
     $('#bridge-modal-form2-select2-hidden-div').hide();

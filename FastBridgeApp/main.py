@@ -21,13 +21,11 @@ from starlette.applications import Starlette
 async def not_found(request, exc):
     context = {"request": request}
     context["statuscode"] = exc.status_code
-    context["title"] = "custom error"
     return templates.TemplateResponse("notfound.html", context)
 
 async def server_error(request, exc):
     context = {"request": request}
     context["statuscode"] = exc.status_code
-    context["title"] = "custom error2"
     return templates.TemplateResponse("notfound.html", context)
 
 exception_handlers = {
