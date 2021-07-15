@@ -68,9 +68,11 @@ function show_full_list(id) {
 //from old bridge. Somethings weren't broken
 function printData()
 {
+  console.log("HI")
    var divToPrint = document.getElementById("export_wrapper");
    newWin = window.open("");
    newWin.document.write(divToPrint.outerHTML);
+   console.log(newWin)
    newWin.print();
    newWin.close();
 }
