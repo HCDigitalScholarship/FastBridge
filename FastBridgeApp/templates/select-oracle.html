@@ -104,24 +104,56 @@
                         <form id="oracle-modal-form1">
                             <div>
                               <div class="form-group"><label style="color: black;" for="chosen_text">
-                                Select the text(s) you would like to explore.</label>
-                                  <div class="dropdown">
-                                    <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
-                                    <div id="myDropdown" class="dropdown-content" style="color: black;">
-                                      <input type="text" autocomplete="off" placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
-                                    {{ titles|safe }}
-                                    </div>
-                                  </div>
-
-                                    </div>
-                                <div class="form-group" id="oracle-modal-form1-select2">
-                                    <label id="oracle-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field">Please select the <b>range</b> to explore with in and the <b>size</b> of those sections.</label>
-                                    <div class="form-row">
-                                        <div class="col"><input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="start" required></div>
-                                          <div class="col"><input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="end" required></div>
-                                            <div class="col"><input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field3" style="color: black;" for="select2-hidden-label" placeholder="9"></div>
+                                    Select the text(s) you would like to explore.</label>
+                                    <div class="dropdown">
+                                        <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
+                                        <div id="myDropdown" class="dropdown-content" style="color: black;">
+                                        <input type="text" autocomplete="off" placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
+                                        {{ titles|safe }}
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="form-group" id="oracle-modal-form1-select2">
+                                    <label id="oracle-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field">Please select the <b>range</b> to explore with in the text</label>
+                                    <div class="dropdown">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <button type="button" onclick="myFunction('dropdownstartoracle')" id="oracle-modal-form1-select2-hidden-field1" class="form-control"> Start Range </button>
+                                                <div id="dropdownstartoracle" class=dropdown-content style="color: black;">
+                                    
+                                                </div>
+                                             </div>
+                                            <div class="col-6">
+                                                <button type="button" onclick="myFunction('dropdownendoracle')" id="oracle-modal-form1-select2-hidden-field2" class="form-control"> End Range </button>
+                                                <div id="dropdownendoracle" class=dropdown-content style="color: black;">
+                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label id="oracle-modal-form1-select2-hidden-label2" style="color: black;" for="select2-hidden-field">Please select the <b>unit</b> to describe the level of analysis and <b>size</b> to define how big each chuck should be. </label>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="dropdown">
+                                                <button type="button" onclick="myFunction('unitdropdown')" id="oracle-modal-form1-select2-hidden-field3" class="form-control"> Selec Unit</button>
+                                                <div id="unitdropdown" class=dropdown-content style="color: black;">
+                                                
+                                                </div> 
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field4" style="color: black;" for="select2-hidden-label" placeholder="9">
+                                        </div> 
+                                    </div>
+                                </div>
+                                        
+                                            <!-- <input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="start" required></div> -->
+                                        
+                                            <!-- <input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="end" required></div> -->
+                                        
+                                            <!-- <input class="form-control" type="text" id="oracle-modal-form1-select2-hidden-field3" style="color: black;" for="select2-hidden-label" placeholder="1/2/3"></div> -->   
                             </div>
                         </form>
                     </div>
@@ -174,10 +206,28 @@
                             <div class="form-group" id="oracle-modal-form2-select2-hidden-div">
                                 <label id="oracle-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">
                                     Please select the section(s).</label>
-                                <div class="form-row">
+                                    <div class="dropdown">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <button type="button" onclick="myFunction('dropdownstartoracle2')" id = "oracle-modal-form2-select2-hidden-field1" class="form-control">Start</button>
+                                                <div id="dropdownstartoracle2" class="dropdown-content" style="color: black;">
+                                                    <!-- <input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction('start2','sectionstartdropdown2')"> -->
+
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" onclick="myFunction('dropdownendoracle2')" id = "oracle-modal-form2-select2-hidden-field2" class="form-control">End</button>
+                                                <div id="dropdownendoracle2" class="dropdown-content" style="color: black;">
+                                                    <!-- <input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction('end2','sectionenddropdown2')"> -->
+
+                                                </div>
+                                            </div>
+                                        </div>    
+                                    </div>
+                                <!-- <div class="form-row">
                                     <div class="col"><input class="form-control" type="text" id="oracle-modal-form2-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From" required=""></div>
                                     <div class="col"><input class="form-control" type="text" id="oracle-modal-form2-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To" required=""></div>
-                                </div>
+                                </div> -->
                     </div>
                 </div>
                 </form>
@@ -191,3 +241,4 @@
 
 </body>
 {% endblock %}
+

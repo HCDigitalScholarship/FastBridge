@@ -17,6 +17,7 @@ var sectionto1 = 'end';
 var sectionfrom2 = 'start';
 var sectionto2 ='end';
 var holdsectiondata;
+var languageselected;
 //dropdown menu
 function myFunction(dropdown_id) {
   document.getElementById(dropdown_id).classList.toggle("show");
@@ -98,7 +99,7 @@ function createDropdown(text, dropdown_id){
       holdsectiondata = keyholder.sort(sortAlphaNum);
       holdsectiondata.push('end');
       holdsectiondata.unshift('start')
-      console.log(holdsectiondata);
+      console.log(holdsectiondata); 
 
       console.log(elementS);
       for(var i = 0 ; i < holdsectiondata.length; i++){

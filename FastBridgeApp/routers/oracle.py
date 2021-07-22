@@ -29,6 +29,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         ogknown_words += (book.get_words(start, end))
     ogknown_tokens = set([(new[0]) for new in ogknown_words])
     e_section_list = e_section_size.split("+")
+    print(f'e_section_list{e_section_list}')
     to_explore = DefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
     sections_display = ""
     for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):
