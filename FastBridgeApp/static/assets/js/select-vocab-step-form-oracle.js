@@ -10,6 +10,7 @@ var known_ends = [];
 var etexts = [];
 var estarts = [];
 var eends = [];
+var eunits = [];
 var e_section_size = [];
 var text_to_add = "";
 
@@ -379,6 +380,7 @@ function nextPrevOracle(n, next) {
     etexts = etexts.toString().replace(",", "+");
     estarts = estarts.toString().replace(",", "+");
     eends = eends.toString().replace(",", "+");
+    eunits = eunits.toString().replace(",", "+");
     e_section_size = e_section_size.toString().replace(",", "+");
 
     window.location.href =
@@ -389,6 +391,8 @@ function nextPrevOracle(n, next) {
       estarts +
       "/" +
       eends +
+      "/" +
+      eunits +
       "/" +
       e_section_size +
       "/" +
@@ -436,6 +440,7 @@ function deleteRowOracle(r) {
   etexts.splice(i - 3, 1);
   estarts.splice(i - 3, 1);
   eends.splice(i - 3, 1);
+  eunits.splice(i - 3, 1);
   e_section_size.splice(i - 3, 1);
   table.deleteRow(i);
   if (table.rows.length <= 3) {
@@ -632,6 +637,7 @@ $("#oracle-modal-form1-save").click(function () {
   etexts.push(string_to_slug(book));
   estarts.push(sectionfrom1);
   eends.push(sectionto1);
+  eunits.push(unitValue);
   e_section_size.push(size);
 
   // show the selection in a table

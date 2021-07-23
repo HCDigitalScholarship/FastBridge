@@ -546,6 +546,9 @@ $('#bridge-modal-form1-save').click(function(){
     $('#sectionstartdropdown').empty();
     $('#sectionenddropdown').empty();
     document.getElementById('chosen_text').innerText = "Select Text";
+    $('input[name=textselection]').val('');
+    // console.log($('input[name=textselection]').val(''));
+    filterFunction("myInput", "myDropdown");
     sectionfrom1='start';
     sectionto1 = 'end';
 
@@ -657,6 +660,9 @@ $('#bridge-modal-form2-save').click(function(){
     $('#sectionstartdropdown2').empty();
     $('#sectionenddropdown2').empty();
     document.getElementById('chosen_text2').innerText = "Select Text";
+    $('input[name=textselection2]').val('');
+    // console.log($('input[name=textselection]').val(''));
+    filterFunction("myInput2", "myDropdown2");
     sectionfrom2 = 'start';
     sectionto2 ='end';
     $('#bridge-modal-form2-select2-hidden-div').hide();
