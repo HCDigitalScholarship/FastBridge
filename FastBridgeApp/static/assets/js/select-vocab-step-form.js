@@ -20,26 +20,47 @@ var holdsectiondata;
 var languageselected;
 //dropdown menu
 function myFunction(dropdown_id) {
-  document.getElementById(dropdown_id).classList.toggle("show");
+  if(dropdown_id == "myDropdown2"){
+    $('#myDropdown2').show();
+    $('#sectionenddropdown2').hide();
+    $('#sectionstartdropdown2').hide();
+  }
+  else{
+    $('#myDropdown').show();
+    $('#sectionstartdropdown').hide();
+    $('#sectionenddropdown').hide();
+  }
 }
 
 //dropdown function for first (main) text
 function dropdownSectionStart(){
-  document.getElementById('sectionstartdropdown').classList.toggle('show');
+  $('#sectionstartdropdown').show();
+  // document.getElementById('sectionstartdropdown').classList.toggle('show');
+  $('#myDropdown').hide();
+  $('#sectionenddropdown').hide();
 }
 
 function dropdownSectionEnd(){
-  document.getElementById('sectionenddropdown').classList.toggle('show');
+  $('#sectionenddropdown').show();
+  // document.getElementById('sectionenddropdown').classList.toggle('show');
+  $('#myDropdown').hide();
+  $('#sectionstartdropdown').hide();
 }
 
 
 //dropdown function for second text 
 function dropdownSectionStart2(){
-  document.getElementById('sectionstartdropdown2').classList.toggle('show');
+  $('#sectionstartdropdown2').show();
+  // document.getElementById('sectionstartdropdown2').classList.toggle('show');
+  $('#myDropdown2').hide();
+  $('#sectionenddropdown2').hide();
 }
 
 function dropdownSectionEnd2(){
-  document.getElementById('sectionenddropdown2').classList.toggle('show');
+  $('#sectionenddropdown2').show();
+  //   document.getElementById('sectionenddropdown2').classList.toggle('show');
+  $('#myDropdown2').hide();
+  $('#sectionstartdropdown2').hide();
 }
 
 
@@ -59,7 +80,7 @@ function add_text(text_name, dropdown_id, depth){
     languageselected = "Greek"
   }
 
-  myFunction(dropdown_id);
+  $('#' + dropdown_id).hide();
   id =  document.getElementById(dropdown_id).previousElementSibling.id
   // console.log(id);
   display = document.getElementById(id);
@@ -135,7 +156,7 @@ function createDropdown(text, dropdown_id){
         b.addEventListener('click', function(){
           sectionto2 = this.innerHTML;
           // console.log("id of the dropdown" + this.id);
-          dropdownSectionEnd2();
+          $('#sectionenddropdown2').hide();
           display = document.getElementById('bridge-modal-form2-select2-hidden-field2');
           display.innerText = sectionto2
         });
@@ -143,7 +164,7 @@ function createDropdown(text, dropdown_id){
         a.addEventListener('click', function(){
           sectionfrom2 = this.innerHTML;
           // console.log("id of the dropdown" + this.id);
-          dropdownSectionStart2();
+          $('#sectionstartdropdown2').hide();
           display = document.getElementById('bridge-modal-form2-select2-hidden-field1');
           display.innerText = sectionfrom2
         });      
@@ -213,7 +234,7 @@ function createDropdown(text, dropdown_id){
         b.addEventListener('click', function(){
           sectionto1 = this.innerHTML;
           // console.log("id of the dropdown" + this.id);
-          dropdownSectionEnd();
+          $('#sectionenddropdown').hide();
           display = document.getElementById('bridge-modal-form1-select2-hidden-field2');
           display.innerText = sectionto1
         });
@@ -221,7 +242,7 @@ function createDropdown(text, dropdown_id){
         a.addEventListener('click', function(){
           sectionfrom1 = this.innerHTML;
           // console.log("id of the dropdown" + this.id);
-          dropdownSectionStart();
+          $('#sectionstartdropdown').hide();
           display = document.getElementById('bridge-modal-form1-select2-hidden-field1');
           display.innerText = sectionfrom1
         });      
