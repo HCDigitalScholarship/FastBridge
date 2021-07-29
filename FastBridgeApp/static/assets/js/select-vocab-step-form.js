@@ -84,13 +84,13 @@ function add_text(text_name, dropdown_id, depth){
   id =  document.getElementById(dropdown_id).previousElementSibling.id
   // console.log(id);
   display = document.getElementById(id);
-  $(display).change(createDropdown(text_name, dropdown_id));
+  $(display).change(createDropdown(text_name, dropdown_id, depth));
   display.innerText = text_name;
   console.log(document.getElementById('myInput'));
 
 }
 
-function createDropdown(text, dropdown_id){
+function createDropdown(text, dropdown_id, sections){
 
   if(dropdown_id === "myDropdown2")
   {
@@ -107,27 +107,34 @@ function createDropdown(text, dropdown_id){
       elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction(`start2`,`sectionstartdropdown2`)">'
       elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction(`end2`,`sectionenddropdown2`)">'
 
-      keyholder = []
+      let keyholder = [];
+      keySectiondict = {};
+      // var sorted = [];
       for(var key in data){
         if(key == 'start' || key == 'end'){
           
         }
         else{
-          keyholder.push(key);
+          let splitedSectionKey = key.split(".");
+          splitedSectionKey = splitedSectionKey.join('');
+          keyholder.push(splitedSectionKey);
+          keySectiondict[splitedSectionKey] = key;
         }
-       
       }
-      holdsectiondata = keyholder.sort(sortAlphaNum);
-      holdsectiondata.push('end');
-      holdsectiondata.unshift('start')
-      console.log(holdsectiondata); 
+      keySectiondict['start'] = "start";
+      keySectiondict['end'] = "end";
 
-      console.log(elementS);
-      for(var i = 0 ; i < holdsectiondata.length; i++){
+      keyholder.sort(sortAlphaNum);
+      keyholder.push('end');
+      keyholder.unshift('start')
+      console.log(keyholder);
+
+     
+      for(var i = 0 ; i < keyholder.length; i++){
         let a = document.createElement("a");
         let b = document.createElement("a");
 
-        key = holdsectiondata[i];
+        key = keySectiondict[keyholder[i]];
 
         a.innerHTML = key;
         b.innerHTML = key;
@@ -185,27 +192,35 @@ function createDropdown(text, dropdown_id){
       elementS.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="start" onkeyup="filterFunction(`start`,`sectionstartdropdown`)">'
       elementE.innerHTML = '<input type="text" autocomplete="off" placeholder="Search..." id="end" onkeyup="filterFunction(`end`,`sectionenddropdown`)">'
 
-      keyholder = []
+      let keyholder = [];
+      keySectiondict = {};
+      // var sorted = [];
       for(var key in data){
         if(key == 'start' || key == 'end'){
           
         }
         else{
-          keyholder.push(key);
+          let splitedSectionKey = key.split(".");
+          splitedSectionKey = splitedSectionKey.join('');
+          keyholder.push(splitedSectionKey);
+          keySectiondict[splitedSectionKey] = key;
         }
       }
-      
-      holdsectiondata = keyholder.sort(sortAlphaNum);
-      holdsectiondata.push('end');
-      holdsectiondata.unshift('start')
-      console.log(holdsectiondata);
 
-      console.log(elementS);
-      for(var i = 0 ; i < holdsectiondata.length; i++){
+      keyholder.sort(sortAlphaNum);
+      keySectiondict['start'] = "start";
+      keySectiondict['end'] = "end";
+
+      keyholder.sort(sortAlphaNum);
+      keyholder.push('end');
+      keyholder.unshift('start')
+      console.log(keyholder);
+
+      for(var i = 0 ; i < keyholder.length; i++){
         let a = document.createElement("a");
         let b = document.createElement("a");
 
-        key = holdsectiondata[i];
+        key = keySectiondict[keyholder[i]];
 
         a.innerHTML = key;
         b.innerHTML = key;
@@ -250,6 +265,8 @@ function createDropdown(text, dropdown_id){
     });
   }
 }
+
+//https://coderwall.com/p/5fu9xw/how-to-sort-multidimensional-array-using-javascript
 
 // https://stackoverflow.com/questions/4340227/sort-mixed-alpha-numeric-array  <- source for the belowe used method
 
