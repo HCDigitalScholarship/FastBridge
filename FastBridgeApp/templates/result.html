@@ -10,7 +10,7 @@
   <div>
   <p style="font-family: sans-serif; font-size:1.5rem;"> Options </p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)">
   <div class="btn-group">
-     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
+    <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
     <button type="button" class="btn btn-default" style="width:50%" onclick="get_csv();">Export as CSV</button>
   </div>
   
@@ -38,7 +38,7 @@
 
   <div class="clusterize table-responsive mx-auto">
     <table class="table table-striped"
-style="margin-bottom: 0rem; overflow: hidden;">
+      style="margin-bottom: 0rem; overflow: hidden;">
       <thead style="text-align:left">
         <tr>{{other_headers|safe}}</tr>
     </thead>
@@ -103,6 +103,7 @@ style="margin-bottom: 0rem; overflow: hidden;">
           filename = matches[1].replace(/['"]/g, '');
         }
     }
+    
     
       // Create a new Blob object using the 
       //response data of the onload object

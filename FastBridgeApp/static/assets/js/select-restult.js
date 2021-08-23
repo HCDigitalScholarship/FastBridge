@@ -64,12 +64,15 @@ function show_full_list(id) {
     ths.value = "show"
   }
 }
+
 //from old bridge. Somethings weren't broken
 function printData()
 {
-   var divToPrint=document.getElementById("export_wrapper");
-   newWin= window.open("");
+  console.log("HI")
+   var divToPrint = document.getElementById("export_wrapper");
+   newWin = window.open("");
    newWin.document.write(divToPrint.outerHTML);
+   console.log(newWin)
    newWin.print();
    newWin.close();
 }
@@ -110,6 +113,7 @@ function download_table_as_csv() {
 function isHidden(el) {
     return (el.offsetParent === null)
 }
+
 var first_visible_row = document.getElementById('main_table').rows[0]
 
 function get_first_visible_row() {

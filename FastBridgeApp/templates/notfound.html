@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<body>
+  <section class="content-section" style="background-image: url('/assets/img/errorpage1.png'); background-size:cover; background-repeat:no-repeat; ">
+    <div class="container" style="align-items: center;">
+      <div class="card text-center">
+        <div class="card-header text-dark">
+         Oops {{statuscode}}
+        </div>
+        <div class="card-body text-dark">
+          <h5 class="card-title">
+            {%  if  (statuscode == 404) %}
+              <h5 class="card-title"> You messed up!!</h5>
+              <p class="card-text">But, Don't worry. Let's take you to Home Page. </p>
+              <a href="/" class="btn btn-primary">Home Page</a>
+            {% else %}
+              <h5 class="card-title"> We messed up!!</h5>
+               <p class="card-text">Sorry for the inconvenience. We suggest you go to our Home Page.</p>
+              <a href="/" class="btn btn-primary">Home Page</a>
+            {% endif %}
+        </div>
+        <div class="card-footer text-muted">
+          Click the button above
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+{% endblock %}

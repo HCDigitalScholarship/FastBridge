@@ -78,7 +78,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     file1.close()
 
     #and add text to language/texts
-    completeName= f'{app_path}/data/{language}/texts.py'
+    completeName = f'{app_path}/data/{language}/texts.py'
     print(completeName)
     texts = importlib.import_module(f'data.{language}.texts')
     print(texts, " current content")
@@ -131,8 +131,6 @@ def add_words(file, language : str):
         return f"Error: {columnheaders} is not the same as {lang.columnheaders} or {row_filters} is not the same as {lang.row_filters}"
 
 
-
-
     to_skip = headers.index("ROW_FILTERS")
     print(to_skip)
     assert to_skip != 0
@@ -155,10 +153,6 @@ def add_words(file, language : str):
     return f"updated {language}"
 
     #nan is added by pandas for empty cells in a csv file. Normally, I think it means not a number. But it is undefined in Python. We want it to be a dummy value, and since everything else is a string, the empty string makes sense. An argument could be made to define it as None, but if we more fully embrace type hints (which we should – figuring out types on the fly is slower because it is harder for the interpreter), code else where will expect a string.
-
-
-
-
 
 
 def assumed_csv_data(lst):

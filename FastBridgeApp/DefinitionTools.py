@@ -20,6 +20,16 @@ def render_titles(language: str, dropdown : str = ""):
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {book_names[key]})\"> {key} </a>") for key in book_names.keys()]
     return "".join(titles)
 
+def get_sections(language: str, dropdown : str =""):
+    book_names = importlib.import_module(f'data.{language}.texts').textFileDict
+    sectionlist = {}
+    for key in book_names:
+        book = importlib.import_module(f'data.{language}.{book_names[key]}')
+        sectionlist.update({key:book.section_list})
+        print(key)
+    # print(sectionlist)
+    return sectionlist
+
 def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False, local_lem : bool = False):
     """
     Gets the definitions,  and other information, about the titles in words, from the appropriate dictionary, also gets the Parts of Speech (POS) and column headers to display for this language.

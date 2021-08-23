@@ -18,9 +18,10 @@ async def oracle_select(request : Request, language : str):
     book_name = importlib.import_module(f'data.{language}.texts').texts
     return templates.TemplateResponse("select-oracle.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
 
-@router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
-async def oracle(request : Request, language : str, etexts : str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str, e_section_start : str, e_section_end : str):
+@router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_units}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
+async def oracle(request : Request, language : str, etexts : str, e_units:str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str, e_section_start : str, e_section_end : str):
     context = {"request": request, "table_data" : []}
+    levelsInText = DefinitionTools.get_text(text, language).book.section_level #this gives the number of levels in text selected
     table_data = []
     known = DefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words= []
@@ -29,6 +30,7 @@ async def oracle(request : Request, language : str, etexts : str, e_section_size
         ogknown_words += (book.get_words(start, end))
     ogknown_tokens = set([(new[0]) for new in ogknown_words])
     e_section_list = e_section_size.split("+")
+    print(f'e_section_list{e_section_list}')
     to_explore = DefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
     sections_display = ""
     for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):

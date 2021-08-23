@@ -134,10 +134,10 @@
 
                                 <div class="form-group"><label style="color: black;" for="chosen_text">
                                     Please select the work you want to read.</label>
-                                    <div class="dropdown">
-                                      <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Click Me</button>
+                                    <div class="dropdown selection">
+                                      <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Select Text</button>
                                       <div id="myDropdown" class="dropdown-content" style="color: black;">
-                                        <input type="text" autocomplete="off"  placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
+                                        <input type="text" autocomplete="off" name = "textselection"  placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
                                       {{ titles|safe }}
                                       </div>
                                     </div>
@@ -150,14 +150,37 @@
                                             <option value="yes" selected="">Yes</option>
                                             <option value="no" selected="selected">No</option>
                                         </optgroup></select></div>
+
                                 <div class="form-group" id="bridge-modal-form1-select2-hidden-div">
+                                    <label id= "bridge-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field"> 
+                                        Please select the section(s).</label>
+                                        <div class="dropdown selection">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionStart()" id = "bridge-modal-form1-select2-hidden-field1" class="form-control">Start</button>
+                                                    <div id="sectionstartdropdown" class="dropdown-content" style="color: black; ">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="start" onkeyup="filterFunction('start','sectionstartdropdown')"> -->
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionEnd()" id = "bridge-modal-form1-select2-hidden-field2" class="form-control">End</button>
+                                                        <div id="sectionenddropdown" class="dropdown-content" style="color: black;">
+                                                            <!-- <input type="text" autocomplete="off" placeholder="Search..." id="end" onkeyup="filterFunction('end','sectionenddropdown')"> -->
+
+                                                        </div>
+                                                </div>
+                                            </div>  
+                                        </div>
+                                </div>       
+                                <!-- <div class="form-group" id="bridge-modal-form1-select2-hidden-div">
                                     <label id="bridge-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field">
                                         Please select the section(s).</label>
                                     <div class="form-row">
                                         <div class="col"><input class="form-control" type="text" name = "start" id="bridge-modal-form1-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From" > </input> </div>
                                         <div class="col"><input class="form-control" type="text" id="bridge-modal-form1-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To" name = "end" > </input> </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </form>
                     </div>
@@ -183,9 +206,9 @@
                             <div class="form-group"><label style="color: black;" for="chosen_text2">
                                 Please select the work(s) you have read.</label>
                                 <div class="dropdown">
-                                  <button type="button" onclick="myFunction('myDropdown2')" id = "chosen_text2" class="form-control">Click Me</button>
+                                  <button type="button" onclick="myFunction('myDropdown2')" id ="chosen_text2" class="form-control">Select Text</button>
                                   <div id="myDropdown2" class="dropdown-content" style="color: black;">
-                                    <input type="text" autocomplete="off" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
+                                    <input type="text" autocomplete="off" name = "textselection2" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
                                   {{ titles2|safe }}
                                   </div>
                                 </div>
@@ -200,13 +223,35 @@
                                             <option value="no" selected="">No</option>
                                         </optgroup></select></div>
                                 <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
+                                    <label id= "bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field"> 
+                                        Please select the section(s).</label>
+                                        <div class="dropdown">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionStart2()" id = "bridge-modal-form2-select2-hidden-field1" class="form-control">Start</button>
+                                                    <div id="sectionstartdropdown2" class="dropdown-content" style="color: black;">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction('start2','sectionstartdropdown2')"> -->
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionEnd2()" id = "bridge-modal-form2-select2-hidden-field2" class="form-control">End</button>
+                                                    <div id="sectionenddropdown2" class="dropdown-content" style="color: black;">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction('end2','sectionenddropdown2')"> -->
+
+                                                    </div>
+                                                </div>
+                                            </div>    
+                                        </div>
+                                </div>    
+                                <!-- <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
                                     <label id="bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">
                                         Please select the section(s).</label>
                                     <div class="form-row">
                                         <div class="col"><input class="form-control" type="text" id="bridge-modal-form2-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From"></div>
                                         <div class="col"><input class="form-control" type="text" id="bridge-modal-form2-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To"></div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </form>
                     </div>
