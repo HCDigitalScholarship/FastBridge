@@ -2028,3 +2028,19 @@ def test_integrity_ocr_as_level_defined_vocabulary_list():
     response = client.get("oracle/Latin/result/ocr_as_level_defined_vocabulary_list/start/end/1/ocr_as_level_defined_vocabulary_list/start-end")
     assert response.status_code == 200
     
+def test_integrity_jenney_first_year_latin_purple_jenney-scudder-baade():
+    response = client.get("oracle/Latin/result/jenney_first_year_latin_purple_jenney-scudder-baade/start/end/1/jenney_first_year_latin_purple_jenney-scudder-baade/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_jenney_first_year_latin_red():
+    response = client.get("oracle/Latin/result/jenney_first_year_latin_red/start/end/1/jenney_first_year_latin_red/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_routledge_later_latin_poets():
+    response = client.get("oracle/Latin/result/ennodius_carmina_routledge_later_latin_poets/start/end/1/ennodius_carmina_routledge_later_latin_poets/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_vogel():
+    response = client.get("oracle/Latin/result/ennodius_carmina_vogel/start/end/1/ennodius_carmina_vogel/start-end")
+    assert response.status_code == 200
+    
