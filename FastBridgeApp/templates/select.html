@@ -137,7 +137,7 @@
                                     <div class="dropdown selection">
                                       <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Select Text</button>
                                       <div id="myDropdown" class="dropdown-content" style="color: black;">
-                                        <input type="text" autocomplete="off" name = "textselection"  placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
+                                        <input type="text" class="dropdown-search" autocomplete="off" name = "textselection"  placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
                                       {{ titles|safe }}
                                       </div>
                                     </div>
@@ -208,7 +208,7 @@
                                 <div class="dropdown">
                                   <button type="button" onclick="myFunction('myDropdown2')" id ="chosen_text2" class="form-control">Select Text</button>
                                   <div id="myDropdown2" class="dropdown-content" style="color: black;">
-                                    <input type="text" autocomplete="off" name = "textselection2" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
+                                    <input type="text" class="dropdown-search" autocomplete="off" name = "textselection2" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
                                   {{ titles2|safe }}
                                   </div>
                                 </div>

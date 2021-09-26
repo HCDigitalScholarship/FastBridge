@@ -39,7 +39,7 @@ Thumbs.db
 
 #python binaries#
 #################
-*.pyc
+**/*.pyc
 
 docker-stack.yml
 

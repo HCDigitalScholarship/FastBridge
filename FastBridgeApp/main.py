@@ -15,6 +15,7 @@ from routers.ToolsApp import lemmatize
 from routers.sql_app import account
 from routers import oracle, select, about, user_help,export
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import os
 
 from starlette.applications import Starlette
 
@@ -61,5 +62,8 @@ async def index(request : Request):
 
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", reload = True, host="64.227.97.179")
+    if os.environ.get('dev', None):
+        uvicorn.run("main:app", reload = True, host="0.0.0.0", port=8000)
+    else:
+        uvicorn.run("main:app", reload = True, host="64.227.97.179")
  #End of select (or main?) code
