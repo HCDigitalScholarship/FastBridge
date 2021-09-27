@@ -2044,3 +2044,23 @@ def test_integrity_ennodius_carmina_vogel():
     response = client.get("oracle/Latin/result/ennodius_carmina_vogel/start/end/1/ennodius_carmina_vogel/start-end")
     assert response.status_code == 200
     
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_learn_to_read_latin_keller-russell():
+    response = client.get("oracle/Latin/result/learn_to_read_latin_keller-russell/start/end/1/learn_to_read_latin_keller-russell/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_horace_odes_garrison_edition():
+    response = client.get("oracle/Latin/result/horace_odes_garrison_edition/start/end/1/horace_odes_garrison_edition/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_horace_odes_garrison_edition():
+    response = client.get("oracle/Latin/result/horace_odes_garrison_edition/start/end/1/horace_odes_garrison_edition/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_learn_to_read_latin_keller-russell():
+    response = client.get("oracle/Latin/result/learn_to_read_latin_keller-russell/start/end/1/learn_to_read_latin_keller-russell/start-end")
+    assert response.status_code == 200
+    
