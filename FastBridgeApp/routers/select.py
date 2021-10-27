@@ -117,7 +117,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
     columnheaders.append("Count_in_Selection")
-    columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Location")
     columnheaders.append("Source_Text")
     context["section"] = section
     context["len"] = len(words)
@@ -206,7 +206,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
     columnheaders.append("Count_in_Selection")
-    columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Location")
     columnheaders.append("Source_Text")
     context["section"] = section
     context["len"] = len(words)
@@ -298,7 +298,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "Count_in_Selection"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
-            elif(columnheaders[i] == "Order_of_Appearance"):
+            elif(columnheaders[i] == "Location"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Appearance}</td>'
                 lst.append(titles[j][1])
                 #the display is the human location, but the value – which the js uses to sort – is the word number

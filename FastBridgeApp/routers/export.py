@@ -108,7 +108,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
     columnheaders.append("Count_in_Selection")
-    columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Location")
     columnheaders.append("Source_Text")
    
     # create a list of dictionaries 
@@ -123,7 +123,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             row = dict(word)
             # print(row)
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
-            row['Order_of_Appearance'] = row['Appearance']
+            row['Location'] = row['Appearance']
             del row['Appearance']
             print(row)
             data.append(row)
@@ -137,7 +137,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             # print(row)  
             print("at line 135 in export.py")
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
-            row['Order_of_Appearance'] = row['Appearance']
+            row['Location'] = row['Appearance']
             del row['Appearance']
             # print(word)
             print(row)
@@ -238,7 +238,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
     columnheaders.append("Count_in_Selection")
-    columnheaders.append("Order_of_Appearance")
+    columnheaders.append("Location")
     columnheaders.append("Source_Text")
     
 
@@ -254,7 +254,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             row = dict(word)
             # print(row)
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
-            row['Order_of_Appearance'] = row['Appearance']
+            row['Location'] = row['Appearance']
             del row['Appearance']
             # print(row)
             data.append(row)
@@ -268,7 +268,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
             # print(row)  
             # print("at line 281 in export.py")
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
-            row['Order_of_Appearance'] = row['Appearance']
+            row['Location'] = row['Appearance']
             del row['Appearance']
             # # print(word)
             # print(row)
