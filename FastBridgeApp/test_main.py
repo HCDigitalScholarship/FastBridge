@@ -2064,3 +2064,39 @@ def test_integrity_learn_to_read_latin_keller-russell():
     response = client.get("oracle/Latin/result/learn_to_read_latin_keller-russell/start/end/1/learn_to_read_latin_keller-russell/start-end")
     assert response.status_code == 200
     
+def test_integrity_horace_epistles():
+    response = client.get("oracle/Latin/result/horace_epistles/start/end/1/horace_epistles/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_latin_for_americans_vol_1_and_2_ullman-henderson():
+    response = client.get("oracle/Latin/result/latin_for_americans_vol_1_and_2_ullman-henderson/start/end/1/latin_for_americans_vol_1_and_2_ullman-henderson/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_vergil_aeneid():
+    response = client.get("oracle/Latin/result/vergil_aeneid/start/end/1/vergil_aeneid/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_routledge_later_latin_poets():
+    response = client.get("oracle/Latin/result/ennodius_carmina_routledge_later_latin_poets/start/end/1/ennodius_carmina_routledge_later_latin_poets/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_vogel():
+    response = client.get("oracle/Latin/result/ennodius_carmina_vogel/start/end/1/ennodius_carmina_vogel/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_routledge_later_latin_poets():
+    response = client.get("oracle/Latin/result/ennodius_carmina_routledge_later_latin_poets/start/end/1/ennodius_carmina_routledge_later_latin_poets/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_ennodius_carmina_vogel():
+    response = client.get("oracle/Latin/result/ennodius_carmina_vogel/start/end/1/ennodius_carmina_vogel/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
