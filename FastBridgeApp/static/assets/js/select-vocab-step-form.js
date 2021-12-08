@@ -537,7 +537,7 @@ $('#bridge-modal-form1-save').click(function(){
         var sections = `${sectionfrom1}-${sectionto1}`;
       } else if(!isNaN(sectionto1) &&  !isNaN(sectionfrom1)){
         console.log("both floats");
-        if(Number(sectionfrom1) > Number(sectionto1) || Number(sectionto1) === Number(sectionfrom1 ) ) {
+        if(Number(sectionfrom1) > Number(sectionto1)) {
           alert("please select a valid range");
         return false;
         }
