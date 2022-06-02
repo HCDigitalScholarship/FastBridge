@@ -8,7 +8,7 @@ app_path = Path.cwd()
 nan = ""
 def import_(title, section_level, csv, language, local_def=False, local_lem=False):
     #print(csv.file)
-    dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI recieves it as a tempfile
+    dataframe = pd.read_csv(csv.file, delimiter=',') #FastAPI receives it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
     filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","").replace(".","").replace("’","").replace("&","and") #get from input, what to save it as, should be the human title but lowercase and with _ instead of space, and remove commas.
     section_words = OrderedDict()
@@ -103,7 +103,7 @@ def test_integrity_{filename}():
     return "added a text"
 
 def add_words(file, language : str):
-    dataframe = pd.read_csv(file, delimiter=',') #FastAPI recieves it as a tempfile
+    dataframe = pd.read_csv(file, delimiter=',') #FastAPI receives it as a tempfile
     csv_reader=[list(row) for row in dataframe.values]
     headers = dataframe.columns.to_list()
     columnheaders, _, row_filters = " ".join(headers).partition("ROW_FILTERS") #we expect the import language sheet to have this column header, but the column will be empty
