@@ -124,5 +124,6 @@ venv.bak/
 
 #google sheets api
 credentials.json
+token.json
 *.pickle
 gunilog
