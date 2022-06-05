@@ -25,13 +25,13 @@ Lemmatizer tries to do the boring part of lemmatizing texts, matching all the le
 `python -m pip install --upgrade pip`
 
 ## 2. Set up your Google API Files and Credentials
-You need to create personal Google API files to work on this project. Follow [these instuctions](https://developers.google.com/sheets/api/quickstart/python), which are also summarized here:
+You need to create personal Google API files to work on this project. Follow [these instructions](https://developers.google.com/sheets/api/quickstart/python), which are also summarized here:
 
 **Create credentials for a Google service account**
 
 Follow the instructions [here](https://developers.google.com/workspace/guides/create-credentials#oauth-client-id) to create a credentials file.
 
-Save the file in the root of the eproject as `credentials.json`
+Save the file in the root of the project as `credentials.json`
 
 Follow [these instructions](https://stackoverflow.com/a/39065422) to add your localhost as a redirect URI on the credentials
 
@@ -63,21 +63,21 @@ The dev app is available at: https://fastbridge-dev.herokuapp.com
 
 ## Deploying to production
 
-1. Shell into the server and the cd to the FastBridge directory
+**1. Shell into the server and the cd to the FastBridge directory**
 
 `cd /srv/FastBridge`
 
-#2. Update Python dependencies
+**2. Update Python dependencies**
 
 `source /srv/bridge_env/bin/activate`
 
 `pip install -r requirements.txt`
 
-3. Update git repo
+**3. Update git repo**
 
 `git pull origin master`
 
-4. Restart the application
+**4. Restart the application**
 
 `systemctl restart gunicorn`
 
