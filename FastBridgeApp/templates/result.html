@@ -13,7 +13,7 @@
     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
     <button type="button" class="btn btn-default" style="width:50%" onclick="get_csv();">Export as CSV</button>
   </div>
-  
+
   <div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
   <div class="modal-body" style="overflow-y:auto;height:65vh">
     <div class="form-group">
@@ -69,7 +69,7 @@
 <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"> </script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js></script>
 <script src="/assets/js/clusterize.min.js"></script>
-<script src="/assets/js/select-restult.js"></script>
+<script src="/assets/js/select-result.js"></script>
 <script src="/assets/js/export.js"></script>
 
 <script>
@@ -80,7 +80,7 @@
     a.dispatchEvent(new MouseEvent('click'));
   };
 
-  function get_csv() { 
+  function get_csv() {
     let url = window.location.href.replace("select", "export");
 
     // Read current filter settings in the page
@@ -93,27 +93,27 @@
     xhr.responseType = 'blob';
     xhr.onload = function(e) {
     if (this.status == 200) {
-    
+
     // Get the filename from the response
     var disposition = xhr.getResponseHeader('Content-Disposition');
     if (disposition && disposition.indexOf('attachment') !== -1) {
         var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
         var matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) { 
+        if (matches != null && matches[1]) {
           filename = matches[1].replace(/['"]/g, '');
         }
     }
-    
-    
-      // Create a new Blob object using the 
+
+
+      // Create a new Blob object using the
       //response data of the onload object
       var blob = new Blob([this.response], {type: 'text/csv'});
-      //Create a link element, hide it, direct 
+      //Create a link element, hide it, direct
       //it towards the blob, and then 'click' it programatically
       let a = document.createElement("a");
       a.style = "display: none";
       document.body.appendChild(a);
-      //Create a DOMString representing the blob 
+      //Create a DOMString representing the blob
       //and point the link element towards it
       let url = window.URL.createObjectURL(blob);
       a.href = url;
