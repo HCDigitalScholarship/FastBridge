@@ -46,9 +46,38 @@ Follow the prompts in the browser to complete Google Sheets Authorization
 The app will be running on http://0.0.0.0:5000/
 
 ---
+# Deploying
 
-# Deploying the dev app
+## Deploying the dev app
 
 This project is configured to automatically deploy the `dev` branch to heroku.
 
 The dev app is available at: https://fastbridge-dev.herokuapp.com
+
+*As of June 2022 the heroku dev app is deprecated due to issues with running out of ram. We recommend just doing local development*
+
+
+## Deploying to production
+
+1. Shell into the server and the cd to the FastBridge directory
+`cd /srv/FastBridge`
+
+#2. Update Python dependencies
+`source /srv/bridge_env/bin/activate`
+`pip install -r requirements.txt`
+
+3. Update git repo
+`git pull origin master`
+
+4. Restart the application
+`systemctl restart gunicorn`
+
+---
+
+# Setting up the server
+
+certbot --nginx -d example.url -> [2]
+
+cd /srv/FastBridge
+source /srv/bridge_env/bin/activate
+pip install -r requirements.txt
