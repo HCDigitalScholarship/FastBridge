@@ -1,10 +1,14 @@
-# FastBridge [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/HCDigitalScholarship/FastBridge/tree/dev)
+# FastBridge
 
 A newer faster Bridge
-Full reference documentation is here: https://docs.google.com/document/d/1OLF_AXg8-KjiQozGNCCo6V-dmIm8jeIk8udHJ8xuvkI/
+
+Full reference documentation is here:
+https://docs.google.com/document/d/1OLF_AXg8-KjiQozGNCCo6V-dmIm8jeIk8udHJ8xuvkI/
+
 Bridge provides several tools to help students of Ancient Languages – currently Latin and Greek, but hopefully Sanskrit, Armaiac, and Coptic will be added soon.
 Bridge has three main tools/apps: Lists, Oracle, and Lemmatizer. Lists helps make custom vocabularly lists, and Oracle gives the most familiar sections in an unfamiliar work.
-Lemmatizer tries to do the boring part of lemmatizing texts, matching all the lemma that have only one possiblity.
+
+Lemmatizer tries to do the boring part of lemmatizing texts, matching all the lemma that have only one possibility.
 
 ---
 
@@ -48,36 +52,44 @@ The app will be running on http://0.0.0.0:5000/
 ---
 # Deploying
 
-## Deploying the dev app
+## Deploying the dev app (BROKEN)
 
 This project is configured to automatically deploy the `dev` branch to heroku.
 
 The dev app is available at: https://fastbridge-dev.herokuapp.com
 
-*As of June 2022 the heroku dev app is deprecated due to issues with running out of ram. We recommend just doing local development*
+*As of June 2022 the heroku dev app is broken due to issues with running out of ram. We recommend just doing local development*
 
 
 ## Deploying to production
 
 1. Shell into the server and the cd to the FastBridge directory
+
 `cd /srv/FastBridge`
 
 #2. Update Python dependencies
+
 `source /srv/bridge_env/bin/activate`
+
 `pip install -r requirements.txt`
 
 3. Update git repo
+
 `git pull origin master`
 
 4. Restart the application
+
 `systemctl restart gunicorn`
 
 ---
 
 # Setting up the server
+*Some incomplete notes on setting up the server. See also /installation for starting config files*
 
 certbot --nginx -d example.url -> [2]
 
 cd /srv/FastBridge
+
 source /srv/bridge_env/bin/activate
+
 pip install -r requirements.txt
