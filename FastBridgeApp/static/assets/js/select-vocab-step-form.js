@@ -185,7 +185,7 @@ function createDropdown(text, dropdown_id, sections){
     $('#sectionstartdropdown').empty();
     $('#sectionenddropdown').empty();
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
-    $.get("/select/sections/"+ text + "/" + languageselected+ "/", function(data){
+    $.get("/select/sections/"+ string_to_slug(text) + "/" + languageselected+ "/", function(data){
       let elementS = document.getElementById("sectionstartdropdown");
       let elementE = document.getElementById("sectionenddropdown");
 
