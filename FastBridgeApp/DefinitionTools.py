@@ -25,7 +25,7 @@ def get_sections(language: str, dropdown : str =""):
     sectionlist = {}
     for key in book_names:
         book = importlib.import_module(f'data.{language}.{book_names[key]}')
-        sectionlist.update({key:book.section_list})
+        sectionlist.update({book_names[key]:book.section_list})
         print(key)
     # print(sectionlist)
     return sectionlist
