@@ -2100,3 +2100,19 @@ def test_integrity_suburani():
     response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
     assert response.status_code == 200
     
+def test_integrity_livy_ab_urbe_condita_ib_list_2_selections():
+    response = client.get("oracle/Latin/result/livy_ab_urbe_condita_ib_list_2_selections/start/end/1/livy_ab_urbe_condita_ib_list_2_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_propertius_elegies():
+    response = client.get("oracle/Latin/result/propertius_elegies/start/end/1/propertius_elegies/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_puer_romanus():
+    response = client.get("oracle/Latin/result/puer_romanus/start/end/1/puer_romanus/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_phaedrus_fables():
+    response = client.get("oracle/Latin/result/phaedrus_fables/start/end/1/phaedrus_fables/start-end")
+    assert response.status_code == 200
+    
