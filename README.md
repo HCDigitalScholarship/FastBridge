@@ -25,6 +25,9 @@ Lemmatizer tries to do the boring part of lemmatizing texts, matching all the le
 `python -m pip install --upgrade pip`
 
 ## 2. Set up your Google API Files and Credentials
+
+> Note: this step is optional for local development.
+
 You need to create personal Google API files to work on this project. Follow [these instructions](https://developers.google.com/sheets/api/quickstart/python), which are also summarized here:
 
 **Create credentials for a Google service account**
@@ -35,12 +38,6 @@ Save the file in the root of the project as `credentials.json`
 
 Follow [these instructions](https://stackoverflow.com/a/39065422) to add your localhost as a redirect URI on the credentials
 
-`touch FastBridgeApp/quickstart.py`
-
-Edit the new quickstart.py file (should be in the FastBridgeApp directory) to contain [this text](https://github.com/googleworkspace/python-samples/blob/master/sheets/quickstart/quickstart.py)
-
-Follow the prompts in the browser to complete Google Sheets Authorization
-
 ## 3. Finish installing requirements and run local server:
 
 `pip install -r requirements.txt`
@@ -48,6 +45,18 @@ Follow the prompts in the browser to complete Google Sheets Authorization
 `heroku local`
 
 The app will be running on http://0.0.0.0:5000/
+
+## Logging in
+
+To access authorized views (eg `/account/login`), you need an account in the SQLite database located at `FastBridgeApp/sql_app.db`. You may open this file in an SQLite3 editor and add your account.
+
+The easiest way is to copy the sample database, which already has an `admin`/`admin` account:
+
+```
+cp FastBridgeApp/sql_app.example.db FastBridgeApp/sql_app.db
+```
+
+You can now log in with user: `admin`, password: `admin`.
 
 ---
 # Deploying
