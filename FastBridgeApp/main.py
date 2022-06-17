@@ -45,8 +45,6 @@ app.include_router(about.router, prefix = "/about", tags=["about"])
 app.include_router(user_help.router, prefix = "/help", tags=["help"])
 app.include_router(export.router, prefix = "/export", tags=["export"])
 
-#sql_app is not on github intentionally
-
 templates = Jinja2Templates(directory="templates")
 app_path = Path.cwd()
 static_path = app_path / "static" / "assets"

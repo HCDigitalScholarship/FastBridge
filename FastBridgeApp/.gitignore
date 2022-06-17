@@ -26,6 +26,7 @@
 *.sql
 *.sqlite
 *.db
+!*.example.db
 
 # OS generated files #
 ######################
@@ -43,6 +44,4 @@ Thumbs.db
 
 docker-stack.yml
 
-/routers/sql_app
-/sql_app
 *.json
