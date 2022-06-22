@@ -83,11 +83,14 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     texts = importlib.import_module(f'data.{language}.texts')
     print(texts, " current content: section level")
     print(texts.texts)
-    print(texts, " current content: huamn to machine titles")
+    print(texts, " current content: human to machine titles")
     print(texts.textFileDict)
-    print(title)
+    print("uploading book:", title)
     texts.texts[title] =  section_level
     texts.textFileDict[title] =  filename
+    texts.texts = dict(sorted(texts.texts.items()))
+    texts.textFileDict = dict(sorted(texts.textFileDict.items()))
+    print("texts.py updated")
     print(texts.texts)
     print(texts.textFileDict)
     code = f'texts = {texts.texts} \n textFileDict = {texts.textFileDict}'
