@@ -93,7 +93,9 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     print(texts.textFileDict)
     # https://stackoverflow.com/questions/9001509/how-can-i-sort-a-dictionary-by-key
     # sort alphabetically
-    code = f'texts = {dict(sorted(texts.texts.items()))} \n textFileDict = {dict(sorted(texts.textFileDict.items()))}'
+    code = (
+        f'texts = {dict(sorted(texts.texts.items()))} \n'
+        f'textFileDict = {dict(sorted(texts.textFileDict.items()))}')
     file1 = open(completeName, "w")
     file1.write(code)
     file1.close()
