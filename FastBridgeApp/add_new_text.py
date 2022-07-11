@@ -174,3 +174,37 @@ def assumed_csv_data(lst):
     row = row.split(",")
     #print(row)
     return row
+
+def delete_(title, language, local_def=False, local_lem=False):
+    # find the filename, same as in import_()
+    filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","").replace(".","").replace("’","").replace("&","and")
+
+    # https://stackoverflow.com/questions/6996603/how-do-i-delete-a-file-or-folder-in-python
+    ## If file exists, delete it ##
+    file = f'{app_path}/data/{language}/{filename}.py'
+    ## Try to delete the file ##
+    try:
+        os.remove(file)
+    except OSError as e:  ## if failed, report it back to the user ##
+        print ("Error: %s - %s." % (e.filename, e.strerror))
+    
+     #and delete text to language/texts
+    completeName = f'{app_path}/data/{language}/texts.py'
+    print(completeName)
+    texts = importlib.import_module(f'data.{language}.texts')
+    print(texts, " current content: section level")
+    print(texts.texts)
+    print(texts, " current content: human to machine titles")
+    print(texts.textFileDict)
+    print("deleting book:", title)
+    # https://stackoverflow.com/questions/11277432/how-can-i-remove-a-key-from-a-python-dictionary
+    # delete key in dictionary
+    try:
+        del texts.texts[title]
+        del texts.textFileDict[title]
+    except KeyError:
+        print ("delete failed, book doesn't exist")
+    print("texts.py updated")
+    print(texts.texts)
+    print(texts.textFileDict)
+    return "deleted a text"

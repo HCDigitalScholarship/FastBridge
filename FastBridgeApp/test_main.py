@@ -2096,19 +2096,3 @@ def test_integrity_suburani():
     response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
     assert response.status_code == 200
     
-def test_integrity_suburani():
-    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
-    assert response.status_code == 200
-    
-def test_integrity_livy_ab_urbe_condita_ib_list_2_selections():
-    response = client.get("oracle/Latin/result/livy_ab_urbe_condita_ib_list_2_selections/start/end/1/livy_ab_urbe_condita_ib_list_2_selections/start-end")
-    assert response.status_code == 200
-    
-def test_integrity_eutropius_breviarium_book_6():
-    response = client.get("oracle/Latin/result/eutropius_breviarium_book_6/start/end/1/eutropius_breviarium_book_6/start-end")
-    assert response.status_code == 200
-    
-def test_integrity_apollonius_king_of_tyre():
-    response = client.get("oracle/Latin/result/apollonius_king_of_tyre/start/end/1/apollonius_king_of_tyre/start-end")
-    assert response.status_code == 200
-    

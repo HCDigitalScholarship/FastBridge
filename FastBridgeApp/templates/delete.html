@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<body style = "background-image: url('/assets/img/The_School_of_Athens.jpg'); background-position: bottom; background-size: cover; background-color: transparent">
+<section style = "height: auto; padding-top: 150px;">
+  <div class="container text-center">
+<form id = "delete form" action="/account/delete/handler/" method="post" enctype= "multipart/form-data">
+
+
+            <div class="form-group"
+            <label for ="title">
+            Please enter the name of the text that you want to delete. </label>
+            <input class="form-control" type="text" id = "title" name = "title" placeholder="title" required>
+            <a class="btn btn-dark" href = 'current_texts'> click here to see what texts are currently uploaded</a>
+            </div>
+
+            <div class="form-group"
+           <label for="language" >
+             What language is this text in? (Please capitalize) </label>
+           <input class="form-control" type="text" id = "language" name = "language" placeholder="language" required>
+           </div>
+
+         <div class="row">
+
+
+         <div class="col-sm"
+
+       <label for="local_def">
+        Does the text have local definitions? </label>
+       <input class="form-control" id = "local_defs_no" type="radio" name = "local_def" value = "No">
+       <label for="local_defs_no">No</label>
+       <input class="form-control" id = "local_defs_yes" type="radio" name = "local_def" value = "Yes">
+        <label for="local_defs_yes">Yes</label>
+       </div>
+       <div class="col-sm"
+     <label for="local_lem">
+       Does the text have local lemma? </label>
+       <input class="form-control" id = "local_lems_no" type="radio" name = "local_lem" value = "No">
+       <label for="local_defs_no">No</label>
+       <input class="form-control" id = "local_lems_yes" type="radio" name = "local_lem" value = "Yes">
+        <label for="local_defs_yes">Yes</label>
+     </div>
+     </div>
+
+              <input class="btn btn-dark primary action-button" style="margin-bottom: 10vh" type="submit" id = "submit" name="submit" value="submit">
+
+
+</form>
+</section>
+</body>
+
+{% endblock %}
