@@ -367,12 +367,12 @@ async def import_words(file: UploadFile = File(...), language : str = Form(...),
     return add_new_text.add_words(file.file, language)
 
 @router.post("/delete/handler/")
-async def delete_handler(request : Request, title : str = Form(...), language : str = Form(...), subsections : int = Form(...), local_def : str = Form(...), local_lem : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
+async def delete_handler(request : Request, title : str = Form(...), language : str = Form(...), local_def : str = Form(...), local_lem : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
     local_def = local_def == "Yes"
     local_lem = local_lem == "Yes"
     context = {"request" : request}
     context["link_back"] ="/account/delete"
-    to_return = add_new_text.delete_(title, subsections, language, local_def, local_lem)
+    to_return = add_new_text.delete_(title, language, local_def, local_lem)
     if to_return == "deleted a text":
         context["result"] = "Successful delete!!!"
         context["next_action"] = "delete another"

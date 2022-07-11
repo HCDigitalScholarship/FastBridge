@@ -175,7 +175,7 @@ def assumed_csv_data(lst):
     #print(row)
     return row
 
-def delete_(title, section_level, language, local_def=False, local_lem=False):
+def delete_(title, language, local_def=False, local_lem=False):
     # find the filename, same as in import_()
     filename = title.lower().replace(" ", "_").replace(",","").replace(":","").replace(")","").replace("(","").replace(".","").replace("’","").replace("&","and")
 
