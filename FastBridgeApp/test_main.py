@@ -2096,3 +2096,31 @@ def test_integrity_suburani():
     response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
     assert response.status_code == 200
     
+def test_integrity_suburani():
+    response = client.get("oracle/Latin/result/suburani/start/end/1/suburani/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_livy_ab_urbe_condita_ib_list_2_selections():
+    response = client.get("oracle/Latin/result/livy_ab_urbe_condita_ib_list_2_selections/start/end/1/livy_ab_urbe_condita_ib_list_2_selections/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eutropius_breviarium_book_6():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_book_6/start/end/1/eutropius_breviarium_book_6/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_apollonius_king_of_tyre():
+    response = client.get("oracle/Latin/result/apollonius_king_of_tyre/start/end/1/apollonius_king_of_tyre/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_passion_of_perpetua_and_felicitas():
+    response = client.get("oracle/Latin/result/passion_of_perpetua_and_felicitas/start/end/1/passion_of_perpetua_and_felicitas/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_propertius_elegies():
+    response = client.get("oracle/Latin/result/propertius_elegies/start/end/1/propertius_elegies/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_terence_adelphoe():
+    response = client.get("oracle/Latin/result/terence_adelphoe/start/end/1/terence_adelphoe/start-end")
+    assert response.status_code == 200
+    
