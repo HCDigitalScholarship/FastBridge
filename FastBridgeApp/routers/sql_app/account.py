@@ -328,6 +328,15 @@ async def import_index(request : Request, current_user: schema.User = Depends(ge
     #this html form will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
     return templates.TemplateResponse("import.html", context)
 
+@router.get("/delete")
+async def delete_index(request : Request, current_user: schema.User = Depends(get_current_user)):
+    context = {"request" : request}
+    print(current_user)
+    if current_user == None or not current_user.add_access:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Only some accounts may delete texts")
+
+    #this html form will take a csv of a lemmatized text, a number of expected subsections, and a language as input.
+    return templates.TemplateResponse("delete.html", context)
 
 
 @router.get("/current_texts")
@@ -346,16 +355,32 @@ async def import_handler(request : Request, file: UploadFile = File(...), title 
     context["link_back"] ="/account/import"
     to_return = add_new_text.import_(title, subsections, file, language, local_def, local_lem)
     if to_return == "added a text":
-        context["result"] = "Successful"
+        context["result"] = "Successful upload!!!"
         context["next_action"] = "add another"
     else:
-        context["result"] = f"{to_return}\nFailed to"
+        context["result"] = f"{to_return}\nFailed to upload"
         context["next_action"] = "try again"
 
     return templates.TemplateResponse("upload_result.html", context)
 @router.post("/addingwords/")
 async def import_words(file: UploadFile = File(...), language : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
     return add_new_text.add_words(file.file, language)
+
+@router.post("/delete/handler/")
+async def delete_handler(request : Request, title : str = Form(...), language : str = Form(...), subsections : int = Form(...), local_def : str = Form(...), local_lem : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
+    local_def = local_def == "Yes"
+    local_lem = local_lem == "Yes"
+    context = {"request" : request}
+    context["link_back"] ="/account/delete"
+    to_return = add_new_text.delete_(title, subsections, language, local_def, local_lem)
+    if to_return == "deleted a text":
+        context["result"] = "Successful delete!!!"
+        context["next_action"] = "delete another"
+    else:
+        context["result"] = f"{to_return}\nFailed to delete"
+        context["next_action"] = "try again"
+
+    return templates.TemplateResponse("upload_result.html", context)
 
 @router.post("/manage/")
 @router.get("/manage/")
