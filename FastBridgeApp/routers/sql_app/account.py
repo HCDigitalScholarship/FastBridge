@@ -355,7 +355,7 @@ async def import_handler(request : Request, file: UploadFile = File(...), title 
     context["link_back"] ="/account/import"
     to_return = add_new_text.import_(title, subsections, file, language, local_def, local_lem)
     if to_return == "added a text":
-        context["result"] = "Successful upload!!!"
+        context["result"] = "You successfully uploaded the text!!!"
         context["next_action"] = "add another"
     else:
         context["result"] = f"{to_return}\nFailed to upload"
@@ -374,7 +374,7 @@ async def delete_handler(request : Request, title : str = Form(...), language : 
     context["link_back"] ="/account/delete"
     to_return = add_new_text.delete_(title, language, local_def, local_lem)
     if to_return == "deleted a text":
-        context["result"] = "Successful delete!!!"
+        context["result"] = "You successfully deleted the text!!!"
         context["next_action"] = "delete another"
     else:
         context["result"] = f"{to_return}\nFailed to delete"

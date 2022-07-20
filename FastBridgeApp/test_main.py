@@ -2124,3 +2124,7 @@ def test_integrity_terence_adelphoe():
     response = client.get("oracle/Latin/result/terence_adelphoe/start/end/1/terence_adelphoe/start-end")
     assert response.status_code == 200
     
+def test_integrity_eutropius_breviarium_all():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
+    assert response.status_code == 200
+    
