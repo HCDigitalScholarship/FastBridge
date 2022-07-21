@@ -10,7 +10,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 # The ID and range of a sample spreadsheet.
 Bridge_sheet_id = '1jA7KbTKS8UUZ_E_gu4Tr5IpQWntQu16wxixTDm45bM0' #not a secret thing
-SAMPLE_RANGE_NAME = 'Bridge Texts!A1:G'
+SAMPLE_RANGE_NAME = 'Bridge Texts!A1:H'
 #important: the final column should have values for all texts, otherwise we end up with non existent cells, which are even worse than empty cells
 
 def main():
