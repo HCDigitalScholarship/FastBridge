@@ -102,3 +102,24 @@ cd /srv/FastBridge
 source /srv/bridge_env/bin/activate
 
 pip install -r requirements.txt
+
+---
+
+# Merging Files From Production
+*Due to the nature of this project, some files are updated direclty on the server by the Admin through the web portal. The changes to these files need to be re-incorporated occassionally into the git history. This is notthe ideal way to do this, with changes flowing in opposite directions, but it is how it currently is. TODO: Fix this.*
+
+**Follow these instructions to incorporate files from Prod into master:**
+
+1. On the prod server: `git status` to view changed files
+
+2. On your local machine: ensure master is up to date. Create and checkout a new branch, ex. `git checkout -b prod-updates`
+
+3. Locally: copy all changed files down into your project directory. ex `scp root@[IP_ADDRESS]:/srv/FastBridge/FastBridgeApp/Latin.py ./FastBridgeApp/Latin.py`
+
+4. Locally: commit the changes and push branch to origin
+
+5. On Github: create a pull request and manually review the changed files and any conflicts. Merge when ready.
+
+6. On prod: `git pull origin master`
+
+If everything has gone right, both master and production should now be the same, incorporating both versions of files. If you messed up the production git at some point (ex. by making a commit or tracking files that are preventing you from pulling), you may need to clean the prod server first. Be sure to scp any files you want to preserve down to your local machine first. **Cleaning git will remove these files from prod!** Use `git reset --hard [COMMIT_HASH]` to update to the last good commit. Then, `git clean -f -d`. You should now be able to pull master without issue.
