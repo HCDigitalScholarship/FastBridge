@@ -129,7 +129,7 @@ img {
 }
 /* Change color of dropdown links on hover */
 .dropdown-content a:hover {
-  background-color: #b3b3b3;
+  background-color: #c8c8c8;
 }
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
@@ -266,7 +266,7 @@ section {
 }
 
 .even {
-  background-color: #f6f6f6;
+  background-color: #e9e9e9;
   color: black;
 }
 

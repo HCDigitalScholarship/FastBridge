@@ -59,7 +59,7 @@ def strip_accents(s: str):
     return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn') #Mn means 'Nonspacing_Mark'
 
 def depunctuate(text : str):
-    text = regex.sub(f"[{string.punctuation}]"," ",text)
+    text = regex.sub(f"[{string.punctuation}]","",text)
     return text
 
 

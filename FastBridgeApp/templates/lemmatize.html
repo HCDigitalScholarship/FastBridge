@@ -11,7 +11,7 @@
 <p style = "font-family: Cabin,Helvetica Neue,Helvetica,Arial,sans-serif;">With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin or Greek text. To begin, either upload a .txt file or just paste the text. Lemmatizer will match all the words that have only one possible lemma, and will return a csv file for you to complete. All you have to do is disambiguate the remaining words and you have a fully lemmatized text. You can also add custom definitions and/or principal parts! </p>
 
 
-<form id="post_text" style="display:inline-block;" method="post" action="" enctype="multipart/form-data">
+<form id="post_text" style="display:inline-block;" method="post" enctype="multipart/form-data">
 	<div id="PostBlock">
 		<div class="form-group">
 			<label for="text"> 1. Paste plain text to lemmatize below or upload a .txt file </label>	<br>
@@ -56,7 +56,10 @@
 			<input type="text" name="resulting_filename" id="resulting_filename" value="">
 			<br>
 		</div>
-		<input class= "btn btn-primary" type="submit" name="submit" value="Lemmatize!" href="https://bridge.haverford.edu/help/lemmatize">
+		<div class="form-group">
+			6. Click on the button below and you will get a csv file to be used <a href="/help/lemmatize"> here </a> <br>
+		</div>
+		<input class= "btn btn-primary" type="submit" name="submit" value="Lemmatize!">
 					<br>
  		</form>
 
