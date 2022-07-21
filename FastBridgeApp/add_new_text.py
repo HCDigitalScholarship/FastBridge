@@ -27,7 +27,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
     elif section_level == 3:
         section_list ={"1.1.1": "start"}
 
-    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION RUNNINGCOUNT TEXT (LOCAL_DEF LOCAL_LEMMA), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
+    #rows are expected to be sanitzied to come in as :TITLE	LOCATION SECTION RUNNINGCOUNT TEXT (LOCAL_DEF TEXT_SPECIFIC_PRINCIPAL_PARTS), where SHORTDEF is the local definition and lemma is a local lemma (for dialectical differences) Those last two are optional
     #we no longer use SECTION and RUNNINGCOUNT in imports
     total_frequency_dict ={}
     for i in range(len(csv_reader)):
@@ -62,7 +62,7 @@ def import_(title, section_level, csv, language, local_def=False, local_lem=Fals
             section = str(row[1]).replace("_", ".") #change _ to . in sections, because excell messes up if this is done there
             section_words.update({section : i} )
         except Exception as e:
-            return f"Error: the row: {row} seems to be missing something. Does it have all of: TITLE, LOCATION, SECTION, RUNNINGCOUNT, TEXT and what you specified of: LOCAL_DEF, LOCAL_LEMMA"
+            return f"Error: the row: {row} seems to be missing something. Does it have all of: TITLE, LOCATION, SECTION, RUNNINGCOUNT, TEXT and what you specified of: LOCAL_DEF, TEXT_SPECIFIC_PRINCIPAL_PARTS"
 
         #running count is number of words starting at 1, but we need them starting at 1. section_words will store the END of sections
     section_words["end"] = -2

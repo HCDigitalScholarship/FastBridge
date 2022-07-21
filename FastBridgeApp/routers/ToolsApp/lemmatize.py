@@ -49,7 +49,7 @@ async def lemmatizing_handler(request : Request, format : str =  Form(...), lang
             #neither were given, which is also bad
             print(file)
             print("got neither")
-            return "Give one"
+            return "Please enter or upload text"
 
         return FileResponse(f'{outputfile.name}', media_type='routerlication/octet-stream', filename = resulting_filename)
 
@@ -59,7 +59,7 @@ def strip_accents(s: str):
     return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn') #Mn means 'Nonspacing_Mark'
 
 def depunctuate(text : str):
-    text = regex.sub(f"[{string.punctuation}]","" ,text)
+    text = regex.sub(f"[{string.punctuation}]","",text)
     return text
 
 
@@ -102,7 +102,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             word = strip_accents(word)
             word = depunctuate(word)
             try:
-                title = lemma_lex[word]
+                title = lemma_lex[word.lower()]
                 try:
                     if conversion:
                         title = conversion[title]

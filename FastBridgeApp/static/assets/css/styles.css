@@ -1,4 +1,3 @@
-
 .How_to_link {
   width: 100%;
   font-size: 2em;
@@ -17,15 +16,15 @@ img {
 }
 
 .btn-nonbs {
-    border: 1px;
-    border-color: white;
-    border-radius: 35px;
-    border-style: solid;
-    color: #ffffff;
-    font-size: 20px;
-    margin-right: 10px;
-    margin-left: 10px;
-    width: 120px;
+  border: 1px;
+  border-color: white;
+  border-radius: 35px;
+  border-style: solid;
+  color: #ffffff;
+  font-size: 20px;
+  margin-right: 10px;
+  margin-left: 10px;
+  width: 120px;
 }
 
 #page-top {
@@ -41,7 +40,7 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
 
 #myInput2 {
@@ -52,10 +51,10 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
 
-#start{
+#start {
   box-sizing: border-box;
   background-position: 14px 12px;
   background-repeat: no-repeat;
@@ -63,10 +62,10 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
 
-#end{
+#end {
   box-sizing: border-box;
   background-position: 14px 12px;
   background-repeat: no-repeat;
@@ -74,10 +73,10 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
 
-#start2{
+#start2 {
   box-sizing: border-box;
   background-position: 14px 12px;
   background-repeat: no-repeat;
@@ -85,10 +84,10 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
 
-#end2{
+#end2 {
   box-sizing: border-box;
   background-position: 14px 12px;
   background-repeat: no-repeat;
@@ -96,9 +95,8 @@ img {
   padding: 14px 20px 12px 45px;
   border: none;
   border-bottom: 1px solid #ddd;
-  width: 100%
+  width: 100%;
 }
-
 
 /* Dropdown Content (Hidden by Default) */
 .dropdown-content {
@@ -109,12 +107,12 @@ img {
   border: 1px solid #ddd;
   z-index: 1;
 }
-.btn-no-padding{
+.btn-no-padding {
   padding: 0 0 0 0;
   color: white;
 }
-.btn-no-padding:focus{
-  outline:0;
+.btn-no-padding:focus {
+  outline: 0;
   box-shadow: none;
 }
 /* Links inside the dropdown */
@@ -125,28 +123,32 @@ img {
   display: block;
 }
 .custom-control-label {
-    position: relative;
-    margin-bottom: 0;
-    vertical-align: unset;
+  position: relative;
+  margin-bottom: 0;
+  vertical-align: unset;
 }
 /* Change color of dropdown links on hover */
-.dropdown-content a:hover {background-color: #f1f1f1}
+.dropdown-content a:hover {
+  background-color: #c8c8c8;
+}
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
-.show {display:block;}
-footer{
+.show {
+  display: block;
+}
+footer {
   background-color: inherit;
   overflow: hidden;
   max-height: 100px;
   min-height: 90px;
   height: 120px;
-  padding: 20px 0
+  padding: 20px 0;
 }
-nav{
+nav {
   height: 120px;
 }
-section{
-min-height: 85vh;
+section {
+  min-height: 85vh;
 }
 .tab {
   display: none;
@@ -168,11 +170,11 @@ min-height: 85vh;
 }
 
 .step.finish {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
-.table-responsive{
-  background-color: rgba(51,51,51,0.77);
+.table-responsive {
+  background-color: rgba(51, 51, 51, 0.77);
   border-radius: 5px;
   padding: 20px;
   margin-bottom: 15px;
@@ -180,38 +182,34 @@ min-height: 85vh;
   height: fit-content;
 }
 
-
-
-
-#main th{
-  color: rgb(255,255,255);
+#main th {
+  color: rgb(255, 255, 255);
 }
-#main td{
-  color: rgb(255,255,255);
+#main td {
+  color: rgb(255, 255, 255);
 }
-
 
 .tab-oracle {
   display: none;
 }
-.myBtn{
-    color: #7de8c2;
-    border-radius: 50%;
-    border-color: #7de8c2;
-    border: solid 2px;
-    margin: 0px 5px;
-    background-color: rgba(43,45,47,0.7);
-    font-size: 18px;
-    width: 43px;
-    height: 43px;
-    padding: 5px;
-  }
+.myBtn {
+  color: #7de8c2;
+  border-radius: 50%;
+  border-color: #7de8c2;
+  border: solid 2px;
+  margin: 0px 5px;
+  background-color: rgba(43, 45, 47, 0.7);
+  font-size: 18px;
+  width: 43px;
+  height: 43px;
+  padding: 5px;
+}
 
-.btn{
+.btn {
   border-radius: 35px;
 }
 
-.select-btn{
+.select-btn {
   font-size: 2rem;
   width: 30%;
   min-width: fit-content;
@@ -223,22 +221,19 @@ min-height: 85vh;
   width: 300px;
   top: 120px; /*should the height of the nav bar*/
   right: -300px;
-  background-color: rgb(81,81,81,.9);
+  background-color: rgb(81, 81, 81, 0.9);
   z-index: 100000000;
   /* Animation  */
   transition-property: all;
-  transition-duration: .5s;
+  transition-duration: 0.5s;
   transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
-
 }
-
 
 /* Display slideOut */
 
 .showSlideOut {
   right: 0px !important;
 }
-
 
 /* Tab */
 
@@ -248,8 +243,8 @@ min-height: 85vh;
   left: -40px;
   height: 200px;
   width: 40px;
-  -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
+  -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   background-color: #228383;
   color: #ffffff;
   border-radius: 15px 0px 0px 15px;
@@ -270,13 +265,12 @@ min-height: 85vh;
   writing-mode: lr-tb;
 }
 
-
-.even{
-  background-color: #cecbcb;
-  color:black;
+.even {
+  background-color: #e9e9e9;
+  color: black;
 }
 
-.odd{
+.odd {
   background-color: white;
-  color:black;
+  color: black;
 }
