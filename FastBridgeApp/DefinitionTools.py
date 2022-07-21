@@ -50,14 +50,14 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     if local_defs_bool and local_lem:
         local_defs =[word[3] for word in words]
         local_lems =[word[4] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "LOCAL_DEFINITION", "TEXT_SPECIFIC_PRINCIPLE_PARTS"])
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "LOCAL_DEFINITION", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
     elif local_defs_bool:
         local_defs =[word[3] for word in words]
         Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "LOCAL_DEFINITION"])
 
     elif local_lem:
         local_lems =[word[4] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_PRINCIPLE_PARTS"])
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
     print("defined word tuple")
 
     #print(words)
