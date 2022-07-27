@@ -245,8 +245,8 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     rules_added = 1 #we set table data width in this stylesheet already
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
-        if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "LOCAL_DEFINITION":
-            if columnheaders[i] == "SHORT_DEFINITION" and "LOCAL_DEFINITION" in columnheaders:
+        if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "TEXT_SPECIFIC_DEFINITION":
+            if columnheaders[i] == "SHORT_DEFINITION" and "TEXT_SPECIFIC_DEFINITION" in columnheaders:
                 style+= f'.{columnheaders[i]} {{display : none !important}}'
                 header_js_obj[columnheaders[i]][0] =rules_added
                 rules_added +=1
@@ -287,7 +287,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             #print(columnheaders[i][-5:])
             if(columnheaders[i] == "LOCAL_DEFINITION"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].LOCAL_DEFINITION}</td>'
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_DEFINITION}</td>'
                 lst.append(words[j][0][-4])
             elif(columnheaders[i] == "TEXT_SPECIFIC_PRINCIPAL_PARTS"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_PRINCIPAL_PARTS}</td>'
