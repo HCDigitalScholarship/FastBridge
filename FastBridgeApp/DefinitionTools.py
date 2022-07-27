@@ -50,10 +50,10 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     if local_defs_bool and local_lem:
         local_defs =[word[3] for word in words]
         local_lems =[word[4] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "LOCAL_DEFINITION", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_DEFINITION", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
     elif local_defs_bool:
         local_defs =[word[3] for word in words]
-        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "LOCAL_DEFINITION"])
+        Word = namedtuple("Word", columnheaders + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_DEFINITION"])
 
     elif local_lem:
         local_lems =[word[4] for word in words]
@@ -119,15 +119,18 @@ def get_lang_data(words : list, dictionary: str, local_defs_bool : bool = False,
     POS = list(POS)
     POS.sort()
     columnheaders = columnheaders[1:] #we don't want a filter for title, that is just to make accessing dicts easier
+    print(columnheaders)
     links = columnheaders[-2:]
     reorder = [head.lower() if head.split("_")[1]!="PARTS" else head for head in columnheaders[:-2]]
+    print(reorder)
 
 
     if local_defs_bool:
-        reorder.append("local_definition")
+        reorder.append("text_specific_definition")
     if local_lem:
-        reorder.append("text_specific_principal_parts")
+        reorder.append("TEXT_SPECIFIC_PRINCIPAL_PARTS")
 
+    print(reorder)
     reorder.sort(key=lambda x: x.split("_")[-1])
     print(reorder)
     columnheaders = [head.upper() for head in reorder]

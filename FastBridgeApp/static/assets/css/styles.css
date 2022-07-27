@@ -15,6 +15,15 @@ img {
   padding: 1vh 1vh 1vh 1vh;
 }
 
+.img-responsive {
+  width: auto;
+  height: 50px;
+}
+.img-feminae {
+  width: 86px;
+  height: 50px;
+}
+
 .btn-nonbs {
   border: 1px;
   border-color: white;
