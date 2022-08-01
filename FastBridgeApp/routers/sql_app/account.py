@@ -95,8 +95,8 @@ class OAuth2PasswordBearerCookie(OAuth2):
     async def __call__(self, request: Request) -> Optional[str]:
         header_authorization: str = request.headers.get("Authorization")
         cookie_authorization: str = request.cookies.get("Authorization")
-        print(header_authorization, " header auth recieved")
-        print(cookie_authorization, " cookie auth recieved")
+        print(header_authorization, " header auth received")
+        print(cookie_authorization, " cookie auth received")
         header_scheme, header_param = get_authorization_scheme_param(
             header_authorization
         )
@@ -362,9 +362,20 @@ async def import_handler(request : Request, file: UploadFile = File(...), title 
         context["next_action"] = "try again"
 
     return templates.TemplateResponse("upload_result.html", context)
-@router.post("/addingwords/")
-async def import_words(file: UploadFile = File(...), language : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
-    return add_new_text.add_words(file.file, language)
+
+@router.post("/addwords/handler/")
+async def addwords_handler(request : Request, file: UploadFile = File(...), language : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):
+    context = {"request" : request}
+    context["link_back"] = "/account/addwords"
+    to_return = add_new_text.add_words(file.file, language)
+    if to_return == f"updated {language}":
+        context["result"] = "You successfully uploaded the dictionary!!!"
+        context["next_action"] = "add another"
+    else:
+        context["result"] = f"{to_return}\nFailed to upload"
+        context["next_action"] = "try again"
+        
+    return templates.TemplateResponse("upload_result.html", context)
 
 @router.post("/delete/handler/")
 async def delete_handler(request : Request, title : str = Form(...), language : str = Form(...), local_def : str = Form(...), local_lem : str = Form(...), current_user: schema.User = Depends(get_current_active_user)):

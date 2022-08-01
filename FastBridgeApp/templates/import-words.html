@@ -5,7 +5,7 @@
 <body>
   <section class="container text-center" style = "height: auto; padding-top: 150px; background-position: bottom; background-size: cover;">
 
-<form class="form" action="/account/addingwords/" method="post" enctype= "multipart/form-data">
+<form class="form" action="/account/addwords/handler" method="post" enctype= "multipart/form-data">
   <div class="form-group"
 <label for="language">
   What language are we adding to? (please capitalize) </label>
@@ -17,10 +17,13 @@
   Please add a file here </label>
   <input type="file" id = "file" name = "file" accept=".csv">
     </div>
-  <input type="submit" name="submit" value="submit">
+    <input class="btn btn-dark primary action-button" style="margin-bottom: 10vh" type="submit" id = "submit" name="submit" value="submit">
 </form>
 
+<a class= "btn btn-dark primary action-button" href="/account/import"> Click here to add texts</a>
+
 </section>
+
 </body>
 
 {% endblock %}
