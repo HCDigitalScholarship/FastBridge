@@ -70,7 +70,7 @@ The dev app is available at: https://fastbridge-dev.herokuapp.com
 *As of June 2022 the heroku dev app is broken due to issues with running out of ram. We recommend just doing local development*
 
 
-## Deploying to production
+## Deploying to dev/production on DigitalOcean
 
 **1. Shell into the server and the cd to the FastBridge directory**
 
