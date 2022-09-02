@@ -15,6 +15,7 @@ import string
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
+from cltk import NLP
 
 
 @router.get("/")
@@ -82,7 +83,11 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         text =  ' '.join(new_text)
         print(text)
 
-
+    text = strip_accents(text)
+    text = depunctuate(text)
+    # use CLTK package to analyze the lemma of text
+    cltk_nlp = NLP(language="lat")
+    cltk_doc = cltk_nlp.analyze(text=text)
     text = text.split()
     print(text)
     running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
@@ -99,18 +104,16 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             section +=1
         else:
             location = location
-            word = strip_accents(word)
-            word = depunctuate(word)
             try:
-                title = lemma_lex[word.lower()]
+                title = lemma_lex[word.lower()] # use morpheus
                 try:
                     if conversion:
-                        title = conversion[title]
+                        title = conversion[title] # use Bridge conversion
                 except KeyError:
-                    title = f"morpheus: {lemma_lex[word]}"
+                    title = f"morpheus: {lemma_lex[word.lower()]}"
 
             except KeyError:
-                title =  "morpheus: NONE" #humans will need to address this one!
+                title =  f"CLTK: {cltk_doc.words[running_count-1].lemma}" # use CLTK package
 
             output += f'{title},{location},{section},{running_count},{word}\n'
             print(running_count)
