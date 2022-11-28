@@ -2127,4 +2127,28 @@ def test_integrity_terence_adelphoe():
 def test_integrity_eutropius_breviarium_all():
     response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
     assert response.status_code == 200
+
+def test_integrity_catullus_carmina_garrison():
+    response = client.get("oracle/Latin/result/catullus_carmina_garrison/start/end/1/catullus_carmina_garrison/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_suburani_fabulae():
+    response = client.get("oracle/Latin/result/suburani_fabulae/start/end/1/suburani_fabulae/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_catullus_carmina_garrison():
+    response = client.get("oracle/Latin/result/catullus_carmina_garrison/start/end/1/catullus_carmina_garrison/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eutropius_breviarium_all():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eutropius_breviarium_all():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_eutropius_breviarium_all():
+    response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
+    assert response.status_code == 200
     
