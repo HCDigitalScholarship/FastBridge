@@ -126,7 +126,7 @@ If everything has gone right, both master and production should now be the same,
 
 ---
 
-# Troubleshootign server errors
+# Troubleshooting server errors
 
 For nginx errors: `tail -n 200 var/log/nginx/error.log`
 
