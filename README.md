@@ -123,3 +123,11 @@ pip install -r requirements.txt
 6. On prod: `git pull origin master`
 
 If everything has gone right, both master and production should now be the same, incorporating both versions of files. If you messed up the production git at some point (ex. by making a commit or tracking files that are preventing you from pulling), you may need to clean the prod server first. Be sure to scp any files you want to preserve down to your local machine first. **Cleaning git will remove these files from prod!** Use `git reset --hard [COMMIT_HASH]` to update to the last good commit. Then, `git clean -f -d`. You should now be able to pull master without issue.
+
+---
+
+# Troubleshootign server errors
+
+For nginx errors: `tail -n 200 var/log/nginx/error.log`
+
+For application errors: `tail -n 200 /var/log/gunicorn.error.log`
