@@ -85,17 +85,17 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
 
     text = strip_accents(text)
     text = depunctuate(text)
-    # use CLTK package to analyze the lemma of text
-    cltk_nlp = NLP(language="lat")
-    cltk_doc = cltk_nlp.analyze(text=text)
+    if format == "CLTK":
+        # use CLTK package to analyze the lemma of text
+        cltk_nlp = NLP(language="lat")
+        cltk_doc = cltk_nlp.analyze(text=text)
     text = text.split()
     print(text)
     running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
     conversion = False
     section = 0
-    if format == "Bridge":
-        #the default lemma_lex is the perseus one, if we get the equivalnces stored nicely in an other file as a dictionary, it will be best to just import that file and look up the conversion.
-        conversion =  importlib.import_module(f'routers.ToolsApp.{language}_morpheus_conversion').conversion_dict
+    #the default lemma_lex is the perseus one, if we get the equivalnces stored nicely in an other file as a dictionary, it will be best to just import that file and look up the conversion.
+    conversion =  importlib.import_module(f'routers.ToolsApp.{language}_morpheus_conversion').conversion_dict
     for word in text:
         if regex_go_brrr.match(word):
             print("FOUND A number")
@@ -107,13 +107,15 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             try:
                 title = lemma_lex[word.lower()] # use morpheus
                 try:
-                    if conversion:
-                        title = conversion[title] # use Bridge conversion
+                    title = conversion[title] # use Bridge conversion
                 except KeyError:
                     title = f"morpheus: {lemma_lex[word.lower()]}"
 
             except KeyError:
-                title =  f"CLTK: {cltk_doc.words[running_count-1].lemma}" # use CLTK package
+                if format == "CLTK":
+                    title =  f"CLTK: {cltk_doc.words[running_count-1].lemma}" # use CLTK package
+                else:
+                    title =  "morpheus: NONE"
 
             output += f'{title},{location},{section},{running_count},{word}\n'
             print(running_count)
