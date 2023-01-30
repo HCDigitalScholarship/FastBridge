@@ -91,12 +91,20 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
     #the default lemma_lex is the perseus one, if we get the equivalnces stored nicely in an other file as a dictionary, it will be best to just import that file and look up the conversion.
     conversion =  importlib.import_module(f'routers.ToolsApp.{language}_morpheus_conversion').conversion_dict
     for word in text:
-        if regex_go_brrr.match(word):
+        # the locations are splitted into one word, when there is whitespace between locations and text
+        if regex_go_brrr.fullmatch(word):
             print("FOUND A number")
             print(word)
             location = word[1:-1].replace(".", "_") #remove the brackets around the word
-            section +=1
+            section +=1         
         else:
+            # the locations are not recognized when there is not whitespace between locations and text
+            if regex_go_brrr.match(word):
+                print("FOUND A number")
+                print(regex_go_brrr.match(word).group())
+                location = regex_go_brrr.match(word).group()[1:-1].replace(".", "_") #remove the brackets around the word
+                section +=1
+                word = word.replace(regex_go_brrr.match(word).group(),"")
             location = location
             word = strip_accents(word)
             word = depunctuate(word)
