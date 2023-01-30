@@ -83,12 +83,6 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         text =  ' '.join(new_text)
         print(text)
 
-    text = strip_accents(text)
-    text = depunctuate(text)
-    if format == "CLTK":
-        # use CLTK package to analyze the lemma of text
-        cltk_nlp = NLP(language="lat")
-        cltk_doc = cltk_nlp.analyze(text=text)
     text = text.split()
     print(text)
     running_count = 1 #if this started at 0, it would make some other things cleaner, but it already starts at 1 everywhere else so lets not change it.
@@ -104,6 +98,8 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
             section +=1
         else:
             location = location
+            word = strip_accents(word)
+            word = depunctuate(word)
             try:
                 title = lemma_lex[word.lower()] # use morpheus
                 try:
@@ -113,11 +109,14 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
 
             except KeyError:
                 if format == "CLTK":
-                    title =  f"CLTK: {cltk_doc.words[running_count-1].lemma}" # use CLTK package
+                    # use CLTK package to analyze the lemma of text
+                    cltk_nlp = NLP(language="lat")
+                    cltk_doc = cltk_nlp.analyze(text=word)
+                    title =  f"CLTK: {cltk_doc.words[0].lemma}" # use CLTK package
                 else:
                     title =  "morpheus: NONE"
 
             output += f'{title},{location},{section},{running_count},{word}\n'
-            print(running_count)
+            # print(running_count)
             running_count+=1
     return output
