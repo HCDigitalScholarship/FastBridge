@@ -2152,3 +2152,15 @@ def test_integrity_eutropius_breviarium_all():
     response = client.get("oracle/Latin/result/eutropius_breviarium_all/start/end/1/eutropius_breviarium_all/start-end")
     assert response.status_code == 200
     
+def test_integrity_ovid_heroides():
+    response = client.get("oracle/Latin/result/ovid_heroides/start/end/1/ovid_heroides/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_horace_epistles():
+    response = client.get("oracle/Latin/result/horace_epistles/start/end/1/horace_epistles/start-end")
+    assert response.status_code == 200
+    
+def test_integrity_plautus_poenulus():
+    response = client.get("oracle/Latin/result/plautus_poenulus/start/end/1/plautus_poenulus/start-end")
+    assert response.status_code == 200
+    
