@@ -10,4 +10,5 @@ COPY . /app
 
 EXPOSE 5000
 
-CMD cd ./FastBridgeApp && uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
+WORKDIR /app/FastBridgeApp
+CMD uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
