@@ -1,0 +1,7 @@
+services:
+  web:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
