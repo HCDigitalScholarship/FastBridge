@@ -256,7 +256,7 @@ section {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   background-color: #228383;
   color: #ffffff;
-  border-radius: 15px 0px 0px 15px;
+  border-radius: 5px 0px 0px 5px;
   z-index: 100000000;
 }
 
