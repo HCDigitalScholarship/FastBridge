@@ -8,11 +8,24 @@ from text import Text
 from collections import defaultdict
 import spacy# for LatinCy
 import csv #for hashtable of Diderich -> lexical sophistication
+import matplotlib.font_manager as fm
+
+# Define FontProperties
+prop = fm.FontProperties(family='serif', size=9)
 
 #LatinCy
 #pip install https://huggingface.co/latincy/la_core_web_trf/resolve/main/la_core_web_trf-any-py3-none-any.whl
 
+#Seaborn Themes
+#sns.set_style("darkgrid")
+#sns.set_context("paper")
+#sns.color_palette("dark")
+title_font = {'fontname':'serif', 'size':'13', 'color':'black', 'weight':'normal',
+              'verticalalignment':'bottom'} # This is for the title properties
+axis_font = {'fontname':'serif', 'size':'11'} # This is for the axis labels
 
+
+#sns.set_context("paper")
 
 def get_text(form_request : str, language : str):
     """
@@ -89,22 +102,6 @@ def get_vocabulary_size(text_object: Text, start_section, end_section):
 
 # Function to display distribution of average word length
 def plot_avg_word_length(text_object: Text, start_section, end_section):
-    '''
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words    
-
-    df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
-    df['Word Length'] = df['Word'].apply(len)
-    avg_word_length = df.groupby('Section')['Word Length'].mean().reset_index()
-    plt.figure(figsize=(10,5))
-    sns.barplot(data=avg_word_length, x='Section', y='Word Length')
-    plt.title('Average Word Length per Section')
-    plt.xticks(rotation=90)
-    plt.show()'''
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
     text_slice = text_object.words[start_index:end_index]
@@ -119,19 +116,30 @@ def plot_avg_word_length(text_object: Text, start_section, end_section):
     # determine the step size for x-axis labels
     n_sections = avg_word_length['Section'].nunique()
     step_size = max(1, n_sections // 20)  # adjust this factor to change the number of labels displayed
-
-    plt.figure(figsize=(10,5))
-    barplot = sns.barplot(data=avg_word_length, x='Section', y='Word Length')
-    plt.title(f"Average Word Length per Section of {text_object.name}")
     
+    plt.figure(figsize=(10,5))
+    
+    sns.set_style("ticks")
+    sns.set_context("paper")
+    lineplot = sns.barplot(data=avg_word_length, x='Section', y='Word Length', palette = "dark", width = 0.9)
+    sns.despine()
+    plt.title(f"Average Word Length per Section of {text_object.name}", **title_font)
+    plt.xlabel('Section', **axis_font)
+    plt.ylabel('Word length', **axis_font)
     # set x-tick labels with a step size
-    for ind, label in enumerate(barplot.get_xticklabels()):
+    for ind, label in enumerate(lineplot.get_xticklabels()):
         if ind % step_size == 0:  # only show labels for every nth section
             label.set_visible(True)
         else:
             label.set_visible(False)
 
     plt.xticks(rotation=90)
+    # Get the current Axes instance
+    ax = plt.gca()
+
+    # set font properties to x and y tick labels
+    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+    plt.setp(ax.get_yticklabels(), fontproperties=prop)
     plt.show()
 
 def plot_avg_word_length2(text_object, start_section, end_section):
@@ -181,10 +189,23 @@ def plot_word_frequency(text_object: Text, start_section, end_section):
     df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
     word_frequency = df['Word'].value_counts().reset_index()
     word_frequency.columns = ['Word', 'Frequency']
+
+    sns.set_style("ticks")
+    sns.set_context("paper")
     plt.figure(figsize=(10,5))
-    sns.barplot(data=word_frequency[:30], x='Word', y='Frequency')
-    plt.title(f"Word Frequency of {text_object.name}")
+    sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette="dark")
+    sns.despine()
+    plt.title(f"Word Frequency of {text_object.name}", **title_font)
+    plt.xlabel('Word', **axis_font)
+    plt.ylabel('Frequency', **axis_font)
     plt.xticks(rotation=90)
+
+    # Get the current Axes instance
+    ax = plt.gca()
+
+    # set font properties to x and y tick labels
+    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+    plt.setp(ax.get_yticklabels(), fontproperties=prop)
     plt.show()
 
 def find_hapax_legomena(words):
@@ -367,33 +388,140 @@ def get_avg_word_length(text_object:Text, start_section, end_section):
         word = word_tuple[0]
         sections.append(word)
 
-    average_word_length = calculate_average_word_length(words)
+    average_word_length = calculate_average_word_length(sections)
     return average_word_length
 
+def get_gen_lex_r(text_object: Text, start_section, end_section):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
 
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    countTokens = 0
+    countTitles = 0
+    titles = []
+    for word_tuple in text_slice:
+        countTokens +=1
+        word = word_tuple[0]
+        if word not in titles:
+            countTitles +=1
+            titles.append(word)
+    
+    gen_lex_r = countTokens/sqrt(countTitles)
+    return gen_lex_r
+
+def get_gen_lex_c(text_object: Text, start_section, end_section):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
+
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    countTokens = 0
+    countTitles = 0
+    titles = []
+    for word_tuple in text_slice:
+        countTokens +=1
+        word = word_tuple[0]
+        if word not in titles:
+            countTitles +=1
+            titles.append(word)
+    
+    gen_lex_c = log(countTokens)/log(countTitles)
+    return gen_lex_c
+
+def create_word_set(file_path):
+    word_set = set()
+    with open(file_path, 'r', encoding = 'utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            word_set.add(row['TITLE'])
+    return word_set
+
+def get_lex_r(text_object: Text, start_section, end_section):
+    #Get the Diederich 300 -> Adjusted CSV method
+    diederich300 = set()
+    with open("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        count = 0
+        for row in reader:
+            if count <=306:#From Latin vocabulary knowledge and the Readability of Latin texts
+                diederich300.add(row['TITLE'])
+                count +=1
+            else:
+                break
+    
+    dcc = create_word_set("FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+
+    diederich1500 = create_word_set("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+
+    #Stats boilerplate
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
+
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    #Bad naming standards, these are counting which words are NOT in these lists
+    in300 = 0
+    inDCC = 0
+    in1500 = 0
+    countWords = 0
+    for word_tuple in text_slice:
+        if word_tuple[0] not in diederich300:
+            in300 +=1
+        if word_tuple[0] not in dcc:
+            inDCC +=1
+        if word_tuple[0] not in diederich1500:
+            in1500 +=1
+        countWords +=1
+
+    freq300 = in300/countWords
+    freqDCC = inDCC/countWords
+    freq1500 = in1500/countWords
+
+    mean_word_length = get_avg_word_length(text_object,start_section,end_section)
+    lexical_sophistication = get_lexical_sophistication(text_object, start_section, end_section)
+    
+    lexical_variation = get_lexical_variation(text_object, start_section, end_section)
+    logTTR = lexical_variation[3]
+    rootTTR = lexical_variation[1]
+
+    lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(lexical_sophistication*0.059)+(logTTR*0.312)+(rootTTR*0.143))
+             
+    lex_r -=11.7
+    lex_r *= 0.833
+
+    return lex_r
 
 #main()
 
 # Using the get_text function to load the text instance
 text_instance = get_text('vergil_aeneid_ap_selections', 'Latin').book  
 
-section_start = 1.1
-section_end = 4.355
-
+section_start = "start"
+section_end = "end"
+#4.355
 #Call new functions
 print(f"Stats for sections: {section_start} - {section_end}")
 print(f"Number of words: {get_number_of_words(text_instance, str(section_start), str(section_end))}")
 print(f"Vocabulary Size: {get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
-print(f"Hapax Legomena: {get_hapax_legomena(text_instance, str(section_start), str(section_end))}")
+#print(f"Hapax Legomena: {get_hapax_legomena(text_instance, str(section_start), str(section_end))}")
 
-#plot_avg_word_length(text_instance, 'start', 'end')
+#plot_avg_word_length(text_instance, str(section_start), str(section_end))
 #plot_avg_word_length2(text_instance, '1.1', '6.899')
-#plot_word_frequency(text_instance, 'start','end')
+plot_word_frequency(text_instance, str(section_start), str(section_end))
 
 
-print(f"Lexical Density: {get_lexical_density(text_instance, str(section_start), str(section_end))}")
+#print(f"Lexical Density: {get_lexical_density(text_instance, str(section_start), str(section_end))}")
 #The density is way too slow
 
-print(f"Lexical Sophistication: {get_lexical_sophistication(text_instance,str(section_start), str(section_end))}")
-print(f"Lexical Variation: {get_lexical_variation(text_instance, str(section_start), str(section_end))}")
-print(f"Average Subordinations per Section/Sentence: {get_average_subordinations_per_section(1,1,4,355)}")
+#print(f"Lexical Sophistication: {get_lexical_sophistication(text_instance,str(section_start), str(section_end))}")
+#print(f"Lexical Variation: {get_lexical_variation(text_instance, str(section_start), str(section_end))}")
+#print(f"Average Subordinations per Section/Sentence: {get_average_subordinations_per_section(1,1,4,355)}")
+
+print(f"LexR: {get_lex_r(text_instance, str(section_start), str(section_end))}")
