@@ -9,6 +9,28 @@ from collections import defaultdict
 import spacy# for LatinCy
 import csv #for hashtable of Diderich -> lexical sophistication
 import matplotlib.font_manager as fm
+import time
+import numpy as np
+
+'''
+Files:
+Text files -> Text class, get_text().book
+Working File -> FastBridgeApp\Bridge_Latin_Text_Vergilius_Aeneis_VerAen_newAP_localdef_20230310.xlsx
+Latin Dictionary -> FastBridgeApp\bridge_latin_dictionary.csv
+Diederich 300,1500 -> FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv
+DCC -> FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv
+'''
+
+
+#Decorators
+def timer_decorator(func):#times the method you give to it, apply using @timer_decorator above method
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        return result, elapsed_time
+    return wrapper
 
 # Define FontProperties
 prop = fm.FontProperties(family='serif', size=9)
@@ -25,9 +47,42 @@ title_font = {'fontname':'serif', 'size':'13', 'color':'black', 'weight':'normal
 axis_font = {'fontname':'serif', 'size':'11'} # This is for the axis labels
 colorblind_palette = ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7']
 
-
-
 #sns.set_context("paper")
+
+#Dictionary File
+def get_latin_dictionary(file_path):#for reading in DICTIONARY file
+    word_dictionary = {}
+    with open(file_path, 'r', encoding = 'utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            #print(row)  # Add this line
+            if 'TITLE' in row:
+                word_dictionary[row['TITLE']] = row
+            else:
+                print(row)
+            # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
+            #word_dictionary[row["TITLE"]] = row
+    return word_dictionary
+
+start_time = time.time()
+latin_dict = get_latin_dictionary("FastBridgeApp/bridge_latin_dictionary.csv")
+end_time = time.time()
+elapsed_time = end_time - start_time
+print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
+
+#Get Diederich
+@timer_decorator
+def create_hashtable_from_csv(file_path):
+    hashtable = {}
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'], 
+                                       'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
+    return hashtable
+diederich, diederich_time = create_hashtable_from_csv("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 def get_text(form_request : str, language : str):
     """
@@ -42,16 +97,12 @@ def calculate_total_words(text_instance: Text):
     total_words = len(text_instance.words)
     print(f"Total number of words: {total_words}")
 
-
-
 def calculate_total_sections(text_instance: Text):
     '''
     Calculate the number of sections in the text
     '''
     total_sections = len(text_instance.sections)
     print(f"Total sections: {total_sections}")
-
-
 
 def calculate_avg_words_per_section(text_instance: Text):
     '''
@@ -63,14 +114,6 @@ def calculate_avg_words_per_section(text_instance: Text):
 
 
     print(f"Average words per section: {avg_words_per_section:.2f}")
-
-
-
-
-
-
-
-
 
 
 
@@ -251,7 +294,7 @@ def get_hapax_legomena(text_object: Text, start_section, end_section):
 
 
 def get_lexical_density(text_object: Text, start_section, end_section):
-    nlp = spacy.load("la_core_web_trf")
+    #nlp = spacy.load("la_core_web_trf")
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
     text_slice = text_object.words[start_index:end_index]
@@ -260,23 +303,28 @@ def get_lexical_density(text_object: Text, start_section, end_section):
         text_slice = text_object.words
 
     #FINDING LEXICAL WORDS
-    spacyString = ""
+    #spacyString = ""
 
-    #adding all words into big string for LatinCy
+    lexicalCategories = ["Adjective", "Adverb", "Noun", "Verb"]
+    lexicalSum = 0
     for word_tuple in text_slice:
         word = word_tuple[0]
-        if len(spacyString) == 0:
-            spacyString = word
-        else:
-            spacyString += f" {word}"
+        if word in latin_dict:
+            if latin_dict[word]["PART_OF_SPEECH"] in lexicalCategories:
+                lexicalSum +=1
+
+        # if len(spacyString) == 0:
+        #     spacyString = word
+        # else:
+        #     spacyString += f" {word}"
     
-    doc = nlp(spacyString)
+    # doc = nlp(spacyString)
     
-    lexicalSum = 0
-    lexicalCategories = ['NOUN', 'ADV', 'PROPN', 'ADJ', 'VERB']
-    for token in doc:
-        if token.pos_ in lexicalCategories:
-            lexicalSum += 1
+    # lexicalSum = 0
+    # lexicalCategories = ['NOUN', 'ADV', 'PROPN', 'ADJ', 'VERB']
+    # for token in doc:
+    #     if token.pos_ in lexicalCategories:
+    #         lexicalSum += 1
 
     #FINDING TOTAL WORDS IN SECTION
     total_words = get_number_of_words(text_object,start_section, end_section)
@@ -285,14 +333,6 @@ def get_lexical_density(text_object: Text, start_section, end_section):
 
     return lexical_density
 
-def create_hashtable_from_csv(file_path):
-    hashtable = {}
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'], 
-                                       'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
-    return hashtable
 
 
 def get_lexical_sophistication(text_object: Text, start_section, end_section):
@@ -435,7 +475,7 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
     gen_lex_c = log(countTokens)/log(countTitles)
     return gen_lex_c
 
-def create_word_set(file_path):
+def create_word_set(file_path):#For getting the unique tokens, or vocabulary, NO DUPLICATES
     word_set = set()
     with open(file_path, 'r', encoding = 'utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -500,6 +540,71 @@ def get_lex_r(text_object: Text, start_section, end_section):
 
     return lex_r
 
+def plot_cum_lex_load(text_object: Text, start_section, end_section):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
+
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    #Go through the words of text_slice
+    #Connect to Dictionary to filter out PROPER, "1" and "T"
+    words = []
+    scores = []
+    for word_tuple in text_slice:
+        word = word_tuple[0]
+        #filter out proper nouns
+        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+            words.append(word)
+
+    for word in words:
+        if word in latin_dict:
+            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                scores.append(2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <=1000:
+                scores.append(1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <=2000:
+                scores.append(-1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <=5000:
+                scores.append(-2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                scores.append(-4)
+                continue
+        else:
+            scores.append(-4)
+            continue
+
+    cumulative_scores = np.cumsum(scores) 
+    x_indexes = list(range(len(words)))
+
+    sns.set_style("ticks")
+    sns.set_context("paper")
+    plt.figure(figsize=(10,5))
+    sns.lineplot(x=x_indexes, y=cumulative_scores, errorbar = None, color = colorblind_palette[0])
+    sns.despine()
+    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
+    plt.xlabel('Word', **axis_font)
+    plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+   
+
+    # Get the current Axes instance
+    ax = plt.gca()
+
+    # set font properties to x and y tick labels
+    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+    plt.setp(ax.get_yticklabels(), fontproperties=prop)
+    
+    
+   
+    
+    plt.show()
+
+
 #main()
 
 # Using the get_text function to load the text instance
@@ -509,21 +614,23 @@ section_start = "start"
 section_end = "end"
 #4.355
 #Call new functions
-print(f"Stats for sections: {section_start} - {section_end}")
-print(f"Number of words: {get_number_of_words(text_instance, str(section_start), str(section_end))}")
-print(f"Vocabulary Size: {get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
+print(f"\n\nStats for sections: {section_start} - {section_end}")
+print(f"Number of words:\t{get_number_of_words(text_instance, str(section_start), str(section_end))}")
+print(f"Vocabulary Size:\t{get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
 #print(f"Hapax Legomena: {get_hapax_legomena(text_instance, str(section_start), str(section_end))}")
 
 #plot_avg_word_length(text_instance, str(section_start), str(section_end))
 #plot_avg_word_length2(text_instance, '1.1', '6.899')
-plot_word_frequency(text_instance, str(section_start), str(section_end))
+#plot_word_frequency(text_instance, str(section_start), str(section_end))
 
 
-#print(f"Lexical Density: {get_lexical_density(text_instance, str(section_start), str(section_end))}")
+print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start), str(section_end))}")
 #The density is way too slow
 
 #print(f"Lexical Sophistication: {get_lexical_sophistication(text_instance,str(section_start), str(section_end))}")
 #print(f"Lexical Variation: {get_lexical_variation(text_instance, str(section_start), str(section_end))}")
 #print(f"Average Subordinations per Section/Sentence: {get_average_subordinations_per_section(1,1,4,355)}")
 
-print(f"LexR: {get_lex_r(text_instance, str(section_start), str(section_end))}")
+print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
+
+plot_cum_lex_load(text_instance, str(section_start), str(section_end))
