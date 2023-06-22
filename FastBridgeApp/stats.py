@@ -23,6 +23,8 @@ prop = fm.FontProperties(family='serif', size=9)
 title_font = {'fontname':'serif', 'size':'13', 'color':'black', 'weight':'normal',
               'verticalalignment':'bottom'} # This is for the title properties
 axis_font = {'fontname':'serif', 'size':'11'} # This is for the axis labels
+colorblind_palette = ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7']
+
 
 
 #sns.set_context("paper")
@@ -121,7 +123,7 @@ def plot_avg_word_length(text_object: Text, start_section, end_section):
     
     sns.set_style("ticks")
     sns.set_context("paper")
-    lineplot = sns.barplot(data=avg_word_length, x='Section', y='Word Length', palette = "dark", width = 0.9)
+    lineplot = sns.barplot(data=avg_word_length, x='Section', y='Word Length', palette = colorblind_palette, width = 0.9)
     sns.despine()
     plt.title(f"Average Word Length per Section of {text_object.name}", **title_font)
     plt.xlabel('Section', **axis_font)
@@ -193,7 +195,7 @@ def plot_word_frequency(text_object: Text, start_section, end_section):
     sns.set_style("ticks")
     sns.set_context("paper")
     plt.figure(figsize=(10,5))
-    sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette="dark")
+    sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette=colorblind_palette)
     sns.despine()
     plt.title(f"Word Frequency of {text_object.name}", **title_font)
     plt.xlabel('Word', **axis_font)
