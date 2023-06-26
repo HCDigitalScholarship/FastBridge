@@ -39,17 +39,13 @@ prop = fm.FontProperties(family='serif', size=9)
 #pip install https://huggingface.co/latincy/la_core_web_trf/resolve/main/la_core_web_trf-any-py3-none-any.whl
 
 #Seaborn Themes
-#sns.set_style("darkgrid")
-#sns.set_context("paper")
-#sns.color_palette("dark")
 title_font = {'fontname':'serif', 'size':'13', 'color':'black', 'weight':'normal',
               'verticalalignment':'bottom'} # This is for the title properties
 axis_font = {'fontname':'serif', 'size':'11'} # This is for the axis labels
 colorblind_palette = ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7']
 
-#sns.set_context("paper")
-
 #Dictionary File
+@timer_decorator
 def get_latin_dictionary(file_path):#for reading in DICTIONARY file
     word_dictionary = {}
     with open(file_path, 'r', encoding = 'utf-8-sig') as csvfile:
@@ -63,11 +59,7 @@ def get_latin_dictionary(file_path):#for reading in DICTIONARY file
             # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
             #word_dictionary[row["TITLE"]] = row
     return word_dictionary
-
-start_time = time.time()
-latin_dict = get_latin_dictionary("FastBridgeApp/bridge_latin_dictionary.csv")
-end_time = time.time()
-elapsed_time = end_time - start_time
+latin_dict,elapsed_time  = get_latin_dictionary("FastBridgeApp/bridge_latin_dictionary.csv")
 print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
 
 #Get Diederich
@@ -82,6 +74,17 @@ def create_hashtable_from_csv(file_path):
     return hashtable
 diederich, diederich_time = create_hashtable_from_csv("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
 print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
+
+#Get DCC
+@timer_decorator
+def create_word_set(file_path):#For getting the unique tokens, or vocabulary, NO DUPLICATES
+    word_set = set()
+    with open(file_path, 'r', encoding = 'utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            word_set.add(row['TITLE'])
+    return word_set
+
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 def get_text(form_request : str, language : str):
@@ -114,6 +117,134 @@ def calculate_avg_words_per_section(text_instance: Text):
 
 
     print(f"Average words per section: {avg_words_per_section:.2f}")
+
+
+
+###############
+def get_slice(text_object: Text, start_section, end_section):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
+
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+    
+    return text_slice
+
+def find_hapax_legomena(words):
+    word_frequencies = defaultdict(int)
+    for word in words:
+        word_frequencies[word] += 1
+    return [word for word, freq in word_frequencies.items() if freq == 1]
+
+class LatinTextAnalyzer():
+    texts = []#(Text, start section, end section)
+    def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
+
+        self.dictionary, self.dictionary_time = get_latin_dictionary(dictionary_path)
+        print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
+
+        self.diederich, self.diederich_time = create_hashtable_from_csv(diederich_path)
+        print("Diederich Loaded: {} seconds".format(self.diederich_time))
+
+        self.dcc, self.dcc_time = create_word_set(dcc_path)
+        print("DCC Loaded: {} seconds".format(self.dcc_time))
+    
+    def add_text(self, form_request: str, language: str, start_section, end_section):#Add working file for subordinations/section?
+        self.texts.append((get_text(form_request, language), start_section, end_section))
+    
+    
+    def num_words(self)->int:
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            start_index = self.texts[0][0].sections[self.texts[0][1]]
+            end_index = self.texts[0][0].sections[self.texts[0][2]]
+            word_count = end_index - start_index
+            if self.texts[0][1] == 'start' and self.texts[0][2] == 'end':
+                word_count = self.texts[0][0].words[-1][1]
+            return word_count
+        else:
+            sum = 0
+            for text in self.texts:
+                start_index = text[0].sections[text[1]]
+                end_index = text[0].sections[text[2]]
+                word_count = end_index - start_index
+                if text[1] == 'start' and text[2] == 'end':
+                    word_count = text[0].words[-1][1]
+                sum += word_count
+            return word_count
+    
+    def vocab_size(self)->int:
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            vocabulary = set(word[0] for word in text_slice)
+            return len(vocabulary)
+        else:
+            vocab = set()
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                vocabulary = set(word[0] for word in text_slice)
+                vocab = vocab.union(vocabulary)
+            return len(vocab)
+        
+    def hapax_legonema(self):
+        if len(self.texts) == 0:
+            return []
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            allwords = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                allwords.append(word)
+            hapax_legomena = find_hapax_legomena(allwords)
+            return hapax_legomena
+        else:
+            allwords = []
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                for word_tuple in text_slice:
+                    word = word_tuple[0]
+                    allwords.append(word)
+            hapax_legomena = find_hapax_legomena(allwords)
+            return hapax_legomena
+
+    def lex_density(self):
+        lexicalCategories = ["Adjective", "Adverb", "Noun", "Verb"]
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])             
+            lexicalSum = 0
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                if word in self.dictionary:
+                    if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
+                        lexicalSum +=1
+
+            total_words = self.num_words()
+            lexical_density = lexicalSum/total_words
+            return lexical_density
+        else:
+            lexicalSum = 0
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                for word_tuple in text_slice:
+                    word = word_tuple[0]
+                    if word in self.dictionary:
+                        if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
+                            lexicalSum +=1
+            total_words = self.num_words()#MAKE SURE THIS IS WORKING WITH MULTIPLE TEXTS
+            lexical_density = lexicalSum/total_words
+            return lexical_density
+
+            
+    
+
+        
+
 
 
 
@@ -253,11 +384,7 @@ def plot_word_frequency(text_object: Text, start_section, end_section):
     plt.setp(ax.get_yticklabels(), fontproperties=prop)
     plt.show()
 
-def find_hapax_legomena(words):
-    word_frequencies = defaultdict(int)
-    for word in words:
-        word_frequencies[word] += 1
-    return [word for word, freq in word_frequencies.items() if freq == 1]
+
 
 def get_hapax_legomena(text_object: Text, start_section, end_section):
     '''
@@ -475,13 +602,7 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
     gen_lex_c = log(countTokens)/log(countTitles)
     return gen_lex_c
 
-def create_word_set(file_path):#For getting the unique tokens, or vocabulary, NO DUPLICATES
-    word_set = set()
-    with open(file_path, 'r', encoding = 'utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            word_set.add(row['TITLE'])
-    return word_set
+
 
 def get_lex_r(text_object: Text, start_section, end_section):
     #Get the Diederich 300 -> Adjusted CSV method
