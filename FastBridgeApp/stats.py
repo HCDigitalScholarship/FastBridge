@@ -11,6 +11,8 @@ import csv #for hashtable of Diderich -> lexical sophistication
 import matplotlib.font_manager as fm
 import time
 import numpy as np
+from scipy.signal import savgol_filter
+#import matplotlib.ticker as ticker #For the x axis ticks
 
 '''
 Files:
@@ -701,6 +703,11 @@ def plot_cum_lex_load(text_object: Text, start_section, end_section):
             continue
 
     cumulative_scores = np.cumsum(scores) 
+
+    # Calculate rolling average
+    #rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
+
+
     x_indexes = list(range(len(words)))
 
     sns.set_style("ticks")
@@ -725,7 +732,87 @@ def plot_cum_lex_load(text_object: Text, start_section, end_section):
     
     plt.show()
 
+def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size = 25):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
 
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    #Go through the words of text_slice
+    #Connect to Dictionary to filter out PROPER, "1" and "T"
+    words = []
+    scores = []
+    for word_tuple in text_slice:
+        word = word_tuple[0]
+        #filter out proper nouns
+        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+            words.append(word)
+
+    for word in words:
+        if word in latin_dict:
+            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                scores.append(2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <=1000:
+                scores.append(1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <=2000:
+                scores.append(-1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <=5000:
+                scores.append(-2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                scores.append(-4)
+                continue
+        else:
+            scores.append(-4)
+            continue
+
+    # Calculate rolling average of the scores
+    rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
+
+    # Apply Savitzky-Golay filter
+    smoothed_scores = savgol_filter(rolling_average, 51, 3)  # window size 51, polynomial order 3
+
+    x_indexes = list(range(len(words)))
+
+    # calculate average linear lexical score for the entire text
+    average_score = np.mean(scores) 
+
+    sns.set_style("ticks")
+    sns.set_context("paper")
+    plt.figure(figsize=(10,5))
+    sns.lineplot(x=x_indexes, y=smoothed_scores, errorbar = None, color = colorblind_palette[0])
+    
+   
+
+    # add a horizontal line representing the average linear lexical score
+    plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
+    
+    sns.despine()
+    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
+    plt.xlabel('Word', **axis_font)
+    plt.ylabel(f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
+   
+
+    # Get the current Axes instance
+    ax = plt.gca()
+
+    # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
+    #tick_spacing = rolling_window_size  # change this to the size of your slices
+    #ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+
+    # set font properties to x and y tick labels
+    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+    plt.setp(ax.get_yticklabels(), fontproperties=prop)
+    
+    
+   
+    
+    plt.show()
 #main()
 
 # Using the get_text function to load the text instance
@@ -754,4 +841,5 @@ print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start)
 
 print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
 
-plot_cum_lex_load(text_instance, str(section_start), str(section_end))
+#plot_cum_lex_load(text_instance, str(section_start), str(section_end))
+plot_rolling_lin_lex_load(text_instance, str(section_start), str(section_end))
