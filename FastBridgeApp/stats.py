@@ -87,6 +87,19 @@ def create_word_set(file_path):#For getting the unique tokens, or vocabulary, NO
             word_set.add(row['TITLE'])
     return word_set
 
+@timer_decorator
+def get_diederich300(file_path):
+    diederich300 = set()
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        count = 0
+        for row in reader:
+            if count <=306:#From Latin vocabulary knowledge and the Readability of Latin texts
+                diederich300.add(row['TITLE'])
+                count +=1
+            else:
+                break
+    return diederich300
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 def get_text(form_request : str, language : str):
@@ -140,21 +153,25 @@ def find_hapax_legomena(words):
     return [word for word, freq in word_frequencies.items() if freq == 1]
 
 class LatinTextAnalyzer():
-    texts = []#(Text, start section, end section)
+    
     def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
 
         self.dictionary, self.dictionary_time = get_latin_dictionary(dictionary_path)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
         self.diederich, self.diederich_time = create_hashtable_from_csv(diederich_path)
-        print("Diederich Loaded: {} seconds".format(self.diederich_time))
+        print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
 
+        self.diederich300, self.diederich300_time = get_diederich300(diederich_path)
+        print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
+        
         self.dcc, self.dcc_time = create_word_set(dcc_path)
         print("DCC Loaded: {} seconds".format(self.dcc_time))
+        
+        self.texts = []#(Text, start section, end section)
     
     def add_text(self, form_request: str, language: str, start_section, end_section):#Add working file for subordinations/section?
-        self.texts.append((get_text(form_request, language), start_section, end_section))
-    
+        self.texts.append((get_text(form_request, language).book, start_section, end_section))
     
     def num_words(self)->int:
         if len(self.texts) == 0:
@@ -242,11 +259,185 @@ class LatinTextAnalyzer():
             lexical_density = lexicalSum/total_words
             return lexical_density
 
-            
+    def lex_sophistication(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+            rareCount = 0
+            totalWords = 0
+            for word_tuple in text_slice:
+                if word_tuple[0] not in self.diederich:
+                    rareCount +=1
+                totalWords +=1
     
+            lexical_sophistication = rareCount/totalWords
+            return lexical_sophistication        
+        else:
+            rareCount = 0
+            totalWords = 0
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                for word_tuple in text_slice:
+                    if word_tuple[0] not in self.diederich:
+                        rareCount +=1
+                totalWords +=1
+            lexical_sophistication = rareCount/totalWords
+            return lexical_sophistication   
 
-        
+    def lex_variation(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            num_unique = len(set([word_tuple[0] for word_tuple in text_slice]))#V
+            total_words = self.num_words()#N
 
+            TTR = num_unique/total_words
+            RootTTR = num_unique/sqrt(total_words)
+            CTTR = num_unique/sqrt(2*total_words)
+            LogTTR = log(num_unique)/log(total_words)
+
+            return (TTR, RootTTR, CTTR, LogTTR)
+        else:
+            total_unique = 0
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                num_unique = len(set([word_tuple[0] for word_tuple in text_slice]))#V for current text selection
+                total_unique += num_unique
+            total_words = self.num_words()#N
+
+            TTR = total_unique/total_words
+            RootTTR = total_unique/sqrt(total_words)
+            CTTR = total_unique/sqrt(2*total_words)
+            LogTTR = log(total_unique)/log(total_words)
+
+            return (TTR, RootTTR, CTTR, LogTTR)
+
+    def LexR(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            out300 = 0
+            outDCC = 0
+            out1500 = 0
+            countWords = 0
+            words = []
+            for word_tuple in text_slice:
+                if word_tuple[0] not in self.diederich300:
+                    out300 +=1
+                if word_tuple[0] not in self.dcc:
+                    outDCC +=1
+                if word_tuple[0] not in self.diederich:
+                    out1500 +=1
+                countWords +=1
+                words.append(word_tuple[0])
+            freq300 = out300/countWords
+            freqDCC = outDCC/countWords
+            freq1500 = out1500/countWords  
+                
+            mean_word_length = sum(len(word) for word in words) / len(words)
+
+            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+             
+            lex_r -=11.7
+            lex_r *= 0.833
+
+            return lex_r   
+        else:
+            out300 = 0
+            outDCC = 0
+            out1500 = 0
+            countWords = 0
+            words = []
+            for text in self.texts:
+                text_slice = get_slice(text[0], text[1], text[2])
+                for word_tuple in text_slice:
+                    if word_tuple[0] not in self.diederich300:
+                        out300 +=1
+                    if word_tuple[0] not in self.dcc:
+                        outDCC +=1
+                    if word_tuple[0] not in self.diederich:
+                        out1500 +=1
+                    countWords +=1
+                    words.append(word_tuple[0])
+
+            freq300 = out300/countWords
+            freqDCC = outDCC/countWords
+            freq1500 = out1500/countWords  
+                
+            mean_word_length = sum(len(word) for word in words) / len(words)
+            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+             
+            lex_r -=11.7
+            lex_r *= 0.833
+            return lex_r
+
+    def plot_word_freq(self):
+        if len(self.text) == 0:
+            return
+        elif len(self.text) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+            word_frequency = df['Word'].value_counts().reset_index()
+            word_frequency.columns = ['Word', 'Frequency']
+
+            sns.set_style("ticks")
+            sns.set_context("paper")
+            plt.figure(figsize=(10,5))
+            sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette=colorblind_palette)
+            sns.despine()
+            plt.title(f"Word Frequency of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word', **axis_font)
+            plt.ylabel('Frequency', **axis_font)
+            plt.xticks(rotation=90)
+
+            # Get the current Axes instance
+            ax = plt.gca()
+
+            # set font properties to x and y tick labels
+            plt.setp(ax.get_xticklabels(), fontproperties=prop)
+            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+            plt.show()
+        else:
+            text_slices_concat = []
+            for text in self.texts:
+                text_slices_concat += get_slice(text[0], text[1], text[2])
+            
+            df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+            word_frequency = df['Word'].value_counts().reset_index()
+            word_frequency.columns = ['Word', 'Frequency']
+
+            sns.set_style("ticks")
+            sns.set_context("paper")
+            plt.figure(figsize=(10,5))
+            sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette=colorblind_palette)
+            sns.despine()
+            plt.title(f"Word Frequency of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word', **axis_font)
+            plt.ylabel('Frequency', **axis_font)
+            plt.xticks(rotation=90)
+
+            # Get the current Axes instance
+            ax = plt.gca()
+
+            # set font properties to x and y tick labels
+            plt.setp(ax.get_xticklabels(), fontproperties=prop)
+            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+            plt.show()    
+
+    def __str__(self) -> str:
+        toReturn = ""
+        toReturn += f"Number of words:\t{self.num_words()}\n"
+        toReturn += f"Vocabulary Size:\t{self.vocab_size()}\n"
+        toReturn += f"Hapax Legonema:\t{self.hapax_legonema()}\n"
+        toReturn += f"Lexical Density:\t{self.lex_density()}\n"
+        toReturn += f"Lexical Sophistication:\t{self.lex_sophistication()}\n"
+        toReturn += f"Lexical Variation:\t{self.lex_variation()}\n"
+        toReturn += f"LexR:\t{self.LexR()}\n"
+        return toReturn
 
 
 
@@ -775,7 +966,7 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
     rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
 
     # Apply Savitzky-Golay filter
-    smoothed_scores = savgol_filter(rolling_average, 51, 3)  # window size 51, polynomial order 3
+    smoothed_scores = savgol_filter(rolling_average, 101, 3)  # window size 51, polynomial order 3
 
     x_indexes = list(range(len(words)))
 
@@ -793,7 +984,7 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
     plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
     
     sns.despine()
-    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
+    plt.title(f"Linear Lexical Load of {text_object.name}", **title_font)
     plt.xlabel('Word', **axis_font)
     plt.ylabel(f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
    
@@ -813,13 +1004,116 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
    
     
     plt.show()
+
+def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_divisor = 25, slice_override = 0):
+    start_index = text_object.sections[start_section]
+    end_index = text_object.sections[end_section]
+    text_slice = text_object.words[start_index:end_index]
+
+    if start_section == 'start' and end_section == 'end':
+        text_slice = text_object.words
+
+    #Go through the words of text_slice
+    #Connect to Dictionary to filter out PROPER, "1" and "T"
+    words = []
+    scores = []
+    for word_tuple in text_slice:
+        word = word_tuple[0]
+        #filter out proper nouns
+        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+            words.append(word)
+
+    for word in words:
+        if word in latin_dict:
+            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                scores.append(2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <=1000:
+                scores.append(1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <=2000:
+                scores.append(-1)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <=5000:
+                scores.append(-2)
+                continue
+            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                scores.append(-4)
+                continue
+        else:
+            scores.append(-4)
+            continue
+
+    # Convert scores to an array of floats->FOR PADDING
+    scores = np.array(scores, dtype=float)
+
+    slice_size = len(scores)//slice_divisor
+    
+    if slice_override != 0:
+        slice_size = slice_override
+
+    # Calculate the remainder of the division
+    remainder = len(scores) % slice_size
+
+    # If there's a remainder, pad the scores array
+    if remainder != 0:
+        # Calculate how many elements we need to add
+        pad_size = slice_size - remainder
+    
+    # Pad the scores array with np.nan values
+    scores = np.pad(scores, (0, pad_size), mode='constant', constant_values=np.nan)
+
+    # Reshape the scores into 2D array where each row corresponds to a slice of words
+    scores_matrix = np.array(scores).reshape((-1, slice_size))
+
+    sns.set_style("ticks")
+    sns.set_context("paper")
+    plt.figure(figsize=(10,5))
+
+    # Create a heatmap
+    sns.heatmap(scores_matrix, cmap='cividis')
+    
+    sns.despine()
+    plt.title(f"Heatmap of Linear Lexical Load of {text_object.name}", **title_font)
+    plt.xlabel('Word within Word Slice', **axis_font)
+    plt.ylabel(f'{slice_size}-Word Slice', **axis_font)
+    
+    
+    # calculate average linear lexical score for the entire text
+    average_score = np.mean(scores) 
+
+    # Get the current Axes instance
+    ax = plt.gca()
+
+    # set font properties to x and y tick labels
+    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+    plt.setp(ax.get_yticklabels(), fontproperties=prop)
+    
+    plt.show()
+
 #main()
+#empty = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+
+#whole = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+#whole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.1", "1.143")
+
+#partsOfWhole = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+#partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.1", "1.436")
+#partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.436", "6.899")
+
+#print(str(empty))
+#pause = input()
+#print(str(whole))
+
+#pause2 = input()
+#print(str(partsOfWhole))
+
 
 # Using the get_text function to load the text instance
 text_instance = get_text('vergil_aeneid_ap_selections', 'Latin').book  
 
-section_start = "start"
-section_end = "end"
+section_start = "1.1"
+section_end = "1.143"
 #4.355
 #Call new functions
 print(f"\n\nStats for sections: {section_start} - {section_end}")
@@ -842,4 +1136,5 @@ print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start)
 print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
 
 #plot_cum_lex_load(text_instance, str(section_start), str(section_end))
-plot_rolling_lin_lex_load(text_instance, str(section_start), str(section_end))
+#plot_rolling_lin_lex_load(text_instance, str(section_start), str(section_end))
+plot_linear_heatmap(text_instance, str(section_start), str(section_end), slice_override=30)
