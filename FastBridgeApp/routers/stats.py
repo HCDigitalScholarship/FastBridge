@@ -12,6 +12,12 @@ import matplotlib.font_manager as fm
 import time
 import numpy as np
 from scipy.signal import savgol_filter
+
+from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+import DefinitionTools
+from pathlib import Path
 #import matplotlib.ticker as ticker #For the x axis ticks
 
 '''
@@ -22,6 +28,9 @@ Latin Dictionary -> FastBridgeApp\bridge_latin_dictionary.csv
 Diederich 300,1500 -> FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv
 DCC -> FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv
 '''
+
+
+ 
 
 
 #Decorators
@@ -61,7 +70,9 @@ def get_latin_dictionary(file_path):#for reading in DICTIONARY file
             # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
             #word_dictionary[row["TITLE"]] = row
     return word_dictionary
-latin_dict,elapsed_time  = get_latin_dictionary("FastBridgeApp/bridge_latin_dictionary.csv")
+
+
+latin_dict,elapsed_time  = get_latin_dictionary("/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv")
 print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
 
 #Get Diederich
@@ -74,7 +85,10 @@ def create_hashtable_from_csv(file_path):
             hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'], 
                                        'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
     return hashtable
-diederich, diederich_time = create_hashtable_from_csv("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+
+import os
+print(os.getcwd())
+diederich, diederich_time = create_hashtable_from_csv("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
 print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
 
 #Get DCC
@@ -666,7 +680,7 @@ def get_lexical_sophistication(text_object: Text, start_section, end_section):
     if start_section == 'start' and end_section == 'end':
         text_slice = text_object.words
 
-    hashTable = create_hashtable_from_csv("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
+    hashTable = create_hashtable_from_csv("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
 
     rareCount = 0
     totalWords = 0
@@ -800,7 +814,7 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
 def get_lex_r(text_object: Text, start_section, end_section):
     #Get the Diederich 300 -> Adjusted CSV method
     diederich300 = set()
-    with open("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
+    with open("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         count = 0
         for row in reader:
@@ -810,9 +824,9 @@ def get_lex_r(text_object: Text, start_section, end_section):
             else:
                 break
     
-    dcc = create_word_set("FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+    dcc = create_word_set("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv")
 
-    diederich1500 = create_word_set("FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+    diederich1500 = create_word_set("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
 
     #Stats boilerplate
     start_index = text_object.sections[start_section]
@@ -1090,6 +1104,52 @@ def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_div
     plt.setp(ax.get_yticklabels(), fontproperties=prop)
     
     plt.show()
+
+#Routing
+router = APIRouter()
+router_path = Path.cwd()
+templates = Jinja2Templates(directory="templates")
+"""Expected Prefix: /stats"""
+import sys
+
+selected_texts = []
+
+@router.get("/")
+async def stats_index(request : Request):
+    return templates.TemplateResponse("stats-list-index.html", {"request": request})
+
+@router.get("/{language}/")
+async def stats_select(request : Request, language : str):
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
+    # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
+
+@router.get("/sections/{textname}/{language}/")
+async def stats_select_section(request : Request, textname: str , language: str):
+    print("reaching section endpoint")
+    sectionDict = DefinitionTools.get_sections(language)#{book: list of sections}
+    sectionBook = sectionDict[textname]#text.section_list
+
+    #analyzer = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+    
+    #the issue is should we put the analyzer here?  sectionBook is only 1 book in general.  
+    #look into select.py, simple_result() and result(), this is how you should model the stats result mehtod, where LatinTextAnalyzer should go
+    #You're gonna need a stats.html page that can contain the plots, possibly multiple html variants depedning on if there are multiple cases for multiple texts
+    selected_texts.append(textname)
+    return sectionBook
+
+@router.get("/cumulative/{language}/")
+async def stats_cumulative(request: Request, language: str):
+    # Retrieve the selected text names from the session or storage
+    selected_texts = retrieve_selected_texts()  # Replace with your storage retrieval logic
+
+    # Process the selected text names and retrieve the corresponding book data
+    sectionDict = DefinitionTools.get_sections(language)
+    sectionBooks = [sectionDict[textname] for textname in selected_texts]
+
+    # Perform cumulative statistics calculations or any other operations on sectionBooks
+
+    return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
+
 
 #main()
 #empty = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
