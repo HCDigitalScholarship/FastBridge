@@ -1123,19 +1123,26 @@ async def stats_select(request : Request, language : str):
     return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
-@router.get("/sections/{textname}/{language}/")
-async def stats_select_section(request : Request, textname: str , language: str):
+@router.get("/select_section/{language}/{textname}/{start_section}/{end_section}")
+async def stats_select_section2(request: Request, language: str, textname: str, start_section: str, end_section: str):
     print("reaching section endpoint")
     sectionDict = DefinitionTools.get_sections(language)#{book: list of sections}
     sectionBook = sectionDict[textname]#text.section_list
 
     #analyzer = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-    
-    #the issue is should we put the analyzer here?  sectionBook is only 1 book in general.  
-    #look into select.py, simple_result() and result(), this is how you should model the stats result mehtod, where LatinTextAnalyzer should go
-    #You're gonna need a stats.html page that can contain the plots, possibly multiple html variants depedning on if there are multiple cases for multiple texts
-    selected_texts.append(textname)
+   
+    selected_texts.append({"textname": textname, "start_section": start_section, "end_section": end_section})
+    print(selected_texts)
+    return templates.TemplateResponse("stats_select.html", {"request": request, "selected_texts": selected_texts, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
+    #return sectionBook
+
+@router.get("/select/sections/{textname}/{language}/")
+async def stats_select_section(request : Request, textname: str , language: str):
+    print("reaching section endpoint")
+    sectionDict = DefinitionTools.get_sections(language)
+    sectionBook = sectionDict[textname]
     return sectionBook
+
 
 @router.get("/cumulative/{language}/")
 async def stats_cumulative(request: Request, language: str):
@@ -1170,15 +1177,15 @@ async def stats_cumulative(request: Request, language: str):
 
 
 # Using the get_text function to load the text instance
-text_instance = get_text('vergil_aeneid_ap_selections', 'Latin').book  
+##text_instance = get_text('vergil_aeneid_ap_selections', 'Latin').book  
 
-section_start = "1.1"
-section_end = "1.143"
+#section_start = "1.1"
+#section_end = "1.143"
 #4.355
 #Call new functions
-print(f"\n\nStats for sections: {section_start} - {section_end}")
-print(f"Number of words:\t{get_number_of_words(text_instance, str(section_start), str(section_end))}")
-print(f"Vocabulary Size:\t{get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
+#print(f"\n\nStats for sections: {section_start} - {section_end}")
+#print(f"Number of words:\t{get_number_of_words(text_instance, str(section_start), str(section_end))}")
+#print(f"Vocabulary Size:\t{get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
 #print(f"Hapax Legomena: {get_hapax_legomena(text_instance, str(section_start), str(section_end))}")
 
 #plot_avg_word_length(text_instance, str(section_start), str(section_end))
@@ -1186,15 +1193,15 @@ print(f"Vocabulary Size:\t{get_vocabulary_size(text_instance,str(section_start),
 #plot_word_frequency(text_instance, str(section_start), str(section_end))
 
 
-print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start), str(section_end))}")
+#print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start), str(section_end))}")
 #The density is way too slow
 
 #print(f"Lexical Sophistication: {get_lexical_sophistication(text_instance,str(section_start), str(section_end))}")
 #print(f"Lexical Variation: {get_lexical_variation(text_instance, str(section_start), str(section_end))}")
 #print(f"Average Subordinations per Section/Sentence: {get_average_subordinations_per_section(1,1,4,355)}")
 
-print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
+#print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
 
 #plot_cum_lex_load(text_instance, str(section_start), str(section_end))
 #plot_rolling_lin_lex_load(text_instance, str(section_start), str(section_end))
-plot_linear_heatmap(text_instance, str(section_start), str(section_end), slice_override=30)
+#plot_linear_heatmap(text_instance, str(section_start), str(section_end), slice_override=30)
