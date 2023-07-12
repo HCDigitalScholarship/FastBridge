@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    h3 {
+        font-size: 18px;
+    }
+    .statistics-list {
+        list-style-type: none; /* removes bullet points */
+        text-align: left; /* aligns text to the left */
+        width: fit-content; /* fits the width to its content */
+        margin: 0 auto; /* centers the block */
+        padding: 0;
+    }
+    .statistics-list li {
+        font-size: 16px;
+        padding: 5px 0; /* adds some vertical spacing between list items */
+    }
+    .statistics-list .label {
+        font-weight: bold; /* makes the label bold */
+        padding-right: 10px; /* adds some space between label and value */
+    }
+    .collapsible {
+        cursor: pointer;
+        text-align: left;
+        outline: none;
+        width: 100%;
+        border: none;
+        background-color: transparent;
+        color: white;
+        font-size: 18px;
+    }
+
+    .content {
+        padding: 0 18px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+    }
+    .content ul {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0;
+    }
+
+    .content ul li {
+        margin-right: 10px;
+        list-style: none;
+    }
+</style>
+
+
+<body id="page-top">
+    <header class="masthead" style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        <div class="intro-body">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px; background-color: rgba(0, 0, 0, 0.6);">
+                        <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 34px;margin-bottom: 45px;font-weight: normal;margin-top: 120px;">
+                            Readability Statistics for ...</p>
+
+                        <!-- Text Information -->
+                        <h1 style="font-family: Cabin, sans-serif;font-size: 40px;margin-bottom: 45px;font-weight: normal;color:#ffffff;">{{ text_name }}</h1>
+                        <!-- <span id="text_name"></span> -->
+                        <h2 style="font-family: Actor, sans-serif;font-size: 28px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">Start: {{ start_section }}               End: {{ end_section }}</h2>
+                        <!-- Computed Statistics -->
+                        <!-- <div id="statistics">
+                            <h3>Number of Words: {{word_count}}</h3>
+                            <h3>Vocab Size: {{vocab_size}}</h3>
+                            <h3>Hapax Legomena: {{hapax_legomena}}</h3>
+                            <h3>Lexical Density: {{lexical_density}}</h3>
+                            <h3>Lexical Sophistication: {{lexical_sophistication}}</h3>
+                            <h3>Lexical Variation: {{lexical_variation}}</h3>
+                            <h3>LexR: {{LexR}}</h3>
+                        </div> -->
+                        <ul class="statistics-list">
+                            <li><span class="label">Number of Words:</span> {{ word_count }}</li>
+                            <li><span class="label">Vocab Size:</span> {{ vocab_size }}</li>
+                            <!-- <li><span class="label">Hapax Legonema:</span> {{ hapax_legonema }}</li> -->
+                            <li><span class="label">Lexical Density:</span> {{ lexical_density }}</li>
+                            <li><span class="label">Lexical Sophistication:</span> {{ lexical_sophistication }}</li>
+                            <li><span class="label">Lexical Variation:</span> {{ lexical_variation }}</li>
+                            <li><span class="label">LexR:</span> {{ LexR }}</li>
+                        </ul>
+                        <button type="button" class="collapsible">Hapax Legonema:</button>
+                        <div class="content">
+                            <ul class="statistics-list">
+                                {% for word in hapax_legonema %}
+                                    <li>{{ word }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Plots -->
+                        <div id="plots">
+                            <!-- <div id="wordFrequencyPlot"></div> -->
+                            <!-- <div id="linearLexicalLoadPlot"></div> -->
+                        </div>
+
+                        <!-- Options Sidebar -->
+                        <div id="optionsSidebar">
+                            <label><input type="checkbox" value="word_count"> Number of Words</label><br>
+                            <label><input type="checkbox" value="vocab_size"> Vocab Size</label><br>
+                            <label><input type="checkbox" value="hapax_legomena"> Hapax Legomena</label><br>
+                            <label><input type="checkbox" value="lexical_density"> Lexical Density</label><br>
+                            <label><input type="checkbox" value="lexical_sophistication"> Lexical Sophistication</label><br>
+                            <label><input type="checkbox" value="lexical_variation"> Lexical Variation</label><br>
+                            <label><input type="checkbox" value="LexR"> LexR</label><br>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-top:40px;">
+                    <span class="step active"></span>
+                    <span class="step"></span>
+                    <span class="step"></span>
+                    <span class="step"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+</body>
+{% block scripts %}
+<script>
+    // Script to make the hapax legonema section collapsible
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.maxHeight){
+                content.style.maxHeight = null;
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+            } 
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}

@@ -334,7 +334,7 @@ function showTab(n, isNext) {
   var len1 = document.getElementById("bridge-result-table1").rows.length;
   var len2 = document.getElementById("bridge-result-table2").rows.length;
   // fix previous and add buttons
-  if (n == 0) {
+  if (n == 0) {//if current tab is 0
     prev.disabled = true;
     open1.style.display = "";
     open2.style.display = "none";
@@ -719,7 +719,7 @@ function string_to_slug(str) {
   }
 
   str = str
-    .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
+    .replace(/[^a-z0-9 -]/g, "") // remove invalid charsA
     .replace(/\s+/g, "_"); // collapse whitespace and replace by _
   //.replace(/-+/g, '_'); // collapse dashes
 

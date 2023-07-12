@@ -166,7 +166,7 @@ def find_hapax_legomena(words):
         word_frequencies[word] += 1
     return [word for word, freq in word_frequencies.items() if freq == 1]
 
-class LatinTextAnalyzer():
+class TextAnalyzer():
     
     def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
 
@@ -1123,18 +1123,6 @@ async def stats_select(request : Request, language : str):
     return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
-@router.get("/select_section/{language}/{textname}/{start_section}/{end_section}")
-async def stats_select_section2(request: Request, language: str, textname: str, start_section: str, end_section: str):
-    print("reaching section endpoint")
-    sectionDict = DefinitionTools.get_sections(language)#{book: list of sections}
-    sectionBook = sectionDict[textname]#text.section_list
-
-    #analyzer = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-   
-    selected_texts.append({"textname": textname, "start_section": start_section, "end_section": end_section})
-    print(selected_texts)
-    return templates.TemplateResponse("stats_select.html", {"request": request, "selected_texts": selected_texts, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
-    #return sectionBook
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request : Request, textname: str , language: str):
@@ -1143,6 +1131,48 @@ async def stats_select_section(request : Request, textname: str , language: str)
     sectionBook = sectionDict[textname]
     return sectionBook
 
+@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+async def stats_simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
+    context = {"request": request}
+    if running_list == "running":
+        running_list = True
+    else:
+        running_list = False
+
+    if language == "Latin":
+        dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+        diederich_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+        dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+        analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+    else:#Greek -> Change this when you put in the Greek files
+        analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+
+    analyzer.add_text(sourcetexts,language,starts,ends)
+
+    word_count = analyzer.num_words()
+    vocab_size = analyzer.vocab_size()
+    hapax = analyzer.hapax_legonema()
+    lex_dens = analyzer.lex_density()
+    lex_sophistication = analyzer.lex_sophistication()
+    lex_variation = analyzer.lex_variation()
+    lex_r = analyzer.LexR()
+
+    # plot functions return the location of plot images
+
+    context.update({
+        "text_name": sourcetexts,
+        "start_section": starts,
+        "end_section": ends,
+        "word_count": word_count,
+        "vocab_size": vocab_size,
+        "hapax_legonema": hapax,
+        "lexical_density": lex_dens,
+        "lexical_sophistication": lex_sophistication,
+        "lexical_variation": lex_variation,
+        "LexR": lex_r
+    })    
+    return templates.TemplateResponse("stats-single-text.html", context)
 
 @router.get("/cumulative/{language}/")
 async def stats_cumulative(request: Request, language: str):
