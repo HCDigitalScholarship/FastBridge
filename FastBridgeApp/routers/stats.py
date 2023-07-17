@@ -330,6 +330,7 @@ class TextAnalyzer():
             return (TTR, RootTTR, CTTR, LogTTR)
 
     def LexR(self):
+        properNounCats = ["1", "T"]
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -340,23 +341,30 @@ class TextAnalyzer():
             countWords = 0
             words = []
             for word_tuple in text_slice:
-                if word_tuple[0] not in self.diederich300:
-                    out300 +=1
-                if word_tuple[0] not in self.dcc:
-                    outDCC +=1
-                if word_tuple[0] not in self.diederich:
-                    out1500 +=1
-                countWords +=1
-                words.append(word_tuple[0])
-            freq300 = out300/countWords
-            freqDCC = outDCC/countWords
-            freq1500 = out1500/countWords  
+                    if word_tuple[0] in self.dictionary:
+                        if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
+                            if word_tuple[0] not in self.diederich300:
+                                out300 +=1
+                            if word_tuple[0] not in self.dcc:
+                                outDCC +=1
+                            if word_tuple[0] not in self.diederich:
+                                out1500 +=1
+                            countWords +=1
+                            words.append(word_tuple[0])
+            freq300 = (out300/countWords)*100
+            freqDCC = (outDCC/countWords)*100
+            freq1500 = (out1500/countWords)*100
                 
             mean_word_length = sum(len(word) for word in words) / len(words)
+            print(f"Mean word length: {mean_word_length}")
+            print(f"freq300: {freq300}")
+            print(f"freqDCC: {freqDCC}")
+            print(f"freq1500: {freq1500}")
 
-            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(self.lex_sophistication()*0.059)+ (self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
              
             lex_r -=11.7
+            lex_r += 6
             lex_r *= 0.833
 
             return lex_r   
@@ -369,23 +377,27 @@ class TextAnalyzer():
             for text in self.texts:
                 text_slice = get_slice(text[0], text[1], text[2])
                 for word_tuple in text_slice:
-                    if word_tuple[0] not in self.diederich300:
-                        out300 +=1
-                    if word_tuple[0] not in self.dcc:
-                        outDCC +=1
-                    if word_tuple[0] not in self.diederich:
-                        out1500 +=1
-                    countWords +=1
-                    words.append(word_tuple[0])
+                    if word_tuple[0] in self.dictionary:
+                        if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
+                            if word_tuple[0] not in self.diederich300:
+                                out300 +=1
+                            if word_tuple[0] not in self.dcc:
+                                outDCC +=1
+                            if word_tuple[0] not in self.diederich:
+                                out1500 +=1
+                            countWords +=1
+                            words.append(word_tuple[0])
+                    
 
-            freq300 = out300/countWords
-            freqDCC = outDCC/countWords
-            freq1500 = out1500/countWords  
+            freq300 = (out300/countWords)*100
+            freqDCC = (outDCC/countWords)*100
+            freq1500 = (out1500/countWords)*100
                 
             mean_word_length = sum(len(word) for word in words) / len(words)
             lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092)+(self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
              
             lex_r -=11.7
+            lex_r += 6
             lex_r *= 0.833
             return lex_r
 
@@ -1149,6 +1161,8 @@ async def stats_simple_result(request : Request, starts : str, ends : str, sourc
         analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
 
     analyzer.add_text(sourcetexts,language,starts,ends)
+    
+    print(str(analyzer))
 
     word_count = analyzer.num_words()
     vocab_size = analyzer.vocab_size()
@@ -1191,16 +1205,16 @@ async def stats_cumulative(request: Request, language: str):
 #main()
 #empty = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
 
-#whole = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-#whole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.1", "1.143")
-
+#whole = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+#whole.add_text('vergil_aeneid_ap_selections', 'Latin', "start", "end")
+#print(str(whole))
 #partsOfWhole = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
 #partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.1", "1.436")
 #partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.436", "6.899")
 
 #print(str(empty))
 #pause = input()
-#print(str(whole))
+
 
 #pause2 = input()
 #print(str(partsOfWhole))
