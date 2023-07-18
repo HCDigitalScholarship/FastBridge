@@ -16,6 +16,7 @@ from scipy.signal import savgol_filter
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+
 import DefinitionTools
 from pathlib import Path
 #import matplotlib.ticker as ticker #For the x axis ticks
@@ -402,9 +403,9 @@ class TextAnalyzer():
             return lex_r
 
     def plot_word_freq(self):
-        if len(self.text) == 0:
+        if len(self.texts) == 0:
             return
-        elif len(self.text) == 1:
+        elif len(self.texts) == 1:
             text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
             df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
             word_frequency = df['Word'].value_counts().reset_index()
@@ -426,13 +427,19 @@ class TextAnalyzer():
             # set font properties to x and y tick labels
             plt.setp(ax.get_xticklabels(), fontproperties=prop)
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
-            plt.show()
+
+            # Save plot as an image file instead of showing
+            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot1.png'  # replace with the actual path and name
+            plt.savefig(plot_path)
+            plt.close()  # close the plot
+
+            return plot_path  # return the file path of the saved plot
         else:
             text_slices_concat = []
             for text in self.texts:
                 text_slices_concat += get_slice(text[0], text[1], text[2])
             
-            df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+            df = pd.DataFrame(text_slices_concat, columns=["Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
             word_frequency = df['Word'].value_counts().reset_index()
             word_frequency.columns = ['Word', 'Frequency']
 
@@ -441,7 +448,7 @@ class TextAnalyzer():
             plt.figure(figsize=(10,5))
             sns.barplot(data=word_frequency[:30], x='Word', y='Frequency', palette=colorblind_palette)
             sns.despine()
-            plt.title(f"Word Frequency of {self.texts[0][0].name}", **title_font)
+            plt.title(f"Word Frequency of {self.texts[0][0].name}", **title_font)#CHANGE this to include all names
             plt.xlabel('Word', **axis_font)
             plt.ylabel('Frequency', **axis_font)
             plt.xticks(rotation=90)
@@ -452,7 +459,93 @@ class TextAnalyzer():
             # set font properties to x and y tick labels
             plt.setp(ax.get_xticklabels(), fontproperties=prop)
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
-            plt.show()    
+
+            # Save plot as an image file instead of showing
+            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot1.png'  # replace with the actual path and name
+            plt.savefig(plot_path)
+            plt.close()  # close the plot
+
+            return plot_path  # return the file path of the saved plot
+             
+    def plot_lin_lex_load(self, rolling_window_size = 25):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            words = []
+            scores = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                #filter out proper nouns
+                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                    words.append(word)
+
+            for word in words:
+                if word in latin_dict:
+                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                        scores.append(2)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <=1000:
+                        scores.append(1)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <=2000:
+                        scores.append(-1)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <=5000:
+                        scores.append(-2)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                        scores.append(-4)
+                        continue
+                else:
+                    scores.append(-4)
+                    continue
+
+            # Calculate rolling average of the scores
+            rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
+
+            # Apply Savitzky-Golay filter
+            smoothed_scores = savgol_filter(rolling_average, 101, 3)  # window size 51, polynomial order 3
+
+            x_indexes = list(range(len(words)))
+
+            # calculate average linear lexical score for the entire text
+            average_score = np.mean(scores) 
+
+            sns.set_style("ticks")
+            sns.set_context("paper")
+            plt.figure(figsize=(10,5))
+            sns.lineplot(x=x_indexes, y=smoothed_scores, errorbar = None, color = colorblind_palette[0])
+
+            # add a horizontal line representing the average linear lexical score
+            plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
+    
+            sns.despine()
+            plt.title(f"Linear Lexical Load of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word', **axis_font)
+            plt.ylabel(f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
+   
+
+            # Get the current Axes instance
+            ax = plt.gca()
+
+            # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
+            #tick_spacing = rolling_window_size  # change this to the size of your slices
+            #ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+
+            # set font properties to x and y tick labels
+            plt.setp(ax.get_xticklabels(), fontproperties=prop)
+            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+    
+            # Save plot as an image file instead of showing
+            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot2.png'  # replace with the actual path and name
+            plt.savefig(plot_path)
+            plt.close()  # close the plot
+
+            return plot_path  # return the file path of the saved plot
+        else:
+            #WHEN WE FIGURE OUT WHAT TO DO WITH MULTIPLE TEXT SELECTIONS, CODE HERE, WILL HAVE TO ADD HTML STRUCTURE DYNAMICALLY TO CONTAIN MANY PLOTS
+            print()
 
     def __str__(self) -> str:
         toReturn = ""
@@ -1173,8 +1266,13 @@ async def stats_simple_result(request : Request, starts : str, ends : str, sourc
     lex_r = analyzer.LexR()
 
     # plot functions return the location of plot images
-
+    freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
+    freq_relative_plot_path =  os.path.relpath(freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/') 
+    
+    lin_lex_plot_path = analyzer.plot_lin_lex_load()
+    lin_lex_relative_plot_path = os.path.relpath(lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/') 
     context.update({
+        "request": request,
         "text_name": sourcetexts,
         "start_section": starts,
         "end_section": ends,
@@ -1184,8 +1282,12 @@ async def stats_simple_result(request : Request, starts : str, ends : str, sourc
         "lexical_density": lex_dens,
         "lexical_sophistication": lex_sophistication,
         "lexical_variation": lex_variation,
-        "LexR": lex_r
+        "LexR": lex_r,
+        "freq_plot_path": freq_relative_plot_path,
+        "lin_lex_plot_path": lin_lex_relative_plot_path
     })    
+    print(f"freq rel path: {freq_relative_plot_path}")
+    print(f"lin lex rel path: {lin_lex_relative_plot_path}")
     return templates.TemplateResponse("stats-single-text.html", context)
 
 @router.get("/cumulative/{language}/")

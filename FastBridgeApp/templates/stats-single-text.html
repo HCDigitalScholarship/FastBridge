@@ -92,6 +92,8 @@
 
                         <!-- Plots -->
                         <div id="plots">
+                            <img src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
+                            <img src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
                             <!-- <div id="wordFrequencyPlot"></div> -->
                             <!-- <div id="linearLexicalLoadPlot"></div> -->
                         </div>
