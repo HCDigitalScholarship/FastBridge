@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
+     body {
+        padding-top: 15px; /* Space between the navigation menu and the title */
+        padding-bottom: 30px; /* Space between the footer and the grid container */
+    }
     h3 {
         font-size: 18px;
     }
@@ -32,7 +36,7 @@
 
     .content {
         padding: 0 18px;
-        max-height: 0;
+        /*max-height: 0;*/
         overflow: hidden;
         transition: max-height 0.2s ease-out;
     }
@@ -46,6 +50,41 @@
         margin-right: 10px;
         list-style: none;
     }
+    .page-title {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 15px 20px;
+    margin-top: 30px; /* Space between navigation bar and title box */
+    margin-bottom: 20px; /* space between the title and the grid container */
+    }
+
+    .grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* creates 3 equal-width columns */
+    gap: 20px; /* adds some gap between the grid items */
+    margin-bottom: 30px; /* Space between the grid container and the footer */
+    }
+    
+
+    .grid-item {
+    background-color: rgba(0, 0, 0, 0.6); /* same as your original color */
+    padding: 15px 20px;
+    }
+
+    .plot-img {
+    width: 100%;
+    transition: transform 0.25s ease-in-out;
+    cursor: zoom-in;
+    margin-bottom: 20px; /* Add space between the images */
+    }
+
+    .plot-img.enlarged {
+        transform: scale(3); /* Triple the size of the image when it's clicked */
+        cursor: zoom-out;
+        z-index: 10; 
+        position: relative; 
+    }
+
 </style>
 
 
@@ -53,68 +92,51 @@
     <header class="masthead" style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
         <div class="intro-body">
             <div class="container">
-                <div class="row">
-                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px; background-color: rgba(0, 0, 0, 0.6);">
-                        <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 34px;margin-bottom: 45px;font-weight: normal;margin-top: 120px;">
-                            Readability Statistics for ...</p>
-
-                        <!-- Text Information -->
-                        <h1 style="font-family: Cabin, sans-serif;font-size: 40px;margin-bottom: 45px;font-weight: normal;color:#ffffff;">{{ text_name }}</h1>
-                        <!-- <span id="text_name"></span> -->
-                        <h2 style="font-family: Actor, sans-serif;font-size: 28px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">Start: {{ start_section }}               End: {{ end_section }}</h2>
-                        <!-- Computed Statistics -->
-                        <!-- <div id="statistics">
-                            <h3>Number of Words: {{word_count}}</h3>
-                            <h3>Vocab Size: {{vocab_size}}</h3>
-                            <h3>Hapax Legomena: {{hapax_legomena}}</h3>
-                            <h3>Lexical Density: {{lexical_density}}</h3>
-                            <h3>Lexical Sophistication: {{lexical_sophistication}}</h3>
-                            <h3>Lexical Variation: {{lexical_variation}}</h3>
-                            <h3>LexR: {{LexR}}</h3>
-                        </div> -->
+                <div class="page-title">
+                    <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 30px;margin-bottom: 45px;font-weight: normal;margin-top: 120px;">
+                        Readability Statistics for ...</p>
+                        <h1 style="font-family: 'Times New Roman', serif; font-size: 40px; margin-bottom: 45px; font-weight: normal; color: #ffffff;">{{ text_name }}</h1>
+                        <h2 style="font-family: Actor, sans-serif; font-size: 28px; color: #ffffff; margin-bottom: 15px; font-weight: normal; font-style: normal;">
+                            Start: <span style="font-family: 'Times New Roman', serif; font-size: 24px;">{{ start_section }}</span>  
+                            End: <span style="font-family: 'Times New Roman', serif; font-size: 24px;">{{ end_section }}</span>
+                        </h2>
+                </div>
+                <div class="grid-container">
+                    <!-- Metrics Section -->
+                    <div class="grid-item" id="metrics-section">
+                        <h2>Metrics</h2>
                         <ul class="statistics-list">
                             <li><span class="label">Number of Words:</span> {{ word_count }}</li>
                             <li><span class="label">Vocab Size:</span> {{ vocab_size }}</li>
-                            <!-- <li><span class="label">Hapax Legonema:</span> {{ hapax_legonema }}</li> -->
                             <li><span class="label">Lexical Density:</span> {{ lexical_density }}</li>
                             <li><span class="label">Lexical Sophistication:</span> {{ lexical_sophistication }}</li>
-                            <li><span class="label">Lexical Variation:</span> {{ lexical_variation }}</li>
+                            <li><span class="label">TTR:</span> {{ lexical_variation[0] }}</li>
+                            <li><span class="label">Root TTR:</span> {{ lexical_variation[1] }}</li>
+                            <li><span class="label">CTTR:</span> {{ lexical_variation[2] }}</li>
+                            <li><span class="label">LogTTR:</span> {{ lexical_variation[3] }}</li>
                             <li><span class="label">LexR:</span> {{ LexR }}</li>
                         </ul>
-                        <button type="button" class="collapsible">Hapax Legonema:</button>
+                    </div>
+                    <!-- Hapax Legomena Section -->
+                    <div class="grid-item" id="hapax-section">
+                        <h2>Hapax Legomena</h2>
+                        <button type="button" class="collapsible">Expand List:</button>
                         <div class="content">
-                            <ul class="statistics-list">
+                            <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
                                 {% for word in hapax_legonema %}
                                     <li>{{ word }}</li>
                                 {% endfor %}
                             </ul>
                         </div>
-
-                        <!-- Plots -->
+                    </div>
+                    <!-- Plots Section -->
+                    <div class="grid-item" id="plots-section">
+                        <h2>Plots</h2>
                         <div id="plots">
-                            <img src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
-                            <img src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
-                            <!-- <div id="wordFrequencyPlot"></div> -->
-                            <!-- <div id="linearLexicalLoadPlot"></div> -->
-                        </div>
-
-                        <!-- Options Sidebar -->
-                        <div id="optionsSidebar">
-                            <label><input type="checkbox" value="word_count"> Number of Words</label><br>
-                            <label><input type="checkbox" value="vocab_size"> Vocab Size</label><br>
-                            <label><input type="checkbox" value="hapax_legomena"> Hapax Legomena</label><br>
-                            <label><input type="checkbox" value="lexical_density"> Lexical Density</label><br>
-                            <label><input type="checkbox" value="lexical_sophistication"> Lexical Sophistication</label><br>
-                            <label><input type="checkbox" value="lexical_variation"> Lexical Variation</label><br>
-                            <label><input type="checkbox" value="LexR"> LexR</label><br>
+                            <img class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
+                            <img class="plot-img" src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
                         </div>
                     </div>
-                </div>
-                <div style="text-align:center;margin-top:40px;">
-                    <span class="step active"></span>
-                    <span class="step"></span>
-                    <span class="step"></span>
-                    <span class="step"></span>
                 </div>
             </div>
         </div>
@@ -127,6 +149,9 @@
     var i;
 
     for (i = 0; i < coll.length; i++) {
+        var content = coll[i].nextElementSibling;
+        content.style.maxHeight = content.scrollHeight + "px"; // This will expand the content by default
+
         coll[i].addEventListener("click", function() {
             this.classList.toggle("active");
             var content = this.nextElementSibling;
@@ -138,5 +163,17 @@
         });
     }
 </script>
+<script>
+    // Select all plot images
+    var plotImages = document.querySelectorAll(".plot-img");
+    
+    // Add a click event listener to each image
+    plotImages.forEach(function(img) {
+        img.addEventListener("click", function() {
+            // Toggle the "enlarged" class on click
+            this.classList.toggle("enlarged");
+        });
+    });
+    </script>
 {% endblock %}
 {% endblock %}
