@@ -84,12 +84,160 @@
         z-index: 10; 
         position: relative; 
     }
+    #slideOut {
+    position: fixed;
+    width: 300px;
+    top: 120px; /*should the height of the nav bar*/
+    right: -300px;
+    background-color: rgb(81, 81, 81, 0.9);
+    z-index: 100000000;
+    /* Animation  */
+    transition-property: all;
+    transition-duration: 0.5s;
+    transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+    }
+
+    /* Display slideOut */
+
+    .showSlideOut {
+        right: 0px !important;
+    }
+
+    /* Tab */
+
+    .slideOutTab {
+        top: 8vh;
+        position: absolute;
+        left: -40px;
+        height: 200px;
+        width: 40px;
+        -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        background-color: #228383;
+        color: #ffffff;
+        border-radius: 5px 0px 0px 5px;
+        z-index: 100000000;
+    }
+
+    .slideOutTab div {
+        text-align: center;
+        position: relative;
+        right: 70px;
+        top: 90px;
+        background-color: inherit;
+        color: #ffffff;
+        width: 180px;
+        -webkit-transform: rotate(270deg);
+        -moz-transform: rotate(270deg);
+        -o-transform: rotate(270deg);
+        writing-mode: lr-tb;
+    }
+    .custom-control.custom-checkbox {
+        text-align: left;
+    }
+
+    @media print {
+        header, footer {
+            display: none;
+        }
+        #slideOut {
+            display: none !important;
+        }
+        ul.statistics-list {
+            max-height: none !important;
+            overflow-y: visible !important;
+        }
+    }
 
 </style>
 
 
 <body id="page-top">
     <header class="masthead" style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        <div id="slideOut">
+            <div id="slideOutTab" class="slideOutTab">
+                <div>
+                    <p style="font-family: sans-serif; font-size:1.5rem;">Options</p>
+                </div>
+            </div>
+            
+            <div class="modal-content" style="background-color:rgba(110,110,110,0.97)">
+                <div class="modal-header">
+                    <h4 class="modal-title">Toggle your Stats!</h4> 
+                </div>
+                <div class="modal-body" style="overflow-y:auto;height:65vh">
+                    <div class="form-group">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print</button>
+                            <button type="button" class="btn btn-default" style="width:50%" onclick="get_pdf();">Export as PDF</button>
+                        </div>
+                        <!-- Checkboxes for toggling metrics -->
+                        <div class="custom-control custom-checkbox">
+                            <input id="metricsCheckbox" type="checkbox" class="custom-control-input" onclick="toggleMetrics();" checked>
+                            <label class="custom-control-label" for="metricsCheckbox">Toggle Metrics Section</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" id="wordCountCheckbox" class="custom-control-input" onclick="toggleWordCount()">
+                            <label class="custom-control-label" for="wordCountCheckbox">Toggle Word Count</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" id="vocabSizeCheckbox" class="custom-control-input" onclick="toggleVocabSize()">
+                            <label class="custom-control-label" for="vocabSizeCheckbox">Toggle Vocab Size</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" id="lexDensityCheckbox" class="custom-control-input" onclick="toggleLexicalDensity()">
+                            <label class="custom-control-label" for="lexDensityCheckbox">Toggle Lexical Density</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="lexicalSophisticationCheckbox" type="checkbox" class="custom-control-input" onclick="toggleLexicalSophistication();" checked>
+                            <label class="custom-control-label" for="lexicalSophisticationCheckbox">Toggle Lexical Sophistication</label>
+                        </div>
+                    
+                        <div class="custom-control custom-checkbox">
+                            <input id="ttrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleTTR();" checked>
+                            <label class="custom-control-label" for="ttrCheckbox">Toggle TTR</label>
+                        </div>
+                    
+                        <div class="custom-control custom-checkbox">
+                            <input id="rootTtrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleRootTTR();" checked>
+                            <label class="custom-control-label" for="rootTtrCheckbox">Toggle Root TTR</label>
+                        </div>
+                    
+                        <div class="custom-control custom-checkbox">
+                            <input id="cttrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleCTTR();" checked>
+                            <label class="custom-control-label" for="cttrCheckbox">Toggle CTTR</label>
+                        </div>
+                    
+                        <div class="custom-control custom-checkbox">
+                            <input id="logTtrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleLogTTR();" checked>
+                            <label class="custom-control-label" for="logTtrCheckbox">Toggle LogTTR</label>
+                        </div>
+                    
+                        <div class="custom-control custom-checkbox">
+                            <input id="lexrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleLexR();" checked>
+                            <label class="custom-control-label" for="lexrCheckbox">Toggle LexR</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="hapaxCheckbox" type="checkbox" class="custom-control-input" onclick="toggleHapax();" checked>
+                            <label class="custom-control-label" for="hapaxCheckbox">Toggle Hapax Legomena</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="plotsCheckbox" type="checkbox" class="custom-control-input" onclick="togglePlots();" checked>
+                            <label class="custom-control-label" for="plotsCheckbox">Toggle Plots Section</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input id="freqPlotCheckbox" type="checkbox" class="custom-control-input" onclick="toggleFreqPlot();" checked>
+                            <label class="custom-control-label" for="freqPlotCheckbox">Toggle Frequency Plot</label>
+                        </div>
+                        
+                        <div class="custom-control custom-checkbox">
+                            <input id="linLexPlotCheckbox" type="checkbox" class="custom-control-input" onclick="toggleLinLexPlot();" checked>
+                            <label class="custom-control-label" for="linLexPlotCheckbox">Toggle Line Lex Plot</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="intro-body">
             <div class="container">
                 <div class="page-title">
@@ -106,21 +254,21 @@
                     <div class="grid-item" id="metrics-section">
                         <h2>Metrics</h2>
                         <ul class="statistics-list">
-                            <li><span class="label">Number of Words:</span> {{ word_count }}</li>
-                            <li><span class="label">Vocab Size:</span> {{ vocab_size }}</li>
-                            <li><span class="label">Lexical Density:</span> {{ lexical_density }}</li>
-                            <li><span class="label">Lexical Sophistication:</span> {{ lexical_sophistication }}</li>
-                            <li><span class="label">TTR:</span> {{ lexical_variation[0] }}</li>
-                            <li><span class="label">Root TTR:</span> {{ lexical_variation[1] }}</li>
-                            <li><span class="label">CTTR:</span> {{ lexical_variation[2] }}</li>
-                            <li><span class="label">LogTTR:</span> {{ lexical_variation[3] }}</li>
-                            <li><span class="label">LexR:</span> {{ LexR }}</li>
+                            <li id="wordCountMetric"><span class="label">Number of Words:</span> {{ word_count }}</li>
+                            <li id = "vocabSizeMetric"><span class="label">Vocab Size:</span> {{ vocab_size }}</li>
+                            <li id = "lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }}</li>
+                            <li id = "lexSophisticationMetric"><span class="label">Lexical Sophistication:</span> {{ lexical_sophistication }}</li>
+                            <li id = "ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }}</li>
+                            <li id = "rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }}</li>
+                            <li id = "cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }}</li>
+                            <li id = "logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3] }}</li>
+                            <li id = lexRMetric><span class="label">LexR:</span> {{ LexR }}</li>
                         </ul>
                     </div>
                     <!-- Hapax Legomena Section -->
                     <div class="grid-item" id="hapax-section">
                         <h2>Hapax Legomena</h2>
-                        <button type="button" class="collapsible">Expand List:</button>
+                        <button type="button" class="collapsible">List:</button>
                         <div class="content">
                             <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
                                 {% for word in hapax_legonema %}
@@ -133,8 +281,8 @@
                     <div class="grid-item" id="plots-section">
                         <h2>Plots</h2>
                         <div id="plots">
-                            <img class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
-                            <img class="plot-img" src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
+                            <img id="freqPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
+                            <img id="linLexPlot" class="plot-img" src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
                         </div>
                     </div>
                 </div>
@@ -174,6 +322,190 @@
             this.classList.toggle("enlarged");
         });
     });
-    </script>
+</script>
+<!-- Toggle Metrics Buttons -->
+<script>
+    function toggleMetrics() {
+        var checkbox = document.getElementById("metricsCheckbox");
+        var section = document.getElementById("metrics-section");
+
+        if (checkbox.checked) {
+            section.style.display = "block";
+        } else {
+            section.style.display = "none";
+        }
+    }
+    function toggleWordCount() {
+        var checkbox = document.getElementById("wordCountCheckbox");
+        var metric = document.getElementById("wordCountMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "block";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleVocabSize() {
+        var checkbox = document.getElementById("vocabSizeCheckbox");
+        var metric = document.getElementById("vocabSizeMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleLexicalDensity() {
+        var checkbox = document.getElementById("lexDensityCheckbox");
+        var metric = document.getElementById("lexDensityMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleLexicalSophistication() {
+        var checkbox = document.getElementById("lexicalSophisticationCheckbox");
+        var metric = document.getElementById("lexSophisticationMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleTTR() {
+        var checkbox = document.getElementById("ttrCheckbox");
+        var metric = document.getElementById("ttrMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleRootTTR() {
+        var checkbox = document.getElementById("rootTtrCheckbox");
+        var metric = document.getElementById("rttrMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleCTTR() {
+        var checkbox = document.getElementById("cttrCheckbox");
+        var metric = document.getElementById("cttrMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleLogTTR() {
+        var checkbox = document.getElementById("logTtrCheckbox");
+        var metric = document.getElementById("logTTRMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+
+    function toggleLexR() {
+        var checkbox = document.getElementById("lexrCheckbox");
+        var metric = document.getElementById("lexRMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleHapax() {
+        var checkbox = document.getElementById("hapaxCheckbox");
+        var section = document.getElementById("hapax-section");
+
+        if (checkbox.checked) {
+            section.style.display = "block";
+        } else {
+            section.style.display = "none";
+        }
+    }
+
+
+    function togglePlots() {
+        var checkbox = document.getElementById("plotsCheckbox");
+        var section = document.getElementById("plots-section");
+
+        if (checkbox.checked) {
+            section.style.display = "block";
+        } else {
+            section.style.display = "none";
+        }
+    }
+    function toggleFreqPlot() {
+        var checkbox = document.getElementById("freqPlotCheckbox");
+        var plot = document.getElementById("freqPlot");
+
+        if (checkbox.checked) {
+            plot.style.display = "block";
+        } else {
+            plot.style.display = "none";
+        }
+    }
+
+    function toggleLinLexPlot() {
+        var checkbox = document.getElementById("linLexPlotCheckbox");
+        var plot = document.getElementById("linLexPlot");
+
+        if (checkbox.checked) {
+            plot.style.display = "block";
+        } else {
+            plot.style.display = "none";
+        }
+    }
+</script>
+<!-- Slideout Options animation -->
+<script>
+    document.getElementById('slideOutTab').addEventListener('click', function() {
+        var slideOut = document.getElementById('slideOut');
+        slideOut.style.right = slideOut.style.right === '0px' ? '-300px' : '0px';
+    });
+</script>
+<!-- Print and Export -->
+<script>
+    function printData() {
+        let checkboxes = document.querySelectorAll('.custom-control-input');
+        checkboxes.forEach(checkbox => {
+            if(checkbox.checked) {
+                let correspondingSection = document.getElementById(checkbox.id + 'Section');
+                window.print(correspondingSection);
+            }
+    });
+    }
+
+
+    function get_pdf() {
+        let doc = new jsPDF();
+        let checkboxes = document.querySelectorAll('.custom-control-input');
+        checkboxes.forEach(checkbox => {
+            if(checkbox.checked) {
+                let correspondingSection = document.getElementById(checkbox.id + 'Section');
+                doc.text(correspondingSection.innerText, 10, 10);  // This is a very basic way to add text to a PDF. Depending on the structure of your sections, you might need to do something more complex.
+            }
+        });
+        doc.save('export.pdf');
+    }
+</script>
 {% endblock %}
 {% endblock %}
