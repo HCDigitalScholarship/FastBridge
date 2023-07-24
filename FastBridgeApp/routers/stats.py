@@ -44,6 +44,18 @@ def timer_decorator(func):#times the method you give to it, apply using @timer_d
         return result, elapsed_time
     return wrapper
 
+def round_decorator(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if isinstance(result, tuple):
+            return tuple(round(val, 2) if isinstance(val, (int, float)) else val for val in result)
+        elif isinstance(result, (int, float)):
+            return round(result, 2)
+        else:
+            return result
+    return wrapper
+
 # Define FontProperties
 prop = fm.FontProperties(family='serif', size=9)
 
@@ -188,6 +200,13 @@ class TextAnalyzer():
     def add_text(self, form_request: str, language: str, start_section, end_section):#Add working file for subordinations/section?
         self.texts.append((get_text(form_request, language).book, start_section, end_section))
     
+    def get_textname(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            return self.texts[0][0].name
+        else:
+            print()
     def num_words(self)->int:
         if len(self.texts) == 0:
             return -1
@@ -223,7 +242,8 @@ class TextAnalyzer():
                 vocabulary = set(word[0] for word in text_slice)
                 vocab = vocab.union(vocabulary)
             return len(vocab)
-        
+
+    @round_decorator    
     def hapax_legonema(self):
         if len(self.texts) == 0:
             return []
@@ -234,6 +254,9 @@ class TextAnalyzer():
                 word = word_tuple[0]
                 allwords.append(word)
             hapax_legomena = find_hapax_legomena(allwords)
+            hapax_legomena = sorted(hapax_legomena)  # Sort the hapax legomena
+            percentage = len(hapax_legomena) / len(allwords) * 100  # Calculate the percentage
+            return hapax_legomena, percentage
             return hapax_legomena
         else:
             allwords = []
@@ -245,6 +268,7 @@ class TextAnalyzer():
             hapax_legomena = find_hapax_legomena(allwords)
             return hapax_legomena
 
+    @round_decorator
     def lex_density(self):
         lexicalCategories = ["Adjective", "Adverb", "Noun", "Verb"]
         if len(self.texts) == 0:
@@ -274,6 +298,7 @@ class TextAnalyzer():
             lexical_density = lexicalSum/total_words
             return lexical_density
 
+    @round_decorator
     def lex_sophistication(self):
         if len(self.texts) == 0:
             return -1
@@ -301,6 +326,7 @@ class TextAnalyzer():
             lexical_sophistication = rareCount/totalWords
             return lexical_sophistication   
 
+    @round_decorator
     def lex_variation(self):
         if len(self.texts) == 0:
             return -1
@@ -330,6 +356,7 @@ class TextAnalyzer():
 
             return (TTR, RootTTR, CTTR, LogTTR)
 
+    @round_decorator
     def LexR(self):
         properNounCats = ["1", "T"]
         if len(self.texts) == 0:
@@ -401,6 +428,7 @@ class TextAnalyzer():
             lex_r += 6
             lex_r *= 0.833
             return lex_r
+
 
     def plot_word_freq(self):
         if len(self.texts) == 0:
@@ -538,13 +566,83 @@ class TextAnalyzer():
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
     
             # Save plot as an image file instead of showing
-            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot2.png'  # replace with the actual path and name
+            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot3.png'  # replace with the actual path and name
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
             return plot_path  # return the file path of the saved plot
         else:
             #WHEN WE FIGURE OUT WHAT TO DO WITH MULTIPLE TEXT SELECTIONS, CODE HERE, WILL HAVE TO ADD HTML STRUCTURE DYNAMICALLY TO CONTAIN MANY PLOTS
+            print()
+
+    def plot_cum_lex_load(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            #Go through the words of text_slice
+            #Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+            scores = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                #filter out proper nouns
+                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                    words.append(word)
+
+            for word in words:
+                if word in latin_dict:
+                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                        scores.append(2)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <=1000:
+                        scores.append(1)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <=2000:
+                        scores.append(-1)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <=5000:
+                        scores.append(-2)
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                        scores.append(-4)
+                        continue
+                else:
+                    scores.append(-4)
+                    continue
+
+            cumulative_scores = np.cumsum(scores) 
+
+            # Calculate rolling average
+            #rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
+
+
+            x_indexes = list(range(len(words)))
+
+            sns.set_style("ticks")
+            sns.set_context("paper")
+            plt.figure(figsize=(10,5))
+            sns.lineplot(x=x_indexes, y=cumulative_scores, errorbar = None, color = colorblind_palette[0])
+            sns.despine()
+            plt.title(f"Cumulative Lexical Load of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word', **axis_font)
+            plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+
+
+            # Get the current Axes instance
+            ax = plt.gca()
+
+            # set font properties to x and y tick labels
+            plt.setp(ax.get_xticklabels(), fontproperties=prop)
+            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+
+            # Save plot as an image file instead of showing
+            plot_path = '/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot2.png'  # replace with the actual path and name
+            plt.savefig(plot_path)
+            plt.close()  # close the plot
+
+            return plot_path
+        else:
             print()
 
     def __str__(self) -> str:
@@ -728,6 +826,7 @@ def get_hapax_legomena(text_object: Text, start_section, end_section):
         hapax_legomena = find_hapax_legomena(words)
         print(f"Section {section}")
         print(f"  Hapax legomena: {hapax_legomena}")'''
+    
     hapax_legomena = find_hapax_legomena(allwords)
     return hapax_legomena
 
@@ -1257,9 +1356,10 @@ async def stats_simple_result(request : Request, starts : str, ends : str, sourc
     
     print(str(analyzer))
 
+    textname = analyzer.get_textname()
     word_count = analyzer.num_words()
     vocab_size = analyzer.vocab_size()
-    hapax = analyzer.hapax_legonema()
+    hapax, hapax_percentage = analyzer.hapax_legonema()
     lex_dens = analyzer.lex_density()
     lex_sophistication = analyzer.lex_sophistication()
     lex_variation = analyzer.lex_variation()
@@ -1268,26 +1368,34 @@ async def stats_simple_result(request : Request, starts : str, ends : str, sourc
     # plot functions return the location of plot images
     freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
     freq_relative_plot_path =  os.path.relpath(freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/') 
-    
+
+    cum_lex_plot_path = analyzer.plot_cum_lex_load()
+    cum_lex_relative_plot_path = os.path.relpath(cum_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+
     lin_lex_plot_path = analyzer.plot_lin_lex_load()
     lin_lex_relative_plot_path = os.path.relpath(lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/') 
+
     context.update({
         "request": request,
-        "text_name": sourcetexts,
+        "text_name": textname,
         "start_section": starts,
         "end_section": ends,
         "word_count": word_count,
         "vocab_size": vocab_size,
         "hapax_legonema": hapax,
+        "hapax_percentage": hapax_percentage,
         "lexical_density": lex_dens,
         "lexical_sophistication": lex_sophistication,
         "lexical_variation": lex_variation,
         "LexR": lex_r,
         "freq_plot_path": freq_relative_plot_path,
-        "lin_lex_plot_path": lin_lex_relative_plot_path
+        "cum_lex_plot_path": cum_lex_relative_plot_path,
+        "lin_lex_plot_path": lin_lex_relative_plot_path,
     })    
     print(f"freq rel path: {freq_relative_plot_path}")
+    print(f"cum lex rel path: {cum_lex_relative_plot_path}")
     print(f"lin lex rel path: {lin_lex_relative_plot_path}")
+
     return templates.TemplateResponse("stats-single-text.html", context)
 
 @router.get("/cumulative/{language}/")
