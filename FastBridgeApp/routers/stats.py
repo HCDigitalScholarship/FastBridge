@@ -1579,6 +1579,10 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     return templates.TemplateResponse("stats-single-text.html", context)
 
 
+@router.get("/formulas")
+async def read_formulas(request: Request):
+    return templates.TemplateResponse("stats-formulas.html", {"request": request})
+
 @router.get("/cumulative/{language}/")
 async def stats_cumulative(request: Request, language: str):
     # Retrieve the selected text names from the session or storage
