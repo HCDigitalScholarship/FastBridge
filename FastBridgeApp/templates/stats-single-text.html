@@ -352,6 +352,11 @@
                                 onclick="toggleLinLexPlot();" checked>
                             <label class="custom-control-label" for="linLexPlotCheckbox">Linear Lexical Load Plot</label>
                         </div>
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input id="freqBinPlotCheckbox" type="checkbox" class="custom-control-input"
+                                onclick="toggleFreqBinPlot();" checked>
+                            <label class="custom-control-label" for="freqBinPlotCheckbox">Frequency Bin Plot</label>
+                        </div>
                         
                     </div>
                 </div>
@@ -402,6 +407,8 @@
                                 src="{{ request.url_for('plots', path=cum_lex_plot_path) }}" alt="Plot Image">
                             <img id="linLexPlot" class="plot-img"
                                 src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
+                            <img id="freqBinPlot" class="plot-img"
+                                src="{{ request.url_for('plots', path=freq_bins_plot_path) }}" alt="Plot Image">
                         </div>
                     </div>
                     <!-- Plot Modal -->
@@ -659,6 +666,16 @@
             plot.style.display = "none";
         }
     }
+    function toggleFreqBinPlot() {
+        var checkbox = document.getElementById("freqBinPlotCheckbox");
+        var plot = document.getElementById("freqBinPlot");
+
+        if (checkbox.checked) {
+            plot.style.display = "block";
+        } else {
+            plot.style.display = "none";
+        }
+    }
 </script>
 <!-- Slideout Options animation -->
 <script>
@@ -692,11 +709,11 @@
         doc.save('export.pdf');
     }
 </script>
-<!-- For i info buttons -->
+<!-- For i info buttons (LEAVE DUPLICATE jQUERY AND BOOTSTRAP INSTALLS OUT-->
 <!-- Add jQuery -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
 <!-- Add Bootstrap JS -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js">
+<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"> -->
 
 </script>
 <!-- Initialize tooltips -->
