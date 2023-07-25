@@ -215,7 +215,7 @@
     }
 
     /* Modal Content (Image) */
-    .modal-content {
+    .plot-modal-content {
         margin: auto;
         display: block;
         max-width: 60%;
@@ -261,7 +261,7 @@
                 </div>
                 <div class="modal-body" style="overflow-y:auto;height:65vh">
                     <!-- Checkboxes -->
-                    <div class="form-group">
+                    <div class="form-group" style = "width:100%;">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default" style="width:50%" id="printSubmit"
                                 value="Print" onclick="printData();" title="Print table">Print</button>
@@ -272,80 +272,87 @@
                         <div class="custom-control custom-checkbox">
                             <input id="metricsCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleMetrics();" checked>
-                            <label class="custom-control-label" for="metricsCheckbox">Toggle Metrics Section</label>
+                            <label class="custom-control-label" for="metricsCheckbox">Metrics Section</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="wordCountCheckbox" class="custom-control-input"
                                 onclick="toggleWordCount()">
-                            <label class="custom-control-label" for="wordCountCheckbox">Toggle Word Count</label>
+                            <label class="custom-control-label" for="wordCountCheckbox">Word Count</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="vocabSizeCheckbox" class="custom-control-input"
                                 onclick="toggleVocabSize()">
-                            <label class="custom-control-label" for="vocabSizeCheckbox">Toggle Vocab Size</label>
+                            <label class="custom-control-label" for="vocabSizeCheckbox">Vocab Size</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="lexDensityCheckbox" class="custom-control-input"
                                 onclick="toggleLexicalDensity()">
-                            <label class="custom-control-label" for="lexDensityCheckbox">Toggle Lexical Density</label>
+                            <label class="custom-control-label" for="lexDensityCheckbox">Lexical Density</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="lexicalSophisticationCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLexicalSophistication();" checked>
-                            <label class="custom-control-label" for="lexicalSophisticationCheckbox">Toggle Lexical
+                            <label class="custom-control-label" for="lexicalSophisticationCheckbox">Lexical
                                 Sophistication</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="ttrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleTTR();"
                                 checked>
-                            <label class="custom-control-label" for="ttrCheckbox">Toggle TTR</label>
+                            <label class="custom-control-label" for="ttrCheckbox">TTR</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="rootTtrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleRootTTR();" checked>
-                            <label class="custom-control-label" for="rootTtrCheckbox">Toggle Root TTR</label>
+                            <label class="custom-control-label" for="rootTtrCheckbox">Root TTR</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="cttrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleCTTR();" checked>
-                            <label class="custom-control-label" for="cttrCheckbox">Toggle CTTR</label>
+                            <label class="custom-control-label" for="cttrCheckbox">CTTR</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="logTtrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLogTTR();" checked>
-                            <label class="custom-control-label" for="logTtrCheckbox">Toggle LogTTR</label>
+                            <label class="custom-control-label" for="logTtrCheckbox">LogTTR</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="lexrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLexR();" checked>
-                            <label class="custom-control-label" for="lexrCheckbox">Toggle LexR</label>
+                            <label class="custom-control-label" for="lexrCheckbox">LexR</label>
                         </div>
                         <div class="custom-control custom-checkbox">
                             <input id="hapaxCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleHapax();" checked>
-                            <label class="custom-control-label" for="hapaxCheckbox">Toggle Hapax Legomena</label>
+                            <label class="custom-control-label" for="hapaxCheckbox">Hapax Legomena</label>
                         </div>
                         <div class="custom-control custom-checkbox">
                             <input id="plotsCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="togglePlots();" checked>
-                            <label class="custom-control-label" for="plotsCheckbox">Toggle Plots Section</label>
+                            <label class="custom-control-label" for="plotsCheckbox">Plots Section</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="freqPlotCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleFreqPlot();" checked>
-                            <label class="custom-control-label" for="freqPlotCheckbox">Toggle Frequency Plot</label>
+                            <label class="custom-control-label" for="freqPlotCheckbox">Frequency Plot</label>
+                        </div>
+                        
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input id="cumLexPlotCheckbox" type="checkbox" class="custom-control-input"
+                                onclick="toggleCumLexPlot();" checked>
+                            <label class="custom-control-label" for="cumLexPlotCheckbox">Cumulative Lexical Load Plot</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="linLexPlotCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLinLexPlot();" checked>
-                            <label class="custom-control-label" for="linLexPlotCheckbox">Toggle Line Lex Plot</label>
+                            <label class="custom-control-label" for="linLexPlotCheckbox">Linear Lexical Load Plot</label>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -372,17 +379,16 @@
                     <div class="grid-item" id="metrics-section">
                         <h2>Metrics</h2>
                         <ul class="statistics-list">
-                            <li id="wordCountMetric"><span class="label">Number of Words:</span> {{ word_count }}</li>
-                            <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }}</li>
-                            <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }}</li>
-                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }}
-                            </li>
+                            <li id="wordCountMetric"><span class="label">Number of Words:</span> {{ word_count }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="The total # of words in this text selection" data-trigger="hover"></i></li>
+                            <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="The number of UNIQUE words in this text selection" data-trigger="hover"></i></li>
+                            <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="((mean_worldlength_enclitic*0.457) + (freq_diederich300_minus_proper*0.063) + (freq_dcc_minus_proper*0.076) + (lex_soph_d*0.092) + (lex_c*0.312) + (lex_r*0.143)-11.7+6)*0.8333333333" data-trigger="hover"></i></li>
+                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of lexical words / # of total words" data-trigger="hover"></i></li>
                             <li id="lexSophisticationMetric"><span class="label">Lexical Sophistication:</span> {{
-                                lexical_sophistication }}</li>
-                            <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }}</li>
-                            <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }}</li>
-                            <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }}</li>
-                            <li id="logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3]}}</li>
+                                lexical_sophistication }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of rare words / # of total words" data-trigger="hover"></i></li>
+                            <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / # of total tokens" data-trigger="hover"></i></li>
+                            <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / square root of total tokens" data-trigger="hover"></i></li>
+                            <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / square root of (2 * # of total tokens)" data-trigger="hover"></i></li>
+                            <li id="logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3]}} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="log # of unique tokens / log # of total tokens" data-trigger="hover"></i></li>
 
                         </ul>
                     </div>
@@ -401,14 +407,14 @@
                     <!-- Plot Modal -->
                     <div id="plotModal" class="modal">
                         <span class="close">&times;</span>
-                        <img class="modal-content" id="img01">
+                        <img class="plot-modal-content" id="img01">
                         <div id="caption"></div>
                     </div>
                     <!-- Hapax Legomena Section -->
                     <div class="grid-item" id="hapax-section">
                         <h2>Hapax Legomena</h2>
-                        <p>Hapax Percentage: {{ hapax_percentage }}%</p>
-                        <button type="button" class="collapsible">List:</button>
+                        <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Percent of total # of words that are Hapax Legomena" data-trigger="hover"></i></p>
+                        <button type="button" class="collapsible">List:<i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Words occurring only once in a text" data-trigger="hover"></i></button>
                         <div class="content">
                             <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
                                 {% for word in hapax_legonema %}
@@ -643,6 +649,16 @@
             plot.style.display = "none";
         }
     }
+    function toggleCumLexPlot() {
+        var checkbox = document.getElementById("cumLexPlotCheckbox");
+        var plot = document.getElementById("cumLexPlot");
+
+        if (checkbox.checked) {
+            plot.style.display = "block";
+        } else {
+            plot.style.display = "none";
+        }
+    }
 </script>
 <!-- Slideout Options animation -->
 <script>
@@ -676,5 +692,19 @@
         doc.save('export.pdf');
     }
 </script>
+<!-- For i info buttons -->
+<!-- Add jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Add Bootstrap JS -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js">
+
+</script>
+<!-- Initialize tooltips -->
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
 {% endblock %}
 {% endblock %}
