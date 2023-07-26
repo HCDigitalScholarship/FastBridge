@@ -185,6 +185,11 @@
         /* Adjust this value to what suits you best */
     }
 
+    .indent-indent-checkbox {
+        padding-left: 60px;
+        /* Adjust this value to what suits you best */
+    }
+
     #plots {
         overflow-y: auto;
         max-height: 500px;
@@ -261,7 +266,7 @@
                 </div>
                 <div class="modal-body" style="overflow-y:auto;height:65vh">
                     <!-- Checkboxes -->
-                    <div class="form-group" style = "width:100%;">
+                    <div class="form-group" style="width:100%;">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default" style="width:50%" id="printSubmit"
                                 value="Print" onclick="printData();" title="Print table">Print</button>
@@ -277,12 +282,34 @@
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="wordCountCheckbox" class="custom-control-input"
                                 onclick="toggleWordCount()">
-                            <label class="custom-control-label" for="wordCountCheckbox">Word Count</label>
+                            <label class="custom-control-label" for="wordCountCheckbox">Total Words</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="vocabSizeCheckbox" class="custom-control-input"
                                 onclick="toggleVocabSize()">
-                            <label class="custom-control-label" for="vocabSizeCheckbox">Vocab Size</label>
+                            <label class="custom-control-label" for="vocabSizeCheckbox">Unique Words</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input type="checkbox" id="wordCountNoProperCheckbox" class="custom-control-input"
+                                onclick="toggleWordCountNoProper()">
+                            <label class="custom-control-label" for="wordCountNoProperCheckbox">Word Count(Proper
+                                Excluded)</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input type="checkbox" id="vocabSizeNoProperCheckbox" class="custom-control-input"
+                                onclick="toggleVocabSizeNoProper()">
+                            <label class="custom-control-label" for="vocabSizeNoProperCheckbox">Unique Words(Proper
+                                Excluded)</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input type="checkbox" id="avgWordCheckbox" class="custom-control-input"
+                                onclick="toggleAverageWordLength()">
+                            <label class="custom-control-label" for="avgWordCheckbox">Average Word Length</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-checkbox">
+                            <input id="lexrCheckbox" type="checkbox" class="custom-control-input"
+                                onclick="toggleLexR();" checked>
+                            <label class="custom-control-label" for="lexrCheckbox">LexR</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input type="checkbox" id="lexDensityCheckbox" class="custom-control-input"
@@ -295,41 +322,37 @@
                             <label class="custom-control-label" for="lexicalSophisticationCheckbox">Lexical
                                 Sophistication</label>
                         </div>
-
                         <div class="custom-control custom-checkbox indent-checkbox">
+                            <input id="lexVarCheckbox" type="checkbox" class="custom-control-input"
+                                onclick="toggleLexVar();" checked>
+                            <label class="custom-control-label" for="lexVarCheckbox">Lexical Variation</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input id="ttrCheckbox" type="checkbox" class="custom-control-input" onclick="toggleTTR();"
                                 checked>
                             <label class="custom-control-label" for="ttrCheckbox">TTR</label>
                         </div>
 
-                        <div class="custom-control custom-checkbox indent-checkbox">
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input id="rootTtrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleRootTTR();" checked>
                             <label class="custom-control-label" for="rootTtrCheckbox">Root TTR</label>
                         </div>
 
-                        <div class="custom-control custom-checkbox indent-checkbox">
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input id="cttrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleCTTR();" checked>
                             <label class="custom-control-label" for="cttrCheckbox">CTTR</label>
                         </div>
 
-                        <div class="custom-control custom-checkbox indent-checkbox">
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input id="logTtrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLogTTR();" checked>
                             <label class="custom-control-label" for="logTtrCheckbox">LogTTR</label>
                         </div>
 
-                        <div class="custom-control custom-checkbox indent-checkbox">
-                            <input id="lexrCheckbox" type="checkbox" class="custom-control-input"
-                                onclick="toggleLexR();" checked>
-                            <label class="custom-control-label" for="lexrCheckbox">LexR</label>
-                        </div>
-                        <div class="custom-control custom-checkbox">
-                            <input id="hapaxCheckbox" type="checkbox" class="custom-control-input"
-                                onclick="toggleHapax();" checked>
-                            <label class="custom-control-label" for="hapaxCheckbox">Hapax Legomena</label>
-                        </div>
+
+
                         <div class="custom-control custom-checkbox">
                             <input id="plotsCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="togglePlots();" checked>
@@ -340,24 +363,31 @@
                                 onclick="toggleFreqPlot();" checked>
                             <label class="custom-control-label" for="freqPlotCheckbox">Frequency Plot</label>
                         </div>
-                        
+
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="cumLexPlotCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleCumLexPlot();" checked>
-                            <label class="custom-control-label" for="cumLexPlotCheckbox">Cumulative Lexical Load Plot</label>
+                            <label class="custom-control-label" for="cumLexPlotCheckbox">Cumulative Lexical Load
+                                Plot</label>
                         </div>
 
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="linLexPlotCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLinLexPlot();" checked>
-                            <label class="custom-control-label" for="linLexPlotCheckbox">Linear Lexical Load Plot</label>
+                            <label class="custom-control-label" for="linLexPlotCheckbox">Linear Lexical Load
+                                Plot</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="freqBinPlotCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleFreqBinPlot();" checked>
                             <label class="custom-control-label" for="freqBinPlotCheckbox">Frequency Bin Plot</label>
                         </div>
-                        
+                        <div class="custom-control custom-checkbox">
+                            <input id="hapaxCheckbox" type="checkbox" class="custom-control-input"
+                                onclick="toggleHapax();" checked>
+                            <label class="custom-control-label" for="hapaxCheckbox">Hapax Legomena</label>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -381,23 +411,68 @@
                     <h3>
                         <a href="/stats/formulas" class="btn btn-info ml-2" role="button">Formulas</a>
                     </h3>
-                    
+
                 </div>
                 <div class="grid-container">
                     <!-- Metrics Section -->
                     <div class="grid-item" id="metrics-section">
                         <h2>Metrics</h2>
                         <ul class="statistics-list">
-                            <li id="wordCountMetric"><span class="label">Number of Words:</span> {{ word_count }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="The total # of words in this text selection" data-trigger="hover"></i></li>
-                            <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="The number of UNIQUE words in this text selection" data-trigger="hover"></i></li>
-                            <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="((mean_worldlength_enclitic*0.457) + (freq_diederich300_minus_proper*0.063) + (freq_dcc_minus_proper*0.076) + (lex_soph_d*0.092) + (lex_c*0.312) + (lex_r*0.143)-11.7+6)*0.8333333333" data-trigger="hover"></i></li>
-                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of lexical words / # of total words" data-trigger="hover"></i></li>
+                            <li id="wordCountMetric"><span class="label">Total Words:</span> {{ word_count }} <i
+                                    class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                    title="The total # of words in this text selection" data-trigger="hover"></i></li>
+                            <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }} <i
+                                    class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                    title="The number of UNIQUE words in this text selection" data-trigger="hover"></i>
+                            </li>
+                            <li id="totalWordsNoProper"><span class="label">Total Words(Proper Excluded):</span> {{
+                                total_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                    data-placement="top"
+                                    title="The total # of words in this text selection, minus proper names"
+                                    data-trigger="hover"></i></li>
+                            <li id="uniqueWordsNoProper"><span class="label">Unique Words(Proper Excluded):</span> {{
+                                unique_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                    data-placement="top"
+                                    title="The number of UNIQUE words in this text selection, minus proper names"
+                                    data-trigger="hover"></i></li>
+                            <li id="avgWordLength"><span class="label">Average Word Length:</span> {{
+                                avg_word_length }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                    data-placement="top" title="Average word length" data-trigger="hover"></i></li>
+                            <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }} <i class="fas fa-info-circle"
+                                    data-toggle="tooltip" data-placement="top"
+                                    title="((mean_worldlength_enclitic*0.457) + (freq_diederich300_minus_proper*0.063) + (freq_dcc_minus_proper*0.076) + (lex_soph_d*0.092) + (lex_c*0.312) + (lex_r*0.143)-11.7+6)*0.8333333333"
+                                    data-trigger="hover"></i></li>
+                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }}
+                                <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                    title="# of lexical words / # of total words" data-trigger="hover"></i>
+                            </li>
                             <li id="lexSophisticationMetric"><span class="label">Lexical Sophistication:</span> {{
-                                lexical_sophistication }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of rare words / # of total words" data-trigger="hover"></i></li>
-                            <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / # of total tokens" data-trigger="hover"></i></li>
-                            <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / square root of total tokens" data-trigger="hover"></i></li>
-                            <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="# of unique tokens / square root of (2 * # of total tokens)" data-trigger="hover"></i></li>
-                            <li id="logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3]}} <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="log # of unique tokens / log # of total tokens" data-trigger="hover"></i></li>
+                                lexical_sophistication }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                    data-placement="top" title="# of rare words / # of total words"
+                                    data-trigger="hover"></i></li>
+                            <li id="lexicalVariation"><span class="label">Lexical Variation:</span>
+                                <ul style="padding-left: 20px;">
+                                    <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i
+                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="# of unique tokens / # of total tokens" data-trigger="hover"></i>
+                                    </li>
+                                    <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }}
+                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="# of unique tokens / square root of total tokens"
+                                            data-trigger="hover"></i>
+                                    </li>
+                                    <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }} <i
+                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="# of unique tokens / square root of (2 * # of total tokens)"
+                                            data-trigger="hover"></i></li>
+                                    <li id="logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3]}}
+                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="log # of unique tokens / log # of total tokens"
+                                            data-trigger="hover"></i>
+                                    </li>
+                                </ul>
+                            </li>
+
 
                         </ul>
                     </div>
@@ -424,8 +499,12 @@
                     <!-- Hapax Legomena Section -->
                     <div class="grid-item" id="hapax-section">
                         <h2>Hapax Legomena</h2>
-                        <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Percent of total # of words that are Hapax Legomena" data-trigger="hover"></i></p>
-                        <button type="button" class="collapsible">List:<i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Words occurring only once in a text" data-trigger="hover"></i></button>
+                        <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip"
+                                data-placement="top" title="Percent of total # of words that are Hapax Legomena"
+                                data-trigger="hover"></i></p>
+                        <button type="button" class="collapsible">List:<i class="fas fa-info-circle"
+                                data-toggle="tooltip" data-placement="top" title="Words occurring only once in a text"
+                                data-trigger="hover"></i></button>
                         <div class="content">
                             <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
                                 {% for word in hapax_legonema %}
@@ -541,7 +620,36 @@
             metric.style.display = "none";
         }
     }
+    function toggleWordCountNoProper() {
+        var checkbox = document.getElementById("wordCountNoProperCheckbox");
+        var metric = document.getElementById("totalWordsNoProper");
 
+        if (checkbox.checked) {
+            metric.style.display = "block";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleVocabSizeNoProper() {
+        var checkbox = document.getElementById("vocabSizeNoProperCheckbox");
+        var metric = document.getElementById("uniqueWordsNoProper");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleAverageWordLength() {
+        var checkbox = document.getElementById("avgWordCheckbox");
+        var metric = document.getElementById("avgWordLength");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
     function toggleLexicalDensity() {
         var checkbox = document.getElementById("lexDensityCheckbox");
         var metric = document.getElementById("lexDensityMetric");
@@ -556,6 +664,16 @@
     function toggleLexicalSophistication() {
         var checkbox = document.getElementById("lexicalSophisticationCheckbox");
         var metric = document.getElementById("lexSophisticationMetric");
+
+        if (checkbox.checked) {
+            metric.style.display = "list-item";
+        } else {
+            metric.style.display = "none";
+        }
+    }
+    function toggleLexVar() {
+        var checkbox = document.getElementById("lexVarCheckbox");
+        var metric = document.getElementById("lexicalVariation");
 
         if (checkbox.checked) {
             metric.style.display = "list-item";

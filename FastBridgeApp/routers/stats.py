@@ -195,7 +195,7 @@ def find_hapax_legomena(words):
         word_frequencies[word] += 1
     return [word for word, freq in word_frequencies.items() if freq == 1]
 
-
+#Class that the site uses to handle everything
 class TextAnalyzer():
 
     def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
@@ -462,6 +462,62 @@ class TextAnalyzer():
             lex_r += 6
             lex_r *= 0.833
             return lex_r
+
+    def totalWordsNoProper(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(
+            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            # Go through the words of text_slice
+            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                # filter out proper nouns
+                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                    words.append(word)     
+
+            return len(words)           
+        else:
+            print()
+
+    def uniqueWordsNoProper(self):
+        if len(self.texts) == 0:
+                return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(
+            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            # Go through the words of text_slice
+            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                # filter out proper nouns
+                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                    words.append(word)     
+
+                vocabulary = set(word for word in words)
+            return len(vocabulary)           
+        else:
+            print()
+
+    @round_decorator
+    def avgWordLength(self):
+        if len(self.texts) == 0:
+                return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(
+            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            # Go through the words of text_slice
+            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+            for word_tuple in text_slice:
+                words.append(word_tuple[0])
+            
+            return sum(len(word) for word in words) / len(words)
+        else:
+            print()
 
     def plot_word_freq(self):
         if len(self.texts) == 0:
@@ -1534,6 +1590,9 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     lex_sophistication = analyzer.lex_sophistication()
     lex_variation = analyzer.lex_variation()
     lex_r = analyzer.LexR()
+    total_words_no_p = analyzer.totalWordsNoProper()
+    unique_words_no_p = analyzer.uniqueWordsNoProper()
+    avgWordLength = analyzer.avgWordLength()
 
     # plot functions return the location of plot images
     freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1566,6 +1625,9 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "lexical_sophistication": lex_sophistication,
         "lexical_variation": lex_variation,
         "LexR": lex_r,
+        "total_words_no_proper": total_words_no_p,
+        "unique_words_no_proper": unique_words_no_p,
+        "avg_word_length": avgWordLength,
         "freq_plot_path": freq_relative_plot_path,
         "cum_lex_plot_path": cum_lex_relative_plot_path,
         "lin_lex_plot_path": lin_lex_relative_plot_path,
