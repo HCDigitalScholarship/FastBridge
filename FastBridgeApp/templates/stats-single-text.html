@@ -247,6 +247,25 @@
         text-decoration: none;
         cursor: pointer;
     }
+
+    .list-item-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .label-container {
+        text-align: right;
+        /* width: 100%; */
+
+        margin-right: 20px; /* Adjust this value to increase or decrease space */
+        
+    }
+
+    .value-container {
+        text-align: left;
+        /* width: 100%; */
+       
+    }
 </style>
 
 
@@ -284,18 +303,18 @@
                                 onclick="toggleWordCount()">
                             <label class="custom-control-label" for="wordCountCheckbox">Total Words</label>
                         </div>
-                        <div class="custom-control custom-checkbox indent-checkbox">
-                            <input type="checkbox" id="vocabSizeCheckbox" class="custom-control-input"
-                                onclick="toggleVocabSize()">
-                            <label class="custom-control-label" for="vocabSizeCheckbox">Unique Words</label>
-                        </div>
-                        <div class="custom-control custom-checkbox indent-checkbox">
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input type="checkbox" id="wordCountNoProperCheckbox" class="custom-control-input"
                                 onclick="toggleWordCountNoProper()">
                             <label class="custom-control-label" for="wordCountNoProperCheckbox">Word Count(Proper
                                 Excluded)</label>
                         </div>
                         <div class="custom-control custom-checkbox indent-checkbox">
+                            <input type="checkbox" id="vocabSizeCheckbox" class="custom-control-input"
+                                onclick="toggleVocabSize()">
+                            <label class="custom-control-label" for="vocabSizeCheckbox">Unique Words</label>
+                        </div>
+                        <div class="custom-control custom-checkbox indent-indent-checkbox">
                             <input type="checkbox" id="vocabSizeNoProperCheckbox" class="custom-control-input"
                                 onclick="toggleVocabSizeNoProper()">
                             <label class="custom-control-label" for="vocabSizeNoProperCheckbox">Unique Words(Proper
@@ -306,6 +325,8 @@
                                 onclick="toggleAverageWordLength()">
                             <label class="custom-control-label" for="avgWordCheckbox">Average Word Length</label>
                         </div>
+
+
                         <div class="custom-control custom-checkbox indent-checkbox">
                             <input id="lexrCheckbox" type="checkbox" class="custom-control-input"
                                 onclick="toggleLexR();" checked>
@@ -418,31 +439,157 @@
                     <div class="grid-item" id="metrics-section">
                         <h2>Metrics</h2>
                         <ul class="statistics-list">
+                            <li id="wordCountMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Total Words:</span>
+                                    </div>
+                                    <div class="value-container">{{ word_count }}</div>
+                                </div>
+                            </li>
+                            <li id="totalWordsNoProper">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Total Words(Proper Excluded):</span>
+            
+                                    </div>
+                                    <div class="value-container">{{ total_words_no_proper }}</div>
+                                </div>
+                            </li>
+                            <li id="vocabSizeMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Unique Words:</span>
+                                    
+                                    </div>
+                                    <div class="value-container">{{ vocab_size }}</div>
+                                </div>
+                            </li>
+                            <li id="uniqueWordsNoProper">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Unique Words(Proper Excluded):</span>
+                                    
+                                    </div>
+                                    <div class="value-container">{{ unique_words_no_proper }}</div>
+                                </div>
+                            </li>
+                            <li id="lexRMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">LexR:</span>
+                                    
+                                    </div>
+                                    <div class="value-container">{{ LexR }}</div>
+                                </div>
+                            </li>
+                            <li id="avgWordLength">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Average Word Length:</span>
+                                        
+                                    </div>
+                                    <div class="value-container">{{ avg_word_length }}</div>
+                                </div>
+                            </li>
+                            <li id="lexDensityMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Lexical Density:</span>
+                                        
+                                    </div>
+                                    <div class="value-container">{{ lexical_density }}</div>
+                                </div>
+                            </li>
+                            <li id="lexSophisticationMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Lexical Sophistication:</span>
+                                        
+                                    </div>
+                                    <div class="value-container">{{ lexical_sophistication }}</div>
+                                </div>
+                            </li>
+                            <li id="lexicalVariation">
+                                <span class="label">Lexical Variation:</span>
+                                <ul style="padding-left: 20px;">
+                                    <li id="cttrMetric">
+                                        <div class="list-item-container">
+                                            <div class="label-container">
+                                                <span class="label">CTTR:</span>
+                                                
+                                            </div>
+                                            <div class="value-container">{{ lexical_variation[2] }}</div>
+                                        </div>
+                                    </li>
+                                    <li id="logTTRMetric">
+                                        <div class="list-item-container">
+                                            <div class="label-container">
+                                                <span class="label">LogTTR:</span>
+                                                
+                                            </div>
+                                            <div class="value-container">{{ lexical_variation[3] }}</div>
+                                        </div>
+                                    </li>
+                                    <li id="rttrMetric">
+                                        <div class="list-item-container">
+                                            <div class="label-container">
+                                                <span class="label">Root TTR:</span>
+                                                
+                                            </div>
+                                            <div class="value-container">{{ lexical_variation[1] }}</div>
+                                        </div>
+                                    </li>
+                                    <li id="ttrMetric">
+                                        <div class="list-item-container">
+                                            <div class="label-container">
+                                                <span class="label">TTR:</span>
+                                                
+                                            </div>
+                                            <div class="value-container">{{ lexical_variation[0] }}</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <!-- <div class="grid-item" id="metrics-section">
+                        <h2>Metrics</h2>
+                        <ul class="statistics-list">
                             <li id="wordCountMetric"><span class="label">Total Words:</span> {{ word_count }} <i
                                     class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
                                     title="The total # of words in this text selection" data-trigger="hover"></i></li>
+                            <ul style="padding-left: 20px;">
+                                <li id="totalWordsNoProper"><span class="label">Total Words(Proper Excluded):</span> {{
+                                    total_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                        data-placement="top"
+                                        title="The total # of words in this text selection, minus proper names"
+                                        data-trigger="hover"></i></li>
+                            </ul>
                             <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }} <i
                                     class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
                                     title="The number of UNIQUE words in this text selection" data-trigger="hover"></i>
                             </li>
-                            <li id="totalWordsNoProper"><span class="label">Total Words(Proper Excluded):</span> {{
-                                total_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                    data-placement="top"
-                                    title="The total # of words in this text selection, minus proper names"
-                                    data-trigger="hover"></i></li>
-                            <li id="uniqueWordsNoProper"><span class="label">Unique Words(Proper Excluded):</span> {{
-                                unique_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                    data-placement="top"
-                                    title="The number of UNIQUE words in this text selection, minus proper names"
-                                    data-trigger="hover"></i></li>
-                            <li id="avgWordLength"><span class="label">Average Word Length:</span> {{
-                                avg_word_length }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                    data-placement="top" title="Average word length" data-trigger="hover"></i></li>
+                            <ul style="padding-left: 20px;">
+                                <li id="uniqueWordsNoProper"><span class="label">Unique Words(Proper Excluded):</span>
+                                    {{
+                                    unique_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                        data-placement="top"
+                                        title="The number of UNIQUE words in this text selection, minus proper names"
+                                        data-trigger="hover"></i></li>
+                            </ul>
                             <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }} <i class="fas fa-info-circle"
                                     data-toggle="tooltip" data-placement="top"
                                     title="((mean_worldlength_enclitic*0.457) + (freq_diederich300_minus_proper*0.063) + (freq_dcc_minus_proper*0.076) + (lex_soph_d*0.092) + (lex_c*0.312) + (lex_r*0.143)-11.7+6)*0.8333333333"
                                     data-trigger="hover"></i></li>
-                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density }}
+                            <li id="avgWordLength"><span class="label">Average Word Length:</span> {{
+                                avg_word_length }} <i class="fas fa-info-circle" data-toggle="tooltip"
+                                    data-placement="top" title="Average word length" data-trigger="hover"></i></li>
+
+                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density
+                                }}
                                 <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
                                     title="# of lexical words / # of total words" data-trigger="hover"></i>
                             </li>
@@ -452,30 +599,34 @@
                                     data-trigger="hover"></i></li>
                             <li id="lexicalVariation"><span class="label">Lexical Variation:</span>
                                 <ul style="padding-left: 20px;">
-                                    <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i
-                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / # of total tokens" data-trigger="hover"></i>
-                                    </li>
-                                    <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1] }}
+                                    <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }}
                                         <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / square root of total tokens"
+                                            title="# of unique tokens / square root of (2 * # of total tokens)"
                                             data-trigger="hover"></i>
                                     </li>
-                                    <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }} <i
-                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / square root of (2 * # of total tokens)"
-                                            data-trigger="hover"></i></li>
-                                    <li id="logTTRMetric"><span class="label">LogTTR:</span> {{ lexical_variation[3]}}
+                                    <li id="logTTRMetric"><span class="label">LogTTR:</span> {{
+                                        lexical_variation[3]}}
                                         <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
                                             title="log # of unique tokens / log # of total tokens"
                                             data-trigger="hover"></i>
                                     </li>
+                                    <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1]
+                                        }}
+                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="# of unique tokens / square root of total tokens"
+                                            data-trigger="hover"></i>
+                                    </li>
+                                    <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i
+                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
+                                            title="# of unique tokens / # of total tokens" data-trigger="hover"></i>
+                                    </li>
+
                                 </ul>
                             </li>
 
 
                         </ul>
-                    </div>
+                    </div> -->
                     <!-- Plots Section -->
                     <div class="grid-item" id="plots-section">
                         <h2>Plots</h2>
@@ -498,7 +649,24 @@
                     </div>
                     <!-- Hapax Legomena Section -->
                     <div class="grid-item" id="hapax-section">
-                        <h2>Hapax Legomena</h2>
+                        <div style="margin-bottom: 20px;">
+                            <h2>Top 20 Most Frequent Words</h2>
+                            <!-- <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip"
+                                data-placement="top" title="Percent of total # of words that are Hapax Legomena"
+                                data-trigger="hover"></i></p> -->
+                            <button type="button" class="collapsible">List:<i class="fas fa-info-circle"
+                                    data-toggle="tooltip" data-placement="top"
+                                    title="Top 20 most frequent words in this text not in the Diederich 300"
+                                    data-trigger="hover"></i></button>
+                            <div class="content">
+                                <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
+                                    {% for word in top20_NoDie300 %}
+                                    <li>{{ word }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <h2>Hapax Legomena </h2>
                         <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip"
                                 data-placement="top" title="Percent of total # of words that are Hapax Legomena"
                                 data-trigger="hover"></i></p>

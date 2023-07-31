@@ -195,7 +195,9 @@ def find_hapax_legomena(words):
         word_frequencies[word] += 1
     return [word for word, freq in word_frequencies.items() if freq == 1]
 
-#Class that the site uses to handle everything
+# Class that the site uses to handle everything
+
+
 class TextAnalyzer():
 
     def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
@@ -468,7 +470,7 @@ class TextAnalyzer():
             return -1
         elif len(self.texts) == 1:
             text_slice = get_slice(
-            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
@@ -476,18 +478,18 @@ class TextAnalyzer():
                 word = word_tuple[0]
                 # filter out proper nouns
                 if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)     
+                    words.append(word)
 
-            return len(words)           
+            return len(words)
         else:
             print()
 
     def uniqueWordsNoProper(self):
         if len(self.texts) == 0:
-                return -1
+            return -1
         elif len(self.texts) == 1:
             text_slice = get_slice(
-            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
@@ -495,26 +497,68 @@ class TextAnalyzer():
                 word = word_tuple[0]
                 # filter out proper nouns
                 if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)     
+                    words.append(word)
 
                 vocabulary = set(word for word in words)
-            return len(vocabulary)           
+            return len(vocabulary)
         else:
             print()
+
+    def top20NoDie300(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            # Go through the words of text_slice
+            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+
+            for word_tuple in text_slice:
+                if word_tuple[0] in latin_dict:
+                    if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
+                        continue
+                    words.append(word_tuple[0])
+                else:
+                    words.append(word_tuple[0])
+
+            word_counts = {}
+
+
+            for word in words:
+                if word in word_counts:
+                    word_counts[word] += 1
+                else:
+                    word_counts[word] = 1
+
+            # Sort the dictionary by value in descending order and get the top 20
+            top_20_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:20]
+            
+            # Extract words from the tuples
+            top_20_words = [word for word, freq in top_20_words]
+            
+            return top_20_words
+
+
+              # word = word_tuple[0]
+              # words.append(word)
+              # filter out proper nouns
+              # if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                   # words.append(word)
 
     @round_decorator
     def avgWordLength(self):
         if len(self.texts) == 0:
-                return -1
+            return -1
         elif len(self.texts) == 1:
             text_slice = get_slice(
-            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
             for word_tuple in text_slice:
                 words.append(word_tuple[0])
-            
+
             return sum(len(word) for word in words) / len(words)
         else:
             print()
@@ -758,7 +802,7 @@ class TextAnalyzer():
             return -1
         elif len(self.texts) == 1:
             text_slice = get_slice(
-            self.texts[0][0], self.texts[0][1], self.texts[0][2])
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
@@ -766,15 +810,14 @@ class TextAnalyzer():
                 word = word_tuple[0]
                 # filter out proper nouns
                 if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)                
-                
+                    words.append(word)
+
             count0_200 = 0
             count201_500 = 0
             count501_1000 = 0
             count1001_1500 = 0
             count1501_2500 = 0
             count2500plus = 0
-
 
             for word in words:
                 if word in latin_dict:
@@ -788,7 +831,7 @@ class TextAnalyzer():
                         count501_1000 += 1
                         continue
                     if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
-                        count1001_1500 +=1
+                        count1001_1500 += 1
                         continue
                     if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
                         count1501_2500 += 1
@@ -796,7 +839,7 @@ class TextAnalyzer():
                     if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
                         count2500plus += 1
                         continue
-                
+
             freq_0_200 = count0_200/len(words)
             freq_201_500 = count201_500/len(words)
             freq_501_1000 = count501_1000/len(words)
@@ -806,15 +849,17 @@ class TextAnalyzer():
 
             data = {'Frequency Range': ['0-200', '201-500', '501-1000', '1001-1500', '1501-2500', '2500+'],
                     'Percentage of Words': [freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500, freq_1501_2500, freq_2500_plus]}
-            
+
             df = pd.DataFrame(data)
-                
+
             sns.set_style("ticks")
             sns.set_context("paper")
             plt.figure(figsize=(10, 5))
-            barplot = sns.barplot(x='Frequency Range', y='Percentage of Words', data=df, palette=colorblind_palette)
+            barplot = sns.barplot(
+                x='Frequency Range', y='Percentage of Words', data=df, palette=colorblind_palette)
             sns.despine()
-            plt.title('Percentage of Words in Frequency Ranges', **title_font)            # Get the current Axes instance
+            plt.title('Percentage of Words in Frequency Ranges', **
+                      title_font)            # Get the current Axes instance
             ax = plt.gca()
 
             # set font properties to x and y tick labels
@@ -826,11 +871,11 @@ class TextAnalyzer():
 
             # add the values on the bars
             for p in barplot.patches:
-                barplot.annotate(format(p.get_height(), '.2f'), 
-                    (p.get_x() + p.get_width() / 2., p.get_height()), 
-                    ha = 'center', va = 'center', 
-                    xytext = (0, 10), 
-                    textcoords = 'offset points')
+                barplot.annotate(format(p.get_height(), '.2f'),
+                                 (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha= 'center', va = 'center',
+                    xytext= (0, 10),
+                    textcoords='offset points')
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
@@ -839,10 +884,9 @@ class TextAnalyzer():
             plt.close()  # close the plot
 
             return plot_path
-                
 
         else:
-            print()    
+            print()
 
     def __str__(self) -> str:
         toReturn = ""
@@ -1593,6 +1637,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     total_words_no_p = analyzer.totalWordsNoProper()
     unique_words_no_p = analyzer.uniqueWordsNoProper()
     avgWordLength = analyzer.avgWordLength()
+    top20NoDie300 = analyzer.top20NoDie300()
 
     # plot functions return the location of plot images
     freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1628,6 +1673,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "total_words_no_proper": total_words_no_p,
         "unique_words_no_proper": unique_words_no_p,
         "avg_word_length": avgWordLength,
+        "top20_NoDie300":top20NoDie300,
         "freq_plot_path": freq_relative_plot_path,
         "cum_lex_plot_path": cum_lex_relative_plot_path,
         "lin_lex_plot_path": lin_lex_relative_plot_path,
@@ -1644,6 +1690,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
 @router.get("/formulas")
 async def read_formulas(request: Request):
     return templates.TemplateResponse("stats-formulas.html", {"request": request})
+
 
 @router.get("/cumulative/{language}/")
 async def stats_cumulative(request: Request, language: str):
