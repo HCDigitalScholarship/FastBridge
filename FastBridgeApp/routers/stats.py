@@ -278,7 +278,7 @@ class TextAnalyzer():
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
             allwords = []
             for word_tuple in text_slice:
-                word = word_tuple[0]
+                word = word_tuple[2]
                 allwords.append(word)
             hapax_legomena = find_hapax_legomena(allwords)
             hapax_legomena = sorted(hapax_legomena)  # Sort the hapax legomena
@@ -518,9 +518,9 @@ class TextAnalyzer():
                 if word_tuple[0] in latin_dict:
                     if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
                         continue
-                    words.append(word_tuple[0])
+                    words.append(word_tuple[2])
                 else:
-                    words.append(word_tuple[0])
+                    words.append(word_tuple[2])
 
             word_counts = {}
 
