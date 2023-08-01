@@ -547,6 +547,65 @@ class TextAnalyzer():
                    # words.append(word)
 
     @round_decorator
+    def freqBinMetrics(self):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(
+                self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            # Go through the words of text_slice
+            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            words = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                # filter out proper nouns
+                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                    words.append(word)
+
+            count0_200 = 0
+            count201_500 = 0
+            count501_1000 = 0
+            count1001_1500 = 0
+            count1501_2500 = 0
+            count2500plus = 0
+
+            for word in words:
+                if word in latin_dict:
+                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                        count0_200 += 1
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 500:
+                        count201_500 += 1
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 500 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                        count501_1000 += 1
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
+                        count1001_1500 += 1
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
+                        count1501_2500 += 1
+                        continue
+                    if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
+                        count2500plus += 1
+                        continue
+
+            freq_0_200 = (count0_200/len(words))*100
+            freq_201_500 = (count201_500/len(words))*100
+            freq_501_1000 = (count501_1000/len(words))*100
+            freq_1001_1500 = (count1001_1500/len(words))*100
+            freq_1501_2500 = (count1501_2500/len(words))*100
+            freq_2500_plus = (count2500plus/len(words))*100
+
+            
+
+            return (freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500,freq_1501_2500,freq_2500_plus)
+
+        else:
+            print()
+             
+
+    @round_decorator
     def avgWordLength(self):
         if len(self.texts) == 0:
             return -1
@@ -689,13 +748,28 @@ class TextAnalyzer():
             sns.set_style("ticks")
             sns.set_context("paper")
             plt.figure(figsize=(10, 5))
+
+
+            #attempt at overlaying sections onto x axis, seems to be too many sections to render properly
+            # section_words = self.texts[0][0].sections
+
+            # # create a list of tick locations and labels
+            # tick_locations = list(section_words.values())
+            # tick_locations.pop(-1)
+            # tick_locations.pop(-2)
+
+            # tick_labels = list(section_words.keys())
+            # tick_labels.remove('start')
+            # tick_labels.remove('end')
+            
             sns.lineplot(x=x_indexes, y=smoothed_scores,
                          errorbar=None, color=colorblind_palette[6])
 
             # add a horizontal line representing the average linear lexical score
             plt.axhline(y=average_score,
                         color=colorblind_palette[4], linestyle='--')
-
+            
+         
             sns.despine()
             plt.title(
                 f"Linear Lexical Load of {self.texts[0][0].name}", **title_font)
@@ -713,6 +787,9 @@ class TextAnalyzer():
             # set font properties to x and y tick labels
             plt.setp(ax.get_xticklabels(), fontproperties=prop)
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
+
+
+
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
@@ -1638,6 +1715,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     unique_words_no_p = analyzer.uniqueWordsNoProper()
     avgWordLength = analyzer.avgWordLength()
     top20NoDie300 = analyzer.top20NoDie300()
+    freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
 
     # plot functions return the location of plot images
     freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1674,6 +1752,12 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "unique_words_no_proper": unique_words_no_p,
         "avg_word_length": avgWordLength,
         "top20_NoDie300":top20NoDie300,
+        "freq1":freqBin1,
+        "freq2":freqBin2,
+        "freq3": freqBin3,
+        "freq4": freqBin4,
+        "freq5":freqBin5,
+        "freq6":freqBin6,
         "freq_plot_path": freq_relative_plot_path,
         "cum_lex_plot_path": cum_lex_relative_plot_path,
         "lin_lex_plot_path": lin_lex_relative_plot_path,

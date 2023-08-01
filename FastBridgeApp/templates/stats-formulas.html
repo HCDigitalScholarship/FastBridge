@@ -1,13 +1,104 @@
 {% extends "base.html" %}
 {% block content %}
+
 <body>
-    <div class="container">
-        <h1 class="mt-5">Formulas Explanation</h1>
-        <p class="lead">Here you will find the explanations for the formulas used in our metrics.</p>
+    <header class="masthead"
+        style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        <div class="container">
+            <h1 class="mt-5">Formulas Explanation</h1>
+            <p class="lead">Here you will find the explanations for the formulas used in our metrics.</p>
 
-        <!-- You can add your formulas explanations here -->
+            <!-- Metrics -->
+            <section>
+                <h2>Metrics</h2>
+                <p>
+                    <strong>Word:</strong> For the purposes of these analyses, proper names (e.g., Marcus, Roma) are
+                    excluded from the
+                    calculations.
+                    <br>
+                    <strong>Number of Words:</strong> The total number of lemma in the text (i.e., “tokens” or N).
+                    <br>
+                    <strong>Vocabulary or Unique Words:</strong> The number of different words that appear in the text
+                    (i.e., “types” or
+                    V). All inflected forms of a word are considered as that word (e.g., “amico” and “amici”, or “agis”
+                    and
+                    “egerunt”)
+                    would count as a single type (“amicus” or “ago”).
+                    <br>
+                    <strong>LexR:</strong> A measurement of lexical readability on a 10-point scale for historical
+                    languages
+                    that blends
+                    data about word length, lexical high frequency, lexical sophistication, and lexical variation.
+                    <br>
+                    <strong>PLexR:</strong> PLexR calculates a text’s readability by replacing LexR’s generic parameters
+                    for
+                    lexical
+                    high frequency and lexical sophistication with customized core and non-core vocabularies.
+                    <br>
+                    <strong>Lexical Density:</strong> The number of lexical or content words (nouns, adjectives, verbs,
+                    and
+                    adverbs)
+                    divided by the total number of words in a text.
+                    <br>
+                    <strong>Lexical Sophistication:</strong> The number of unusual or advanced words in the text,
+                    defined as
+                    those words
+                    that are not in the Diederich 1500.
+                    <br>
+                    <strong>Lexical Variation:</strong> How often individual words are repeated within a text can also
+                    contribute to its
+                    lexical complexity. Because this metric is biased.
+                    <br>
+                    <strong>CTTR or Corrected TTR:</strong> Corrected TTR divides the number of types (V) by the
+                    square-root
+                    of 2 times
+                    the number of tokens (N).
+                    <br>
+                    <strong>Root TTR:</strong> Root TTR divides the number of types (V) by the square-root of the number
+                    tokens.
+                    <br>
+                    <strong>LogTTR or Herdan’s C:</strong> LogTTR divides the log of the number of types (V) by the log
+                    of
+                    the number of
+                    tokens (N).
+                    <br>
+                    <strong>TTR:</strong> The ratio of the number of unique words (“types”) to the total number of words
+                    (“tokens”).
+                    This formula exhibits bias against shorter texts.
+                </p>
+            </section>
 
-    </div>
+            <!-- Plots -->
+            <section>
+                <h2>Plots</h2>
+                <p>
+                    <strong>Word Frequency:</strong> plots a histogram of the most common words found in text selection,
+                    no
+                    exclusions.
+                    <br>
+                    <strong>Cumulative Lexical Load:</strong> assigns a lexical score to each word of the text, displays
+                    the
+                    ever-growing cumulative difficulty/load of the text.
+                    <br>
+                    <strong>Linear Lexical Load:</strong> assigns a lexical score to each word, displays the change in
+                    lexical load of the text selection.
+                    <br>
+                    <strong>Bin Frequency:</strong> displays the percentage of words in text selection that fall into
+                    certain frequency bins within the Diederich 1500.
+                </p>
+            </section>
+
+            <!-- Hapax -->
+            <section>
+                <h2>Hapax</h2>
+                <p>
+                    <strong>Hapax (legomenon):</strong> a word that only appears once in the selection.
+                </p>
+            </section>
+
+        </div>
+    </header>
 </body>
-</html>
 {% endblock %}
+
+</html>
