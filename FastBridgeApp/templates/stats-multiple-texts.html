@@ -1,0 +1,75 @@
+{% extends "stats-multiple-base.html" %}
+{% block content %}
+<!-- Style goes here -->
+<style>
+
+</style>
+
+
+<!-- HTML goes here -->
+
+<body id="page-top">
+    <header class="masthead"
+        style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-6">
+                    <select class="form-control" id="dropdown1">
+                        {% for name in textNames %}
+                        <option value="{{ loop.index0 }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-control" id="dropdown2">
+                        {% for name in textNames %}
+                        <option value="{{ loop.index0 }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-md-6" id="column1">
+                    <!-- The metrics and plots for the first dropdown choice will be inserted here -->
+                </div>
+                <div class="col-md-6" id="column2">
+                    <!-- The metrics and plots for the second dropdown choice will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </header>
+</body>
+
+
+{% block scripts %}
+<!-- Scripts go here -->
+<script>
+    // When a dropdown selection changes, update the corresponding column
+    $(document).ready(function () {
+        function updateColumn(dropdownId, columnId) {
+            var index = $('#' + dropdownId).val();
+
+            // Here, you would use JQuery to make an AJAX call to a new route in your Python app
+            // This route should accept an index, and return the HTML for the metrics and plots for that index
+            // Once the AJAX call receives the HTML, it updates the column with that HTML
+
+            $.get('/get_metrics_html', { index: index }, function (data) {
+                $('#' + columnId).html(data);
+            });
+        }
+
+        $('#dropdown1').change(function () {
+            updateColumn('dropdown1', 'column1');
+        });
+        $('#dropdown2').change(function () {
+            updateColumn('dropdown2', 'column2');
+        });
+
+        // Trigger a change on page load so the columns are populated with the initial selections
+        $('#dropdown1').change();
+        $('#dropdown2').change();
+    });
+</script>
+
+{% endblock %}
+{% endblock %}
