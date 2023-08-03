@@ -18,14 +18,19 @@
     <header class="masthead"
         style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
         <div class="container mt-5">
-            <div class="row">
-                <div class="dropdown-container">
+            <div class="dropdown-container">
+
+                <div class="row">
+                
                     <div class="col-md-6">
                         <select class="form-control" id="dropdown1" onchange="updateData('dropdown1')">
                             {% for name in textNames %}
                             <option value="{{ loop.index0 }}">{{ name }}</option>
                             {% endfor %}
                         </select>
+                        <div id="column1" class="mt-5">
+                            <!-- The metrics and plots for the first dropdown choice will be inserted here -->
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <select class="form-control" id="dropdown2" onchange="updateData('dropdown2')">
@@ -33,15 +38,10 @@
                             <option value="{{ loop.index0 }}">{{ name }}</option>
                             {% endfor %}
                         </select>
+                        <div id="column2" class="mt-5">
+                            <!-- The metrics and plots for the second dropdown choice will be inserted here -->
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="row mt-5">
-                <div class="col-md-6" id="column1">
-                    <!-- The metrics and plots for the first dropdown choice will be inserted here -->
-                </div>
-                <div class="col-md-6" id="column2">
-                    <!-- The metrics and plots for the second dropdown choice will be inserted here -->
                 </div>
             </div>
         </div>
@@ -62,16 +62,25 @@
 
         // Extract the sections from the current URL
         var urlParts = currentUrl.split("/");
-        var sections = urlParts[urlParts.length - 1];
+        console.log(urlParts)
+
+        //extract starts and ends
+        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
         var starts_and_ends = sections.split("-")
+        console.log(starts_and_ends)
         var starts = starts_and_ends[0].split("+")
         var ends = starts_and_ends[1].split("+")
+
+        //extract textname
+        var text_names_raw = urlParts[urlParts.length-4];
+        var text_names = text_names_raw.split("+")
+        var selected_text_filename = text_names[selectedIndex]
 
         var sectionStart = starts[selectedIndex];
         var sectionEnd = ends[selectedIndex];
 
         // Construct the URL for the GET request
-        var url = "/actualFastAPIEndpoint/" + textName + "/" + sectionStart + "-" + sectionEnd;
+        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd;
 
         // Make the GET request and update the page with the received data
         fetch(url)

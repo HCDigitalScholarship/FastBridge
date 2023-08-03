@@ -1848,32 +1848,81 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         return templates.TemplateResponse("stats-multiple-texts.html", context)
 
    
-@router.get("/get_metrics/{index}")
-async def get_metrics_html(request: Request, index: int):
-    # Assuming `context` is a globally defined dictionary storing the data
-    # Here, you would retrieve the metrics and plots for the given index from the context dictionary
+@router.get("/get_metrics/{text_name}/{section_start}-{section_end}")
+async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str):
     
-    text_name = context['textNames'][index]
-    text_start = context['textStarts'][index]
-    text_end = context['textEnds'][index]
-    word_count = context['wordsCounts'][index]
-    vocab_size = context['vocabSizes'][index]
-    hapax = context['hapaxes'][index]
-    # ...and so on for each metric in the context dictionary
+    context = {"request": request}
+    dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+    diederich_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+    dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+    analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+    
+    analyzer.add_text(text_name, "Latin", section_start, section_end)
+
+    textname = analyzer.get_textname()
+    word_count = analyzer.num_words()
+    vocab_size = analyzer.vocab_size()
+    hapax, hapax_percentage = analyzer.hapax_legonema()
+    lex_dens = analyzer.lex_density()
+    lex_sophistication = analyzer.lex_sophistication()
+    lex_variation = analyzer.lex_variation()
+    lex_r = analyzer.LexR()
+    total_words_no_p = analyzer.totalWordsNoProper()
+    unique_words_no_p = analyzer.uniqueWordsNoProper()
+    avgWordLength = analyzer.avgWordLength()
+    top20NoDie300 = analyzer.top20NoDie300()
+    freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+    
+    # plot functions return the location of plot images
+    freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
+    freq_relative_plot_path = os.path.relpath(
+        freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+
+    cum_lex_plot_path = analyzer.plot_cum_lex_load()
+    cum_lex_relative_plot_path = os.path.relpath(
+        cum_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+
+    lin_lex_plot_path = analyzer.plot_lin_lex_load()
+    lin_lex_relative_plot_path = os.path.relpath(
+        lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+
+    freq_bins_plot_path = analyzer.plot_freq_bin()
+    freq_bins_relative_plot_path = os.path.relpath(
+        freq_bins_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/'
+        )
+
+    context.update({
+            "request": request,
+            "text_name": textname,
+            "start_section": section_start,
+            "end_section": section_end,
+            "word_count": word_count,
+            "vocab_size": vocab_size,
+            "hapax_legonema": hapax,
+            "hapax_percentage": hapax_percentage,
+            "lexical_density": lex_dens,
+            "lexical_sophistication": lex_sophistication,
+            "lexical_variation": lex_variation,
+            "LexR": lex_r,
+            "total_words_no_proper": total_words_no_p,
+            "unique_words_no_proper": unique_words_no_p,
+            "avg_word_length": avgWordLength,
+            "top20_NoDie300":top20NoDie300,
+            "freq1":freqBin1,
+            "freq2":freqBin2,
+            "freq3": freqBin3,
+            "freq4": freqBin4,
+            "freq5":freqBin5,
+            "freq6":freqBin6,
+            "freq_plot_path": freq_relative_plot_path,
+            "cum_lex_plot_path": cum_lex_relative_plot_path,
+            "lin_lex_plot_path": lin_lex_relative_plot_path,
+            "freq_bins_plot_path": freq_bins_relative_plot_path
+        })
 
     # Then, you would render these to an HTML string using a new Jinja2 template
     # This new template should just contain the HTML for the metrics and plots
-    return templates.TemplateResponse('metrics_and_plots.html', 
-    {
-        "request": request, 
-        "textName": text_name, 
-        "textStart": text_start, 
-        "textEnd": text_end,
-        "wordCount": word_count,
-        "vocabSize": vocab_size,
-        "hapax": hapax,
-        # ...and so on for each metric in the context dictionary
-    })
+    return templates.TemplateResponse('metrics_and_plots.html',context)
 
 
 @router.get("/formulas")
