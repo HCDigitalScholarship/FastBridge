@@ -1789,11 +1789,12 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
                 dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
                 analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
             analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
+            analyzers.append(analyzer)
         
         #Used multiple TextAnalyzer's, account for dynamicism here
 
         # Getting Metrics, Hapax
-        text_names = [a.texts[0][0] for a in analyzers] 
+        text_names = [a.texts[0][0].name for a in analyzers] 
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
         word_counts = [a.num_words() for a in analyzers]
@@ -1817,6 +1818,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = i+(2*len(analyzers))) for i in range(len(analyzers))]
         freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = i+(3*len(analyzers))) for i in range(len(analyzers))]
         
+        print(text_names)
 
         #add analyzer stats from each text to context
         context.update({

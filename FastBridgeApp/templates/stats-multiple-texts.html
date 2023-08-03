@@ -2,6 +2,12 @@
 {% block content %}
 <!-- Style goes here -->
 <style>
+    .dropdown-container {
+        position: relative;
+        top: 100px;
+        /* adjust as necessary */
+    }
+</style>
 
 </style>
 
@@ -13,19 +19,21 @@
         style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
         <div class="container mt-5">
             <div class="row">
-                <div class="col-md-6">
-                    <select class="form-control" id="dropdown1">
-                        {% for name in textNames %}
-                        <option value="{{ loop.index0 }}">{{ name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <select class="form-control" id="dropdown2">
-                        {% for name in textNames %}
-                        <option value="{{ loop.index0 }}">{{ name }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="dropdown-container">
+                    <div class="col-md-6">
+                        <select class="form-control" id="dropdown1" onchange="updateData('dropdown1')">
+                            {% for name in textNames %}
+                            <option value="{{ loop.index0 }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-control" id="dropdown2" onchange="updateData('dropdown2')">
+                            {% for name in textNames %}
+                            <option value="{{ loop.index0 }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="row mt-5">
@@ -44,6 +52,86 @@
 {% block scripts %}
 <!-- Scripts go here -->
 <script>
+    function updateData(dropdownId) {
+        var selectElement = document.getElementById(dropdownId);
+        var selectedIndex = selectElement.selectedIndex;
+        var textName = selectElement.options[selectedIndex].text;
+
+        // Get the current URL
+        var currentUrl = window.location.href;
+
+        // Extract the sections from the current URL
+        var urlParts = currentUrl.split("/");
+        var sections = urlParts[urlParts.length - 1];
+        var starts_and_ends = sections.split("-")
+        var starts = starts_and_ends[0].split("+")
+        var ends = starts_and_ends[1].split("+")
+
+        var sectionStart = starts[selectedIndex];
+        var sectionEnd = ends[selectedIndex];
+
+        // Construct the URL for the GET request
+        var url = "/actualFastAPIEndpoint/" + textName + "/" + sectionStart + "-" + sectionEnd;
+
+        // Make the GET request and update the page with the received data
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                if (dropdownId === "dropdown1") {
+                    document.getElementById("column1").innerHTML = data;
+                } else if (dropdownId === "dropdown2") {
+                    document.getElementById("column2").innerHTML = data;
+                }
+            });
+    }
+</script>
+<!-- <script>
+    function updateData(dropdownId) {
+        var selectElement = document.getElementById(dropdownId);
+        var selectedOption = selectElement.options[selectElement.selectedIndex].value;
+        var selectedIndex = selectElement.selectedIndex;
+
+
+        console.log(selectedIndex)
+        console.log(selectedOption)
+        //Still need the Start and End Sections too
+        //Can probably get them if the javascript can also fetch the current URL
+
+        // Extract the information you need from the selected option
+        // This will depend on how you've set up your options
+        var textName = selectedOption;  // Replace with your own logic
+
+        // Get the current URL
+        var currentUrl = window.location.href;
+
+        // Extract the sections from the current URL
+        // This will depend on the format of your URLs
+        var urlParts = currentUrl.split("/");
+        var texts_filenames = urlParts[urlParts.length - 2]
+        var sections = urlParts[urlParts.length - 1];
+        var starts_and_ends = sections.split("-")
+        var starts = starts_and_ends[0].split("+")
+        var ends = starts_and_ends[1].split("+")
+
+        //get index of selected text from dropdown to indicate which choice from the URL
+        //or send back a URL with the real name of the text, look to see if we can match it with a filename in the text name dict
+        //or 3rd option, just pass the filename through the context and to the dropdown, can always fix later
+        //use this index to choose which starts and ends to request stuff from
+
+
+        // Construct the URL for the GET request
+        // This will depend on your FastAPI routes
+        var url = "/myEndpoint/" + textName + "/" + sectionStart + "-" + sectionEnd;
+
+        // Make the GET request and update the page with the received data
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("dataContainer").innerHTML = data;
+            });
+    }
+</script> -->
+<!-- <script>
     // When a dropdown selection changes, update the corresponding column
     $(document).ready(function () {
         function updateColumn(dropdownId, columnId) {
@@ -69,7 +157,7 @@
         $('#dropdown1').change();
         $('#dropdown2').change();
     });
-</script>
+</script> -->
 
 {% endblock %}
 {% endblock %}
