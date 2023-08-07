@@ -19,6 +19,7 @@ from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depen
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
+from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
@@ -1797,26 +1798,31 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         text_names = [a.texts[0][0].name for a in analyzers] 
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
-        word_counts = [a.num_words() for a in analyzers]
-        vocab_sizes = [a.vocab_size() for a in analyzers]
-        hapaxes_and_percentages = [a.hapax_legonema(tupleFlag=True) for a in analyzers]#(hapaxes[], percent_hapax)
-        # hapaxes, hapax_percentages = zip(*[a.hapax_legonema() for a in analyzers])
-        lex_densities = [a.lex_density() for a in analyzers]
-        lex_sophists = [a.lex_sophistication() for a in analyzers]
-        lex_variations = [a.lex_variation() for a in analyzers]
-        lex_rs = [a.LexR() for a in analyzers]
-        no_p_word_counts = [a.totalWordsNoProper() for a in analyzers]
-        no_p_vocab_sizes = [a.uniqueWordsNoProper() for a in analyzers]
-        avg_word_lengths = [a.avgWordLength() for a in analyzers]
-        characteristic_words = [a.top20NoDie300() for a in analyzers]
-        freq_bins = [a.freqBinMetrics() for a in analyzers]#(freq1,freq2,freq3,freq4,freq5,freq6)
+        # word_counts = [a.num_words() for a in analyzers]
+        # vocab_sizes = [a.vocab_size() for a in analyzers]
+        # hapaxes_and_percentages = [a.hapax_legonema(tupleFlag=True) for a in analyzers]#(hapaxes[], percent_hapax)
+        # # hapaxes, hapax_percentages = zip(*[a.hapax_legonema() for a in analyzers])
+        # lex_densities = [a.lex_density() for a in analyzers]
+        # lex_sophists = [a.lex_sophistication() for a in analyzers]
+        # lex_variations = [a.lex_variation() for a in analyzers]
+        # lex_rs = [a.LexR() for a in analyzers]
+        # no_p_word_counts = [a.totalWordsNoProper() for a in analyzers]
+        # no_p_vocab_sizes = [a.uniqueWordsNoProper() for a in analyzers]
+        # avg_word_lengths = [a.avgWordLength() for a in analyzers]
+        # characteristic_words = [a.top20NoDie300() for a in analyzers]
+        # freq_bins = [a.freqBinMetrics() for a in analyzers]#(freq1,freq2,freq3,freq4,freq5,freq6)
 
-        #Getting Plots
-        #we need to specify which plot path each plot will go to, use plot_num argument in each plot method
-        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = i) for i in range(len(analyzers))]
-        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = i+len(analyzers)) for i in range(len(analyzers))]
-        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = i+(2*len(analyzers))) for i in range(len(analyzers))]
-        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = i+(3*len(analyzers))) for i in range(len(analyzers))]
+        # #Getting Plots
+        # #we need to specify which plot path each plot will go to, use plot_num argument in each plot method
+        # this should cache all the plots in local memory
+        # word_freq_paths = [analyzers[i].plot_word_freq(plot_num = i) for i in range(len(analyzers))]
+        # cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = i+len(analyzers)) for i in range(len(analyzers))]
+        # lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = i+(2*len(analyzers))) for i in range(len(analyzers))]
+        # freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = i+(3*len(analyzers))) for i in range(len(analyzers))]
+        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
+        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
+        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
+        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
         
         print(text_names)
 
@@ -1825,21 +1831,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "request": request,
             "textNames": text_names,
             "textStarts": text_starts,
-            "textEnds": text_ends,
-            "wordsCounts": word_counts,
-            "vocabSizes": vocab_sizes,
-            "hapaxes_and_percents": hapaxes_and_percentages,
-            "lexDensities": lex_densities,
-            "lexRs": lex_rs,
-            "noPWordCounts": no_p_word_counts,
-            "noPVocabSizes": no_p_vocab_sizes,
-            "avgWordLengths": avg_word_lengths,
-            "characteristicWords": characteristic_words,
-            "freqBins": freq_bins,
-            "wordFreqPaths": word_freq_paths,
-            "cumLexPaths": cum_lex_plot_paths,
-            "linLexPaths": lin_lex_plot_paths,
-            "freqBinPaths": freq_bin_plot_paths
+            "textEnds": text_ends
         })
 
         #Create stats-multiple-texts.html, 2 columns, 2 dropdown menus
@@ -1848,8 +1840,8 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         return templates.TemplateResponse("stats-multiple-texts.html", context)
 
    
-@router.get("/get_metrics/{text_name}/{section_start}-{section_end}")
-async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str):
+@router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
+async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
     
     context = {"request": request}
     dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
@@ -1874,23 +1866,40 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
     
     # plot functions return the location of plot images
-    freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
+
+    #Technically, the analyzer before caches the plots in project local memory
+    #Since we onlyneed the path,render all the plots before hand to save space and pass
+    # the index through this router to identify which plots we're going with
+
+    plotpath_nums= [0,1,2,3]
+    if selected_index > 0:#if the selected index isn't the first set of graphs
+        plotpath_nums = [num+(4*selected_index) for num in plotpath_nums]
+
+    print(plotpath_nums)
+
+    # freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
+    freq_plot_path =  f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[0]}.png'
     freq_relative_plot_path = os.path.relpath(
         freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
 
-    cum_lex_plot_path = analyzer.plot_cum_lex_load()
+    # cum_lex_plot_path = analyzer.plot_cum_lex_load()
+    cum_lex_plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[1]}.png'
     cum_lex_relative_plot_path = os.path.relpath(
         cum_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
 
-    lin_lex_plot_path = analyzer.plot_lin_lex_load()
+    # lin_lex_plot_path = analyzer.plot_lin_lex_load()
+    lin_lex_plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[2]}.png'
     lin_lex_relative_plot_path = os.path.relpath(
         lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
 
-    freq_bins_plot_path = analyzer.plot_freq_bin()
+    # freq_bins_plot_path = analyzer.plot_freq_bin()
+    freq_bins_plot_path= f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[3]}.png'
     freq_bins_relative_plot_path = os.path.relpath(
         freq_bins_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/'
         )
-
+    
+    now = datetime.utcnow()#for caching issue with plots
+    
     context.update({
             "request": request,
             "text_name": textname,
@@ -1898,7 +1907,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
             "end_section": section_end,
             "word_count": word_count,
             "vocab_size": vocab_size,
-            "hapax_legonema": hapax,
+            "hapax_legomena": hapax,
             "hapax_percentage": hapax_percentage,
             "lexical_density": lex_dens,
             "lexical_sophistication": lex_sophistication,
@@ -1917,12 +1926,15 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
             "freq_plot_path": freq_relative_plot_path,
             "cum_lex_plot_path": cum_lex_relative_plot_path,
             "lin_lex_plot_path": lin_lex_relative_plot_path,
-            "freq_bins_plot_path": freq_bins_relative_plot_path
+            "freq_bins_plot_path": freq_bins_relative_plot_path,
+            "now": now
         })
+
+    
 
     # Then, you would render these to an HTML string using a new Jinja2 template
     # This new template should just contain the HTML for the metrics and plots
-    return templates.TemplateResponse('metrics_and_plots.html',context)
+    return templates.TemplateResponse('stats-column-data.html',context)
 
 
 @router.get("/formulas")

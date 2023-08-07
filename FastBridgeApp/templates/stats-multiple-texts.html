@@ -9,7 +9,7 @@
     }
 </style>
 
-</style>
+
 
 
 <!-- HTML goes here -->
@@ -44,6 +44,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </header>
 </body>
@@ -80,7 +81,7 @@
         var sectionEnd = ends[selectedIndex];
 
         // Construct the URL for the GET request
-        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd;
+        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd + "/"+selectedIndex;
 
         // Make the GET request and update the page with the received data
         fetch(url)
