@@ -37,12 +37,26 @@
         /* Add a scrollbar when content overflows */
         margin-bottom: 100px;
     }
- 
 
+    h2 {
+        margin-top: 50px;
+    }
+
+    .plot-img {
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    .statistics-list-words li {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
 </style>
 
 <div class="container mt-5">
     <div class="content-container">
+        <h1>{{ text_name }}</h1>
         <h2>Metrics</h2>
         <div class="row">
             <div class="col-md-12">
@@ -237,14 +251,14 @@
             {{ plots|safe }}
         </div> -->
             <div id="plots">
-                <img id="freqPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}?v={{ now }}"
-                    alt="Plot Image">
-                <img id="cumLexPlot" class="plot-img" src="{{ request.url_for('plots', path=cum_lex_plot_path) }}?v={{ now }}"
-                    alt="Plot Image">
-                <img id="linLexPlot" class="plot-img" src="{{ request.url_for('plots', path=lin_lex_plot_path) }}?v={{ now }}"
-                    alt="Plot Image">
-                <img id="freqBinPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_bins_plot_path) }}?v={{ now }}"
-                    alt="Plot Image">
+                <img id="freqPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=freq_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="cumLexPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=cum_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="linLexPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=lin_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="freqBinPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=freq_bins_plot_path) }}?v={{ now }}" alt="Plot Image">
                 <!-- <img id="freqPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}"
                     alt="Plot Image">
                 <img id="cumLexPlot" class="plot-img" src="{{ request.url_for('plots', path=cum_lex_plot_path) }}"
@@ -266,7 +280,7 @@
         <h2>20 Most Characteristic Words</h2>
         <div class="row">
             <div class="col-md-12">
-                <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
+                <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
                     {% for word in top20_NoDie300 %}
                     <li>{{ word }}</li>
                     {% endfor %}
@@ -277,7 +291,7 @@
         <h2>Hapax Legomena</h2>
         <div class="row">
             <div class="col-md-12">
-                <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
+                <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
                     {% for word in hapax_legomena %}
                     <li>{{ word }}</li>
                     {% endfor %}

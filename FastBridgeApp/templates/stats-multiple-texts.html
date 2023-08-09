@@ -7,6 +7,27 @@
         top: 100px;
         /* adjust as necessary */
     }
+
+    .loader {
+        border: 16px solid #f3f3f3;
+        /* Light grey */
+        border-top: 16px solid #3498db;
+        /* Blue */
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 
 
@@ -14,21 +35,23 @@
 
 <!-- HTML goes here -->
 
-<body id="page-top">
+<body id="page-top" onload="handlePageLoad()">
     <header class="masthead"
         style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
         <div class="container mt-5">
             <div class="dropdown-container">
 
                 <div class="row">
-                
+
                     <div class="col-md-6">
                         <select class="form-control" id="dropdown1" onchange="updateData('dropdown1')">
                             {% for name in textNames %}
                             <option value="{{ loop.index0 }}">{{ name }}</option>
                             {% endfor %}
                         </select>
+                        <div class="loader" id="loader1" style="display: none;"></div>
                         <div id="column1" class="mt-5">
+
                             <!-- The metrics and plots for the first dropdown choice will be inserted here -->
                         </div>
                     </div>
@@ -38,7 +61,9 @@
                             <option value="{{ loop.index0 }}">{{ name }}</option>
                             {% endfor %}
                         </select>
+                        <div class="loader" id="loader2" style="display: none;"></div>
                         <div id="column2" class="mt-5">
+
                             <!-- The metrics and plots for the second dropdown choice will be inserted here -->
                         </div>
                     </div>
@@ -52,8 +77,10 @@
 
 {% block scripts %}
 <!-- Scripts go here -->
+<!-- updateData -->
 <script>
     function updateData(dropdownId) {
+
         var selectElement = document.getElementById(dropdownId);
         var selectedIndex = selectElement.selectedIndex;
         var textName = selectElement.options[selectedIndex].text;
@@ -73,7 +100,7 @@
         var ends = starts_and_ends[1].split("+")
 
         //extract textname
-        var text_names_raw = urlParts[urlParts.length-4];
+        var text_names_raw = urlParts[urlParts.length - 4];
         var text_names = text_names_raw.split("+")
         var selected_text_filename = text_names[selectedIndex]
 
@@ -81,7 +108,17 @@
         var sectionEnd = ends[selectedIndex];
 
         // Construct the URL for the GET request
-        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd + "/"+selectedIndex;
+        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd + "/" + selectedIndex;
+
+
+        // Show the loader before starting the request
+        var loaderElement;
+        if (dropdownId === "dropdown1") {
+            loaderElement = document.getElementById("loader1");
+        } else if (dropdownId === "dropdown2") {
+            loaderElement = document.getElementById("loader2");
+        }
+        loaderElement.style.display = "block";
 
         // Make the GET request and update the page with the received data
         fetch(url)
@@ -92,8 +129,86 @@
                 } else if (dropdownId === "dropdown2") {
                     document.getElementById("column2").innerHTML = data;
                 }
+                // Hide the loader after the request is complete
+                loaderElement.style.display = "none";
             });
     }
+</script>
+<!-- updateData for default selection -->
+<script>
+    function updateDataDefault(dropdownId) {
+        var selectElement = document.getElementById(dropdownId);
+        var selectedIndex;
+
+        if (dropdownId === "dropdown1") {
+            selectedIndex = 0; // default to the first option for dropdown1
+        } else if (dropdownId === "dropdown2") {
+            selectedIndex = 1; // default to the second option for dropdown2
+        } else {
+            selectedIndex = selectElement.selectedIndex; // keep this as a fallback
+        }
+
+        var textName = selectElement.options[selectedIndex].text;
+        // var selectElement = document.getElementById(dropdownId);
+        // var selectedIndex = selectElement.selectedIndex;
+        // var textName = selectElement.options[selectedIndex].text;
+
+        // Get the current URL
+        var currentUrl = window.location.href;
+
+        // Extract the sections from the current URL
+        var urlParts = currentUrl.split("/");
+        console.log(urlParts)
+
+        //extract starts and ends
+        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
+        var starts_and_ends = sections.split("-")
+        console.log(starts_and_ends)
+        var starts = starts_and_ends[0].split("+")
+        var ends = starts_and_ends[1].split("+")
+
+        //extract textname
+        var text_names_raw = urlParts[urlParts.length - 4];
+        var text_names = text_names_raw.split("+")
+        var selected_text_filename = text_names[selectedIndex]
+
+        var sectionStart = starts[selectedIndex];
+        var sectionEnd = ends[selectedIndex];
+
+        // Construct the URL for the GET request
+        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd + "/" + selectedIndex;
+
+
+        // Show the loader before starting the request
+        var loaderElement;
+        if (dropdownId === "dropdown1") {
+            loaderElement = document.getElementById("loader1");
+        } else if (dropdownId === "dropdown2") {
+            loaderElement = document.getElementById("loader2");
+        }
+        loaderElement.style.display = "block";
+
+        // Make the GET request and update the page with the received data
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                if (dropdownId === "dropdown1") {
+                    document.getElementById("column1").innerHTML = data;
+                } else if (dropdownId === "dropdown2") {
+                    document.getElementById("column2").innerHTML = data;
+                }
+                // Hide the loader after the request is complete
+                loaderElement.style.display = "none";
+            });
+    }
+</script>
+<!-- Default Selections on Page Load -->
+<script>
+    function handlePageLoad() {
+        updateDataDefault('dropdown1');
+        updateDataDefault('dropdown2');
+    }
+
 </script>
 <!-- <script>
     function updateData(dropdownId) {

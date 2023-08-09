@@ -940,7 +940,7 @@ class TextAnalyzer():
             barplot = sns.barplot(
                 x='Frequency Range', y='Percentage of Words', data=df, palette=colorblind_palette)
             sns.despine()
-            plt.title('Percentage of Words in Frequency Ranges', **
+            plt.title(f'Percentage of Words in Frequency Ranges of {self.texts[0][0].name}', **
                       title_font)            # Get the current Axes instance
             ax = plt.gca()
 
