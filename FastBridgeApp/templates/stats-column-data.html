@@ -1,37 +1,37 @@
 <style>
-    .statistics-list {
+    /* .statistics-list {
         list-style-type: none;
-        /* removes bullet points */
+        
         text-align: left;
-        /* aligns text to the left */
+        
         width: fit-content;
-        /* fits the width to its content */
+        
         margin: 0 auto;
-        /* centers the block */
+        
         padding: 0;
-    }
+    } */
 
-    .statistics-list li {
+    /* .statistics-list li {
         font-size: 16px;
         padding: 5px 0;
-        /* adds some vertical spacing between list items */
-    }
+        
+    } */
 
-    .statistics-list .label {
+    /* .statistics-list .label {
         font-weight: bold;
-        /* makes the label bold */
+        
         padding-right: 10px;
-        /* adds some space between label and value */
-    }
+        
+    } */
 
     .content-container {
         background: rgba(0, 0, 0, 0.5);
         /* Black background with 50% opacity */
         color: white;
         /* White text */
-        padding: 20px;
+        padding: 5px;
         /* Some padding */
-        max-height: 600px;
+        max-height: 4000px;
         /* Maximum height */
         overflow-y: auto;
         /* Add a scrollbar when content overflows */
@@ -51,6 +51,38 @@
         display: inline-block;
         margin-right: 10px;
         margin-bottom: 10px;
+    }
+
+    .statistics-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .list-item-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+    }
+
+    .label-container,
+    .value-container {
+        flex: 1;
+        margin-right: 10px;
+        /* give a little spacing between them */
+    }
+
+    .label {
+        font-weight: bold;
+    }
+    
+    .label-container{
+        text-align: left;
+    }
+
+    .value-container {
+        text-align: right;
+        /* aligns the values to the right */
     }
 </style>
 
