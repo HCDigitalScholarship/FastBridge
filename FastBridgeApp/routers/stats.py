@@ -33,6 +33,10 @@ Diederich 300,1500 -> FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbri
 DCC -> FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv
 '''
 
+# Get the directory containing the current script.
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+parent_dir = os.path.dirname(current_dir)
 
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
@@ -90,9 +94,11 @@ def get_latin_dictionary(file_path):  # for reading in DICTIONARY file
             # word_dictionary[row["TITLE"]] = row
     return word_dictionary
 
+# Construct the path to the CSV file relative to the script's directory.
+latin_dict_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
 
 latin_dict, elapsed_time = get_latin_dictionary(
-    "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv")
+    latin_dict_path)
 print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
 
 # Get Diederich
@@ -108,10 +114,12 @@ def create_hashtable_from_csv(file_path):
                                        'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
     return hashtable
 
+# Construct the path to the CSV file relative to the script's directory.
+diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
 
 print(os.getcwd())
 diederich, diederich_time = create_hashtable_from_csv(
-    "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+    diederich_path)
 print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
 
 # Get DCC
@@ -659,7 +667,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -696,7 +704,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -798,7 +806,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -871,7 +879,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -961,7 +969,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -1217,7 +1225,7 @@ def get_lexical_sophistication(text_object: Text, start_section, end_section):
         text_slice = text_object.words
 
     hashTable = create_hashtable_from_csv(
-        "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
+        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
 
     rareCount = 0
     totalWords = 0
@@ -1362,7 +1370,7 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
 def get_lex_r(text_object: Text, start_section, end_section):
     # Get the Diederich 300 -> Adjusted CSV method
     diederich300 = set()
-    with open("/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
+    with open("/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         count = 0
         for row in reader:
@@ -1373,10 +1381,10 @@ def get_lex_r(text_object: Text, start_section, end_section):
                 break
 
     dcc = create_word_set(
-        "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv")
+        "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv")
 
     diederich1500 = create_word_set(
-        "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
 
     # Stats boilerplate
     start_index = text_object.sections[start_section]
@@ -1696,9 +1704,15 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         running_list = False
 
     if language == "Latin":
-        dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-        diederich_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-        dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+
+        # Construct the path to the CSV file relative to the script's directory.
+        dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
+        diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
+        dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
+
+        # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+        # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+        # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
         analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
     else:  # Greek -> Change this when you put in the Greek files
         analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv",
@@ -1726,19 +1740,19 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
         freq_relative_plot_path = os.path.relpath(
-            freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+            freq_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
         cum_lex_plot_path = analyzer.plot_cum_lex_load()
         cum_lex_relative_plot_path = os.path.relpath(
-            cum_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+            cum_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
         lin_lex_plot_path = analyzer.plot_lin_lex_load()
         lin_lex_relative_plot_path = os.path.relpath(
-            lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+            lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
         freq_bins_plot_path = analyzer.plot_freq_bin()
         freq_bins_relative_plot_path = os.path.relpath(
-            freq_bins_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/'
+            freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
         )
 
         context.update({
@@ -1785,9 +1799,9 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         analyzers = []
         for i in range(len(analyzer_texts)):
             if language == "Latin":
-                dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-                diederich_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-                dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+                dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+                diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+                dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
                 analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
             analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
             analyzers.append(analyzer)
@@ -1844,9 +1858,9 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
     
     context = {"request": request}
-    dictionary_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-    diederich_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-    dcc_path = "/home/microbeta/crim/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+    dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+    diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+    dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
     analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
     
     analyzer.add_text(text_name, "Latin", section_start, section_end)
@@ -1878,24 +1892,24 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     print(plotpath_nums)
 
     # freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
-    freq_plot_path =  f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[0]}.png'
+    freq_plot_path =  f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[0]}.png'
     freq_relative_plot_path = os.path.relpath(
-        freq_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+        freq_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
     # cum_lex_plot_path = analyzer.plot_cum_lex_load()
-    cum_lex_plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[1]}.png'
+    cum_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[1]}.png'
     cum_lex_relative_plot_path = os.path.relpath(
-        cum_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+        cum_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
     # lin_lex_plot_path = analyzer.plot_lin_lex_load()
-    lin_lex_plot_path = f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[2]}.png'
+    lin_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[2]}.png'
     lin_lex_relative_plot_path = os.path.relpath(
-        lin_lex_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/')
+        lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
     # freq_bins_plot_path = analyzer.plot_freq_bin()
-    freq_bins_plot_path= f'/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[3]}.png'
+    freq_bins_plot_path= f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[3]}.png'
     freq_bins_relative_plot_path = os.path.relpath(
-        freq_bins_plot_path, start='/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots/'
+        freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
         )
     
     now = datetime.utcnow()#for caching issue with plots

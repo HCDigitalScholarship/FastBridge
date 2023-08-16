@@ -40,6 +40,12 @@ Follow [these instructions](https://stackoverflow.com/a/39065422) to add your lo
 
 ## 3. Finish installing requirements and run local server:
 
+python 3.8
+cltk, numpy, protobuf,  stanza left blank in requirements.txt
+PyYAML==6.0.1
+may have to pip install pybind11 before cltk
+
+
 `pip install -r requirements.txt`
 
 `heroku local`
