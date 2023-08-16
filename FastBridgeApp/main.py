@@ -51,7 +51,9 @@ app_path = Path.cwd()
 
 static_path = app_path / "static" / "assets"
 app.mount("/assets", StaticFiles(directory=static_path), name="assets")
-app.mount("/plots", StaticFiles(directory="/home/microbeta/crim/FastBridge/FastBridgeApp/static/assets/plots"), name="plots")#for stats
+
+plot_path = static_path / "plots"
+app.mount("/plots", StaticFiles(directory=plot_path), name="plots")#for stats
 
 @app.get("/")
 async def index(request : Request):

@@ -36,7 +36,7 @@ DCC -> FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv
 # Get the directory containing the current script.
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-parent_dir = os.path.dirname(current_dir)
+parent_dir = os.path.dirname(current_dir)#FastBridgeApp
 
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
@@ -665,9 +665,15 @@ class TextAnalyzer():
             plt.setp(ax.get_xticklabels(), fontproperties=prop)
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
+            
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
+
+            #/Users/mikerabayda/repos/github.com/public/FastBridge/FastBridgeApp/static/assets/plots/plot0.png
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            #plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            print(plot_path)
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -705,12 +711,15 @@ class TextAnalyzer():
             # Save plot as an image file instead of showing
             # replace with the actual path and name
             plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
+
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, rolling_window_size=25, plot_num = 3):
+    def plot_lin_lex_load(self, rolling_window_size=50, plot_num = 3):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -807,6 +816,9 @@ class TextAnalyzer():
             # Save plot as an image file instead of showing
             # replace with the actual path and name
             plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
+
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -880,6 +892,8 @@ class TextAnalyzer():
             # Save plot as an image file instead of showing
             # replace with the actual path and name
             plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -970,6 +984,8 @@ class TextAnalyzer():
             # Save plot as an image file instead of showing
             # replace with the actual path and name
             plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -1704,7 +1720,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         running_list = False
 
     if language == "Latin":
-
+        
         # Construct the path to the CSV file relative to the script's directory.
         dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
         diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
@@ -1799,9 +1815,14 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         analyzers = []
         for i in range(len(analyzer_texts)):
             if language == "Latin":
-                dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-                diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-                dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+                # Construct the path to the CSV file relative to the script's directory.
+                dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
+                diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
+                dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
+
+                # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+                # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+                # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
                 analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
             analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
             analyzers.append(analyzer)
@@ -1858,9 +1879,12 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
     
     context = {"request": request}
-    dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-    diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-    dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+    # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
+    # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
+    # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
+    dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
+    diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
+    dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
     analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
     
     analyzer.add_text(text_name, "Latin", section_start, section_end)
