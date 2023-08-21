@@ -40,7 +40,11 @@
         background-repeat: no-repeat;
         background-attachment: fixed;
         /* this will make the background fixed even when scrolling */
-    
+
+    .masthead {
+    padding-top: 80px;  /* Adjust this value according to the height of your navbar */
+}
+
 </style>
 
 
@@ -49,9 +53,47 @@
 <!-- HTML goes here -->
 
 <body id="page-top" onload="handlePageLoad()">
-    <header class="masthead" style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+    <header class="masthead"
+        style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
         <!--  -->
         <div class="container mt-5">
+            <!-- Title Section Start -->
+            <div class="title-section text-center">
+                <h2>Stats: Compare</h2>
+                <button id="add-text-btn" class="btn btn-primary">Add New Text</button>
+                <button id="delete-text-btn" class="btn btn-danger">Delete Text</button>
+
+                <!-- Add New Text Dropdowns & Submit Button -->
+                <div id="add-new-dropdowns-container" style="display: none;">
+                    <select class="form-control" id="new-dropdown1" onchange="updateDropdowns()">
+                        <!-- Options go here -->
+                        {% for key in texts_and_sections.keys() %}
+                        <option value="{{ key }}">{{ key }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-control" id="new-dropdown2">
+                        <!-- Options go here -->
+                    </select>
+                    <select class="form-control" id="new-dropdown3">
+                        <!-- Options go here -->
+                    </select>
+                    <button id="back-btn-1" class="btn btn-secondary">Back</button>
+                    <button id="submit-btn" class="btn btn-success">Submit</button>
+                </div>
+
+                <!-- Delete Text Dropdowns & Submit Button -->
+                <div id="delete-dropdowns-container" style="display: none;">
+                    <select class="form-control" id="del-dropdown1">
+                        <!-- Options go here -->
+                        {% for name in textNames %}
+                        <option value="{{ loop.index0 }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="back-btn-2" class="btn btn-secondary" >Back</button>
+                    <button id="del-submit-btn" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+            <!-- Title Section End -->
             <div class="dropdown-container">
 
                 <div class="row">
@@ -215,87 +257,257 @@
             });
     }
 </script>
-<!-- Default Selections on Page Load -->
+<!-- Add New Text Button -->
 <script>
-    function handlePageLoad() {
-        updateDataDefault('dropdown1');
-        updateDataDefault('dropdown2');
-    }
+    document.getElementById("add-text-btn").addEventListener("click", function () {
+        // Hide 'Add New Text' button
+        document.getElementById("add-text-btn").style.display = "none";
 
+        // Hide 'Delete Text' button
+        document.getElementById("delete-text-btn").style.display = "none";
+        // Show dropdowns & submit button
+        document.getElementById("add-new-dropdowns-container").style.display = "block";
+    });
 </script>
-<!-- <script>
-    function updateData(dropdownId) {
-        var selectElement = document.getElementById(dropdownId);
-        var selectedOption = selectElement.options[selectElement.selectedIndex].value;
-        var selectedIndex = selectElement.selectedIndex;
+
+<!-- Delete Text Button -->
+<script>
+    document.getElementById("delete-text-btn").addEventListener("click", function () {
+        // Hide 'Add New Text' button
+        document.getElementById("add-text-btn").style.display = "none";
+        // Hide 'Delete Text' button
+        document.getElementById("delete-text-btn").style.display = "none";
+
+        // Show dropdowns & submit button
+        document.getElementById("delete-dropdowns-container").style.display = "block";
+    });
+</script>
+
+<!-- Dropdowns 2, 3 for Add New Text -->
+<script>
+
+    var textsAndSections = {{ texts_and_sections| tojson | safe }};
+
+    function updateDropdowns() {
+        // Get the selected key from dropdown1
+        var selectedKey = document.getElementById("new-dropdown1").value;
+        console.log(selectedKey);
+        // Get the corresponding object from textsAndSections dictionary
+        var sectionObj = textsAndSections[selectedKey];
+
+        // Convert the object to a list of section numbers
+        var sections = Object.keys(sectionObj);
 
 
-        console.log(selectedIndex)
-        console.log(selectedOption)
-        //Still need the Start and End Sections too
-        //Can probably get them if the javascript can also fetch the current URL
+        // Get the corresponding value from textsAndSections dictionary
+        // var sections = textsAndSections[selectedKey];
 
-        // Extract the information you need from the selected option
-        // This will depend on how you've set up your options
-        var textName = selectedOption;  // Replace with your own logic
+        console.log(sections)
+        // Get references to dropdown2 and dropdown3
+        var dropdown2 = document.getElementById("new-dropdown2");
+        var dropdown3 = document.getElementById("new-dropdown3");
+
+        // Clear existing options from dropdown2 and dropdown3
+        dropdown2.innerHTML = '';
+        dropdown3.innerHTML = '';
+
+        // Populate dropdown2 and dropdown3 with sections
+        sections.forEach(function (section) {
+            var option2 = document.createElement("option");
+            option2.text = section;
+            option2.value = section;
+            dropdown2.add(option2);
+
+            var option3 = document.createElement("option");
+            option3.text = section;
+            option3.value = section;
+            dropdown3.add(option3);
+        });
+    }
+</script>
+
+<!-- 'Add New Text' Submit button -->
+<script>
+    document.getElementById("submit-btn").addEventListener("click", function () {
+
+        var textname = document.getElementById("new-dropdown1").value;
+        var section_start = document.getElementById("new-dropdown2").value;
+        var section_end = document.getElementById("new-dropdown3").value;
 
         // Get the current URL
         var currentUrl = window.location.href;
 
         // Extract the sections from the current URL
-        // This will depend on the format of your URLs
         var urlParts = currentUrl.split("/");
-        var texts_filenames = urlParts[urlParts.length - 2]
-        var sections = urlParts[urlParts.length - 1];
+        console.log(urlParts)
+
+        //extract starts and ends
+        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
         var starts_and_ends = sections.split("-")
+        console.log(starts_and_ends)
         var starts = starts_and_ends[0].split("+")
         var ends = starts_and_ends[1].split("+")
 
-        //get index of selected text from dropdown to indicate which choice from the URL
-        //or send back a URL with the real name of the text, look to see if we can match it with a filename in the text name dict
-        //or 3rd option, just pass the filename through the context and to the dropdown, can always fix later
-        //use this index to choose which starts and ends to request stuff from
+        //extract text names
+        var text_names_raw = urlParts[urlParts.length - 4];
+        var text_names = text_names_raw.split("+")
 
+        //add new selected text, starts, ends to array
+        text_names.push(textname)
+        starts.push(section_start)
+        ends.push(section_end)
 
-        // Construct the URL for the GET request
-        // This will depend on your FastAPI routes
-        var url = "/myEndpoint/" + textName + "/" + sectionStart + "-" + sectionEnd;
+        //put text_names, starts, ends back into proper string URL format
+        textnames_url = ""
+        starts_url = ""
+        ends_url = ""
 
-        // Make the GET request and update the page with the received data
-        fetch(url)
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("dataContainer").innerHTML = data;
-            });
-    }
-</script> -->
-<!-- <script>
-    // When a dropdown selection changes, update the corresponding column
-    $(document).ready(function () {
-        function updateColumn(dropdownId, columnId) {
-            var index = $('#' + dropdownId).val();
-
-            // Here, you would use JQuery to make an AJAX call to a new route in your Python app
-            // This route should accept an index, and return the HTML for the metrics and plots for that index
-            // Once the AJAX call receives the HTML, it updates the column with that HTML
-
-            $.get('/get_metrics_html', { index: index }, function (data) {
-                $('#' + columnId).html(data);
-            });
+        for (var i = 0; i < text_names.length; i++) {
+            if (i != text_names.length - 1) {
+                textnames_url += (text_names[i] + "+")
+            }
+            else {
+                textnames_url += text_names[i]
+            }
+        }
+        for (var i = 0; i < starts.length; i++) {
+            if (i != starts.length - 1) {
+                starts_url += (starts[i] + "+")
+            }
+            else {
+                starts_url += starts[i]
+            }
+        }
+        for (var i = 0; i < ends.length; i++) {
+            if (i != ends.length - 1) {
+                ends_url += (ends[i] + "+")
+            }
+            else {
+                ends_url += ends[i]
+            }
         }
 
-        $('#dropdown1').change(function () {
-            updateColumn('dropdown1', 'column1');
-        });
-        $('#dropdown2').change(function () {
-            updateColumn('dropdown2', 'column2');
-        });
+        // Construct the URL for the GET request
+        var url = "/stats/Latin/result/" + textnames_url + "/" + starts_url + "-" + ends_url + "/non_running"
 
-        // Trigger a change on page load so the columns are populated with the initial selections
-        $('#dropdown1').change();
-        $('#dropdown2').change();
+        //redirect to the URL
+        window.location.href = url
     });
-</script> -->
+</script>
+
+<!-- 'Delete Text' Submit button -->
+<script>
+    document.getElementById("del-submit-btn").addEventListener("click", function () {
+
+        var selectElement = document.getElementById("del-dropdown1");
+        var selectedIndex = selectElement.selectedIndex;
+
+        var textname = document.getElementById("del-dropdown1").value;
+
+
+        // Get the current URL
+        var currentUrl = window.location.href;
+
+        // Extract the sections from the current URL
+        var urlParts = currentUrl.split("/");
+        console.log(urlParts)
+
+        //extract starts and ends
+        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
+        var starts_and_ends = sections.split("-")
+        console.log(starts_and_ends)
+        var starts = starts_and_ends[0].split("+")
+        var ends = starts_and_ends[1].split("+")
+
+        //extract text names
+        var text_names_raw = urlParts[urlParts.length - 4];
+        var text_names = text_names_raw.split("+")
+
+        //add new selected text, starts, ends to array
+        text_names.splice(selectedIndex, 1)
+        starts.splice(selectedIndex, 1)
+        ends.push(selectedIndex, 1)
+
+        //put text_names, starts, ends back into proper string URL format
+        textnames_url = ""
+        starts_url = ""
+        ends_url = ""
+
+        for (var i = 0; i < text_names.length; i++) {
+            if (i != text_names.length - 1) {
+                textnames_url += (text_names[i] + "+")
+            }
+            else {
+                textnames_url += text_names[i]
+            }
+        }
+        for (var i = 0; i < starts.length; i++) {
+            if (i != starts.length - 1) {
+                starts_url += (starts[i] + "+")
+            }
+            else {
+                starts_url += starts[i]
+            }
+        }
+        for (var i = 0; i < ends.length; i++) {
+            if (i != ends.length - 1) {
+                ends_url += (ends[i] + "+")
+            }
+            else {
+                ends_url += ends[i]
+            }
+        }
+
+        // Construct the URL for the GET request
+        var url = "/stats/Latin/result/" + textnames_url + "/" + starts_url + "-" + ends_url + "/non_running"
+
+        //redirect to the URL
+        window.location.href = url
+    });
+</script>
+
+<!-- Back buttons -->
+<script>
+    document.getElementById("back-btn-1").addEventListener("click", function () {
+        // Show 'Add New Text' button
+        document.getElementById("add-text-btn").style.display = "flex";
+
+        // Show 'Delete Text' button
+        document.getElementById("delete-text-btn").style.display = "flex";
+
+        // Hide dropdowns & submit button
+        document.getElementById("add-new-dropdowns-container").style.display = "none";
+        //document.getElementById("delete-dropdowns-container").style.display = "none";
+
+    });
+</script>
+<script>
+    document.getElementById("back-btn-2").addEventListener("click", function () {
+        // Show 'Add New Text' button
+        document.getElementById("add-text-btn").style.display = "flex";
+
+        // Show 'Delete Text' button
+        document.getElementById("delete-text-btn").style.display = "flex";
+
+        // Hide dropdowns & submit button
+        //document.getElementById("add-new-dropdowns-container").style.display = "none";
+        document.getElementById("delete-dropdowns-container").style.display = "none";
+
+    });
+</script>
+<!-- Default Selections on Page Load -->
+<script>
+    function handlePageLoad() {
+        updateDataDefault('dropdown1');
+        updateDataDefault('dropdown2');
+        updateDropdowns()
+
+
+    }
+
+
+</script>
+
 
 {% endblock %}
 {% endblock %}

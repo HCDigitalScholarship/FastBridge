@@ -518,6 +518,7 @@ class TextAnalyzer():
             print()
 
     def top20NoDie300(self):
+        properNounCats = ["1", "T"]
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -528,12 +529,14 @@ class TextAnalyzer():
             words = []
 
             for word_tuple in text_slice:
-                if word_tuple[0] in latin_dict:
-                    if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
-                        continue
-                    words.append(word_tuple[2])
-                else:
-                    words.append(word_tuple[2])
+                if word_tuple[0] in self.dictionary:
+                        if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
+                            if word_tuple[0] in latin_dict:
+                                if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
+                                    continue
+                                words.append(word_tuple[2])
+                            else:
+                                words.append(word_tuple[2])
 
             word_counts = {}
 
@@ -1804,7 +1807,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         print(f"lin lex rel path: {lin_lex_relative_plot_path}")
         print(f"freq bins rel path: {freq_bins_relative_plot_path}")
         return templates.TemplateResponse("stats-single-text.html", context)
-    else:#multiple texts have been added
+    else:#multiple texts have been added - Stats: Compare
 
         #Get text information from URL
         analyzer_texts = sourcetexts.split('+')
@@ -1861,12 +1864,16 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         
         print(text_names)
 
+        texts_and_sections = DefinitionTools.get_sections("Latin")
+
+
         #add analyzer stats from each text to context
         context.update({
             "request": request,
             "textNames": text_names,
             "textStarts": text_starts,
-            "textEnds": text_ends
+            "textEnds": text_ends,
+            "texts_and_sections": texts_and_sections
         })
 
         #Create stats-multiple-texts.html, 2 columns, 2 dropdown menus

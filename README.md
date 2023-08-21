@@ -40,11 +40,29 @@ Follow [these instructions](https://stackoverflow.com/a/39065422) to add your lo
 
 ## 3. Finish installing requirements and run local server:
 
-python 3.8
-cltk, numpy, protobuf,  stanza left blank in requirements.txt
-PyYAML==6.0.1
-may have to pip install pybind11 before cltk
+Notes from Mike Rabayda:
 
+Use python 3.8 -> python 3.7 is now deprecated
+
+if cltk, numpy, protobuf,  stanza have version numbers specified in requirements.txt, remove them, let pip do the work
+make sure to specifiy PyYAML==6.0.1 in requirements.txt
+may also have to pip install pybind11 before using pip install -r requirements.txt -> pybind11 is used by fasttext which is imported by cltk in requirements.txt
+
+Useful commands:
+deactivate = get out of python env
+rm -r env = remove current python environment, useful for reinstalling dependencies
+
+uvicorn main:app --host=0.0.0.0 --port=${PORT:-5001} 
+= use this instead of heroku to locally host the app, you must be in FastBridge/FastBridgeApp for this to work 
+
+while running uvicorn:
+Ctrl + C       =    stop uvicorn processes, useful for making a change in code, saving, then hosting new changes locally
+
+If out of uvicorn, but you cannot run the host command due to activity on that port:
+lsof -i :5001     =  list the current activity on port 5001, look for the PID number if anything shows up
+kill -9 PID_CODE  = using the PID you identified using lsof, kill that process, then try hosting through port 5001 again
+
+the app will be running on http://localhost:5001/
 
 `pip install -r requirements.txt`
 

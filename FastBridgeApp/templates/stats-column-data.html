@@ -38,7 +38,7 @@
         margin-bottom: 100px;
     }
 
-    h2 {
+    h3 {
         margin-top: 50px;
     }
 
@@ -84,12 +84,33 @@
         text-align: right;
         /* aligns the values to the right */
     }
+    .row {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h2 {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h1 {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h1, h2 {
+    font-family: "Times New Roman", Times, serif;
+    }
+
+
 </style>
 
 <div class="container mt-5">
     <div class="content-container">
         <h1>{{ text_name }}</h1>
-        <h2>Metrics</h2>
+        <h2>{{ start_section }} - {{ end_section }}</h2>
+        <h3>Metrics</h3>
         <div class="row">
             <div class="col-md-12">
                 <ul class="statistics-list">
@@ -277,7 +298,7 @@
             </div>
         </div>
 
-        <h2>Plots</h2>
+        <h3>Plots</h3>
         <div class="row">
             <!-- <div class="col-md-12">
             {{ plots|safe }}
@@ -309,7 +330,7 @@
             <div id="caption"></div>
         </div>
 
-        <h2>20 Most Characteristic Words</h2>
+        <h3>20 Most Characteristic Words</h3>
         <div class="row">
             <div class="col-md-12">
                 <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
@@ -320,7 +341,7 @@
             </div>
         </div>
 
-        <h2>Hapax Legomena</h2>
+        <h3>Hapax Legomena</h3>
         <div class="row">
             <div class="col-md-12">
                 <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
@@ -334,7 +355,7 @@
 </div>
 
 {% block scripts %}
-<!-- Enlarging Plots script -->
+<!-- Enlarging Plots script - doesnt work -->
 <script>
     // // Select all plot images
     // var plotImages = document.querySelectorAll(".plot-img");
