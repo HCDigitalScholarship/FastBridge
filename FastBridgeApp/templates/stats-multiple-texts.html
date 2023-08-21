@@ -386,7 +386,8 @@
                 ends_url += ends[i]
             }
         }
-
+        console.log(starts_url);
+        console.log(ends_url);
         // Construct the URL for the GET request
         var url = "/stats/Latin/result/" + textnames_url + "/" + starts_url + "-" + ends_url + "/non_running"
 
@@ -426,7 +427,7 @@
         //add new selected text, starts, ends to array
         text_names.splice(selectedIndex, 1)
         starts.splice(selectedIndex, 1)
-        ends.push(selectedIndex, 1)
+        ends.splice(selectedIndex, 1)
 
         //put text_names, starts, ends back into proper string URL format
         textnames_url = ""
