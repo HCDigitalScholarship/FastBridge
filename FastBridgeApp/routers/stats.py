@@ -845,6 +845,7 @@ class TextAnalyzer():
                 # filter out proper nouns
                 if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
+                
 
             for word in words:
                 if word in latin_dict:
@@ -867,6 +868,7 @@ class TextAnalyzer():
                     scores.append(-4)
                     continue
 
+            #print(scores)
             cumulative_scores = np.cumsum(scores)
 
             # Calculate rolling average
@@ -1737,7 +1739,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv",
                                 "FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", "FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
 
-    if '+' not in sourcetexts:#Only 1 text has been added
+    if '+' not in sourcetexts:#Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
         print(str(analyzer))
