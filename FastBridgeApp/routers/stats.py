@@ -151,42 +151,14 @@ def get_diederich300(file_path):
     return diederich300
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-
+#
 def get_text(form_request: str, language: str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
     """
     return importlib.import_module(f'data.{language}.{form_request}')  # point to the data folder
 
-
-def calculate_total_words(text_instance: Text):
-    '''
-    Calculate the total amount of words in the text given
-    '''
-    total_words = len(text_instance.words)
-    print(f"Total number of words: {total_words}")
-
-
-def calculate_total_sections(text_instance: Text):
-    '''
-    Calculate the number of sections in the text
-    '''
-    total_sections = len(text_instance.sections)
-    print(f"Total sections: {total_sections}")
-
-
-def calculate_avg_words_per_section(text_instance: Text):
-    '''
-    Calculate the avg number of words per section. Can also be words per sentence???
-    '''
-    total_words = len(text_instance.words)
-    total_sections = len(text_instance.sections)
-    avg_words_per_section = total_words / total_sections
-
-    print(f"Average words per section: {avg_words_per_section:.2f}")
-
-
-###############
+#used for getting slices of each text
 def get_slice(text_object: Text, start_section, end_section):
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
@@ -1838,27 +1810,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         text_names = [a.texts[0][0].name for a in analyzers] 
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
-        # word_counts = [a.num_words() for a in analyzers]
-        # vocab_sizes = [a.vocab_size() for a in analyzers]
-        # hapaxes_and_percentages = [a.hapax_legonema(tupleFlag=True) for a in analyzers]#(hapaxes[], percent_hapax)
-        # # hapaxes, hapax_percentages = zip(*[a.hapax_legonema() for a in analyzers])
-        # lex_densities = [a.lex_density() for a in analyzers]
-        # lex_sophists = [a.lex_sophistication() for a in analyzers]
-        # lex_variations = [a.lex_variation() for a in analyzers]
-        # lex_rs = [a.LexR() for a in analyzers]
-        # no_p_word_counts = [a.totalWordsNoProper() for a in analyzers]
-        # no_p_vocab_sizes = [a.uniqueWordsNoProper() for a in analyzers]
-        # avg_word_lengths = [a.avgWordLength() for a in analyzers]
-        # characteristic_words = [a.top20NoDie300() for a in analyzers]
-        # freq_bins = [a.freqBinMetrics() for a in analyzers]#(freq1,freq2,freq3,freq4,freq5,freq6)
-
-        # #Getting Plots
-        # #we need to specify which plot path each plot will go to, use plot_num argument in each plot method
-        # this should cache all the plots in local memory
-        # word_freq_paths = [analyzers[i].plot_word_freq(plot_num = i) for i in range(len(analyzers))]
-        # cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = i+len(analyzers)) for i in range(len(analyzers))]
-        # lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = i+(2*len(analyzers))) for i in range(len(analyzers))]
-        # freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = i+(3*len(analyzers))) for i in range(len(analyzers))]
+        
         word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
         cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
         lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
@@ -2004,50 +1956,3 @@ async def stats_cumulative(request: Request, language: str):
     return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
 
 
-# main()
-# empty = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-
-# whole = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-# whole.add_text('vergil_aeneid_ap_selections', 'Latin', "start", "end")
-# print(str(whole))
-# partsOfWhole = LatinTextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv","FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv","FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
-# partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.1", "1.436")
-# partsOfWhole.add_text('vergil_aeneid_ap_selections', 'Latin', "1.436", "6.899")
-
-# print(str(empty))
-# pause = input()
-
-
-# pause2 = input()
-# print(str(partsOfWhole))
-
-
-# Using the get_text function to load the text instance
-# text_instance = get_text('vergil_aeneid_ap_selections', 'Latin').book
-
-# section_start = "1.1"
-# section_end = "1.143"
-# 4.355
-# Call new functions
-# print(f"\n\nStats for sections: {section_start} - {section_end}")
-# print(f"Number of words:\t{get_number_of_words(text_instance, str(section_start), str(section_end))}")
-# print(f"Vocabulary Size:\t{get_vocabulary_size(text_instance,str(section_start), str(section_end))}")
-# print(f"Hapax Legomena: {get_hapax_legomena(text_instance, str(section_start), str(section_end))}")
-
-# plot_avg_word_length(text_instance, str(section_start), str(section_end))
-# plot_avg_word_length2(text_instance, '1.1', '6.899')
-# plot_word_frequency(text_instance, str(section_start), str(section_end))
-
-
-# print(f"Lexical Density:\t{get_lexical_density(text_instance, str(section_start), str(section_end))}")
-# The density is way too slow
-
-# print(f"Lexical Sophistication: {get_lexical_sophistication(text_instance,str(section_start), str(section_end))}")
-# print(f"Lexical Variation: {get_lexical_variation(text_instance, str(section_start), str(section_end))}")
-# print(f"Average Subordinations per Section/Sentence: {get_average_subordinations_per_section(1,1,4,355)}")
-
-# print(f"LexR:\t\t{get_lex_r(text_instance, str(section_start), str(section_end))}")
-
-# plot_cum_lex_load(text_instance, str(section_start), str(section_end))
-# plot_rolling_lin_lex_load(text_instance, str(section_start), str(section_end))
-# plot_linear_heatmap(text_instance, str(section_start), str(section_end), slice_override=30)
