@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<body>
+    <section id="bridge-select" class="content-section" style="background: url('/assets/img/stats_background_2.jpg') fixed center center no-repeat; background-size: cover;">
+        <div class="container" style="color: #ffffff;">
+
+            <!-- First tab-->
+            <div class="tab">
+                <div class="row" style="margin-bottom: 30px;">
+                    <div class="col" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;">
+                        <div class="row">
+                            <div class="col-xl-7">
+
+                                <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">
+                                    Select text(s) you are reading </h4>
+                            </div>
+                        </div>
+                        <div id="result">
+                            <div class="table-responsive" style="margin-bottom: 50px;">
+                                <table class="table" id="bridge-result-table1">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase" style="color: #ffffff;font-family: Actor, sans-serif;">WORK</th>
+                                            <th class="text-uppercase" style="color: rgb(255,255,255);font-family: Actor, sans-serif;">Section(s)</th>
+                                            <th style="width: 20%;color: #e8837d;font-family: Actor, sans-serif;">CLEAR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id = "bridge-result-table1-body">
+                                        <tr></tr>
+                                        <tr></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Second tab-->
+            <div class="tab">
+                <div class="row" style="margin-bottom: 50px;margin-top: 30px;">
+                    <div class="col" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;">
+                        <div class="row">
+                            <div class="col-xl-7">
+                                <h4 style="padding: 10px;margin-bottom: 10px;margin-top: 30px;margin-right: 60px;">Get Statistics</h4>
+                                <!-- Customize my List -->
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <form>
+                                    <div class="form-group" style="font-family: Cabin, sans-serif;padding: 10px;">
+                                        <!-- <div class="form-check" style="margin-bottom: 5px;">
+                                            <input class="form-check-input" type="radio" id="formCheck-1" name="changeList" checked="">
+                                            <label class="form-check-label" for="formCheck-1" style="margin-left: 5px;">
+                                                EXCLUDE words found in following text(s)</label></div>
+                                        <div class="form-check" style="margin-bottom: 5px;">
+                                            <input class="form-check-input" type="radio" id="formCheck-2" name="changeList">
+                                            <label class="form-check-label" for="formCheck-2" style="margin-left: 5px;">
+                                                REVEAL only words that ALSO appear in the following text(s)</label></div> -->
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" id="formCheck-3" name="changeList">
+                                            <label class="form-check-label" for="formCheck-3" style="margin-left: 5px;">
+                                                Click Here and Continue!!</label></div>
+                                    </div>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+
+                  </div> 
+                </div>
+
+                        <div id="result">
+                            <div class="table-responsive" style="margin-bottom: 50px;">
+                                <table class="table" id="bridge-result-table2">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase" style="color: #ffffff;font-family: Actor, sans-serif;">Book</th>
+                                            <th class="text-uppercase" style="color: rgb(255,255,255);font-family: Actor, sans-serif;">Section(s)</th>
+                                            <th style="width: 20%;color: #e8837d;font-family: Actor, sans-serif;">CLEAR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr></tr>
+                                        <tr></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Buttons-->
+
+            <div class="row" style="margin-bottom: 50px;margin-top: 30px;">
+                <div class="col d-flex justify-content-center align-items-center" id="page-buttons" style="background-color: rgba(43,45,47,0.7);border-radius: 5px;padding: 15px;">
+
+                    <button class="myBtn" id="myPrev" type="button" data-placement="bottom" title="Go back to texts you are reading" data-toggle="tooltip"><i class="fas fa-angle-double-left"></i></button>
+
+
+                    <span data-toggle="modal" data-target="#bridge-select-text">
+                    <button class="myBtn" id="openModal1" type="button"  data-placement="bottom" title="Click me to add a text" data-toggle="tooltip" value="">
+                        <i class="fas fa-plus" style="font-size: 16px;"></i>
+                      </button>
+                      </span>
+
+                    <button class="myBtn" id="openModal2" type="button" data-toggle="modal" data-target="#bridge-change-list">
+                        <i class="fas fa-plus" style="font-size: 16px;"></i></button>
+                    <!--BELOW IS THE BUTTON-->
+                    <button class="myBtn" id="myNext" type="button" data-placement="bottom" title="Go on to the next step!" data-toggle="tooltip">
+                      <i class="fas fa-angle-double-right"></i></button>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:40px;"><span class="step"></span><span class="step"></span><span class="step"></span></div>
+        </div>
+
+        <!--Modal 1-->
+        <div class="modal fade" role="dialog" tabindex="-1" id="bridge-select-text">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" style="color: black;">Select work</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span></button></div>
+                    <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
+                      <form class="fake" id="fake" action="index.html" method="post">
+    <!-- TEMP SOLUTION: the form "modal-bridge-form1" was not building. with this above it, it does. -->
+                      </form>
+                        <form id="modal-bridge-form1">
+                            <div>
+
+                                <div class="form-group"><label style="color: black;" for="chosen_text">
+                                    Please select the work you want to read.</label>
+                                    <div class="dropdown selection">
+                                      <button type="button" onclick="myFunction('myDropdown')" id = "chosen_text" class="form-control">Select Text</button>
+                                      <div id="myDropdown" class="dropdown-content" style="color: black;">
+                                        <input type="text" autocomplete="off" name = "textselection"  placeholder="Search..." id="myInput" onkeyup="filterFunction('myInput', 'myDropdown')">
+                                      {{ titles|safe }}
+                                      </div>
+                                    </div>
+
+                                      </div>
+                                <div class="form-group"><label style="color: black;" for="select2">
+                                    Do you want to specify the section(s) of the book?</label>
+                                    <select class="form-control" id="bridge-modal-form1-select2">
+                                        <optgroup label="Please select">
+                                            <option value="yes" selected="">Yes</option>
+                                            <option value="no" selected="selected">No</option>
+                                        </optgroup></select></div>
+
+                                <div class="form-group" id="bridge-modal-form1-select2-hidden-div">
+                                    <label id= "bridge-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field"> 
+                                        Please select the section(s).</label>
+                                        <div class="dropdown selection">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionStart()" id = "bridge-modal-form1-select2-hidden-field1" class="form-control">Start</button>
+                                                    <div id="sectionstartdropdown" class="dropdown-content" style="color: black; ">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="start" onkeyup="filterFunction('start','sectionstartdropdown')"> -->
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionEnd()" id = "bridge-modal-form1-select2-hidden-field2" class="form-control">End</button>
+                                                        <div id="sectionenddropdown" class="dropdown-content" style="color: black;">
+                                                            <!-- <input type="text" autocomplete="off" placeholder="Search..." id="end" onkeyup="filterFunction('end','sectionenddropdown')"> -->
+
+                                                        </div>
+                                                </div>
+                                            </div>  
+                                        </div>
+                                </div>       
+                                <!-- <div class="form-group" id="bridge-modal-form1-select2-hidden-div">
+                                    <label id="bridge-modal-form1-select2-hidden-label" style="color: black;" for="select2-hidden-field">
+                                        Please select the section(s).</label>
+                                    <div class="form-row">
+                                        <div class="col"><input class="form-control" type="text" name = "start" id="bridge-modal-form1-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From" > </input> </div>
+                                        <div class="col"><input class="form-control" type="text" id="bridge-modal-form1-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To" name = "end" > </input> </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="padding-bottom: 25px;padding-right: 20px;padding-left: 20px;">
+                        <button class="btn btn-light" type="button" data-dismiss="modal" style="border-radius: 35px;">
+                            Close</button>
+                        <button class="btn btn-primary" id="bridge-modal-form1-save" type="button" style="border-radius: 35px;">
+                            Save</button></div>
+                </div>
+            </div>
+        </div>
+        <!--Modal 2-->
+        <div class="modal fade" role="dialog" tabindex="-1" id="bridge-change-list">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" style="color: black;">Customize my list</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span></button></div>
+                    <div class="modal-body" style="padding: 25px;padding-bottom: 30px;">
+                        <form id="bridge-modal-form2" style="color: black;" for="select1">
+                          <div>
+                            <div class="form-group"><label style="color: black;" for="chosen_text2">
+                                Please select the work(s) you have read.</label>
+                                <div class="dropdown">
+                                  <button type="button" onclick="myFunction('myDropdown2')" id ="chosen_text2" class="form-control">Select Text</button>
+                                  <div id="myDropdown2" class="dropdown-content" style="color: black;">
+                                    <input type="text" autocomplete="off" name = "textselection2" placeholder="Search..." id="myInput2" onkeyup="filterFunction('myInput2','myDropdown2')">
+                                  {{ titles2|safe }}
+                                  </div>
+                                </div>
+
+                                  </div>
+
+                                <div class="form-group"><label style="color: black;" for="select2">
+                                    Do you want to specify the section(s) of the book?</label>
+                                    <select class="form-control" id="bridge-modal-form2-select2">
+                                        <optgroup label="Please select">
+                                            <option value="yes" selected="">Yes</option>
+                                            <option value="no" selected="">No</option>
+                                        </optgroup></select></div>
+                                <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
+                                    <label id= "bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field"> 
+                                        Please select the section(s).</label>
+                                        <div class="dropdown">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionStart2()" id = "bridge-modal-form2-select2-hidden-field1" class="form-control">Start</button>
+                                                    <div id="sectionstartdropdown2" class="dropdown-content" style="color: black;">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="start2" onkeyup="filterFunction('start2','sectionstartdropdown2')"> -->
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button type="button" onclick="dropdownSectionEnd2()" id = "bridge-modal-form2-select2-hidden-field2" class="form-control">End</button>
+                                                    <div id="sectionenddropdown2" class="dropdown-content" style="color: black;">
+                                                        <!-- <input type="text" autocomplete="off" placeholder="Search..." id="end2" onkeyup="filterFunction('end2','sectionenddropdown2')"> -->
+
+                                                    </div>
+                                                </div>
+                                            </div>    
+                                        </div>
+                                </div>    
+                                <!-- <div class="form-group" id="bridge-modal-form2-select2-hidden-div">
+                                    <label id="bridge-modal-form2-select2-hidden-label" style="color: black;" for="select2-hidden-field">
+                                        Please select the section(s).</label>
+                                    <div class="form-row">
+                                        <div class="col"><input class="form-control" type="text" id="bridge-modal-form2-select2-hidden-field1" style="color: black;" for="select2-hidden-label" placeholder="From"></div>
+                                        <div class="col"><input class="form-control" type="text" id="bridge-modal-form2-select2-hidden-field2" style="color: black;" for="select2-hidden-label" placeholder="To"></div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="padding-bottom: 25px;padding-right: 20px;padding-left: 20px;">
+                        <button class="btn btn-light" type="button" data-dismiss="modal" style="border-radius: 35px;">
+                            Close</button>
+                        <button class="btn btn-primary" id="bridge-modal-form2-save" type="button" style="border-radius: 35px;">
+                            Save</button></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<script src=  "/assets/js/select-stats-step-form.js" ></script>
+</body>
+
+{% endblock %}

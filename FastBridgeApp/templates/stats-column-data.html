@@ -1,0 +1,403 @@
+<style>
+    /* .statistics-list {
+        list-style-type: none;
+        
+        text-align: left;
+        
+        width: fit-content;
+        
+        margin: 0 auto;
+        
+        padding: 0;
+    } */
+
+    /* .statistics-list li {
+        font-size: 16px;
+        padding: 5px 0;
+        
+    } */
+
+    /* .statistics-list .label {
+        font-weight: bold;
+        
+        padding-right: 10px;
+        
+    } */
+
+    .content-container {
+        background: rgba(0, 0, 0, 0.5);
+        /* Black background with 50% opacity */
+        color: white;
+        /* White text */
+        padding: 5px;
+        /* Some padding */
+        max-height: 4000px;
+        /* Maximum height */
+        overflow-y: auto;
+        /* Add a scrollbar when content overflows */
+        margin-bottom: 100px;
+    }
+
+    h3 {
+        margin-top: 50px;
+    }
+
+    .plot-img {
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    .statistics-list-words li {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+
+    .statistics-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .list-item-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+    }
+
+    .label-container,
+    .value-container {
+        flex: 1;
+        margin-right: 10px;
+        /* give a little spacing between them */
+    }
+
+    .label {
+        font-weight: bold;
+    }
+    
+    .label-container{
+        text-align: left;
+    }
+
+    .value-container {
+        text-align: right;
+        /* aligns the values to the right */
+    }
+    .row {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h2 {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h1 {
+    border-bottom: 1px solid #b5b2b2; /* Set the color of the line to white */
+    margin-bottom: 20px; /* Add some margin after the line for spacing */
+    padding-bottom: 20px; /* Add some padding to give the content inside the row some space from the line */
+    }
+    h1, h2 {
+    font-family: "Times New Roman", Times, serif;
+    }
+
+
+</style>
+
+<div class="container mt-5">
+    <div class="content-container">
+        <h1>{{ text_name }}</h1>
+        <h2>{{ start_section }} - {{ end_section }}</h2>
+        <h3>Metrics</h3>
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="statistics-list">
+                    <li id="wordCountMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Total Words</span>
+                            </div>
+                            <div class="value-container">{{ word_count }}</div>
+                        </div>
+                    </li>
+                    <li id="totalWordsNoProper">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Total Words (-proper)</span>
+
+                            </div>
+                            <div class="value-container">{{ total_words_no_proper }}</div>
+                        </div>
+                    </li>
+                    <li id="vocabSizeMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Unique Words</span>
+
+                            </div>
+                            <div class="value-container">{{ vocab_size }}</div>
+                        </div>
+                    </li>
+                    <li id="uniqueWordsNoProper">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Unique Words (-proper)</span>
+
+                            </div>
+                            <div class="value-container">{{ unique_words_no_proper }}</div>
+                        </div>
+                    </li>
+                    <li id="lexRMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">LexR</span>
+
+                            </div>
+                            <div class="value-container">{{ LexR }}</div>
+                        </div>
+                    </li>
+                    <li id="avgWordLength">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Average Word Length</span>
+
+                            </div>
+                            <div class="value-container">{{ avg_word_length }}</div>
+                        </div>
+                    </li>
+                    <li id="lexDensityMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Lexical Density</span>
+
+                            </div>
+                            <div class="value-container">{{ lexical_density }}</div>
+                        </div>
+                    </li>
+                    <li id="lexSophisticationMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Lexical Sophistication</span>
+
+                            </div>
+                            <div class="value-container">{{ lexical_sophistication }}</div>
+                        </div>
+                    </li>
+                    <li id="lexicalVariation">
+                        <span class="label">Lexical Variation</span>
+                        <ul style="padding-left: 20px;">
+                            <li id="cttrMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">CTTR</span>
+
+                                    </div>
+                                    <div class="value-container">{{ lexical_variation[2] }}</div>
+                                </div>
+                            </li>
+                            <li id="logTTRMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">LogTTR</span>
+
+                                    </div>
+                                    <div class="value-container">{{ lexical_variation[3] }}</div>
+                                </div>
+                            </li>
+                            <li id="rttrMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Root TTR</span>
+
+                                    </div>
+                                    <div class="value-container">{{ lexical_variation[1] }}</div>
+                                </div>
+                            </li>
+                            <li id="ttrMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">TTR</span>
+
+                                    </div>
+                                    <div class="value-container">{{ lexical_variation[0] }}</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                    <li id="freqBinFreqs">
+                        <span class="label">Frequency Bin Count</span>
+                        <ul style="padding-left: 20px;">
+                            <li id="freq_0_200">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">0-200</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq1 }}%</div>
+                                </div>
+                            </li>
+                            <li id="freq_201_500">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">201-500</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq2 }}%</div>
+                                </div>
+                            </li>
+                            <li id="freq_501_1000">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">501-1000</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq3 }}%</div>
+                                </div>
+                            </li>
+                            <li id="freq_1001_1500">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">1001-1500</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq4 }}%</div>
+                                </div>
+                            </li>
+                            <li id="freq_1501_2500">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">1501-2500</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq5 }}%</div>
+                                </div>
+                            </li>
+                            <li id="freq_2500_plus">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">2500+</span>
+
+                                    </div>
+                                    <div class="value-container">{{ freq6 }}%</div>
+                                </div>
+                            </li>
+                        </ul>
+                    <li id="hapaxPercentMetric">
+                        <div class="list-item-container">
+                            <div class="label-container">
+                                <span class="label">Hapax Percentage</span>
+
+                            </div>
+                            <div class="value-container">{{ hapax_percentage }}%</div>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+
+        <h3>Plots</h3>
+        <div class="row">
+            <!-- <div class="col-md-12">
+            {{ plots|safe }}
+        </div> -->
+            <div id="plots">
+                <img id="freqPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=freq_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="cumLexPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=cum_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="linLexPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=lin_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <img id="freqBinPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=freq_bins_plot_path) }}?v={{ now }}" alt="Plot Image">
+                <!-- <img id="freqPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_plot_path) }}"
+                    alt="Plot Image">
+                <img id="cumLexPlot" class="plot-img" src="{{ request.url_for('plots', path=cum_lex_plot_path) }}"
+                    alt="Plot Image">
+                <img id="linLexPlot" class="plot-img" src="{{ request.url_for('plots', path=lin_lex_plot_path) }}"
+                    alt="Plot Image">
+                <img id="freqBinPlot" class="plot-img" src="{{ request.url_for('plots', path=freq_bins_plot_path) }}"
+                    alt="Plot Image"> -->
+
+            </div>
+        </div>
+        <!-- Plot Modal -->
+        <div id="plotModal" class="modal">
+            <span class="close">&times;</span>
+            <img class="plot-modal-content" id="img01">
+            <div id="caption"></div>
+        </div>
+
+        <h3>20 Most Characteristic Words</h3>
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
+                    {% for word in top20_NoDie300 %}
+                    <li>{{ word }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <h3>Hapax Legomena</h3>
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="statistics-list-words" style="max-height: 300px; overflow-y: scroll;">
+                    {% for word in hapax_legomena %}
+                    <li>{{ word }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<!-- Enlarging Plots script - doesnt work -->
+<script>
+    // // Select all plot images
+    // var plotImages = document.querySelectorAll(".plot-img");
+
+    // // Add a click event listener to each image
+    // plotImages.forEach(function (img) {
+    //     img.addEventListener("click", function () {
+    //         // Toggle the "enlarged" class on click
+    //         this.classList.toggle("enlarged");
+    //     });
+    // });
+
+    // Get the modal
+    var modal = document.getElementById("plotModal");
+
+    // Select all plot images
+    var plotImages = document.querySelectorAll(".plot-img");
+
+    // Add a click event listener to each image
+    plotImages.forEach(function (img) {
+        img.addEventListener("click", function () {
+            // Show the modal
+            modal.style.display = "block";
+            // Get the image and insert it inside the modal
+            var modalImg = document.getElementById("img01");
+            modalImg.src = this.src;
+        });
+    });
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the image, close the modal
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}
