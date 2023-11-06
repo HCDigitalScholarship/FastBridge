@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<body id="page-top">
+    <header class="masthead" style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        <div class="intro-body">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px;">
+                    <!-- To access more languages, simply add a button for them that redirects to /select/Language. add a dictionary and a list of texts, and it is supported-->
+                        <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 34px;margin-bottom: 45px;font-weight: normal;">
+                            Get Readability Statistics on your Favorite Greek or Latin Texts!</p>
+                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">
+                            Select a mode to get started!</p>
+                        <a class="btn btn-nonbs select-btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="/stats/Latin/">
+                            Analyze</a>
+                        <a class="btn btn-nonbs select-btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="/stats/Latin/">
+                            Compare</a>
+                        <a class="btn btn-nonbs select-btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="/stats/Latin/">
+                            Explore</a>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-top:40px;"><span class="step active"></span><span class="step"></span><span class="step"></span><span class="step"></span></div>
+            </div>
+          </div>
+    </header>
+</body>
+{% endblock %}
