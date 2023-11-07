@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 from text import Text
-from collections import defaultdict
+from collections import defaultdict #comment
 import spacy  # for LatinCy
 import csv  # for hashtable of Diderich -> lexical sophistication
 import matplotlib.font_manager as fm
