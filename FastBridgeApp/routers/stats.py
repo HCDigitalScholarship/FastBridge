@@ -1672,6 +1672,9 @@ selected_texts = []
 async def stats_index(request: Request):
     return templates.TemplateResponse("stats-list-index.html", {"request": request})
 
+@router.get("/mode-select/")
+async def stats_mode_selector(request: Request):
+    return templates.TemplateResponse("stats-mode-selector.html", {"request": request})
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
