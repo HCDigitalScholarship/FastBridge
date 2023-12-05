@@ -610,7 +610,7 @@ class TextAnalyzer():
         else:
             print()
 
-    def plot_word_freq(self, plot_num = 1):
+    def plot_word_freq(self, mode, plot_num = 1):
         if len(self.texts) == 0:
             return
         elif len(self.texts) == 1:
@@ -641,7 +641,7 @@ class TextAnalyzer():
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
             
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/{mode}/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
             #/Users/mikerabayda/repos/github.com/public/FastBridge/FastBridgeApp/static/assets/plots/plot0.png
@@ -685,7 +685,7 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/plot{plot_num}.png'
             plot_partial = f'/static/assets/plots/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
@@ -694,7 +694,7 @@ class TextAnalyzer():
 
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, rolling_window_size=50, plot_num = 3):
+    def plot_lin_lex_load(self, mode, rolling_window_size=50, plot_num = 3):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -790,8 +790,8 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/{mode}/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
             plt.savefig(plot_path)
@@ -802,7 +802,7 @@ class TextAnalyzer():
             # WHEN WE FIGURE OUT WHAT TO DO WITH MULTIPLE TEXT SELECTIONS, CODE HERE, WILL HAVE TO ADD HTML STRUCTURE DYNAMICALLY TO CONTAIN MANY PLOTS
             print()
 
-    def plot_cum_lex_load(self, plot_num = 2):
+    def plot_cum_lex_load(self, mode, plot_num = 2):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -868,8 +868,8 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/{mode}/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
             plt.savefig(plot_path)
             plt.close()  # close the plot
@@ -878,7 +878,7 @@ class TextAnalyzer():
         else:
             print()
 
-    def plot_freq_bin(self, plot_num = 4):
+    def plot_freq_bin(self, mode, plot_num = 4):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -960,8 +960,8 @@ class TextAnalyzer():
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/{mode}/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
             plt.savefig(plot_path)
             plt.close()  # close the plot
@@ -1676,23 +1676,23 @@ async def stats_index(request: Request):
 async def stats_mode_selector(request: Request):
     return templates.TemplateResponse("stats-mode-selector.html", {"request": request})
 
-@router.get("/{language}/")
-async def stats_select(request: Request, language: str):
+@router.get("/{language}/{mode}")
+async def stats_select(request: Request, language: str, mode: str):
     return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
-@router.get("/select/sections/{textname}/{language}/")
-async def stats_select_section(request: Request, textname: str, language: str):
+@router.get("/select/sections/{textname}/{language}/{mode}/")
+async def stats_select_section(request: Request, textname: str, language: str, mode: str):
     print("reaching section endpoint")
     sectionDict = DefinitionTools.get_sections(language)
     sectionBook = sectionDict[textname]
     return sectionBook
 
 
-@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str):
+@router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+@router.get("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, mode: str, running_list: str):
     context = {"request": request}
     if running_list == "running":
         running_list = True
@@ -1734,21 +1734,21 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
 
         # plot functions return the location of plot images
-        freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
+        freq_plot_path = analyzer.plot_word_freq(mode=mode)  # call your plot function here
         freq_relative_plot_path = os.path.relpath(
-            freq_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+            freq_plot_path, start=f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/')
 
-        cum_lex_plot_path = analyzer.plot_cum_lex_load()
+        cum_lex_plot_path = analyzer.plot_cum_lex_load(mode=mode)
         cum_lex_relative_plot_path = os.path.relpath(
-            cum_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+            cum_lex_plot_path, start=f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/')
 
-        lin_lex_plot_path = analyzer.plot_lin_lex_load()
+        lin_lex_plot_path = analyzer.plot_lin_lex_load(mode=mode)
         lin_lex_relative_plot_path = os.path.relpath(
-            lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+            lin_lex_plot_path, start=f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/')
 
-        freq_bins_plot_path = analyzer.plot_freq_bin()
+        freq_bins_plot_path = analyzer.plot_freq_bin(mode=mode)
         freq_bins_relative_plot_path = os.path.relpath(
-            freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
+            freq_bins_plot_path, start=f'/FastBridge/FastBridgeApp/static/assets/plots/{mode}/'
         )
 
         context.update({
@@ -1814,10 +1814,10 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
         
-        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
-        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
-        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
-        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
+        word_freq_paths = [analyzers[i].plot_word_freq(mode=mode, plot_num = 0+(4*i)) for i in range(len(analyzers))]
+        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(mode=mode, plot_num = 1+(4*i)) for i in range(len(analyzers))]
+        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(mode=mode, plot_num = 2+(4*i)) for i in range(len(analyzers))]
+        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(mode=mode, plot_num = 3+(4*i)) for i in range(len(analyzers))]
         
         print(text_names)
 
