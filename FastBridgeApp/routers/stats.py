@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 from text import Text
-from collections import defaultdict #comment
+from collections import defaultdict
 import spacy  # for LatinCy
 import csv  # for hashtable of Diderich -> lexical sophistication
 import matplotlib.font_manager as fm
@@ -24,6 +24,14 @@ import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
 
+'''
+Stats.py Directory
+1.) Decorators, get_text(), get_slice(),find_hapax() all functions that TextAnalyzer needs
+2.) TextAnalyzer - Separate into other file!!
+                 - contains all stats calculations, plotting functions
+3.) Routing - Routes for Stats
+
+'''
 '''
 Files:
 Text files -> Text class, get_text().book
@@ -1744,12 +1752,12 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
 
         lin_lex_plot_path = analyzer.plot_lin_lex_load()
         lin_lex_relative_plot_path = os.path.relpath(
-            lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+           lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
 
         freq_bins_plot_path = analyzer.plot_freq_bin()
         freq_bins_relative_plot_path = os.path.relpath(
-            freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
-        )
+           freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
+       )
 
         context.update({
             "request": request,
@@ -1774,15 +1782,15 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "freq4": freqBin4,
             "freq5":freqBin5,
             "freq6":freqBin6,
-            "freq_plot_path": freq_relative_plot_path,
-            "cum_lex_plot_path": cum_lex_relative_plot_path,
-            "lin_lex_plot_path": lin_lex_relative_plot_path,
-            "freq_bins_plot_path": freq_bins_relative_plot_path
+            "freq_plot_path": freq_plot_path,
+            "cum_lex_plot_path": cum_lex_plot_path,
+            "lin_lex_plot_path": lin_lex_plot_path,
+            "freq_bins_plot_path": freq_bins_plot_path
         })
-        print(f"freq rel path: {freq_relative_plot_path}")
-        print(f"cum lex rel path: {cum_lex_relative_plot_path}")
-        print(f"lin lex rel path: {lin_lex_relative_plot_path}")
-        print(f"freq bins rel path: {freq_bins_relative_plot_path}")
+        #print(f"freq rel path: {freq_relative_plot_path}")
+        #print(f"cum lex rel path: {cum_lex_relative_plot_path}")
+        #print(f"lin lex rel path: {lin_lex_relative_plot_path}")
+        #print(f"freq bins rel path: {freq_bins_relative_plot_path}")
         return templates.TemplateResponse("stats-single-text.html", context)
     else:#multiple texts have been added - Stats: Compare
 
