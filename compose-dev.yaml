@@ -1,7 +1,20 @@
+#services:
+#  web:
+#    build: .
+#    volumes:
+#      - .:/app
+#    ports:
+#      - "5000:5000"
+
+version: '3.8'
 services:
   web:
     build: .
+    command: uvicorn main:app --host=0.0.0.0 --port=${PORT:-5001} --reload
     volumes:
-      - .:/app
+      - ~/repos/github.com/public/FastBridge/FastBridgeApp:/app/FastBridgeApp
     ports:
-      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - PORT=5001
+
