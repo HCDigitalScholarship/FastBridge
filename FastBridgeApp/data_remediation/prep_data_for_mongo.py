@@ -10,7 +10,7 @@ Standardizes all column labels, removes unwanted columns, and changes current co
 def clean_data(folder, datasheet):
 
     possible_headers = ["HEAD_WORD", "LOCATION", "SECTION", "ORTHOGRAPHIC_FORM", "CASE", "GRAMMATICAL_CATEGORY_SUB", "LASLA_SUBORDINATION_CODE", "LOCAL_DEFINITION", "LOCAL_PRINCIPAL_PARTS"]
-    remove_headers = ["GRAMMATICAL_CATEGORY"]
+    remove_headers = ["GRAMMATICAL_CATEGORY", "_MERGE"]
     target_headers = {"TITLE": "HEAD_WORD", "TEXT": "ORTHOGRAPHIC_FORM", "SUBORDINATION_CODE": "LASLA_SUBORDINATION_CODE", "LOCALDEF": "LOCAL_DEFINITION", "LOCAL DEFINITION": "LOCAL_DEFINITION", "RUNNINGCOUNT": "COUNTER"}
 
     text_data = pd.DataFrame(pd.read_excel(f"../data_remediation/Texts_New/{folder}/{datasheet}")) 
