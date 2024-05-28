@@ -18,6 +18,7 @@ def clean_data(folder, datasheet):
     print("Original columns: ", text_data.columns)
     text_data = text_data.rename(columns=target_headers)
     text_data.columns = map(str.upper, text_data.columns)
+    text_data.rename(columns=lambda x: x.strip(), inplace=True)
     print("Renamed columns: ", text_data) 
     
     text_data_final = pd.DataFrame(columns=possible_headers)
