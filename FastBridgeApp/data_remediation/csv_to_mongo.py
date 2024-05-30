@@ -5,7 +5,7 @@ import json
 from subprocess import call
 
 # Define the directory containing CSV files and MongoDB details
-csv_directory = '/srv/FastBridge/FastBridgeApp/data_remediation/FOLDERNAME'
+csv_directory = '/srv/FastBridge/FastBridgeApp/data_remediation/Cleaned_FastBridge_Files_1/'
 mongo_uri = 'mongodb://localhost:27017'
 database_name = 'Latin'
 collection_name = 'AllTexts'
