@@ -2,13 +2,14 @@
 #Currently running a local MongoDB deployment on dev droplet
 
 from pymongo import MongoClient
+
 try:
-    # start example code heri
+    # start connection code heri
 
     uri = "mongodb://localhost:27017/"
     client = MongoClient(uri)
 
-    # end example code here
+    # end connection code here
     client.admin.command("ping")
     print("Connected successfully")
     # other application code
@@ -16,3 +17,6 @@ try:
 except Exception as e:
     raise Exception(
         "The following error occurred: ", e)
+
+
+
