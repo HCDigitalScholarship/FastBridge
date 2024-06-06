@@ -50,3 +50,33 @@ print('Connected to Atlas instance! We are good to go!')
 section_1 = atlas_client.find(collection_name=COLLECTION_NAME, filter={"section": 1})
 print(section_1)
 
+
+def compare_functions(func1, func2, *args, **kwargs):
+	"""
+    Compares the output of two functions with the same arguments.
+
+    Parameters:
+    func1 (function): The first function to compare.
+    func2 (function): The second function to compare.
+    *args: Variable length argument list to pass to the functions.
+    **kwargs: Arbitrary keyword arguments to pass to the functions.
+
+    Returns:
+    bool: True if the outputs are equal, False otherwise.
+    tuple: The outputs of the functions.
+
+
+	Example usage:
+	def add(x,y):
+		return x+y
+
+	def mult(x,y):
+		return x*y
+
+	are_equal, outputs = compare_functions(add, mult, 2, 3)
+    """
+	output1 = func1(*args, **kwargs)
+	output2 = func2(*args, **kwargs)
+
+	return output1 == output2, (output1, output2)
+
