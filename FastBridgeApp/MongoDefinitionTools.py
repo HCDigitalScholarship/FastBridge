@@ -4,22 +4,7 @@ import pymongo
 import dns # required for connecting with SRV
 from pymongo import MongoClient
 from DefinitionTools import get_text
-
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
-
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
-
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
+from text import Text
 
 class AtlasClient ():
 
@@ -41,15 +26,60 @@ class AtlasClient ():
        return items
 
 DB_NAME = 'local-dev'
-COLLECTION_NAME = 'AP Latin Core List 2024_LIST'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
 ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
 
 atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
 atlas_client.ping()
 print('Connected to Atlas instance! We are good to go!')
 
-section_1 = atlas_client.find(collection_name=COLLECTION_NAME, filter={"section": 1})
-print(section_1)
+db = atlas_client.database
+
+def main():
+
+    print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
+
+
+def connect_to_local_deployment():
+	try:
+		# start connection code heri
+
+		uri = "mongodb://localhost:27017/"
+		client = MongoClient(uri)
+
+		# end connection code here
+		client.admin.command("ping")
+		print("Connected successfully")
+		# other application code
+		client.close()
+	except Exception as e:
+		raise Exception(
+			"The following error occurred: ", e)
+
+
+#used for getting slices of each text
+def mg_get_slice(db, text_name, start_section, end_section):
+    collection = db[text_name]
+    cursor = collection.find({'section': {'$gte': start_section, '$lte': end_section}})
+    
+    if cursor is None:
+        return "Start or end section not found in the collection."
+    
+    #head_words = [document['head_word'] for document in cursor]
+    
+    cursor_list = list(cursor)
+    document_tuple_list = list()
+
+    for document in cursor_list:
+        document_tuple = []
+        for field in ['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']:
+            if field in document:
+                document_tuple.append(document[field])
+            else:
+                document_tuple.append("")
+        document_tuple_list.append(document_tuple)
+
+    return document_tuple_list
 
 
 def compare_functions(func1, func2, *args, **kwargs):
@@ -97,3 +127,6 @@ def mg_get_text(title: str):
     # if the document isn't found in any collection, return None
     else: 
         return None
+
+if __name__ == "__main__":
+    main()
