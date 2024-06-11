@@ -3,6 +3,7 @@
 import pymongo
 import dns # required for connecting with SRV
 from pymongo import MongoClient
+from DefinitionTools import get_text
 
 def connect_to_local_deployment():
 	try:
@@ -80,3 +81,19 @@ def compare_functions(func1, func2, *args, **kwargs):
 
 	return output1 == output2, (output1, output2)
 
+def mg_get_text(title: str):
+    """
+    function meant to retrieve the name of the collection that contains the requested text by title and language
+    """
+    # Access the database
+    db = atlas_client.database
+    
+    # the list of collections to search through
+    collections = db.list_collection_names()
+
+    # Iterate through collections and search for the document
+    if title in collections:
+        return title
+    # if the document isn't found in any collection, return None
+    else: 
+        return None
