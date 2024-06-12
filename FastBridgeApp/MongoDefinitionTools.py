@@ -37,7 +37,7 @@ db = atlas_client.database
 
 def main():
     #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
-    print(get_field_subset(["head_word", "orthographic_form", "counter"], COLLECTION_NAME))
+    print(get_field_subset(["head_word", "corn", "counter"], COLLECTION_NAME))
 
 
 def connect_to_local_deployment():
@@ -65,7 +65,12 @@ def get_field_subset(fields, text_name):
 
     for field in fields:
         cursor = collection.find({}, {field: 1}) 
-        field_list = [document[field] for document in cursor]
+        field_list = []
+        for document in cursor:
+            try:
+                field_list.append(document[field])
+            except KeyError:
+                pass
         field_subset[field] = field_list
 
     return field_subset
