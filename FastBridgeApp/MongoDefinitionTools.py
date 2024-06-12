@@ -1,6 +1,7 @@
 #Meant to be a copy of DefinitionTools but with Mongo queries instead of data/*.py queries
 #Currently running a local MongoDB deployment on dev droplet
 import pymongo
+from pymongo import MongoClient, errors
 import dns # required for connecting with SRV
 from pymongo import MongoClient
 from DefinitionTools import get_text
@@ -31,7 +32,7 @@ ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongo
 
 atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
 atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!')
+print('Connected to Atlas instance! We are good to go!!')
 
 db = atlas_client.database
 
@@ -104,33 +105,133 @@ def mg_get_slice(db, text_name, start_section, end_section):
 
 
 def compare_functions(func1, func2, *args, **kwargs):
-	"""
-    Compares the output of two functions with the same arguments.
+    pass
+"""
+Compares the output of two functions with the same arguments.
+
+Parameters:
+func1 (function): The first function to compare.
+func2 (function): The second function to compare.
+*args: Variable length argument list to pass to the functions.
+**kwargs: Arbitrary keyword arguments to pass to the functions.
+
+Returns:
+bool: True if the outputs are equal, False otherwise.
+tuple: The outputs of the functions.
+
+
+Example usage:
+def add(x,y):
+    return x+y
+
+def mult(x,y):
+    return x*y
+
+are_equal, outputs = compare_functions(add, mult, 2, 3)
+"""
+"""output1 = func1(*args, **kwargs)
+output2 = func2(*args, **kwargs)
+
+return output1 == output2, (output1, output2)"""
+
+
+def mg_get_locations(language: str):
+
+    """
+    Get locations for all texts of a given language from MongoDB. A location is usually formatted:
+    X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
 
     Parameters:
-    func1 (function): The first function to compare.
-    func2 (function): The second function to compare.
-    *args: Variable length argument list to pass to the functions.
-    **kwargs: Arbitrary keyword arguments to pass to the functions.
+    language (str): The language to query for. Ie. 'Latin'
 
     Returns:
-    bool: True if the outputs are equal, False otherwise.
-    tuple: The outputs of the functions.
+    text_locations: A dictionary which holds the list of locations of each text text title.
+        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
+        Values: A dictionary which represents a linked list of locations in the text (called locations_linked_list).
 
+            locations_linked_list: A dictionary which represent locations in a book, where each key
+            points to the preceding section. 
+                Keys: Represent the current section
+                Values: Represent the preceding section
+                    Eg. {'1.1': 'start', '1.2': '1.1', '1.3': '1.2', '1.4': '1.3', '1.5': '1.4', '1.6': '1.5'}
 
-	Example usage:
-	def add(x,y):
-		return x+y
+    Raises:
+    errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
 
-	def mult(x,y):
-		return x*y
-
-	are_equal, outputs = compare_functions(add, mult, 2, 3)
     """
-	output1 = func1(*args, **kwargs)
-	output2 = func2(*args, **kwargs)
 
-	return output1 == output2, (output1, output2)
+    db = atlas_client.database
+
+    # A dictionary to store the return value
+    text_locations = {}
+
+    # Get all collection names (text names)
+    collection_names = db.list_collection_names()
+
+    # Iterate over each collection (text) in the database
+    for collection_name in collection_names:
+        collection = db[collection_name]
+
+        # Query for all documents in the collection, sorted by the 'counter' field
+        documents = collection.find().sort({"counter":1})
+
+        # locations is a list to store the location data from each document
+        locations_list = ["start"]
+
+        # Iterate over each document in the collection and extract the location data
+        for doc in documents:
+            location_data = doc.get("location")
+            
+            if isinstance(location_data, str):
+                if location_data != locations_list[-1]:
+                    locations_list.append((location_data))
+            elif isinstance(location_data, int):
+                if location_data != locations_list[-1]:
+                    locations_list.append(str(location_data))
+            elif isinstance(location_data, none):
+                print("No location data found in document {doc['_id']}")
+            else:
+                print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
+                exit(1)  
+
+        locations_list.append("end")
+
+        # Replaces the "_" in the location string with "."
+        locations_list = format_sections(locations_list)
+
+        # Add to locations_linked_list if locations_list is not empty
+        locations_linked_list = {}
+        if locations_list:
+            for i in range(len(locations_list) - 1):
+                locations_linked_list[locations_list[i + 1]] = locations_list[i]
+        else:
+            print(f"No locations found for {collection_name}")
+            exit(1)
+
+        text_locations[collection_name] = locations_linked_list
+
+    #print(text_locations)
+    return text_locations
+
+
+def format_sections(locations):
+    """
+    Formats a list of location strings by replacing '_' with '.'. 
+    For example, '1_1_1' is converted to 1.1.1 and 58B_2 is converted to 58B.2
+    
+    Parameters:
+    locations a list of type str: The location strings to convert.
+    
+    Returns: 
+    locations: A list of the formatted location strings.
+    
+    """
+    for(i, location) in enumerate(locations):
+        locations[i] = locations[i].replace('_', '.') #replace underscores with periods
+    
+    return locations
+    
+    
 
 def mg_get_text(title: str):
     """

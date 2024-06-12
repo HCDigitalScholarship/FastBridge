@@ -25,7 +25,7 @@ async def select(request : Request, language : str):
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
     print("reaching section endpoint")
-    sectionDict = DefinitionTools.get_sections(language)
+    sectionDict = MongoDefinitionTools.mg_get_locations(language)
     sectionBook = sectionDict[textname]
     return sectionBook
  
