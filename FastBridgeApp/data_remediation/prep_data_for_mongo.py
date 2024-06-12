@@ -14,10 +14,12 @@ def main():
     convert_to_csv(options.data_folder, options.data_type)
 
 
-'''
-Loops through all text data spreadsheets in local directory and calls data cleaning before converting to a csv file (if not already a csv file) 
-'''
+
 def convert_to_csv(data_folder, data_type):
+    '''
+    Loops through all text data spreadsheets in local directory and calls data cleaning before converting to a csv file (if not already a csv file) 
+    '''
+
     if data_type == "text":
         is_text_data = True
     elif data_type == "dict" or data_type == "dictionary":
@@ -44,17 +46,20 @@ def convert_to_csv(data_folder, data_type):
                 header=True)
                 
 
-'''
-Assigns acceptable and target headers for data to be compared against 
-'''
+
 def data_config(is_text_data):
-    necessary_headers = ["head_word", "location", "section", "counter", "orthographic_form"]
+    '''
+    Assigns acceptable and target headers for data to be compared against 
+    '''
+
+    necessary_headers = ["head_word", "location", "sentence", "counter", "orthographic_form"]
     if is_text_data:
-        data_acceptable_headers = ["head_word", "location", "section", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+        data_acceptable_headers = ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
         data_target_headers = {
                     "title": "head_word", 
                     "headword": "head_word", 
                     "text": "orthographic_form", 
+                    "section": "sentence",
                     "orthographicform": "orthographic_form",
                     "subordination_code": "lasla_subordination_code", 
                     "laslasubordinationcode": "lasla_subordination_code",
@@ -79,10 +84,11 @@ def data_config(is_text_data):
         return dict_data_acceptable_headers, dict_data_target_headers, necessary_headers
             
 
-'''
-Standardizes all column labels, removes unwanted columns, and changes current column labels to target column labels   
-'''
+
 def clean_data(data, datasheet, acceptable_headers, target_headers, necessary_headers, is_text_data):
+    '''
+    Standardizes all column labels, removes unwanted columns, and changes current column labels to target column labels   
+    '''
 
     print("Original Columns:\n", data.columns)
     data.columns = map(str.lower, data.columns)
@@ -105,15 +111,20 @@ def clean_data(data, datasheet, acceptable_headers, target_headers, necessary_he
     for header in cleaned_data.columns:
         if header in acceptable_headers:
             cleaned_data_final[header] = cleaned_data[[header]].copy()
+
+    if cleaned_data_final['sentence'].dtype == object:  
+        cleaned_data_final['sentence'] = cleaned_data_final['sentence'].astype(int) 
         
     print("Final columns:\n", cleaned_data_final)
 
     return cleaned_data_final
 
-'''
-Checks for both column duplicates and row duplicates (as well as entire rows/columns with NaN values), removes them, and logs them in the folder duplicate_data
-'''
+
 def check_for_duplicates(spreadsheet_name, data):
+    '''
+    Checks for both column duplicates and row duplicates (as well as entire rows/columns with NaN values), removes them, and logs them in the folder duplicate_data
+    '''
+
     column_header_duplicates = data.columns.duplicated(keep=False)
     if column_header_duplicates.any():
         duplicate_columns = data.iloc[:, column_header_duplicates]
