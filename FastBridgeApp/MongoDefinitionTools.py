@@ -36,8 +36,8 @@ print('Connected to Atlas instance! We are good to go!')
 db = atlas_client.database
 
 def main():
-
-    print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
+    #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
+    print(get_field_subset(["head_word", "orthographic_form", "counter"], COLLECTION_NAME))
 
 
 def connect_to_local_deployment():
@@ -56,14 +56,30 @@ def connect_to_local_deployment():
 		raise Exception(
 			"The following error occurred: ", e)
 
-
-#used for getting slices of each text
-def mg_get_slice(db, text_name, start_section, end_section):
+def get_field_subset(fields, text_name):
+    '''
+    Retrieve a subset of fields from all documents in a collection and return as a dictionary.
+    '''
     collection = db[text_name]
-    cursor = collection.find({'section': {'$gte': start_section, '$lte': end_section}})
+    field_subset = {}
+
+    for field in fields:
+        cursor = collection.find({}, {field: 1}) 
+        field_list = [document[field] for document in cursor]
+        field_subset[field] = field_list
+
+    return field_subset
+
+
+def mg_get_slice(db, text_name, start_section, end_section):
+    '''
+    Retrieve documents within a specific sentence range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
+    '''
+    collection = db[text_name]
+    cursor = collection.find({'sentence': {'$gte': start_section, '$lte': end_section}})
     
     if cursor is None:
-        return "Start or end section not found in the collection."
+        return "Start or end sentence not found in the collection."
     
     #head_words = [document['head_word'] for document in cursor]
     
