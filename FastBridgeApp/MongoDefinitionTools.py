@@ -38,7 +38,8 @@ db = atlas_client.database
 
 def main():
     #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
-    print(get_field_subset(["head_word", "corn", "counter"], COLLECTION_NAME))
+    #print(get_field_subset(["head_word", "corn", "counter"], COLLECTION_NAME))
+    #print(mg_get_locations("Latin"))
 
 
 def connect_to_local_deployment():
@@ -204,13 +205,15 @@ def mg_get_locations(language: str):
         if locations_list:
             for i in range(len(locations_list) - 1):
                 locations_linked_list[locations_list[i + 1]] = locations_list[i]
+            locations_linked_list["start"] = "start"
         else:
             print(f"No locations found for {collection_name}")
             exit(1)
 
         text_locations[collection_name] = locations_linked_list
 
-    #print(text_locations)
+
+    # print(text_locations)
     return text_locations
 
 
