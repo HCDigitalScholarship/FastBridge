@@ -5,7 +5,7 @@ from pymongo import MongoClient, errors
 import dns # required for connecting with SRV
 from pymongo import MongoClient
 from DefinitionTools import get_text
-from text import Text
+import text
 
 class AtlasClient ():
 
@@ -59,7 +59,7 @@ def connect_to_local_deployment():
 		raise Exception(
 			"The following error occurred: ", e)
 
-def get_field_subset(fields, text_name):
+def get_field_subset(db, fields, text_name):
     '''
     Retrieve a subset of fields from all documents in a collection and return as a dictionary.
     '''
@@ -324,6 +324,20 @@ def mg_get_text(title: str):
     # if the document isn't found in any collection, return None
     else: 
         return None
+
+def mg_get_text_as_Text(db, text_title):
+    '''
+    Returns the specified collection as a Text object
+    '''    
+    collection_name = mg_get_text(text_name)
+    all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+    #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
+    field_data = get_field_subset(db, all_possible_fields, collection_name)
+
+    print(field_data)
+
+
+    #book = text.Text(collection_name, ______, _____,______,______,"Latin",______,_____)
 
 if __name__ == "__main__":
     main()
