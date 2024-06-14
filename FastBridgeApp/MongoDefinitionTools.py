@@ -40,6 +40,7 @@ def main():
     #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
     #print(get_field_subset(["head_word", "corn", "counter"], COLLECTION_NAME))
     #print(mg_get_locations("Latin"))
+    mg_get_location_words("Latin")
 
 
 def connect_to_local_deployment():
@@ -146,7 +147,7 @@ def mg_get_locations(language: str):
     language (str): The language to query for. Ie. 'Latin'
 
     Returns:
-    text_locations: A dictionary which holds the list of locations of each text text title.
+    text_locations: A dictionary which holds the list of locations of each text title.
         Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
         Values: A dictionary which represents a linked list of locations in the text (called locations_linked_list).
 
@@ -215,6 +216,77 @@ def mg_get_locations(language: str):
 
     # print(text_locations)
     return text_locations
+
+def mg_get_location_words(language: str):
+
+    """
+    For every text of a given language, this method gets the headword count by section 
+    from MongoDB. 
+
+    Parameters:
+    language (str): The language to query for. Ie. 'Latin'
+
+    Returns:
+    all_texts_word_counts: A dictionary in which:
+        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
+        Values: A dictionary (called text_locations_count)... see below
+
+            text_word_count: A dictionary in which:
+                Keys: Represent a location in the text
+                Values: Represent the headword count in that location
+                    Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
+
+    Raises:
+    errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
+
+    """
+
+    db = atlas_client.database
+
+    # A dictionary to store the return value
+    all_texts_word_counts = {}
+
+    # Get all collection names (text names)
+    collection_names = db.list_collection_names()
+
+    # Iterate over each collection (text) in the database
+    for collection_name in collection_names:
+        collection = db[collection_name]
+
+        # Query for all documents in the collection, where 'counter' field is ascending sorted
+        documents = collection.find().sort({"counter":1})
+
+        text_word_count = {"start": -1, "end": -2}
+
+        # Iterate over each document in the collection and extract the location data
+        for doc in documents:
+            location_data = doc.get("location")
+            
+            if isinstance(location_data, str):
+                if location_data not in text_word_count:
+                    text_word_count[location_data.replace('_', '.')] = doc.get("counter") - 1
+            elif isinstance(location_data, int):
+                if location_data not in text_word_count:
+                    text_word_count[location_data] = doc.get("counter") - 1
+            elif isinstance(location_data, none):
+                print("No location data found in document {doc['_id']}")
+            else:
+                print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
+                exit(1)  
+
+        # Check that the text has a locations word count dictionary
+        if text_word_count:
+            all_texts_word_counts[collection_name] = text_word_count
+        else:
+            print(f"No locations found for {collection_name}")
+            exit(1)
+
+        if collection_name == "Bridge_Latin_Text_Juvenalis_JuvSaturae_JuvSatur_prep_fastbridge_07_2020":
+            print(all_texts_word_counts[collection_name])
+
+
+    #print(all_texts_word_counts)
+    return all_texts_word_counts
 
 
 def format_sections(locations):
