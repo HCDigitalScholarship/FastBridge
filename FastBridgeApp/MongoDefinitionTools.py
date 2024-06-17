@@ -40,8 +40,11 @@ def main():
     #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
     #print(get_field_subset(["head_word", "corn", "counter"], COLLECTION_NAME))
     #print(mg_get_locations("Latin"))
-    mg_get_location_words("Latin")
-
+    #mg_get_location_words("Latin")
+    locations = mg_get_locations("Latin")
+    location_words = mg_get_location_words("Latin")
+    test_text = mg_get_text_as_Text(db, COLLECTION_NAME, locations, location_words)
+    print(test_text.get_words()[0])
 
 def connect_to_local_deployment():
 	try:
@@ -282,8 +285,8 @@ def mg_get_location_words(language: str):
             exit(1)
 
         if collection_name == "Bridge_Latin_Text_Juvenalis_JuvSaturae_JuvSatur_prep_fastbridge_07_2020":
-            print(all_texts_word_counts[collection_name])
-
+        #print(all_texts_word_counts[collection_name])
+            print("")
 
     #print(all_texts_word_counts)
     return all_texts_word_counts
@@ -325,37 +328,84 @@ def mg_get_text(title: str):
     else: 
         return None
 
-def mg_get_text_as_Text(db, text_title, locations):
+def mg_get_text_as_Text(db, text_title, location_words, location_list):
     '''
     Returns the specified collection as a Text object
     '''    
+    #Get the Text from either Atlas or Local Deployment
     print("Loading Text from MongoDB. . .")
-    collection_name = mg_get_text(text_name)
-    if(!(collection_name == None)):
-        print("Text successfully loaded")
-    else:
+    collection_name = mg_get_text(text_title)
+    if(collection_name == None):
         print("Text not found")
-        break
-    print("Text successfully loaded")
+        return
+    else:
+        print("Text found")
+    print(f"{collection_name} successfully loaded")
 
+
+    #Get all of the fields possible from the text
     all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
-
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
     field_data = get_field_subset(db, all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
+    print("Fields found:")
+    print(field_data.keys())
+ 
+    #Testing field_data
+    for field in field_data.keys():
+        len_field = len(field_data[field])
+        print(f"{field}:\t {len_field}")
 
-    print(field_data)
-    
-    all_locations = mg_get_locations("Latin")
-    if(!(collection_name in all_locations.keys)):
+    #Create boolean flags for local_def, local_lem
+    local_def_flag = False
+    local_lem_flag = False
+    if("local_definition" in field_data.keys()):
+        local_def_flag = True
+    #if("local_principal_parts" in field_data.keys()):
+    #    local_lem_flag = True
+
+    #Create the tuple by looping through field_data
+    #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
+    #Guaranteed Fields: ["head_word", "location", "sentence", "counter", "orthographic_form"]
+    tuples = []
+    print("Creating tuples . . .")
+    for i in range(len(field_data["head_word"])):
+        # Create a list instead of a tuple for mutability
+        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], 99, "", "", ""]
+
+        if local_def_flag:
+            temp_list[3] = field_data["local_definition"][i]
+        if local_lem_flag:
+            temp_list[4] = field_data["local_principal_parts"][i]
+        if "sentence" in field_data.keys():
+            temp_list[7] = field_data["sentence"][i]
+        if "case" in field_data.keys():
+            temp_list[8] = field_data["case"][i]
+        if "lasla_subordination_code" in field_data.keys():
+            temp_list[9] = field_data["lasla_subordination_code"][i]
+
+        # Convert the list back to a tuple
+        temp_tuple = tuple(temp_list)
+        tuples.append(temp_tuple)
+    print("Tuples loaded.")
+
+    #Get the Location List
+    all_locations = location_list
+    if(collection_name not in all_locations.keys()):
         print(f"{collection_name} not found in locations list")
-        break
+        return
     print(f"{collection_name} found in locations list") 
+    section_list = all_locations[collection_name]    
 
-    section_list = all_locations[collection_name]
-    
+    #Get the Location words
+    all_location_words = location_words
+    if(collection_name not in all_location_words.keys()):
+        print(f"{collection_name} not found in location words")
+        return
+    print(f"{collection_name} found in locations words") 
+    section_words = all_location_words[collection_name]
 
 
-    #book = text.Text(collection_name, ______, _____,______,______,"Latin",______,_____)
-
+    #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
+    return text.Text(collection_name, section_words, tuples, section_list, 99, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 if __name__ == "__main__":
     main()
