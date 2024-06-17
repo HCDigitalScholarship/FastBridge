@@ -281,11 +281,7 @@ def mg_get_location_words(language: str):
             print(f"No locations found for {collection_name}")
             exit(1)
 
-        if collection_name == "Bridge_Latin_Text_Juvenalis_JuvSaturae_JuvSatur_prep_fastbridge_07_2020":
-            print(all_texts_word_counts[collection_name])
-
-
-    #print(all_texts_word_counts)
+    # print(all_texts_word_counts)
     return all_texts_word_counts
 
 
