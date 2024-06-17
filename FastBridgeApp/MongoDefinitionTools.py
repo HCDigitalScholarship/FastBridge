@@ -325,16 +325,34 @@ def mg_get_text(title: str):
     else: 
         return None
 
-def mg_get_text_as_Text(db, text_title):
+def mg_get_text_as_Text(db, text_title, locations):
     '''
     Returns the specified collection as a Text object
     '''    
+    print("Loading Text from MongoDB. . .")
     collection_name = mg_get_text(text_name)
+    if(!(collection_name == None)):
+        print("Text successfully loaded")
+    else:
+        print("Text not found")
+        break
+    print("Text successfully loaded")
+
     all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
-    field_data = get_field_subset(db, all_possible_fields, collection_name)
+    field_data = get_field_subset(db, all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
 
     print(field_data)
+    
+    all_locations = mg_get_locations("Latin")
+    if(!(collection_name in all_locations.keys)):
+        print(f"{collection_name} not found in locations list")
+        break
+    print(f"{collection_name} found in locations list") 
+
+    section_list = all_locations[collection_name]
+    
 
 
     #book = text.Text(collection_name, ______, _____,______,______,"Latin",______,_____)
