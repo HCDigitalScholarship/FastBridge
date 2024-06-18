@@ -240,7 +240,6 @@ def mg_get_locations(language: str):
     return text_locations
 
 def mg_get_location_words(language: str):
-
     """
     For every text of a given language, this method gets the headword count by section 
     from MongoDB. 
@@ -260,7 +259,6 @@ def mg_get_location_words(language: str):
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
-
     """
 
     db = atlas_client.database
@@ -308,6 +306,57 @@ def mg_get_location_words(language: str):
             print("")
 
     return all_texts_word_counts
+
+
+def mg_render_titles(language: str, dropdown : str = ""):
+    """
+    For every text of a given language, this method writes a string of HTML code to display the text titles
+    from MongoDB. 
+
+    Parameters:
+    language (str): The language to query for. Ie. 'Latin'
+
+    Returns:
+    titles: A list of HTML code to display the text titles.
+    """
+    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
+    
+    titles = []
+    [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
+    print(titles)
+    return "".join(titles)
+
+def mg_get_location_levels(language: str):
+    """
+    For every text of a given language, this method gets the location levels
+    from MongoDB. 
+
+    Parameters:
+    language (str): The language to query for. Ie. 'Latin'
+
+    Returns:
+    title_location_levels: A dictionary in which:
+        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
+        Values: The location levels of the text from 1 - 3. (Eg. 1 = 1, 1.1. = 2, 1.1.1 = 3)
+    """
+    db = atlas_client.database # Access the database
+    
+    title_location_levels = {} # A dictionary of {"Title" : location_level} to store the return value
+
+    collection_names = db.list_collection_names() # Get all collection names (text names)
+
+    # Iterate over each collection (text) in the database
+    for collection_name in collection_names:
+        collection = db[collection_name]
+
+        location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
+        
+        underscore_count = location.count("_") + 1 # Count the number of _ in the location string
+
+        title_location_levels[collection_name] = underscore_count # Add the location level to the dictionary
+
+    # print(title_location_levels)
+    return title_location_levels
 
 
 def format_sections(locations):
