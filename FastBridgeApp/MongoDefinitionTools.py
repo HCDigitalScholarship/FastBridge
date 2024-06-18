@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from DefinitionTools import get_text
 import text
 
+
 class AtlasClient ():
 
    def __init__ (self, altas_uri, dbname):
@@ -187,18 +188,18 @@ def mg_get_locations(language: str):
         for doc in documents:
             location_data = doc.get("location")
             
-            if isinstance(location_data, str):
+            if type(location_data) is str:
                 if location_data != locations_list[-1]:
                     locations_list.append((location_data))
-            elif isinstance(location_data, int):
+                    #print(locations_list[-1])
+            elif type(location_data) is int:
+                    #print(f"found int", location_data, collection_name)
                 if location_data != locations_list[-1]:
                     locations_list.append(str(location_data))
-            elif isinstance(location_data, none):
-                print("No location data found in document {doc['_id']}")
-            else:
-                print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
-                exit(1)  
-
+                    #print(locations_list[-1])
+            elif location_data is None:
+                print(f"No location data found in document {doc['_id']}, {collection_name}")
+        
         locations_list.append("end")
 
         # Replaces the "_" in the location string with "."
@@ -271,7 +272,7 @@ def mg_get_location_words(language: str):
             elif isinstance(location_data, int):
                 if location_data not in text_word_count:
                     text_word_count[location_data] = doc.get("counter") - 1
-            elif isinstance(location_data, none):
+            elif isinstance(location_data, None):
                 print("No location data found in document {doc['_id']}")
             else:
                 print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
@@ -288,7 +289,6 @@ def mg_get_location_words(language: str):
         #print(all_texts_word_counts[collection_name])
             print("")
 
-    #print(all_texts_word_counts)
     return all_texts_word_counts
 
 
