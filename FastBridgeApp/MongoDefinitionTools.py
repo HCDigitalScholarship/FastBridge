@@ -44,7 +44,7 @@ def main():
     locations = mg_get_locations("Latin")
     location_words = mg_get_location_words("Latin")
     test_text = mg_get_text_as_Text(db, COLLECTION_NAME, locations, location_words)
-    print(test_text.get_words()[0])
+    #print(test_text.get_words()[0])
 
 def connect_to_local_deployment():
 	try:
@@ -367,10 +367,19 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
     #Guaranteed Fields: ["head_word", "location", "sentence", "counter", "orthographic_form"]
     tuples = []
+    frequencies = {}
     print("Creating tuples . . .")
+    #Calculate word frequency within text, independent of selected range to put into tuple
+    print("Calculating frequencies . . .")
+    for head_word in field_data["head_word"]:
+        if head_word in frequencies:
+            frequencies[head_word] += 1
+        else:
+            frequencies[head_word] = 1
+
     for i in range(len(field_data["head_word"])):
         # Create a list instead of a tuple for mutability
-        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], 99, "", "", ""]
+        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", ""]
 
         if local_def_flag:
             temp_list[3] = field_data["local_definition"][i]
@@ -403,6 +412,10 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
         return
     print(f"{collection_name} found in locations words") 
     section_words = all_location_words[collection_name]
+
+    #Check tuples
+    for i in range(4):
+        print(tuples)
 
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
