@@ -46,23 +46,33 @@ db = atlas_client.database
 
 def main():
 
-    print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
+    #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
 
-    text_name = mg_get_text("Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL")
+    #text_name = mg_get_text("Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL")
     #print(get_field_subset(["head_word", "corn", "counter"], text_name))
 
-    dict_db = atlas_client.get_database('dictionaries')
-    words = [('ACCIPIO', 0, 'accipio', '', '', '1', 1, '50 Most Important Latin Verbs'), ('DICO/2', 1, 'dico', '', '', '10', 1, '50 Most Important Latin Verbs'), ('DO', 2, 'do', '', '', '11', 1, '50 Most Important Latin Verbs'), ('DORMIO', 3, 'dormio', '', '', '12', 1, '50 Most Important Latin Verbs'), ('DVCO', 4, 'duco', '', '', '13', 1, '50 Most Important Latin Verbs'), ('EMO', 5, 'emo', '', '', '14', 1, '50 Most Important Latin Verbs'), ('EO/1', 6, 'eo', '', '', '15', 1, '50 Most Important Latin Verbs'), ('FACIO', 7, 'facio', '', '', '16', 1, '50 Most Important Latin Verbs'), ('FERO', 8, 'fero', '', '', '17', 1, '50 Most Important Latin Verbs'), ('FVGIO', 9, 'fugio', '', '', '18', 1, '50 Most Important Latin Verbs'), ('HABEO', 10, 'habeo', '', '', '19', 1, '50 Most Important Latin Verbs'), ('AGO', 11, 'ago', '', '', '2', 1, '50 Most Important Latin Verbs'), ('INVENIO', 12, 'invenio', '', '', '20', 1, '50 Most Important Latin Verbs'), ('IVBEO', 13, 'iubeo', '', '', '21', 1, '50 Most Important Latin Verbs'), ('LEGO/2', 14, 'lego', '', '', '22', 1, '50 Most Important Latin Verbs'), ('LOQVOR', 15, 'loquor', '', '', '23', 1, '50 Most Important Latin Verbs'), ('MITTO', 16, 'mitto', '', '', '24', 1, '50 Most Important Latin Verbs'), ('MOVEO', 17, 'moveo', '', '', '25', 1, '50 Most Important Latin Verbs'), ('NOLO', 18, 'nolo', '', '', '26', 1, '50 Most Important Latin Verbs'), ('OSTENDO', 19, 'ostendo', '', '', '27', 1, '50 Most Important Latin Verbs'), ('PETO', 20, 'peto', '', '', '28', 1, '50 Most Important Latin Verbs'), ('PLACEO', 21, 'placeo', '', '', '29', 1, '50 Most Important Latin Verbs'), ('AMO', 22, 'amo', '', '', '3', 1, '50 Most Important Latin Verbs'), ('PONO', 23, 'pono', '', '', '30', 1, '50 Most Important Latin Verbs'), ('POSSVM/1', 24, 'possum', '', '', '31', 1, '50 Most Important Latin Verbs'), ('PVTO', 25, 'puto', '', '', '32', 1, '50 Most Important Latin Verbs'), ('QVAERO', 26, 'quaero', '', '', '33', 1, '50 Most Important Latin Verbs'), ('RELINQVO', 27, 'relinquo', '', '', '34', 1, '50 Most Important Latin Verbs'), ('SCIO', 28, 'scio', '', '', '35', 1, '50 Most Important Latin Verbs'), ('SCRIBO', 29, 'scribo', '', '', '36', 1, '50 Most Important Latin Verbs'), ('SEDEO', 30, 'sedeo', '', '', '37', 1, '50 Most Important Latin Verbs'), ('SOLEO', 31, 'soleo', '', '', '38', 1, '50 Most Important Latin Verbs'), ('STO', 32, 'sto', '', '', '39', 1, '50 Most Important Latin Verbs'), ('AVDIO', 33, 'audio', '', '', '4', 1, '50 Most Important Latin Verbs'), ('SVM/1', 34, 'sum', '', '', '40', 1, '50 Most Important Latin Verbs'), ('SVMO', 35, 'sumo', '', '', '41', 1, '50 Most Important Latin Verbs'), ('SVRGO', 36, 'surgo', '', '', '42', 1, '50 Most Important Latin Verbs'), ('TENEO', 37, 'teneo', '', '', '43', 1, '50 Most Important Latin Verbs'), ('TIMEO', 38, 'timeo', '', '', '44', 1, '50 Most Important Latin Verbs'), ('VENIO', 39, 'venio', '', '', '45', 1, '50 Most Important Latin Verbs'), ('VERTO', 40, 'verto', '', '', '46', 1, '50 Most Important Latin Verbs'), ('VIDEO', 41, 'video', '', '', '47', 1, '50 Most Important Latin Verbs'), ('VOCO', 42, 'voco', '', '', '48', 1, '50 Most Important Latin Verbs'), ('VOLO/3', 43, 'volo', '', '', '49', 1, '50 Most Important Latin Verbs'), ('CAPIO/2', 44, 'capio', '', '', '5', 1, '50 Most Important Latin Verbs'), ('VTOR', 45, 'utor', '', '', '50', 1, '50 Most Important Latin Verbs'), ('COMEDO/2', 46, 'comedo', '', '', '6', 1, '50 Most Important Latin Verbs'), ('CONOR', 47, 'conor', '', '', '7', 1, '50 Most Important Latin Verbs'), ('CREDO', 48, 'credo', '', '', '8', 1, '50 Most Important Latin Verbs'), ('DEBEO', 49, 'debeo', '', '', '9', 1, '50 Most Important Latin Verbs')] 
-    print(mg_get_lang_data(dict_db, words, "bridge_latin_dictionary"))
+    #dict_db = atlas_client.get_database('dictionaries')
+    #words = [('ACCIPIO', 0, 'accipio', '', '', '1', 1, '50 Most Important Latin Verbs'), ('DICO/2', 1, 'dico', '', '', '10', 1, '50 Most Important Latin Verbs'), ('DO', 2, 'do', '', '', '11', 1, '50 Most Important Latin Verbs'), ('DORMIO', 3, 'dormio', '', '', '12', 1, '50 Most Important Latin Verbs'), ('DVCO', 4, 'duco', '', '', '13', 1, '50 Most Important Latin Verbs'), ('EMO', 5, 'emo', '', '', '14', 1, '50 Most Important Latin Verbs'), ('EO/1', 6, 'eo', '', '', '15', 1, '50 Most Important Latin Verbs'), ('FACIO', 7, 'facio', '', '', '16', 1, '50 Most Important Latin Verbs'), ('FERO', 8, 'fero', '', '', '17', 1, '50 Most Important Latin Verbs'), ('FVGIO', 9, 'fugio', '', '', '18', 1, '50 Most Important Latin Verbs'), ('HABEO', 10, 'habeo', '', '', '19', 1, '50 Most Important Latin Verbs'), ('AGO', 11, 'ago', '', '', '2', 1, '50 Most Important Latin Verbs'), ('INVENIO', 12, 'invenio', '', '', '20', 1, '50 Most Important Latin Verbs'), ('IVBEO', 13, 'iubeo', '', '', '21', 1, '50 Most Important Latin Verbs'), ('LEGO/2', 14, 'lego', '', '', '22', 1, '50 Most Important Latin Verbs'), ('LOQVOR', 15, 'loquor', '', '', '23', 1, '50 Most Important Latin Verbs'), ('MITTO', 16, 'mitto', '', '', '24', 1, '50 Most Important Latin Verbs'), ('MOVEO', 17, 'moveo', '', '', '25', 1, '50 Most Important Latin Verbs'), ('NOLO', 18, 'nolo', '', '', '26', 1, '50 Most Important Latin Verbs'), ('OSTENDO', 19, 'ostendo', '', '', '27', 1, '50 Most Important Latin Verbs'), ('PETO', 20, 'peto', '', '', '28', 1, '50 Most Important Latin Verbs'), ('PLACEO', 21, 'placeo', '', '', '29', 1, '50 Most Important Latin Verbs'), ('AMO', 22, 'amo', '', '', '3', 1, '50 Most Important Latin Verbs'), ('PONO', 23, 'pono', '', '', '30', 1, '50 Most Important Latin Verbs'), ('POSSVM/1', 24, 'possum', '', '', '31', 1, '50 Most Important Latin Verbs'), ('PVTO', 25, 'puto', '', '', '32', 1, '50 Most Important Latin Verbs'), ('QVAERO', 26, 'quaero', '', '', '33', 1, '50 Most Important Latin Verbs'), ('RELINQVO', 27, 'relinquo', '', '', '34', 1, '50 Most Important Latin Verbs'), ('SCIO', 28, 'scio', '', '', '35', 1, '50 Most Important Latin Verbs'), ('SCRIBO', 29, 'scribo', '', '', '36', 1, '50 Most Important Latin Verbs'), ('SEDEO', 30, 'sedeo', '', '', '37', 1, '50 Most Important Latin Verbs'), ('SOLEO', 31, 'soleo', '', '', '38', 1, '50 Most Important Latin Verbs'), ('STO', 32, 'sto', '', '', '39', 1, '50 Most Important Latin Verbs'), ('AVDIO', 33, 'audio', '', '', '4', 1, '50 Most Important Latin Verbs'), ('SVM/1', 34, 'sum', '', '', '40', 1, '50 Most Important Latin Verbs'), ('SVMO', 35, 'sumo', '', '', '41', 1, '50 Most Important Latin Verbs'), ('SVRGO', 36, 'surgo', '', '', '42', 1, '50 Most Important Latin Verbs'), ('TENEO', 37, 'teneo', '', '', '43', 1, '50 Most Important Latin Verbs'), ('TIMEO', 38, 'timeo', '', '', '44', 1, '50 Most Important Latin Verbs'), ('VENIO', 39, 'venio', '', '', '45', 1, '50 Most Important Latin Verbs'), ('VERTO', 40, 'verto', '', '', '46', 1, '50 Most Important Latin Verbs'), ('VIDEO', 41, 'video', '', '', '47', 1, '50 Most Important Latin Verbs'), ('VOCO', 42, 'voco', '', '', '48', 1, '50 Most Important Latin Verbs'), ('VOLO/3', 43, 'volo', '', '', '49', 1, '50 Most Important Latin Verbs'), ('CAPIO/2', 44, 'capio', '', '', '5', 1, '50 Most Important Latin Verbs'), ('VTOR', 45, 'utor', '', '', '50', 1, '50 Most Important Latin Verbs'), ('COMEDO/2', 46, 'comedo', '', '', '6', 1, '50 Most Important Latin Verbs'), ('CONOR', 47, 'conor', '', '', '7', 1, '50 Most Important Latin Verbs'), ('CREDO', 48, 'credo', '', '', '8', 1, '50 Most Important Latin Verbs'), ('DEBEO', 49, 'debeo', '', '', '9', 1, '50 Most Important Latin Verbs')] 
+    #print(mg_get_lang_data(dict_db, words, "bridge_latin_dictionary"))
     #def_tools_result = ([(Word(TITLE='POST/2', PRINCIPAL_PARTS='post', PRINCIPAL_PARTS_NO_DIACRITICALS='post', SIMPLE_LEMMA='post', SHORT_DEFINITION='after (adv. and prep. +acc.)', LONG_DEFINITION='after(ward), later; behind (+ acc.)', PART_OF_SPEECH='Preposition', LOGEION_LINK='http://logeion.uchicago.edu/index.html#post', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=post', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='T', Appearance='5', Total_Count_in_Text=3, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Preposition STOPWORD_Preposition_0 '), (Word(TITLE='PAVCI', PRINCIPAL_PARTS='paucus –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='paucus –a –um', SIMPLE_LEMMA='paucus', SHORT_DEFINITION='(pl.) a few; (sing.) small', LONG_DEFINITION='(pl.) a few; (sing.) small', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#paucus', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=paucus', CONJUGATION='', DECLENSION='1', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 '), (Word(TITLE='ITAQVE', PRINCIPAL_PARTS='itaque', PRINCIPAL_PARTS_NO_DIACRITICALS='itaque', SIMPLE_LEMMA='itaque', SHORT_DEFINITION='and so therefore', LONG_DEFINITION='and so, accordingly; thus, therefore, consequently', PART_OF_SPEECH='Adverb', LOGEION_LINK='http://logeion.uchicago.edu/index.html#itaque', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=itaque', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=7, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adverb '), (Word(TITLE='DIES', PRINCIPAL_PARTS='diēs diēī m. or f.', PRINCIPAL_PARTS_NO_DIACRITICALS='dies diei m. or f.', SIMPLE_LEMMA='dies', SHORT_DEFINITION='day', LONG_DEFINITION='day', PART_OF_SPEECH='Noun', LOGEION_LINK='http://logeion.uchicago.edu/index.html#dies', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=dies', CONJUGATION='', DECLENSION='5', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Noun DECLENSION_Noun_5 '), (Word(TITLE='PARISIVS/A', PRINCIPAL_PARTS='Parīsius –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='Parisius –a –um', SIMPLE_LEMMA='Parisius', SHORT_DEFINITION='of or from Paris (place)', LONG_DEFINITION='of or from Paris (city); subst. esp., the Celtic tribe from this region', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#Parisius', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=Parisius', CONJUGATION='', DECLENSION='1', PROPER='T', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 PROPER_Adjective_0 ')], ['Adjective', 'Adverb', 'Conjunction', 'Idiom', 'Interjection', 'Noun', 'Number', 'Preposition', 'Pronoun', 'Verb'], ['PRINCIPAL_PARTS_NO_DIACRITICALS', 'PRINCIPAL_PARTS', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'SIMPLE_LEMMA', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK', 'Total_Count_in_Text'], [('DECLENSION_Adjective_1', 'Adjective '), ('DECLENSION_Noun_5', 'Noun '), ('PROPER_Adjective_0', 'Adjective '), ('STOPWORD_Preposition_0', 'Preposition ')], ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD'])
     #print(compare_results(mongo_def_tools_result, def_tools_result))
     
     #print(mg_get_locations("Latin"))
     #mg_get_location_words("Latin")
+    print("Fetching locations for all texts . . . ")
     locations = mg_get_locations("Latin")
+    print("Locations loaded.")
+    print("\n\nFetching all location words for all texts . . .")
     location_words = mg_get_location_words("Latin")
-    test_text = mg_get_text_as_Text(db, COLLECTION_NAME, locations, location_words)
+    print("Location words loaded.\n\n")
+
+    sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
     #print(test_text.get_words()[0])
+
+
+    #Use this text below from the old py files to test sallust_mongo
+    sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
+
 
 def connect_to_local_deployment():
 	try:
@@ -543,6 +553,32 @@ def compare_dicts(mg_built_dict):
 def mg_get_text_as_Text(db, text_title, location_words, location_list):
     '''
     Returns the specified collection as a Text object
+
+    Parameters:
+    db = Mongo Instance, local devlopment or Atlas
+    text_title = The title of the text as it appears in Mongo, must match the same name as a collection in DB, but will tell you if not found
+    location_words = a dictionary with titles of texts as keys, and location words as their values, can be obtained with mg_get_location_words()
+    location_list = a dictionary with titles of texts as keys, and location lists as values, can be obtained with mg_get_locations()
+
+    Returns:
+    A Text object(see text.py) containing all normal Text fields from that class, but adding some more fields to the_text tuples for each head_word:
+
+    Within each Tuple:
+     * = optional fields, they may not be present in every text
+     ! = new field
+    [0] = head_word
+    [1] = counter
+    [2] = orthographic_form!
+    [3] = local_definition*
+    [4] = local_principal_parts*
+    [5] = location 
+    [6] = frequency
+    [7] = sentence*
+    [8] = case*! 
+    [9] = lasla_subordination_code*!
+    [10]= grammatical_subcategory*!
+
+
     '''    
     #Get the Text from either Atlas or Local Deployment
     print("Loading Text from MongoDB. . .")
@@ -570,6 +606,7 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     #Create boolean flags for local_def, local_lem
     local_def_flag = False
     local_lem_flag = False
+
     if("local_definition" in field_data.keys()):
         local_def_flag = True
     #if("local_principal_parts" in field_data.keys()):
@@ -580,7 +617,9 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     #Guaranteed Fields: ["head_word", "location", "sentence", "counter", "orthographic_form"]
     tuples = []
     frequencies = {}
+    
     print("Creating tuples . . .")
+   
     #Calculate word frequency within text, independent of selected range to put into tuple
     print("Calculating frequencies . . .")
     for head_word in field_data["head_word"]:
@@ -591,7 +630,7 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     for i in range(len(field_data["head_word"])):
         # Create a list instead of a tuple for mutability
-        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", ""]
+        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
 
         if local_def_flag:
             temp_list[3] = field_data["local_definition"][i]
@@ -603,11 +642,28 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
             temp_list[8] = field_data["case"][i]
         if "lasla_subordination_code" in field_data.keys():
             temp_list[9] = field_data["lasla_subordination_code"][i]
+        if "grammatical_subcategory" in field_data.keys():
+            temp_list[10] = field_data["grammatical_subcategory"][i]
 
         # Convert the list back to a tuple
         temp_tuple = tuple(temp_list)
         tuples.append(temp_tuple)
+
+    #sort the tuples by counter in case it is not sorted in DB
+    tuples = sorted(tuples, key=lambda word: word[1])
     print("Tuples loaded.")
+
+    #get the section_level
+    section_level = 0 #1 level for Location 1, 2 for 1_1, 3 for 1_1_1
+    location_example = tuples[0][5]
+    print(f"location example: {location_example}")
+    if location_example == "1":
+        section_level = 1
+    if location_example == '1_1':
+        section_level = 2
+    if location_example == '1_1_1':
+        section_level = 3
+
 
     #Get the Location List
     all_locations = location_list
@@ -627,11 +683,13 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     #Check tuples
     for i in range(4):
-        print(tuples)
+        print(tuples[i])
 
+    #check section level
+    print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, 99, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
 if __name__ == "__main__":
     main()
