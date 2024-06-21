@@ -565,7 +565,7 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     Within each Tuple:
      * = optional fields, they may not be present in every text
-     ! = new field
+     ! = new field, compared to old .py file method
     [0] = head_word
     [1] = counter
     [2] = orthographic_form!
@@ -609,8 +609,8 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     if("local_definition" in field_data.keys()):
         local_def_flag = True
-    #if("local_principal_parts" in field_data.keys()):
-    #    local_lem_flag = True
+    if("local_principal_parts" in field_data.keys()):
+        local_lem_flag = True
 
     #Create the tuple by looping through field_data
     #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
@@ -689,7 +689,7 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
 
 if __name__ == "__main__":
     main()
