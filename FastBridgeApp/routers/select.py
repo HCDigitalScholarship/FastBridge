@@ -76,20 +76,31 @@ def connect_to_local_deployment():
 
 @router.get("/")
 async def index(request : Request):
+    print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db, language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
+    print("Calling select()")
+    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
+    print("Calling select_section()")
+    print("textname: ", textname)
     print("reaching section endpoint")
-    sectionDict = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    sectionDict = MongoDefinitionTools.mg_get_locations(language)
+    # print("sectionDict: ", sectionDict)
+
+    print("Printing sectionDict[textname]: ")
+    print(sectionDict[textname])
+    sectionBook = sectionDict[textname]
+    
     return sectionBook
  
 def filter_helper(row_filters, POS):
+    print("Calling filter_helper()")
     print(row_filters)
     print(POS)
     loc_style = ""
@@ -113,6 +124,7 @@ def filter_helper(row_filters, POS):
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
+    print("Calling simple_result()")
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
@@ -123,14 +135,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         running_list = False
     local_def = False
     local_lem = False
-    #print(triple)
+    print("Printing triple: ", triple)
     words = []
     titles =[]
     print("entering for")
     display_triple =[]
     for text, start, end in triple:
-        print(text)
-        book = DefinitionTools.get_text(text, language).book
+        print("Fetching locations for all texts . . . ")
+        locations = MongoDefinitionTools.mg_get_locations(language)
+        print("Locations loaded.")
+        print("\n\nFetching all location words for all texts . . .")
+        location_words = MongoDefinitionTools.mg_get_location_words(language)
+        print("Location words loaded.\n\n")
+        print("text: ", text)
+        # book = DefinitionTools.get_text(text, language).book
+        book = MongoDefinitionTools.mg_get_text_as_Text(db, text, locations, location_words)
+        print("PRINTING BOOK")
         print(book)
         if not local_def:
             local_def = book.local_def
