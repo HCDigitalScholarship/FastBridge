@@ -57,21 +57,25 @@ def main():
     #def_tools_result = ([(Word(TITLE='POST/2', PRINCIPAL_PARTS='post', PRINCIPAL_PARTS_NO_DIACRITICALS='post', SIMPLE_LEMMA='post', SHORT_DEFINITION='after (adv. and prep. +acc.)', LONG_DEFINITION='after(ward), later; behind (+ acc.)', PART_OF_SPEECH='Preposition', LOGEION_LINK='http://logeion.uchicago.edu/index.html#post', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=post', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='T', Appearance='5', Total_Count_in_Text=3, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Preposition STOPWORD_Preposition_0 '), (Word(TITLE='PAVCI', PRINCIPAL_PARTS='paucus –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='paucus –a –um', SIMPLE_LEMMA='paucus', SHORT_DEFINITION='(pl.) a few; (sing.) small', LONG_DEFINITION='(pl.) a few; (sing.) small', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#paucus', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=paucus', CONJUGATION='', DECLENSION='1', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 '), (Word(TITLE='ITAQVE', PRINCIPAL_PARTS='itaque', PRINCIPAL_PARTS_NO_DIACRITICALS='itaque', SIMPLE_LEMMA='itaque', SHORT_DEFINITION='and so therefore', LONG_DEFINITION='and so, accordingly; thus, therefore, consequently', PART_OF_SPEECH='Adverb', LOGEION_LINK='http://logeion.uchicago.edu/index.html#itaque', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=itaque', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=7, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adverb '), (Word(TITLE='DIES', PRINCIPAL_PARTS='diēs diēī m. or f.', PRINCIPAL_PARTS_NO_DIACRITICALS='dies diei m. or f.', SIMPLE_LEMMA='dies', SHORT_DEFINITION='day', LONG_DEFINITION='day', PART_OF_SPEECH='Noun', LOGEION_LINK='http://logeion.uchicago.edu/index.html#dies', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=dies', CONJUGATION='', DECLENSION='5', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Noun DECLENSION_Noun_5 '), (Word(TITLE='PARISIVS/A', PRINCIPAL_PARTS='Parīsius –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='Parisius –a –um', SIMPLE_LEMMA='Parisius', SHORT_DEFINITION='of or from Paris (place)', LONG_DEFINITION='of or from Paris (city); subst. esp., the Celtic tribe from this region', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#Parisius', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=Parisius', CONJUGATION='', DECLENSION='1', PROPER='T', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 PROPER_Adjective_0 ')], ['Adjective', 'Adverb', 'Conjunction', 'Idiom', 'Interjection', 'Noun', 'Number', 'Preposition', 'Pronoun', 'Verb'], ['PRINCIPAL_PARTS_NO_DIACRITICALS', 'PRINCIPAL_PARTS', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'SIMPLE_LEMMA', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK', 'Total_Count_in_Text'], [('DECLENSION_Adjective_1', 'Adjective '), ('DECLENSION_Noun_5', 'Noun '), ('PROPER_Adjective_0', 'Adjective '), ('STOPWORD_Preposition_0', 'Preposition ')], ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD'])
     #print(compare_results(mongo_def_tools_result, def_tools_result))
     
-    #print(mg_get_locations("Latin"))
+    print(mg_get_locations("Latin"))
     #mg_get_location_words("Latin")
-    print("Fetching locations for all texts . . . ")
+    """print("Fetching locations for all texts . . . ")
     locations = mg_get_locations("Latin")
+    print(mg_get_locations("Latin"))
     print("Locations loaded.")
     print("\n\nFetching all location words for all texts . . .")
     location_words = mg_get_location_words("Latin")
-    print("Location words loaded.\n\n")
+    print("Location words loaded.\n\n")"""
+    #mg_render_titles("Latin")
+    #print()
+    #mg_render_titles("Latin", "2")
 
-    sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
-    #print(test_text.get_words()[0])
+    # sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
+    # print(test_text.get_words()[0])
 
 
     #Use this text below from the old py files to test sallust_mongo
-    sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
+    # sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
 
 
 def connect_to_local_deployment():
@@ -231,7 +235,7 @@ def mg_get_locations(language: str):
         locations_list.append("end")
 
         # Replaces the "_" in the location string with "."
-        locations_list = format_sections(locations_list)
+        locations_list = mg_format_sections(locations_list)
 
         # Add to locations_linked_list if locations_list is not empty
         locations_linked_list = {}
@@ -243,7 +247,7 @@ def mg_get_locations(language: str):
             print(f"No locations found for {collection_name}")
             exit(1)
 
-        text_locations[collection_name] = locations_linked_list
+        text_locations[mg_format_lowercase(collection_name)] = locations_linked_list
 
 
     # print(text_locations)
@@ -330,9 +334,12 @@ def mg_render_titles(language: str, dropdown : str = ""):
     titles: A list of HTML code to display the text titles.
     """
     title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
-    
+    print("calling mg_render_titles")
+    # print("printing mg_get_location_levels", title_location_levels)
     titles = []
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
+    "".join(titles)
+    print("Printing mg_render_titles")
     print(titles)
     return "".join(titles)
 
@@ -363,13 +370,13 @@ def mg_get_location_levels(language: str):
         
         underscore_count = location.count("_") + 1 # Count the number of _ in the location string
 
-        title_location_levels[collection_name] = underscore_count # Add the location level to the dictionary
+        title_location_levels[mg_format_title(collection_name)] = underscore_count # Add the location level to the dictionary
 
     # print(title_location_levels)
     return title_location_levels
 
 
-def format_sections(locations):
+def mg_format_sections(locations):
     """
     Formats a list of location strings by replacing '_' with '.'. 
     For example, '1_1_1' is converted to 1.1.1 and 58B_2 is converted to 58B.2
@@ -690,6 +697,30 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+
+def mg_format_title(unformatted_title: str):
+    '''
+    Formats a title string to be more readable. By replacing underscores with spaces. 
+    For example,'200_essential_latin_words_list_mahoney'is converted to
+    '200 Essential Latin Words List (Mahoney)'
+    
+    Parameters:
+    unformatted_title (str): The title string to format.
+    
+    Returns: 
+    formatted_title (str): The formatted title string.
+    
+    '''
+    formatted_title = unformatted_title.replace('_', ' ')
+    return formatted_title
+
+def mg_format_lowercase(unformatted_title: str):
+    '''
+    Formats a title string to be the same as the lowercase title used in
+    URL request 
+    '''
+    formatted_title = unformatted_title.lower()
+    return formatted_title
 
 if __name__ == "__main__":
     main()
