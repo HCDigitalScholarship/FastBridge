@@ -265,6 +265,8 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
     titles: A list of HTML code to display the text titles.
     """
     title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
+    
+    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
     print("calling mg_render_titles")
     # print("printing mg_get_location_levels", title_location_levels)
     titles = []
@@ -611,31 +613,10 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
 
-def mg_format_title(unformatted_title: str):
-    '''
-    Formats a title string to be more readable.s By replacing underscores with spaces. 
-    For example,'200_essential_latin_words_list_mahoney'is converted to
-    '200 Essential Latin Words List (Mahoney)'
-    
-    Parameters:
-    unformatted_title (str): The title string to format.
-    
-    Returns: 
-    formatted_title (str): The formatted title string.
-    
-    '''
-    formatted_title = unformatted_title.replace('_', ' ')
-    return formatted_title
 
-def mg_format_lowercase(unformatted_title: str):
-    '''
-    Formats a title string to be the same as the lowercase title used in
-    URL request 
-    '''
-    formatted_title = unformatted_title.lower()
-    return formatted_title
+
 
 if __name__ == "__main__":
     main()
