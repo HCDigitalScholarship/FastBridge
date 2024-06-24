@@ -87,14 +87,10 @@ async def select(request : Request, language : str):
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    print("reaching section endpoint")
+    print("Calling select_section()")
+    print("textname: ", textname)
     sectionDict = MongoDefinitionTools.mg_get_locations(language)
-    # print("sectionDict: ", sectionDict)
-
-    print("Printing sectionDict[textname]: ")
-    print(sectionDict[textname])
     sectionBook = sectionDict[textname]
-    
     return sectionBook
  
 def filter_helper(row_filters, POS):
