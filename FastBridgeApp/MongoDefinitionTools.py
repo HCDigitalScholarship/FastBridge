@@ -61,10 +61,10 @@ def main():
     #print(mg_get_locations("Latin"))
     #mg_get_location_words("Latin")
     print("Fetching locations for all texts . . . ")
-    print("Total time: ", timer_decorator(mg_get_locations("Latin")))
+    locations = mg_get_locations("Latin")
     print("Locations loaded.")
     print("\n\nFetching all location words for all texts . . .")
-    #location_words = mg_get_location_words("Latin")
+    location_words = mg_get_location_words("Latin")
     print("Location words loaded.\n\n")
 
     sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
@@ -73,6 +73,20 @@ def main():
 
     #Use this text below from the old py files to test sallust_mongo
     sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
+
+# Decorators
+# times the method you give to it, apply using @timer_decorator above method
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        print("Start: ", start_time)
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print("End: ", end_time)
+        elapsed_time = end_time - start_time
+        print("Total time: ", elapsed_time)
+        return result, elapsed_time
+    return wrapper
 
 
 def connect_to_local_deployment():
@@ -170,7 +184,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-
+@timer_decorator
 def mg_get_locations(language: str):
     """
     Get locations for all texts of a given language from MongoDB. A location is usually formatted:
@@ -250,6 +264,7 @@ def mg_get_locations(language: str):
     # print(text_locations)
     return text_locations
 
+@timer_decorator
 def mg_get_location_words(language: str):
     """
     For every text of a given language, this method gets the headword count by section 
@@ -691,18 +706,6 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
-
-
-# Decorators
-# times the method you give to it, apply using @timer_decorator above method
-def timer_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        return result, elapsed_time
-    return wrapper
 
 
 if __name__ == "__main__":
