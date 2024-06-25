@@ -80,11 +80,15 @@ def main():
 def timer_decorator(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
+        print("Start: ", start_time)
         result = func(*args, **kwargs)
         end_time = time.time()
+        print("End: ", end_time)
         elapsed_time = end_time - start_time
+        print("Total time: ", elapsed_time)
         return result, elapsed_time
     return wrapper
+
 
 def connect_to_local_deployment():
 	try:
