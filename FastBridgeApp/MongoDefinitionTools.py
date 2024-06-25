@@ -60,20 +60,31 @@ def main():
     
     #print(mg_get_locations("Latin"))
     #mg_get_location_words("Latin")
-    print("Fetching locations for all texts . . . ")
-    print("Total time: ", timer_decorator(mg_get_locations("Latin")))
-    print("Locations loaded.")
-    print("\n\nFetching all location words for all texts . . .")
-    #location_words = mg_get_location_words("Latin")
-    print("Location words loaded.\n\n")
+    # print("Fetching locations for all texts . . . ")
+    # print("Locations loaded.")
+    # print("\n\nFetching all location words for all texts . . .")
+    # #location_words = mg_get_location_words("Latin")
+    # print("Location words loaded.\n\n")
 
-    sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
+    # sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
     #print(test_text.get_words()[0])
+    mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
+    mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
 
 
     #Use this text below from the old py files to test sallust_mongo
-    sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
+    #sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
 
+# Decorators
+# times the method you give to it, apply using @timer_decorator above method
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        return result, elapsed_time
+    return wrapper
 
 def connect_to_local_deployment():
 	try:
@@ -170,25 +181,22 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-
-def mg_get_locations(language: str):
+@timer_decorator
+def mg_get_locations(language: str, collection_name: str):
     """
-    Get locations for all texts of a given language from MongoDB. A location is usually formatted:
+    Get all locations from a collection from MongoDB. A location is usually formatted:
     X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
 
     Parameters:
-    language (str): The language to query for. Ie. 'Latin'
+    language (str): The language to query for. Ie. 'Latin' and the name of the collection.
+    collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
 
     Returns:
-    text_locations: A dictionary which holds the list of locations of each text title.
-        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
-        Values: A dictionary which represents a linked list of locations in the text (called locations_linked_list).
-
-            locations_linked_list: A dictionary which represent locations in a book, where each key
-            points to the preceding section. 
-                Keys: Represent the current section
-                Values: Represent the preceding section
-                    Eg. {'1.1': 'start', '1.2': '1.1', '1.3': '1.2', '1.4': '1.3', '1.5': '1.4', '1.6': '1.5'}
+        locations_linked_list: A dictionary which represent locations in a book, where each key
+        points to the preceding section. 
+            Keys: Represent the current section
+            Values: Represent the preceding section
+                Eg. {'1.1': 'start', '1.2': '1.1', '1.3': '1.2', '1.4': '1.3', '1.5': '1.4', '1.6': '1.5'}
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
@@ -196,127 +204,88 @@ def mg_get_locations(language: str):
     """
 
     db = atlas_client.database
+    collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
 
-    # A dictionary to store the return value
-    text_locations = {}
+    documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
 
-    # Get all collection names (text names)
-    collection_names = db.list_collection_names()
+    locations_list = ["start"] # locations is a list to store the location data from each document
 
-    # Iterate over each collection (text) in the database
-    for collection_name in collection_names:
-        collection = db[collection_name]
+    # Iterate over each document in the collection and extract the location data
+    for doc in documents:
+        location_data = doc.get("location")
+        if type(location_data) is str:
+            if location_data != locations_list[-1]:
+                locations_list.append((location_data))
+        elif type(location_data) is int:
+                #print(f"found int", location_data, collection_name)
+            if location_data != locations_list[-1]:
+                locations_list.append(str(location_data))
+                #print(locations_list[-1])
+        elif location_data is None:
+            print(f"No location data found in document {doc['_id']}, {collection_name}")
+    
+    locations_list.append("end")
+    locations_list = format_sections(locations_list) # Replaces the "_" in the location string with "."
 
-        # Query for all documents in the collection, sorted by the 'counter' field
-        documents = collection.find().sort({"counter":1})
+    # Add to locations_linked_list if locations_list is not empty
+    locations_linked_list = {}
+    if locations_list:
+        for i in range(len(locations_list) - 1):
+            locations_linked_list[locations_list[i + 1]] = locations_list[i]
+        locations_linked_list["start"] = "start"
+    else:
+        print(f"No locations found for {collection_name}")
+        exit(1)
 
-        # locations is a list to store the location data from each document
-        locations_list = ["start"]
+    print(locations_linked_list)
+    return locations_linked_list
 
-        # Iterate over each document in the collection and extract the location data
-        for doc in documents:
-            location_data = doc.get("location")
-            
-            if type(location_data) is str:
-                if location_data != locations_list[-1]:
-                    locations_list.append((location_data))
-                    #print(locations_list[-1])
-            elif type(location_data) is int:
-                    #print(f"found int", location_data, collection_name)
-                if location_data != locations_list[-1]:
-                    locations_list.append(str(location_data))
-                    #print(locations_list[-1])
-            elif location_data is None:
-                print(f"No location data found in document {doc['_id']}, {collection_name}")
-        
-        locations_list.append("end")
-
-        # Replaces the "_" in the location string with "."
-        locations_list = format_sections(locations_list)
-
-        # Add to locations_linked_list if locations_list is not empty
-        locations_linked_list = {}
-        if locations_list:
-            for i in range(len(locations_list) - 1):
-                locations_linked_list[locations_list[i + 1]] = locations_list[i]
-            locations_linked_list["start"] = "start"
-        else:
-            print(f"No locations found for {collection_name}")
-            exit(1)
-
-        text_locations[collection_name] = locations_linked_list
-
-
-    # print(text_locations)
-    return text_locations
-
-def mg_get_location_words(language: str):
+@timer_decorator
+def mg_get_location_words(language: str, collection_name: str):
     """
-    For every text of a given language, this method gets the headword count by section 
+    A text of a given language and collection name, this method gets the headword count by section 
     from MongoDB. 
 
     Parameters:
     language (str): The language to query for. Ie. 'Latin'
+    collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
 
     Returns:
-    all_texts_word_counts: A dictionary in which:
-        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
-        Values: A dictionary (called text_locations_count)... see below
-
-            text_word_count: A dictionary in which:
-                Keys: Represent a location in the text
-                Values: Represent the headword count in that location
-                    Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
+        text_word_count: A dictionary in which:
+            Keys: Represent a location in the text
+            Values: Represent the headword count in that location
+                Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
     """
 
     db = atlas_client.database
+    collection = db[collection_name]
 
-    # A dictionary to store the return value
-    all_texts_word_counts = {}
+    # Query for all documents in the collection, where 'counter' field is ascending sorted
+    documents = collection.find().sort({"counter":1})
 
-    # Get all collection names (text names)
-    collection_names = db.list_collection_names()
+    text_word_count = {"start": -1, "end": -2}
 
-    # Iterate over each collection (text) in the database
-    for collection_name in collection_names:
-        collection = db[collection_name]
-
-        # Query for all documents in the collection, where 'counter' field is ascending sorted
-        documents = collection.find().sort({"counter":1})
-
-        text_word_count = {"start": -1, "end": -2}
-
-        # Iterate over each document in the collection and extract the location data
-        for doc in documents:
-            location_data = doc.get("location")
-            
-            if isinstance(location_data, str):
-                if location_data not in text_word_count:
-                    text_word_count[location_data.replace('_', '.')] = doc.get("counter") - 1
-            elif isinstance(location_data, int):
-                if location_data not in text_word_count:
-                    text_word_count[location_data] = doc.get("counter") - 1
-            elif isinstance(location_data, None):
-                print("No location data found in document {doc['_id']}")
-            else:
-                print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
-                exit(1)  
-
-        # Check that the text has a locations word count dictionary
-        if text_word_count:
-            all_texts_word_counts[collection_name] = text_word_count
+    # Iterate over each document in the collection and extract the location data
+    for doc in documents:
+        location_data = doc.get("location")
+        
+        if isinstance(location_data, str):
+            if location_data not in text_word_count:
+                text_word_count[location_data.replace('_', '.')] = doc.get("counter") - 1
+        elif isinstance(location_data, int):
+            if location_data not in text_word_count:
+                text_word_count[location_data] = doc.get("counter") - 1
+        elif isinstance(location_data, None):
+            print("No location data found in document {doc['_id']}")
         else:
-            print(f"No locations found for {collection_name}")
-            exit(1)
+            print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
+            exit(1)  
 
-        if collection_name == "Bridge_Latin_Text_Juvenalis_JuvSaturae_JuvSatur_prep_fastbridge_07_2020":
-        #print(all_texts_word_counts[collection_name])
-            print("")
-
-    return all_texts_word_counts
+    print(text_word_count)
+    return text_word_count
 
 
 def mg_render_titles(language: str, dropdown : str = ""):
@@ -693,16 +662,6 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
 
 
-# Decorators
-# times the method you give to it, apply using @timer_decorator above method
-def timer_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        return result, elapsed_time
-    return wrapper
 
 
 if __name__ == "__main__":
