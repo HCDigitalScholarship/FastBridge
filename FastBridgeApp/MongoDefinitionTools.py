@@ -66,10 +66,10 @@ def main():
     # #location_words = mg_get_location_words("Latin")
     # print("Location words loaded.\n\n")
     print("Fetching locations for all texts . . . ")
-    locations = mg_get_locations("Latin")
+    locations = mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
     print("Locations loaded.")
     print("\n\nFetching all location words for all texts . . .")
-    location_words = mg_get_location_words("Latin")
+    location_words = mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
     print("Location words loaded.\n\n")
 
     # sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
@@ -191,7 +191,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-@timer_decorator@timer_decorator
+@timer_decorator
 def mg_get_locations(language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -250,7 +250,6 @@ def mg_get_locations(language: str, collection_name: str):
     print(locations_linked_list)
     return locations_linked_list
 
-@timer_decorator
 @timer_decorator
 def mg_get_location_words(language: str, collection_name: str):
     """
