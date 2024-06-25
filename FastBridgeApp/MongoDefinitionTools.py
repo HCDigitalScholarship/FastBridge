@@ -35,17 +35,17 @@ class AtlasClient ():
         selected_database = self.mongodb_client[dbname]
         return selected_database
 
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
 
 def main():
+    DB_NAME = 'local-dev'
+    COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+    ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+    atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+    atlas_client.ping()
+    print('Connected to Atlas instance! We are good to go!!')
+    db = atlas_client.database
+
 
     #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
 
@@ -65,19 +65,25 @@ def main():
     # print("\n\nFetching all location words for all texts . . .")
     # #location_words = mg_get_location_words("Latin")
     # print("Location words loaded.\n\n")
+    sallust_title = "Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef"
+
     print("Fetching locations for all texts . . . ")
-    locations = mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
-    print("Locations loaded.")
+    locations, locations_list_time = mg_get_locations(db,"Latin", sallust_title) 
+    print(f"Location list loaded in {locations_list_time} seconds.")
+
     print("\n\nFetching all location words for all texts . . .")
-    location_words = mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
-    print("Location words loaded.\n\n")
+    location_words, location_words_time = mg_get_location_words(db,"Latin", sallust_title)
+    print(f"Location words loaded in {location_words_time} seconds.")
 
     # sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
     #print(test_text.get_words()[0])
-    mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
-    mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
+    #mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
+    #mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
 
 
+    print("\n\n\nGetting text as Text object.")
+    sallust_mongo, sallust_get_time = mg_get_text_as_Text(db, "Latin", sallust_title, locations, location_words) 
+    print(f"mg_get_text_as_Text completed in {sallust_get_time} seconds.")
     #Use this text below from the old py files to test sallust_mongo
     #sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
 
@@ -86,12 +92,12 @@ def main():
 def timer_decorator(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
-        print("Start: ", start_time)
+        print(f"{func} start: ", start_time)
         result = func(*args, **kwargs)
         end_time = time.time()
-        print("End: ", end_time)
+        print(f"{func} end: ", end_time)
         elapsed_time = end_time - start_time
-        print("Total time: ", elapsed_time)
+        print(f"{func} total time: ", elapsed_time)
         return result, elapsed_time
     return wrapper
 
@@ -192,12 +198,13 @@ output2 = func2(*args, **kwargs)
 return output1 == output2, (output1, output2)"""
 
 @timer_decorator
-def mg_get_locations(language: str, collection_name: str):
+def mg_get_locations(db,language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
     X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
 
     Parameters:
+    db = Mongo Atlas, local deployment
     language (str): The language to query for. Ie. 'Latin' and the name of the collection.
     collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
 
@@ -213,7 +220,6 @@ def mg_get_locations(language: str, collection_name: str):
 
     """
 
-    db = atlas_client.database
     collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
 
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
@@ -247,16 +253,17 @@ def mg_get_locations(language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    print(locations_linked_list)
+    #print(locations_linked_list)
     return locations_linked_list
 
 @timer_decorator
-def mg_get_location_words(language: str, collection_name: str):
+def mg_get_location_words(db, language: str, collection_name: str):
     """
     A text of a given language and collection name, this method gets the headword count by section 
     from MongoDB. 
 
     Parameters:
+    db = Mongo Atlas, local deployment
     language (str): The language to query for. Ie. 'Latin'
     collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
 
@@ -270,7 +277,6 @@ def mg_get_location_words(language: str, collection_name: str):
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
     """
 
-    db = atlas_client.database
     collection = db[collection_name]
 
     # Query for all documents in the collection, where 'counter' field is ascending sorted
@@ -294,7 +300,7 @@ def mg_get_location_words(language: str, collection_name: str):
             print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
             exit(1)  
 
-    print(text_word_count)
+    #print(text_word_count)
     return text_word_count
 
 
@@ -367,13 +373,11 @@ def format_sections(locations):
     return locations
     
 
-def mg_get_text(title: str):
+def mg_get_text(db, title: str):
     """
     function meant to retrieve the name of the collection that contains the requested text by title and language
     """
     
-    # Access the database
-    db = atlas_client.database
     
     # the list of collections to search through
     collections = db.list_collection_names()
@@ -529,16 +533,17 @@ def compare_dicts(mg_built_dict):
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
 
-
-def mg_get_text_as_Text(db, text_title, location_words, location_list):
+@timer_decorator
+def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
     '''
     Returns the specified collection as a Text object
 
     Parameters:
     db = Mongo Instance, local devlopment or Atlas
+    language = "Latin", or "Greek"
     text_title = The title of the text as it appears in Mongo, must match the same name as a collection in DB, but will tell you if not found
-    location_words = a dictionary with titles of texts as keys, and location words as their values, can be obtained with mg_get_location_words()
-    location_list = a dictionary with titles of texts as keys, and location lists as values, can be obtained with mg_get_locations()
+    location_list = result of mg_get_locations() with the same text_title
+    location_words = result of mg_get_location_words() with the same text_title
 
     Returns:
     A Text object(see text.py) containing all normal Text fields from that class, but adding some more fields to the_text tuples for each head_word:
@@ -560,16 +565,16 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
 
     '''    
+
     #Get the Text from either Atlas or Local Deployment
     print("Loading Text from MongoDB. . .")
-    collection_name = mg_get_text(text_title)
+    collection_name = mg_get_text(db, text_title)
     if(collection_name == None):
         print("Text not found")
         return
     else:
         print("Text found")
     print(f"{collection_name} successfully loaded")
-
 
     #Get all of the fields possible from the text
     all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
@@ -589,8 +594,8 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     if("local_definition" in field_data.keys()):
         local_def_flag = True
-    if("local_principal_parts" in field_data.keys()):
-        local_lem_flag = True
+    #if("local_principal_parts" in field_data.keys()):
+    #local_lem_flag = True
 
     #Create the tuple by looping through field_data
     #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
@@ -645,22 +650,6 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
         section_level = 3
 
 
-    #Get the Location List
-    all_locations = location_list
-    if(collection_name not in all_locations.keys()):
-        print(f"{collection_name} not found in locations list")
-        return
-    print(f"{collection_name} found in locations list") 
-    section_list = all_locations[collection_name]    
-
-    #Get the Location words
-    all_location_words = location_words
-    if(collection_name not in all_location_words.keys()):
-        print(f"{collection_name} not found in location words")
-        return
-    print(f"{collection_name} found in locations words") 
-    section_words = all_location_words[collection_name]
-
     #Check tuples
     for i in range(4):
         print(tuples[i])
@@ -669,7 +658,7 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
 
 
 
