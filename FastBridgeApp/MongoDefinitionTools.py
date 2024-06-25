@@ -9,6 +9,7 @@ import text
 import importlib
 from collections import namedtuple, deque
 import re
+import time 
 
 
 class AtlasClient ():
@@ -60,10 +61,10 @@ def main():
     #print(mg_get_locations("Latin"))
     #mg_get_location_words("Latin")
     print("Fetching locations for all texts . . . ")
-    locations = mg_get_locations("Latin")
+    print("Total time: ", timer_decorator(mg_get_locations("Latin")))
     print("Locations loaded.")
     print("\n\nFetching all location words for all texts . . .")
-    location_words = mg_get_location_words("Latin")
+    #location_words = mg_get_location_words("Latin")
     print("Location words loaded.\n\n")
 
     sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
@@ -690,6 +691,19 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
+
+
+# Decorators
+# times the method you give to it, apply using @timer_decorator above method
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        return result, elapsed_time
+    return wrapper
+
 
 if __name__ == "__main__":
     main()
