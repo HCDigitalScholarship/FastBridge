@@ -160,7 +160,7 @@ output2 = func2(*args, **kwargs)
 return output1 == output2, (output1, output2)"""
 
 @timer_decorator
-def mg_get_locations(db,language: str, collection_name: str):
+def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
     X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
@@ -183,9 +183,7 @@ def mg_get_locations(db,language: str, collection_name: str):
     """
 
     collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
-
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
-
     locations_list = ["start"] # locations is a list to store the location data from each document
 
     # Iterate over each document in the collection and extract the location data
@@ -215,7 +213,8 @@ def mg_get_locations(db,language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    #print(locations_linked_list)
+    print(f"locations linked list for {collection_name}:")
+    print(locations_linked_list)
     return locations_linked_list
 
 @timer_decorator
@@ -241,8 +240,7 @@ def mg_get_location_words(db, language: str, collection_name: str):
 
     collection = db[collection_name]
 
-    # Query for all documents in the collection, where 'counter' field is ascending sorted
-    documents = collection.find().sort({"counter":1})
+    documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, where 'counter' field is ascending sorted
 
     text_word_count = {"start": -1, "end": -2}
 
@@ -262,7 +260,8 @@ def mg_get_location_words(db, language: str, collection_name: str):
             print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
             exit(1)  
 
-    #print(text_word_count)
+    print(f"Text word count for {collection_name}:")
+    print(text_word_count)
     return text_word_count
 
 def mg_render_titles(db,language: str, dropdown : str = ""):
