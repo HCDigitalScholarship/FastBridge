@@ -12,68 +12,42 @@ import re
 import time 
 
 
-class AtlasClient ():
+# class AtlasClient ():
     
-    def __init__ (self, altas_uri, dbname):
-        self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
+#     def __init__ (self, altas_uri, dbname):
+#         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+#         self.database = self.mongodb_client[dbname]
 
-    ## A quick way to test if we can connect to Atlas instance
-    def ping (self):
-        self.mongodb_client.admin.command('ping')
+#     ## A quick way to test if we can connect to Atlas instance
+#     def ping (self):
+#         self.mongodb_client.admin.command('ping')
 
-    def get_collection (self, collection_name):
-        collection = self.database[collection_name]
-        return collection
+#     def get_collection (self, collection_name):
+#         collection = self.database[collection_name]
+#         return collection
 
-    def find (self, collection_name, filter = {}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
+#     def find (self, collection_name, filter = {}, limit=0):
+#         collection = self.database[collection_name]
+#         items = list(collection.find(filter=filter, limit=limit))
+#         return items
     
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
-
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
+#     def get_database(self, dbname):
+#         selected_database = self.mongodb_client[dbname]
+#         return selected_database
 
 
-def main():
+# def main():
+#     DB_NAME = 'local-dev'
+#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
 
-    #print(mg_get_slice(db, COLLECTION_NAME, 1, 117))
+#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+#     atlas_client.ping()
+#     print('Connected to Atlas instance! We are good to go!!')
+#     db = atlas_client.database
+#     mg_get_locations(db, "Latin", COLLECTION_NAME)
+#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
 
-    #text_name = mg_get_text("Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL")
-    #print(get_field_subset(["head_word", "corn", "counter"], text_name))
-
-    #dict_db = atlas_client.get_database('dictionaries')
-    #words = [('ACCIPIO', 0, 'accipio', '', '', '1', 1, '50 Most Important Latin Verbs'), ('DICO/2', 1, 'dico', '', '', '10', 1, '50 Most Important Latin Verbs'), ('DO', 2, 'do', '', '', '11', 1, '50 Most Important Latin Verbs'), ('DORMIO', 3, 'dormio', '', '', '12', 1, '50 Most Important Latin Verbs'), ('DVCO', 4, 'duco', '', '', '13', 1, '50 Most Important Latin Verbs'), ('EMO', 5, 'emo', '', '', '14', 1, '50 Most Important Latin Verbs'), ('EO/1', 6, 'eo', '', '', '15', 1, '50 Most Important Latin Verbs'), ('FACIO', 7, 'facio', '', '', '16', 1, '50 Most Important Latin Verbs'), ('FERO', 8, 'fero', '', '', '17', 1, '50 Most Important Latin Verbs'), ('FVGIO', 9, 'fugio', '', '', '18', 1, '50 Most Important Latin Verbs'), ('HABEO', 10, 'habeo', '', '', '19', 1, '50 Most Important Latin Verbs'), ('AGO', 11, 'ago', '', '', '2', 1, '50 Most Important Latin Verbs'), ('INVENIO', 12, 'invenio', '', '', '20', 1, '50 Most Important Latin Verbs'), ('IVBEO', 13, 'iubeo', '', '', '21', 1, '50 Most Important Latin Verbs'), ('LEGO/2', 14, 'lego', '', '', '22', 1, '50 Most Important Latin Verbs'), ('LOQVOR', 15, 'loquor', '', '', '23', 1, '50 Most Important Latin Verbs'), ('MITTO', 16, 'mitto', '', '', '24', 1, '50 Most Important Latin Verbs'), ('MOVEO', 17, 'moveo', '', '', '25', 1, '50 Most Important Latin Verbs'), ('NOLO', 18, 'nolo', '', '', '26', 1, '50 Most Important Latin Verbs'), ('OSTENDO', 19, 'ostendo', '', '', '27', 1, '50 Most Important Latin Verbs'), ('PETO', 20, 'peto', '', '', '28', 1, '50 Most Important Latin Verbs'), ('PLACEO', 21, 'placeo', '', '', '29', 1, '50 Most Important Latin Verbs'), ('AMO', 22, 'amo', '', '', '3', 1, '50 Most Important Latin Verbs'), ('PONO', 23, 'pono', '', '', '30', 1, '50 Most Important Latin Verbs'), ('POSSVM/1', 24, 'possum', '', '', '31', 1, '50 Most Important Latin Verbs'), ('PVTO', 25, 'puto', '', '', '32', 1, '50 Most Important Latin Verbs'), ('QVAERO', 26, 'quaero', '', '', '33', 1, '50 Most Important Latin Verbs'), ('RELINQVO', 27, 'relinquo', '', '', '34', 1, '50 Most Important Latin Verbs'), ('SCIO', 28, 'scio', '', '', '35', 1, '50 Most Important Latin Verbs'), ('SCRIBO', 29, 'scribo', '', '', '36', 1, '50 Most Important Latin Verbs'), ('SEDEO', 30, 'sedeo', '', '', '37', 1, '50 Most Important Latin Verbs'), ('SOLEO', 31, 'soleo', '', '', '38', 1, '50 Most Important Latin Verbs'), ('STO', 32, 'sto', '', '', '39', 1, '50 Most Important Latin Verbs'), ('AVDIO', 33, 'audio', '', '', '4', 1, '50 Most Important Latin Verbs'), ('SVM/1', 34, 'sum', '', '', '40', 1, '50 Most Important Latin Verbs'), ('SVMO', 35, 'sumo', '', '', '41', 1, '50 Most Important Latin Verbs'), ('SVRGO', 36, 'surgo', '', '', '42', 1, '50 Most Important Latin Verbs'), ('TENEO', 37, 'teneo', '', '', '43', 1, '50 Most Important Latin Verbs'), ('TIMEO', 38, 'timeo', '', '', '44', 1, '50 Most Important Latin Verbs'), ('VENIO', 39, 'venio', '', '', '45', 1, '50 Most Important Latin Verbs'), ('VERTO', 40, 'verto', '', '', '46', 1, '50 Most Important Latin Verbs'), ('VIDEO', 41, 'video', '', '', '47', 1, '50 Most Important Latin Verbs'), ('VOCO', 42, 'voco', '', '', '48', 1, '50 Most Important Latin Verbs'), ('VOLO/3', 43, 'volo', '', '', '49', 1, '50 Most Important Latin Verbs'), ('CAPIO/2', 44, 'capio', '', '', '5', 1, '50 Most Important Latin Verbs'), ('VTOR', 45, 'utor', '', '', '50', 1, '50 Most Important Latin Verbs'), ('COMEDO/2', 46, 'comedo', '', '', '6', 1, '50 Most Important Latin Verbs'), ('CONOR', 47, 'conor', '', '', '7', 1, '50 Most Important Latin Verbs'), ('CREDO', 48, 'credo', '', '', '8', 1, '50 Most Important Latin Verbs'), ('DEBEO', 49, 'debeo', '', '', '9', 1, '50 Most Important Latin Verbs')] 
-    #print(mg_get_lang_data(dict_db, words, "bridge_latin_dictionary"))
-    #def_tools_result = ([(Word(TITLE='POST/2', PRINCIPAL_PARTS='post', PRINCIPAL_PARTS_NO_DIACRITICALS='post', SIMPLE_LEMMA='post', SHORT_DEFINITION='after (adv. and prep. +acc.)', LONG_DEFINITION='after(ward), later; behind (+ acc.)', PART_OF_SPEECH='Preposition', LOGEION_LINK='http://logeion.uchicago.edu/index.html#post', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=post', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='T', Appearance='5', Total_Count_in_Text=3, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Preposition STOPWORD_Preposition_0 '), (Word(TITLE='PAVCI', PRINCIPAL_PARTS='paucus –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='paucus –a –um', SIMPLE_LEMMA='paucus', SHORT_DEFINITION='(pl.) a few; (sing.) small', LONG_DEFINITION='(pl.) a few; (sing.) small', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#paucus', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=paucus', CONJUGATION='', DECLENSION='1', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 '), (Word(TITLE='ITAQVE', PRINCIPAL_PARTS='itaque', PRINCIPAL_PARTS_NO_DIACRITICALS='itaque', SIMPLE_LEMMA='itaque', SHORT_DEFINITION='and so therefore', LONG_DEFINITION='and so, accordingly; thus, therefore, consequently', PART_OF_SPEECH='Adverb', LOGEION_LINK='http://logeion.uchicago.edu/index.html#itaque', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=itaque', CONJUGATION='', DECLENSION='', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=7, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adverb '), (Word(TITLE='DIES', PRINCIPAL_PARTS='diēs diēī m. or f.', PRINCIPAL_PARTS_NO_DIACRITICALS='dies diei m. or f.', SIMPLE_LEMMA='dies', SHORT_DEFINITION='day', LONG_DEFINITION='day', PART_OF_SPEECH='Noun', LOGEION_LINK='http://logeion.uchicago.edu/index.html#dies', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=dies', CONJUGATION='', DECLENSION='5', PROPER='', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Noun DECLENSION_Noun_5 '), (Word(TITLE='PARISIVS/A', PRINCIPAL_PARTS='Parīsius –a –um', PRINCIPAL_PARTS_NO_DIACRITICALS='Parisius –a –um', SIMPLE_LEMMA='Parisius', SHORT_DEFINITION='of or from Paris (place)', LONG_DEFINITION='of or from Paris (city); subst. esp., the Celtic tribe from this region', PART_OF_SPEECH='Adjective', LOGEION_LINK='http://logeion.uchicago.edu/index.html#Parisius', FORCELLINI_LINK='http://lexica.linguax.com/forc2.php?searchedLG=Parisius', CONJUGATION='', DECLENSION='1', PROPER='T', REGULAR='', STOPWORD='', Appearance='5', Total_Count_in_Text=2, Source_Text='Abelard, Historia Calamitatum 5-6'), 'Adjective DECLENSION_Adjective_1 PROPER_Adjective_0 ')], ['Adjective', 'Adverb', 'Conjunction', 'Idiom', 'Interjection', 'Noun', 'Number', 'Preposition', 'Pronoun', 'Verb'], ['PRINCIPAL_PARTS_NO_DIACRITICALS', 'PRINCIPAL_PARTS', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'SIMPLE_LEMMA', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK', 'Total_Count_in_Text'], [('DECLENSION_Adjective_1', 'Adjective '), ('DECLENSION_Noun_5', 'Noun '), ('PROPER_Adjective_0', 'Adjective '), ('STOPWORD_Preposition_0', 'Preposition ')], ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD'])
-    #print(compare_results(mongo_def_tools_result, def_tools_result))
-    
-    #print(mg_get_locations("Latin"))
-    #mg_get_location_words("Latin")
-    # print("Fetching locations for all texts . . . ")
-    # print("Locations loaded.")
-    # print("\n\nFetching all location words for all texts . . .")
-    # #location_words = mg_get_location_words("Latin")
-    # print("Location words loaded.\n\n")
-
-    # sallust_mongo = mg_get_text_as_Text(db, 'Bridge_Latin_Text_Sallustius_Catilina_SalCatil_prep_fastbridge_07_2020_localdef', locations, location_words)
-    #print(test_text.get_words()[0])
-    mg_get_locations("Latin", "AP Latin Core List 2024_LIST")
-    mg_get_location_words("Latin", "AP Latin Core List 2024_LIST")
-
-
-    #Use this text below from the old py files to test sallust_mongo
-    #sallust_py = get_text("sallust_bellum_catilinae", "Latin") 
 
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
@@ -90,21 +64,21 @@ def timer_decorator(func):
     return wrapper
 
 
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
+# def connect_to_local_deployment():
+# 	try:
+# 		# start connection code heri
 
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
+# 		uri = "mongodb://localhost:27017/"
+# 		client = MongoClient(uri)
 
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
+# 		# end connection code here
+# 		client.admin.command("ping")
+# 		print("Connected successfully")
+# 		# other application code
+# 		client.close()
+# 	except Exception as e:
+# 		raise Exception(
+# 			"The following error occurred: ", e)
 
 def get_field_subset(db, fields, text_name):
     '''
@@ -291,8 +265,7 @@ def mg_get_location_words(language: str, collection_name: str):
     print(text_word_count)
     return text_word_count
 
-
-def mg_render_titles(language: str, dropdown : str = ""):
+def mg_render_titles(db,language: str, dropdown : str = ""):
     """
     For every text of a given language, this method writes a string of HTML code to display the text titles
     from MongoDB. 
@@ -303,14 +276,14 @@ def mg_render_titles(language: str, dropdown : str = ""):
     Returns:
     titles: A list of HTML code to display the text titles.
     """
-    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
+    title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
     
     titles = []
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
     print(titles)
     return "".join(titles)
 
-def mg_get_location_levels(language: str):
+def mg_get_location_levels(db, language: str):
     """
     For every text of a given language, this method gets the location levels
     from MongoDB. 
@@ -323,8 +296,6 @@ def mg_get_location_levels(language: str):
         Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
         Values: The location levels of the text from 1 - 3. (Eg. 1 = 1, 1.1. = 2, 1.1.1 = 3)
     """
-    db = atlas_client.database # Access the database
-    
     title_location_levels = {} # A dictionary of {"Title" : location_level} to store the return value
 
     collection_names = db.list_collection_names() # Get all collection names (text names)
