@@ -12,41 +12,41 @@ import re
 import time 
 
 
-class AtlasClient ():
+# class AtlasClient ():
     
-    def __init__ (self, altas_uri, dbname):
-        self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
+#     def __init__ (self, altas_uri, dbname):
+#         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+#         self.database = self.mongodb_client[dbname]
 
-    ## A quick way to test if we can connect to Atlas instance
-    def ping (self):
-        self.mongodb_client.admin.command('ping')
+#     ## A quick way to test if we can connect to Atlas instance
+#     def ping (self):
+#         self.mongodb_client.admin.command('ping')
 
-    def get_collection (self, collection_name):
-        collection = self.database[collection_name]
-        return collection
+#     def get_collection (self, collection_name):
+#         collection = self.database[collection_name]
+#         return collection
 
-    def find (self, collection_name, filter = {}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
+#     def find (self, collection_name, filter = {}, limit=0):
+#         collection = self.database[collection_name]
+#         items = list(collection.find(filter=filter, limit=limit))
+#         return items
     
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
+#     def get_database(self, dbname):
+#         selected_database = self.mongodb_client[dbname]
+#         return selected_database
 
 
-def main():
-    DB_NAME = 'local-dev'
-    COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-    ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+# def main():
+#     DB_NAME = 'local-dev'
+#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
 
-    atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-    atlas_client.ping()
-    print('Connected to Atlas instance! We are good to go!!')
-    db = atlas_client.database
-    mg_get_locations(db, "Latin", COLLECTION_NAME)
-    mg_get_location_words(db, "Latin", COLLECTION_NAME)
+#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+#     atlas_client.ping()
+#     print('Connected to Atlas instance! We are good to go!!')
+#     db = atlas_client.database
+#     mg_get_locations(db, "Latin", COLLECTION_NAME)
+#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
 
 
 # Decorators
@@ -64,21 +64,21 @@ def timer_decorator(func):
     return wrapper
 
 
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
+# def connect_to_local_deployment():
+# 	try:
+# 		# start connection code heri
 
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
+# 		uri = "mongodb://localhost:27017/"
+# 		client = MongoClient(uri)
 
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
+# 		# end connection code here
+# 		client.admin.command("ping")
+# 		print("Connected successfully")
+# 		# other application code
+# 		client.close()
+# 	except Exception as e:
+# 		raise Exception(
+# 			"The following error occurred: ", e)
 
 def get_field_subset(db, fields, text_name):
     '''
@@ -264,7 +264,7 @@ def mg_get_location_words(db, language: str, collection_name: str):
     print(text_word_count)
     return text_word_count
 
-def mg_render_titles(language: str, dropdown : str = ""):
+def mg_render_titles(db,language: str, dropdown : str = ""):
     """
     For every text of a given language, this method writes a string of HTML code to display the text titles
     from MongoDB. 
@@ -275,14 +275,14 @@ def mg_render_titles(language: str, dropdown : str = ""):
     Returns:
     titles: A list of HTML code to display the text titles.
     """
-    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
+    title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
     
     titles = []
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
     print(titles)
     return "".join(titles)
 
-def mg_get_location_levels(language: str):
+def mg_get_location_levels(db, language: str):
     """
     For every text of a given language, this method gets the location levels
     from MongoDB. 
@@ -295,8 +295,6 @@ def mg_get_location_levels(language: str):
         Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
         Values: The location levels of the text from 1 - 3. (Eg. 1 = 1, 1.1. = 2, 1.1.1 = 3)
     """
-    db = atlas_client.database # Access the database
-    
     title_location_levels = {} # A dictionary of {"Title" : location_level} to store the return value
 
     collection_names = db.list_collection_names() # Get all collection names (text names)
