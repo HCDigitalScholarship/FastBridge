@@ -13,7 +13,11 @@ import time
 
 
 # class AtlasClient ():
+# class AtlasClient ():
     
+#     def __init__ (self, altas_uri, dbname):
+#         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+#         self.database = self.mongodb_client[dbname]
 #     def __init__ (self, altas_uri, dbname):
 #         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
 #         self.database = self.mongodb_client[dbname]
@@ -21,7 +25,13 @@ import time
 #     ## A quick way to test if we can connect to Atlas instance
 #     def ping (self):
 #         self.mongodb_client.admin.command('ping')
+#     ## A quick way to test if we can connect to Atlas instance
+#     def ping (self):
+#         self.mongodb_client.admin.command('ping')
 
+#     def get_collection (self, collection_name):
+#         collection = self.database[collection_name]
+#         return collection
 #     def get_collection (self, collection_name):
 #         collection = self.database[collection_name]
 #         return collection
@@ -30,7 +40,14 @@ import time
 #         collection = self.database[collection_name]
 #         items = list(collection.find(filter=filter, limit=limit))
 #         return items
+#     def find (self, collection_name, filter = {}, limit=0):
+#         collection = self.database[collection_name]
+#         items = list(collection.find(filter=filter, limit=limit))
+#         return items
     
+#     def get_database(self, dbname):
+#         selected_database = self.mongodb_client[dbname]
+#         return selected_database
 #     def get_database(self, dbname):
 #         selected_database = self.mongodb_client[dbname]
 #         return selected_database
@@ -40,6 +57,18 @@ import time
 #     DB_NAME = 'local-dev'
 #     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
 #     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+# def main():
+#     DB_NAME = 'local-dev'
+#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+#     atlas_client.ping()
+#     print('Connected to Atlas instance! We are good to go!!')
+#     db = atlas_client.database
+#     mg_get_locations(db, "Latin", COLLECTION_NAME)
+#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
 
 #     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
 #     atlas_client.ping()
