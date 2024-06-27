@@ -23,6 +23,8 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
+import MongoDefinitionTools
+from pymongo import MongoClient, errors
 
 '''
 Files:
@@ -1684,6 +1686,61 @@ templates = Jinja2Templates(directory="templates")
 
 selected_texts = []
 
+# AtlasClient class definition
+class AtlasClient():
+    
+    def __init__(self, atlas_uri, dbname):
+        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+        self.database = self.mongodb_client[dbname]
+
+    def ping(self):
+        self.mongodb_client.admin.command('ping')
+
+    def get_collection(self, collection_name):
+        collection = self.database[collection_name]
+        return collection
+
+    def find(self, collection_name, filter={}, limit=0):
+        collection = self.database[collection_name]
+        items = list(collection.find(filter=filter, limit=limit))
+        return items
+    
+    def get_database(self, dbname):
+        selected_database = self.mongodb_client[dbname]
+        return selected_database
+
+# Initialize AtlasClient
+# ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+# DB_NAME = 'local-dev'
+# atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
+# atlas_client.ping()
+# print('Connected to Atlas instance! We are good to go!!')
+
+DB_NAME = 'local-dev'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+atlas_client.ping()
+print('Connected to Atlas instance! We are good to go!!')
+db = atlas_client.database
+
+def connect_to_local_deployment():
+	try:
+		# start connection code heri
+
+		uri = "mongodb://localhost:27017/"
+		client = MongoClient(uri)
+
+		# end connection code here
+		client.admin.command("ping")
+		print("Connected successfully")
+		# other application code
+		client.close()
+	except Exception as e:
+		raise Exception(
+			"The following error occurred: ", e)
+
 
 @router.get("/")
 async def stats_index(request: Request):
@@ -1695,16 +1752,16 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db=db, language=language), 'titles2': MongoDefinitionTools.mg_render_titles(db=db, language=language, dropdown="2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
     print("reaching section endpoint")
-    sectionDict = DefinitionTools.get_sections(language)
-    sectionBook = sectionDict[textname]
-    return sectionBook
+    sectionDict = MongoDefinitionTools.mg_get_locations(db=db, language=language, collection_name=textname)
+    #sectionBook = sectionDict[textname]
+    return sectionDict
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -1838,7 +1895,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         
         print(text_names)
 
-        texts_and_sections = DefinitionTools.get_sections("Latin")
+        texts_and_sections = MongoDefinitionTools.mg_get_locations(db=db, language="Latin")
 
 
         #add analyzer stats from each text to context
@@ -1968,11 +2025,12 @@ async def stats_cumulative(request: Request, language: str):
     selected_texts = retrieve_selected_texts()
 
     # Process the selected text names and retrieve the corresponding book data
-    sectionDict = DefinitionTools.get_sections(language)
+    for textname in selected_texts:
+        sectionDict = MongoDefinitionTools.mg_get_locations(db=db, langauge=language, collection_name=textname)
     sectionBooks = [sectionDict[textname] for textname in selected_texts]
 
     # Perform cumulative statistics calculations or any other operations on sectionBooks
 
-    return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
+    return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionDict})
 
 
