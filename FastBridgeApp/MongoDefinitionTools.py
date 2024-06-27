@@ -188,7 +188,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-@timer_decorator
+# @timer_decorator
 def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -210,7 +210,8 @@ def mg_get_locations(db, language: str, collection_name: str):
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
 
     """
-
+    print("calling mg_get_locations()")
+    print(f"mg_get_locations() received a collection_name of: {collection_name}")
     collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
     locations_list = ["start"] # locations is a list to store the location data from each document
@@ -230,20 +231,20 @@ def mg_get_locations(db, language: str, collection_name: str):
             print(f"No location data found in document {doc['_id']}, {collection_name}")
     
     locations_list.append("end")
-    locations_list = format_sections(locations_list) # Replaces the "_" in the location string with "."
+    locations_list = mg_format_sections(locations_list) # Replaces the "_" in the location string with "."
 
     # Add to locations_linked_list if locations_list is not empty
     locations_linked_list = {}
     if locations_list:
         for i in range(len(locations_list) - 1):
             locations_linked_list[locations_list[i + 1]] = locations_list[i]
-        locations_linked_list["start"] = "start"
+        # locations_linked_list["1"] = "start"
     else:
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    print(f"locations linked list for {collection_name}:")
-    print(locations_linked_list)
+    # print(f"locations linked list for {collection_name}:")
+    # print(locations_linked_list)
     return locations_linked_list
 
 @timer_decorator
@@ -305,8 +306,6 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
     titles: A list of HTML code to display the text titles.
     """
     title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
-    
-    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
     print("calling mg_render_titles")
     # print("printing mg_get_location_levels", title_location_levels)
     titles = []
@@ -654,7 +653,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
 
 def mg_format_title(unformatted_title: str):
     '''
-    Formats a title string to be more readable. By replacing underscores with spaces. 
+    Formats a title string to be more readable.s By replacing underscores with spaces. 
     For example,'200_essential_latin_words_list_mahoney'is converted to
     '200 Essential Latin Words List (Mahoney)'
     
