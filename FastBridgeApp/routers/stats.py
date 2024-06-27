@@ -102,8 +102,8 @@ def get_latin_dictionary(file_path):  # for reading in DICTIONARY file
             # print(row)  # Add this line
             if 'TITLE' in row:
                 word_dictionary[row['TITLE']] = row
-            else:
-                print(row)
+                #else:
+                #print(row)
             # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
             # word_dictionary[row["TITLE"]] = row
     return word_dictionary
@@ -234,8 +234,8 @@ class TextAnalyzer():
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
         print(f"\n\n\n{form_request}\n\n\n")
-        location_list = MongoDefinitionTools.mg_get_locations(db, language, form_request)
-        location_words = MongoDefinitionTools.mg_get_location_words(db, language, form_request)
+        location_list, l_list_time = MongoDefinitionTools.mg_get_locations(db, language, form_request)
+        location_words, l_word_time = MongoDefinitionTools.mg_get_location_words(db, language, form_request)
         self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(db, language, form_request, location_list, location_words),start_section, end_section))
 #(get_text(form_request, language).book, start_section, end_section))
 
@@ -251,7 +251,6 @@ class TextAnalyzer():
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
-            print(self.texts[0][0])
             start_index = self.texts[0][0].sections[self.texts[0][1]]
             end_index = self.texts[0][0].sections[self.texts[0][2]]
             word_count = end_index - start_index
@@ -1751,7 +1750,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     if '+' not in sourcetexts:#Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
-        print(str(analyzer))
+        #print(str(analyzer))
 
         textname = analyzer.get_textname()
         word_count = analyzer.num_words()

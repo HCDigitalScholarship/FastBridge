@@ -479,7 +479,7 @@ def compare_dicts(mg_built_dict):
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
 
-@timer_decorator
+#@timer_decorator
 def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
     '''
     Returns the specified collection as a Text object
@@ -603,6 +603,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     #check section level
     print(f"section level: {section_level}")    
 
+    print("FInished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
 
