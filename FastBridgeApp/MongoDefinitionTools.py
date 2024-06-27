@@ -173,7 +173,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-#@timer_decorator
+# @timer_decorator
 def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -201,26 +201,22 @@ def mg_get_locations(db, language: str, collection_name: str):
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
     locations_list = ["start"] # locations is a list to store the location data from each document
 
-        # Iterate over each document in the collection and extract the location data
-        for doc in documents:
-            location_data = doc.get("location")
-            
-            if type(location_data) is str:
-                if location_data != locations_list[-1]:
-                    locations_list.append((location_data))
-                    #print(locations_list[-1])
-            elif type(location_data) is int:
-                    #print(f"found int", location_data, collection_name)
-                if location_data != locations_list[-1]:
-                    locations_list.append(str(location_data))
-                    #print(locations_list[-1])
-            elif location_data is None:
-                print(f"No location data found in document {doc['_id']}, {collection_name}")
-        
-        locations_list.append("end")
-
-        # Replaces the "_" in the location string with "."
-        locations_list = format_sections(locations_list)
+    # Iterate over each document in the collection and extract the location data
+    for doc in documents:
+        location_data = doc.get("location")
+        if type(location_data) is str:
+            if location_data != locations_list[-1]:
+                locations_list.append((location_data))
+        elif type(location_data) is int:
+                #print(f"found int", location_data, collection_name)
+            if location_data != locations_list[-1]:
+                locations_list.append(str(location_data))
+                #print(locations_list[-1])
+        elif location_data is None:
+            print(f"No location data found in document {doc['_id']}, {collection_name}")
+    
+    locations_list.append("end")
+    locations_list = format_sections(locations_list) # Replaces the "_" in the location string with "."
 
     # Add to locations_linked_list if locations_list is not empty
     locations_linked_list = {}
@@ -232,13 +228,12 @@ def mg_get_locations(db, language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
-        text_locations[collection_name] = locations_linked_list
+    print(f"locations linked list for {collection_name}:")
+    print(locations_linked_list)
+    return locations_linked_list
 
-
-    # print(text_locations)
-    return text_locations
-
-def mg_get_location_words(language: str):
+@timer_decorator
+def mg_get_location_words(db, language: str, collection_name: str):
     """
     A text of a given language and collection name, this method gets the headword count by section 
     from MongoDB. 
@@ -296,8 +291,6 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
     titles: A list of HTML code to display the text titles.
     """
     title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
-    
-    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
     print("calling mg_render_titles")
     # print("printing mg_get_location_levels", title_location_levels)
     titles = []
@@ -651,7 +644,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
 
 def mg_format_title(unformatted_title: str):
     '''
-    Formats a title string to be more readable. By replacing underscores with spaces. 
+    Formats a title string to be more readable.s By replacing underscores with spaces. 
     For example,'200_essential_latin_words_list_mahoney'is converted to
     '200 Essential Latin Words List (Mahoney)'
     

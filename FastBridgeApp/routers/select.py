@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depen
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import importlib
+import text
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
@@ -41,13 +42,6 @@ class AtlasClient():
         selected_database = self.mongodb_client[dbname]
         return selected_database
 
-# Initialize AtlasClient
-# ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-# DB_NAME = 'local-dev'
-# atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
-# atlas_client.ping()
-# print('Connected to Atlas instance! We are good to go!!')
-
 DB_NAME = 'local-dev'
 COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
 ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
@@ -82,16 +76,16 @@ async def index(request : Request):
 @router.get("/{language}/")
 async def select(request : Request, language : str):
     print("Calling select()")
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
+    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db,language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
     print("Calling select_section()")
-    print("textname: ", textname)
-    sectionDict = MongoDefinitionTools.mg_get_locations(language)
-    sectionBook = sectionDict[textname]
-    return sectionBook
+    print("Unformatted textname: ", textname)
+    locations_list = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    print(f"locations_list for {textname}: ", locations_list)
+    return locations_list
  
 def filter_helper(row_filters, POS):
     print("Calling filter_helper()")
@@ -136,7 +130,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     display_triple =[]
     for text, start, end in triple:
         print("Fetching locations for all texts . . . ")
-        locations = MongoDefinitionTools.mg_get_locations(language)
+        locations = MongoDefinitionTools.mg_get_locations(db, language, )
         print("Locations loaded.")
         print("\n\nFetching all location words for all texts . . .")
         location_words = MongoDefinitionTools.mg_get_location_words(language)
