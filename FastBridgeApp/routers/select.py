@@ -87,7 +87,7 @@ async def select(request : Request, language : str):
 async def select_section(request : Request, textname: str , language: str):
     print("reaching section endpoint")
     sectionDict = MongoDefinitionTools.mg_get_locations(db, language, textname)
-    return sectionBook
+    return sectionDict
  
 def filter_helper(row_filters, POS):
     print(row_filters)
