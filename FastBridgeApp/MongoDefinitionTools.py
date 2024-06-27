@@ -608,7 +608,6 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     #check section level
     print(f"section level: {section_level}")    
 
-    print("Finished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
