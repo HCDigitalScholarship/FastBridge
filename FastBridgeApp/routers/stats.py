@@ -23,6 +23,20 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
+import MongoDefinitionTools
+from MongoDefinitionTools import AtlasClient
+
+#DB boilerplate
+DB_NAME = 'local-dev'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+atlas_client.ping()
+print('Connected to Atlas instance! We are good to go!!')
+db = atlas_client.database
+
+
 
 '''
 Files:
@@ -1695,16 +1709,15 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db, language), 'titles2': MongoDefinitionTools.mg_render_titles(db, language, "2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
     print("reaching section endpoint")
-    sectionDict = DefinitionTools.get_sections(language)
-    sectionBook = sectionDict[textname]
-    return sectionBook
+    sectionDict = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    return sectionDict
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
