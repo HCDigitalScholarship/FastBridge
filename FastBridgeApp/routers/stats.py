@@ -26,6 +26,20 @@ from pathlib import Path
 import MongoDefinitionTools
 from MongoDefinitionTools import AtlasClient
 
+#DB boilerplate
+DB_NAME = 'local-dev'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+atlas_client.ping()
+print('Connected to Atlas instance! We are good to go!!')
+db = atlas_client.database
+
+
+import MongoDefinitionTools
+from MongoDefinitionTools import AtlasClient
+
 '''
 Files:
 Text files -> Text class, get_text().book
@@ -1731,16 +1745,16 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db=db, language=language), 'titles2': MongoDefinitionTools.mg_render_titles(db=db, language=language, dropdown="2")})
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
     print("reaching section endpoint")
-    sectionDict = MongoDefinitionTools.mg_get_locations(db=db, language=language, collection_name=textname)
-    #sectionBook = sectionDict[textname]
-    return sectionDict
+    sectionDict = DefinitionTools.get_sections(language)
+    sectionBook = sectionDict[textname]
+    return sectionBook
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
