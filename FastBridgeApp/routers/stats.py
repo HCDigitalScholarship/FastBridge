@@ -233,8 +233,11 @@ class TextAnalyzer():
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
-        self.texts.append(
-            (get_text(form_request, language).book, start_section, end_section))
+        print(f"\n\n\n{form_request}\n\n\n")
+        location_list = MongoDefinitionTools.mg_get_locations(db, language, form_request)
+        location_words = MongoDefinitionTools.mg_get_location_words(db, language, form_request)
+        self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(db, language, form_request, location_list, location_words),start_section, end_section))
+#(get_text(form_request, language).book, start_section, end_section))
 
     def get_textname(self):
         if len(self.texts) == 0:
@@ -248,6 +251,7 @@ class TextAnalyzer():
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
+            print(self.texts[0][0])
             start_index = self.texts[0][0].sections[self.texts[0][1]]
             end_index = self.texts[0][0].sections[self.texts[0][2]]
             word_count = end_index - start_index
