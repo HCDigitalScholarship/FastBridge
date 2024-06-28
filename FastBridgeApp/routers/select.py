@@ -108,6 +108,7 @@ def filter_helper(row_filters, POS):
             cssclass = filter.split('_')[0]
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(\'{filter}\');" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
+
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -116,28 +117,30 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
-    print(sourcetexts)
+    print("sourcetexts: ", sourcetexts)
     if running_list == "running":
+        print("running list")
         running_list = True
     else:
+        print("not running list")
         running_list = False
     local_def = False
     local_lem = False
     print("Printing triple: ", triple)
     words = []
     titles =[]
-    print("entering for")
-    display_triple =[]
+    print("entering for loop")
+    display_triple = []
     for text, start, end in triple:
         print("Fetching locations for all texts . . . ")
-        locations = MongoDefinitionTools.mg_get_locations(db, language, )
+        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text)
         print("Locations loaded.")
         print("\n\nFetching all location words for all texts . . .")
-        location_words = MongoDefinitionTools.mg_get_location_words(language)
+        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text)
         print("Location words loaded.\n\n")
         print("text: ", text)
         # book = DefinitionTools.get_text(text, language).book
-        book = MongoDefinitionTools.mg_get_text_as_Text(db, text, locations, location_words)
+        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
         print("PRINTING BOOK")
         print(book)
         if not local_def:
