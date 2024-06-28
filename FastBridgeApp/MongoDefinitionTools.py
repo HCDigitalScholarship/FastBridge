@@ -12,31 +12,48 @@ import re
 import time 
 
 
-class AtlasClient():
+class AtlasClient ():
     
-    def __init__(self, atlas_uri, dbname):
-        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+    
+    def __init__ (self, altas_uri, dbname):
+        self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
         self.database = self.mongodb_client[dbname]
 
-    def ping(self):
-        self.mongodb_client.admin.command('ping')
+#     ## A quick way to test if we can connect to Atlas instance
+#     def ping (self):
+#         self.mongodb_client.admin.command('ping')
+#     ## A quick way to test if we can connect to Atlas instance
+#     def ping (self):
+#         self.mongodb_client.admin.command('ping')
 
-    def get_collection(self, collection_name):
-        collection = self.database[collection_name]
-        return collection
+#     def get_collection (self, collection_name):
+#         collection = self.database[collection_name]
+#         return collection
+#     def get_collection (self, collection_name):
+#         collection = self.database[collection_name]
+#         return collection
 
-    def find(self, collection_name, filter={}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
+#     def find (self, collection_name, filter = {}, limit=0):
+#         collection = self.database[collection_name]
+#         items = list(collection.find(filter=filter, limit=limit))
+#         return items
+#     def find (self, collection_name, filter = {}, limit=0):
+#         collection = self.database[collection_name]
+#         items = list(collection.find(filter=filter, limit=limit))
+#         return items
     
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
+#     def get_database(self, dbname):
+#         selected_database = self.mongodb_client[dbname]
+#         return selected_database
+#     def get_database(self, dbname):
+#         selected_database = self.mongodb_client[dbname]
+#         return selected_database
 
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+# def main():
+#     DB_NAME = 'local-dev'
+#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
 
 atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
 atlas_client.ping()
@@ -223,14 +240,14 @@ def mg_get_locations(db, language: str, collection_name: str):
     if locations_list:
         for i in range(len(locations_list) - 1):
             locations_linked_list[locations_list[i + 1]] = locations_list[i]
-        # locations_linked_list["1"] = "start"
+        locations_linked_list["start"] = "start"
     else:
         print(f"No locations found for {collection_name}")
         exit(1)
 
     return locations_linked_list
 
-@timer_decorator
+# @timer_decorator
 def mg_get_location_words(db, language: str, collection_name: str):
     """
     A text of a given language and collection name, this method gets the headword count by section 
@@ -507,7 +524,7 @@ def compare_dicts(mg_built_dict):
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
 
-#@timer_decorator
+@timer_decorator
 def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
     '''
     Returns the specified collection as a Text object
@@ -635,7 +652,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
 
 def mg_format_title(unformatted_title: str):
     '''
