@@ -12,45 +12,33 @@ import re
 import time 
 
 
-# class AtlasClient ():
-# class AtlasClient ():
+class AtlasClient ():
     
-#     def __init__ (self, altas_uri, dbname):
-#         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-#         self.database = self.mongodb_client[dbname]
-#     def __init__ (self, altas_uri, dbname):
-#         self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-#         self.database = self.mongodb_client[dbname]
-
-#     ## A quick way to test if we can connect to Atlas instance
-#     def ping (self):
-#         self.mongodb_client.admin.command('ping')
-#     ## A quick way to test if we can connect to Atlas instance
-#     def ping (self):
-#         self.mongodb_client.admin.command('ping')
-
-#     def get_collection (self, collection_name):
-#         collection = self.database[collection_name]
-#         return collection
-#     def get_collection (self, collection_name):
-#         collection = self.database[collection_name]
-#         return collection
-
-#     def find (self, collection_name, filter = {}, limit=0):
-#         collection = self.database[collection_name]
-#         items = list(collection.find(filter=filter, limit=limit))
-#         return items
-#     def find (self, collection_name, filter = {}, limit=0):
-#         collection = self.database[collection_name]
-#         items = list(collection.find(filter=filter, limit=limit))
-#         return items
     
-#     def get_database(self, dbname):
-#         selected_database = self.mongodb_client[dbname]
-#         return selected_database
-#     def get_database(self, dbname):
-#         selected_database = self.mongodb_client[dbname]
-#         return selected_database
+    def __init__ (self, altas_uri, dbname):
+        self.mongodb_client = MongoClient(altas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
+        self.database = self.mongodb_client[dbname]
+
+    ## A quick way to test if we can connect to Atlas instance
+    def ping (self):
+        self.mongodb_client.admin.command('ping')
+   
+
+    def get_collection (self, collection_name):
+        collection = self.database[collection_name]
+        return collection
+ 
+
+    def find (self, collection_name, filter = {}, limit=0):
+        collection = self.database[collection_name]
+        items = list(collection.find(filter=filter, limit=limit))
+        return items
+  
+    
+    def get_database(self, dbname):
+        selected_database = self.mongodb_client[dbname]
+        return selected_database
+   
 
 
 # def main():
@@ -238,7 +226,7 @@ def mg_get_locations(db, language: str, collection_name: str):
     if locations_list:
         for i in range(len(locations_list) - 1):
             locations_linked_list[locations_list[i + 1]] = locations_list[i]
-        # locations_linked_list["1"] = "start"
+        locations_linked_list["start"] = "start"
     else:
         print(f"No locations found for {collection_name}")
         exit(1)
@@ -247,7 +235,7 @@ def mg_get_locations(db, language: str, collection_name: str):
     # print(locations_linked_list)
     return locations_linked_list
 
-@timer_decorator
+# @timer_decorator
 def mg_get_location_words(db, language: str, collection_name: str):
     """
     A text of a given language and collection name, this method gets the headword count by section 
@@ -524,7 +512,135 @@ def compare_dicts(mg_built_dict):
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
 
-@timer_decorator
+#@timer_decorator
+def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
+    '''
+    Returns the specified collection as a Text object
+
+    Parameters:
+    db = Mongo Instance, local devlopment or Atlas
+    language = "Latin", or "Greek"
+    text_title = The title of the text as it appears in Mongo, must match the same name as a collection in DB, but will tell you if not found
+    location_list = result of mg_get_locations() with the same text_title
+    location_words = result of mg_get_location_words() with the same text_title
+
+    Returns:
+    A Text object(see text.py) containing all normal Text fields from that class, but adding some more fields to the_text tuples for each head_word:
+
+    Within each Tuple:
+     * = optional fields, they may not be present in every text
+     ! = new field, compared to old .py file method
+    [0] = head_word
+    [1] = counter
+    [2] = orthographic_form!
+    [3] = local_definition*
+    [4] = local_principal_parts*
+    [5] = location 
+    [6] = frequency
+    [7] = sentence*
+    [8] = case*! 
+    [9] = lasla_subordination_code*!
+    [10]= grammatical_subcategory*!
+
+
+    '''    
+
+    #Get the Text from either Atlas or Local Deployment
+    print("Loading Text from MongoDB. . .")
+    collection_name = mg_get_text(db, text_title)
+    if(collection_name == None):
+        print("Text not found")
+        return
+    else:
+        print("Text found")
+    print(f"{collection_name} successfully loaded")
+
+    #Get all of the fields possible from the text
+    all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+    #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
+    field_data = get_field_subset(db, all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
+    print("Fields found:")
+    print(field_data.keys())
+ 
+    #Testing field_data
+    for field in field_data.keys():
+        len_field = len(field_data[field])
+        print(f"{field}:\t {len_field}")
+
+    #Create boolean flags for local_def, local_lem
+    local_def_flag = False
+    local_lem_flag = False
+
+    if("local_definition" in field_data.keys()):
+        local_def_flag = True
+    #if("local_principal_parts" in field_data.keys()):
+    #local_lem_flag = True
+
+    #Create the tuple by looping through field_data
+    #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
+    #Guaranteed Fields: ["head_word", "location", "sentence", "counter", "orthographic_form"]
+    tuples = []
+    frequencies = {}
+    
+    print("Creating tuples . . .")
+   
+    #Calculate word frequency within text, independent of selected range to put into tuple
+    print("Calculating frequencies . . .")
+    for head_word in field_data["head_word"]:
+        if head_word in frequencies:
+            frequencies[head_word] += 1
+        else:
+            frequencies[head_word] = 1
+
+    for i in range(len(field_data["head_word"])):
+        # Create a list instead of a tuple for mutability
+        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
+
+        if local_def_flag:
+            temp_list[3] = field_data["local_definition"][i]
+        if local_lem_flag:
+            temp_list[4] = field_data["local_principal_parts"][i]
+        if "sentence" in field_data.keys():
+            temp_list[7] = field_data["sentence"][i]
+        if "case" in field_data.keys():
+            temp_list[8] = field_data["case"][i]
+        if "lasla_subordination_code" in field_data.keys():
+            temp_list[9] = field_data["lasla_subordination_code"][i]
+        if "grammatical_subcategory" in field_data.keys():
+            temp_list[10] = field_data["grammatical_subcategory"][i]
+
+        # Convert the list back to a tuple
+        temp_tuple = tuple(temp_list)
+        tuples.append(temp_tuple)
+
+    #sort the tuples by counter in case it is not sorted in DB
+    tuples = sorted(tuples, key=lambda word: word[1])
+    print("Tuples loaded.")
+
+    #get the section_level
+    section_level = 0 #1 level for Location 1, 2 for 1_1, 3 for 1_1_1
+    location_example = tuples[0][5]
+    print(f"location example: {location_example}")
+    if location_example == "1":
+        section_level = 1
+    if location_example == '1_1':
+        section_level = 2
+    if location_example == '1_1_1':
+        section_level = 3
+
+    #Check tuples
+    for i in range(4):
+        print(tuples[i])
+
+    #check section level
+    print(f"section level: {section_level}")    
+
+    location_words = location_words # does this fix???
+    location_list = location_list
+
+    #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+
 def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
     '''
     Returns the specified collection as a Text object
@@ -649,7 +765,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     print(f"section level: {section_level}")    
 
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
 
 def mg_format_title(unformatted_title: str):
     '''
