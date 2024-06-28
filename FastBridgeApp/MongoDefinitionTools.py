@@ -147,7 +147,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-# @timer_decorator
+@timer_decorator
 def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -202,7 +202,7 @@ def mg_get_locations(db, language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
-   return locations_linked_list
+    return locations_linked_list
 
 @timer_decorator
 def mg_get_location_words(db, language: str, collection_name: str):
@@ -607,7 +607,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
 
     print("FInished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
 def mg_format_title(unformatted_title: str):
     '''
