@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depen
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import importlib
+import text
 from pathlib import Path
 import DefinitionTools
 from collections import namedtuple
@@ -41,13 +42,6 @@ class AtlasClient():
         selected_database = self.mongodb_client[dbname]
         return selected_database
 
-# Initialize AtlasClient
-# ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-# DB_NAME = 'local-dev'
-# atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
-# atlas_client.ping()
-# print('Connected to Atlas instance! We are good to go!!')
-
 DB_NAME = 'local-dev'
 COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
 ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
@@ -76,20 +70,25 @@ def connect_to_local_deployment():
 
 @router.get("/")
 async def index(request : Request):
+    print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db, language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
+    print("Calling select()")
+    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db,language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    print("reaching section endpoint")
-    sectionDict = MongoDefinitionTools.mg_get_locations(db, language, textname)
-    return sectionDict
+    print("Calling select_section()")
+    print("Unformatted textname: ", textname)
+    locations_list = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    print(f"locations_list for {textname}: ", locations_list)
+    return locations_list
  
 def filter_helper(row_filters, POS):
+    print("Calling filter_helper()")
     print(row_filters)
     print(POS)
     loc_style = ""
@@ -109,28 +108,40 @@ def filter_helper(row_filters, POS):
             cssclass = filter.split('_')[0]
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(\'{filter}\');" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
+
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
+    print("Calling simple_result()")
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
     print("made trips")
-    print(sourcetexts)
+    print("sourcetexts: ", sourcetexts)
     if running_list == "running":
+        print("running list")
         running_list = True
     else:
+        print("not running list")
         running_list = False
     local_def = False
     local_lem = False
-    #print(triple)
+    print("Printing triple: ", triple)
     words = []
     titles =[]
-    print("entering for")
-    display_triple =[]
+    print("entering for loop")
+    display_triple = []
     for text, start, end in triple:
-        print(text)
-        book = DefinitionTools.get_text(text, language).book
+        print("Fetching locations for all texts . . . ")
+        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text)
+        print("Locations loaded.")
+        print("\n\nFetching all location words for all texts . . .")
+        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text)
+        print("Location words loaded.\n\n")
+        print("text: ", text)
+        # book = DefinitionTools.get_text(text, language).book
+        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
+        print("PRINTING BOOK")
         print(book)
         if not local_def:
             local_def = book.local_def

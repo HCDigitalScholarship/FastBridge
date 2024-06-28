@@ -147,7 +147,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-@timer_decorator
+# @timer_decorator
 def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -169,7 +169,8 @@ def mg_get_locations(db, language: str, collection_name: str):
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
 
     """
-
+    print("calling mg_get_locations()")
+    print(f"mg_get_locations() received a collection_name of: {collection_name}")
     collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
     locations_list = ["start"] # locations is a list to store the location data from each document
@@ -189,21 +190,19 @@ def mg_get_locations(db, language: str, collection_name: str):
             print(f"No location data found in document {doc['_id']}, {collection_name}")
     
     locations_list.append("end")
-    locations_list = format_sections(locations_list) # Replaces the "_" in the location string with "."
+    locations_list = mg_format_sections(locations_list) # Replaces the "_" in the location string with "."
 
     # Add to locations_linked_list if locations_list is not empty
     locations_linked_list = {}
     if locations_list:
         for i in range(len(locations_list) - 1):
             locations_linked_list[locations_list[i + 1]] = locations_list[i]
-        locations_linked_list["start"] = "start"
+        # locations_linked_list["1"] = "start"
     else:
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    #print(f"locations linked list for {collection_name}:")
-    #print(locations_linked_list)
-    return locations_linked_list
+   return locations_linked_list
 
 @timer_decorator
 def mg_get_location_words(db, language: str, collection_name: str):
@@ -264,9 +263,12 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
     titles: A list of HTML code to display the text titles.
     """
     title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
-    
+    print("calling mg_render_titles")
+    # print("printing mg_get_location_levels", title_location_levels)
     titles = []
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
+    "".join(titles)
+    print("Printing mg_render_titles")
     print(titles)
     return "".join(titles)
 
@@ -295,13 +297,13 @@ def mg_get_location_levels(db, language: str):
         
         underscore_count = location.count("_") + 1 # Count the number of _ in the location string
 
-        title_location_levels[collection_name] = underscore_count # Add the location level to the dictionary
+        title_location_levels[mg_format_title(collection_name)] = underscore_count # Add the location level to the dictionary
 
     # print(title_location_levels)
     return title_location_levels
 
 
-def format_sections(locations):
+def mg_format_sections(locations):
     """
     Formats a list of location strings by replacing '_' with '.'. 
     For example, '1_1_1' is converted to 1.1.1 and 58B_2 is converted to 58B.2
@@ -605,10 +607,31 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
 
     print("FInished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)
+    return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
+def mg_format_title(unformatted_title: str):
+    '''
+    Formats a title string to be more readable.s By replacing underscores with spaces. 
+    For example,'200_essential_latin_words_list_mahoney'is converted to
+    '200 Essential Latin Words List (Mahoney)'
+    
+    Parameters:
+    unformatted_title (str): The title string to format.
+    
+    Returns: 
+    formatted_title (str): The formatted title string.
+    
+    '''
+    formatted_title = unformatted_title.replace('_', ' ')
+    return formatted_title
 
-
+def mg_format_lowercase(unformatted_title: str):
+    '''
+    Formats a title string to be the same as the lowercase title used in
+    URL request 
+    '''
+    formatted_title = unformatted_title.lower()
+    return formatted_title
 
 if __name__ == "__main__":
     main()
