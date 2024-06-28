@@ -24,7 +24,7 @@ import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
 import MongoDefinitionTools
-from pymongo import MongoClient, errors
+from MongoDefinitionTools import AtlasClient
 
 '''
 Files:
@@ -34,6 +34,16 @@ Latin Dictionary -> FastBridgeApp\bridge_latin_dictionary.csv
 Diederich 300,1500 -> FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv
 DCC -> FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv
 '''
+
+#DB boilerplate
+DB_NAME = 'local-dev'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+atlas_client.ping()
+print('Connected to Atlas instance! We are good to go!!')
+db = atlas_client.database
 
 # Get the directory containing the current script.
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1708,38 +1718,6 @@ class AtlasClient():
     def get_database(self, dbname):
         selected_database = self.mongodb_client[dbname]
         return selected_database
-
-# Initialize AtlasClient
-# ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-# DB_NAME = 'local-dev'
-# atlas_client = AtlasClient(ATLAS_URI, DB_NAME)
-# atlas_client.ping()
-# print('Connected to Atlas instance! We are good to go!!')
-
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
-
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
-
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
 
 
 @router.get("/")
