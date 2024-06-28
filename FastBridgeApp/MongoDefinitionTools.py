@@ -202,6 +202,8 @@ def mg_get_locations(db, language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
+    #print(f"locations linked list for {collection_name}:")
+    #print(locations_linked_list)
     return locations_linked_list
 
 @timer_decorator
