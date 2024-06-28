@@ -12,6 +12,23 @@ from mongo_connection import db, dict_db
 
 
 # def main():
+#     DB_NAME = 'local-dev'
+#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+#     atlas_client.ping()
+#     print('Connected to Atlas instance! We are good to go!!')
+#     db = atlas_client.database
+#     mg_get_locations(db, "Latin", COLLECTION_NAME)
+#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
+
+#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+#     atlas_client.ping()
+#     print('Connected to Atlas instance! We are good to go!!')
+#     db = atlas_client.database
+#     mg_get_locations(db, "Latin", COLLECTION_NAME)
+#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
 
 
 # Decorators
