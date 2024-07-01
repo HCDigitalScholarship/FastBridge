@@ -1701,30 +1701,6 @@ templates = Jinja2Templates(directory="templates")
 
 selected_texts = []
 
-# AtlasClient class definition
-class AtlasClient():
-    
-    def __init__(self, atlas_uri, dbname):
-        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
-
-    def ping(self):
-        self.mongodb_client.admin.command('ping')
-
-    def get_collection(self, collection_name):
-        collection = self.database[collection_name]
-        return collection
-
-    def find(self, collection_name, filter={}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
-    
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
-
-
 @router.get("/")
 async def stats_index(request: Request):
     return templates.TemplateResponse("stats-list-index.html", {"request": request})
