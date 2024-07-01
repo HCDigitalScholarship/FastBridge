@@ -237,7 +237,7 @@ class TextAnalyzer():
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
         print(f"\n\n\n{form_request}\n\n\n")
-        location_list, l_list_time = MongoDefinitionTools.mg_get_locations(db, language, form_request)
+        location_list = MongoDefinitionTools.mg_get_locations(db, language, form_request)
         location_words, l_word_time = MongoDefinitionTools.mg_get_location_words(db, language, form_request)
         self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(db, language, form_request, location_list, location_words),start_section, end_section))
         

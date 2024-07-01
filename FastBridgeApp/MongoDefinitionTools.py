@@ -147,7 +147,7 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-@timer_decorator
+#@timer_decorator
 def mg_get_locations(db, language: str, collection_name: str):
     """
     Get all locations from a collection from MongoDB. A location is usually formatted:
