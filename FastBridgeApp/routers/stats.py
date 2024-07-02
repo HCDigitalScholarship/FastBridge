@@ -740,6 +740,7 @@ class TextAnalyzer():
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
             words = []
             scores = []
+            print(f"Number of words{self.num_words()}")
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
@@ -773,7 +774,15 @@ class TextAnalyzer():
 
             # Apply Savitzky-Golay filter
             # window size 51, polynomial order 3
-            smoothed_scores = savgol_filter(rolling_average, 101, 3)
+            #Selection must have 101 words
+            if(self.num_words() >20):
+                savgol_num = 20
+            elif(self.num_words()>50):
+                savgol_num = 50
+            else:
+                savgol_num = 100
+
+            smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
 
             x_indexes = list(range(len(words)))
 
@@ -912,6 +921,7 @@ class TextAnalyzer():
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
+            #print("Created cumulative lexical load plot!")
             return plot_path
         else:
             print()
@@ -1863,6 +1873,8 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         text_ends = [a.texts[0][2] for a in analyzers]
         
         word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
+
+        #ERROR: when making selections too small . . .
         cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
         lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
         freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
