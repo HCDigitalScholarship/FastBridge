@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from DefinitionTools import get_text
 import text
 import importlib
+import time
 from collections import namedtuple, deque
 import re
 
@@ -691,5 +692,33 @@ def mg_get_text_as_Text(db, text_title, location_words, location_list):
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, section_words, tuples, section_list, section_level, "Latin", local_def_flag, local_lem_flag)
 
+
+def get_mongo_dictionary(title: str):
+    """
+    queries a MongoDB database for a dictionary with the specified title.
+    """
+    # Get the collection name that contains the text with the specified title by using mg_get_text
+    collection_name = mg_get_text(title)
+    
+    # If collection is found
+    if collection_name:
+        # Connect to the MongoDB server
+        db = atlas_client.database
+        collection = db[collection_name]
+
+        # Build the query filter (Unneccesary probably?)
+        query_filter = {'title': title}
+        
+        # Perform the query that we want
+        search = collection.find(query_filter)
+        
+        # Convert cursor to a list of dictionaries
+        result_list = list(search)
+        
+        return result_list
+    else:
+        return None
+    
 if __name__ == "__main__":
     main()
+    

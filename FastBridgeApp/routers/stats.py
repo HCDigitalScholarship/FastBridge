@@ -14,6 +14,7 @@ import matplotlib.font_manager as fm
 import time
 import numpy as np
 from scipy.signal import savgol_filter
+from pymongo import MongoClient
 
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
@@ -21,8 +22,11 @@ from fastapi.responses import HTMLResponse
 
 from datetime import datetime
 import DefinitionTools
+import MongoDefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
+
+client = MongoClient('mongodb://localhost:27017/')
 
 '''
 Files:
@@ -80,74 +84,48 @@ colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
 
 
 @timer_decorator
-def get_latin_dictionary(file_path):  # for reading in DICTIONARY file
+def mg_get_latin_dictionary(db):
     word_dictionary = {}
-    with open(file_path, 'r', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            # print(row)  # Add this line
-            if 'TITLE' in row:
-                word_dictionary[row['TITLE']] = row
-            else:
-                print(row)
-            # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
-            # word_dictionary[row["TITLE"]] = row
+    cursor = db.dictionary.find()
+    for row in cursor:
+        if 'TITLE' in row:
+            word_dictionary[row['TITLE']] = row
+        else:
+            print(row)
     return word_dictionary
 
-# Construct the path to the CSV file relative to the script's directory.
-latin_dict_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-
-latin_dict, elapsed_time = get_latin_dictionary(
-    latin_dict_path)
-print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
-
-# Get Diederich
-
+@timer_decorator
+def mg_get_diederich1500(db, collection_name):
+    diederich1500 = {}
+    cursor = db[collection_name].find()
+    for row in cursor:
+        diederich1500[row['TITLE']] = {
+            'LOCATION': row['LOCATION'],
+            'SECTION': row['SECTION'],
+            'RUNNINGCOUNT': row['RUNNINGCOUNT'],
+            'TEXT': row['TEXT']
+        }
+    return diederich1500
 
 @timer_decorator
-def create_hashtable_from_csv(file_path):
-    hashtable = {}
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'],
-                                       'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
-    return hashtable
-
-# Construct the path to the CSV file relative to the script's directory.
-diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-
-print(os.getcwd())
-diederich, diederich_time = create_hashtable_from_csv(
-    diederich_path)
-print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
-
-# Get DCC
-
+def mg_get_dcc(db, collection_name):
+    dcc = set()
+    cursor = db[collection_name].find()
+    for row in cursor:
+        dcc.add(row['TITLE'])
+    return dcc
 
 @timer_decorator
-# For getting the unique tokens, or vocabulary, NO DUPLICATES
-def create_word_set(file_path):
-    word_set = set()
-    with open(file_path, 'r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            word_set.add(row['TITLE'])
-    return word_set
-
-
-@timer_decorator
-def get_diederich300(file_path):
+def mg_get_diederich300(db):
     diederich300 = set()
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        count = 0
-        for row in reader:
-            if count <= 306:  # From Latin vocabulary knowledge and the Readability of Latin texts
-                diederich300.add(row['TITLE'])
-                count += 1
-            else:
-                break
+    cursor = db.diederich300.find()
+    count = 0
+    for row in cursor:
+        if count <= 306:
+            diederich300.add(row['TITLE'])
+            count += 1
+        else:
+            break
     return diederich300
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -196,26 +174,29 @@ def find_hapax_legomena(words):
 # Class that the site uses to handle everything
 
 
-class TextAnalyzer():
+class TextAnalyzer:
 
-    def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
+    MONGO_URI = "mongodb://localhost:27017/"
+    DB_NAME = "Latin"
 
-        self.dictionary, self.dictionary_time = get_latin_dictionary(
-            dictionary_path)
+    def __init__(self):
+        
+        self.client = MongoClient(self.MONGO_URI)
+        self.db = self.client[self.DB_NAME]
+
+        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
-        self.diederich, self.diederich_time = create_hashtable_from_csv(
-            diederich_path)
+        self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
 
-        self.diederich300, self.diederich300_time = get_diederich300(
-            diederich_path)
+        self.diederich300, self.diederich300_time = mg_get_diederich300(self.db)
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
 
-        self.dcc, self.dcc_time = create_word_set(dcc_path)
+        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
 
-        self.texts = []  # (Text, start section, end section)
+        self.texts = []
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
@@ -1695,8 +1676,8 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
-    # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
+    # return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
@@ -1717,21 +1698,11 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         running_list = False
 
     if language == "Latin":
-        
-        # Construct the path to the CSV file relative to the script's directory.
-        dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-        diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-        dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-        # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-        # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-        # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-        analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+        analyzer = TextAnalyzer()
     else:  # Greek -> Change this when you put in the Greek files
-        analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv",
-                                "FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", "FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+        analyzer = TextAnalyzer()
 
-    if '+' not in sourcetexts:#Only 1 text has been added - SingleStats
+    if '+' not in sourcetexts:  # Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
         print(str(analyzer))
@@ -1748,7 +1719,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         unique_words_no_p = analyzer.uniqueWordsNoProper()
         avgWordLength = analyzer.avgWordLength()
         top20NoDie300 = analyzer.top20NoDie300()
-        freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+        freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
 
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1784,13 +1755,13 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "total_words_no_proper": total_words_no_p,
             "unique_words_no_proper": unique_words_no_p,
             "avg_word_length": avgWordLength,
-            "top20_NoDie300":top20NoDie300,
-            "freq1":freqBin1,
-            "freq2":freqBin2,
+            "top20_NoDie300": top20NoDie300,
+            "freq1": freqBin1,
+            "freq2": freqBin2,
             "freq3": freqBin3,
             "freq4": freqBin4,
-            "freq5":freqBin5,
-            "freq6":freqBin6,
+            "freq5": freqBin5,
+            "freq6": freqBin6,
             "freq_plot_path": freq_relative_plot_path,
             "cum_lex_plot_path": cum_lex_relative_plot_path,
             "lin_lex_plot_path": lin_lex_relative_plot_path,
@@ -1801,47 +1772,37 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         print(f"lin lex rel path: {lin_lex_relative_plot_path}")
         print(f"freq bins rel path: {freq_bins_relative_plot_path}")
         return templates.TemplateResponse("stats-single-text.html", context)
-    else:#multiple texts have been added - Stats: Compare
+    else:  # multiple texts have been added - Stats: Compare
 
-        #Get text information from URL
+        # Get text information from URL
         analyzer_texts = sourcetexts.split('+')
         analyzer_starts = starts.split('+')
         analyzer_ends = ends.split('+')
 
-        #Add text info to analyzer
+        # Add text info to analyzer
         analyzers = []
         for i in range(len(analyzer_texts)):
-            if language == "Latin":
-                # Construct the path to the CSV file relative to the script's directory.
-                dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-                diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-                dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-                # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-                # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-                # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-                analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
-            analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
+            analyzer = TextAnalyzer()
+            analyzer.add_text(analyzer_texts[i], language, analyzer_starts[i], analyzer_ends[i])
             analyzers.append(analyzer)
         
-        #Used multiple TextAnalyzer's, account for dynamicism here
+        # Used multiple TextAnalyzer's, account for dynamicism here
 
         # Getting Metrics, Hapax
-        text_names = [a.texts[0][0].name for a in analyzers] 
+        text_names = [a.texts[0][0].name for a in analyzers]
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
-        
-        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
-        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
-        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
-        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
-        
+
+        word_freq_paths = [analyzers[i].plot_word_freq(plot_num=0+(4*i)) for i in range(len(analyzers))]
+        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num=1+(4*i)) for i in range(len(analyzers))]
+        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num=2+(4*i)) for i in range(len(analyzers))]
+        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num=3+(4*i)) for i in range(len(analyzers))]
+
         print(text_names)
 
-        texts_and_sections = DefinitionTools.get_sections("Latin")
+        texts_and_sections = MongoDefinitionTools.get_sections("Latin")
 
-
-        #add analyzer stats from each text to context
+        # add analyzer stats from each text to context
         context.update({
             "request": request,
             "textNames": text_names,
@@ -1849,9 +1810,6 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "textEnds": text_ends,
             "texts_and_sections": texts_and_sections
         })
-
-        #Create stats-multiple-texts.html, 2 columns, 2 dropdown menus
-        #
 
         return templates.TemplateResponse("stats-multiple-texts.html", context)
 

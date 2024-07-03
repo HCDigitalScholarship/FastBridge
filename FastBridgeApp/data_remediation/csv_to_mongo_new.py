@@ -4,6 +4,7 @@ import json
 from subprocess import call
 import sys
 
+
 # Define the directory containing CSV files and MongoDB details
 csv_directory = '/srv/FastBridge/FastBridgeApp/data_remediation/Cleaned_FastBridge_Files_SAMPLE'
 mongo_uri = 'mongodb://localhost:27017'
@@ -21,6 +22,7 @@ def import_json_chunks(json_chunks, collection_name):
 
         temp_json_file_size = sys.getsizeof(json_chunk) / (1024 * 1024)
         print("Size of json file " + str(temp_json_file_size))
+        print(temp_json_file)
 
         if temp_json_file_size > 16:
             print("Warning: The size of the JSON object in memory exceeds 16MB")
@@ -28,6 +30,7 @@ def import_json_chunks(json_chunks, collection_name):
         
         with open(temp_json_file, 'w') as file:
             json.dump(chunk, file)
+            
         
         # Import the JSON file into MongoDB
         call(['mongoimport', '--uri', mongo_uri, '--db', database_name, '--collection', collection_name, '--file', temp_json_file, '--jsonArray'])
@@ -52,8 +55,13 @@ for csv_file in os.listdir(csv_directory):
         
         # Strip the .csv extension from the file name
         collection_name = os.path.splitext(csv_file)[0]
+        print(collection_name)
         
         # Import JSON chunks into MongoDB
         import_json_chunks(json_chunks, collection_name)
 
+
 print('CSV files imported successfully. With chunk size ' + str(chunk_size))
+
+
+
