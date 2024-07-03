@@ -173,16 +173,19 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 frequency_dict[title[0]] += 1
 
         titles_no_dups = new_titles
-        #print(titles)
+        print("titles: ", titles)
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
 
+    dict_db = atlas_client.get_database('dictionaries') # access the 'dictionaries' database
+    dict_name = "bridge_latin_dictionary"
     # words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(db,language, titles, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(db, language, titles_no_dups, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
-    #words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    # words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    
+    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(dict_db, titles, dict_name, local_def, local_lem))
+    words_no_dups = MongoDefinitionTools.mg_get_lang_data(dict_db, titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
 
     section =", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
