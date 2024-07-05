@@ -18,6 +18,4 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
-    # network_mode: host # uncomment when working with MongoDB on dev server 
-
-  
+    network_mode: host
