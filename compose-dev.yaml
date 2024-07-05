@@ -17,4 +17,4 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
-
+    network_mode: host
