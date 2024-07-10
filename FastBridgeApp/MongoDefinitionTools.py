@@ -557,18 +557,21 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
         # Create a list instead of a tuple for mutability
         temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
 
+        #print("Current temp_list:", temp_list)
+        #print("Field_data", field_data) 
+        
         if local_def_flag:
-            temp_list[3] = field_data["local_definition"][i]
+            temp_list[3] = field_data["local_definition"].append(i)
         if local_lem_flag:
-            temp_list[4] = field_data["local_principal_parts"][i]
+            temp_list[4] = field_data["local_principal_parts"].append(i)
         if "sentence" in field_data.keys():
-            temp_list[7] = field_data["sentence"][i]
+            temp_list[7] = field_data["sentence"].append(i)
         if "case" in field_data.keys():
-            temp_list[8] = field_data["case"][i]
+            temp_list[8] = field_data["case"].append(i)
         if "lasla_subordination_code" in field_data.keys():
-            temp_list[9] = field_data["lasla_subordination_code"][i]
+            temp_list[9] = field_data["lasla_subordination_code"].append(i)
         if "grammatical_subcategory" in field_data.keys():
-            temp_list[10] = field_data["grammatical_subcategory"][i]
+            temp_list[10] = field_data["grammatical_subcategory"].append(i)
 
         # Convert the list back to a tuple
         temp_tuple = tuple(temp_list)
