@@ -471,6 +471,8 @@ def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_
         else:
             filtered_global_filters.append(f"{filterl}")
 
+    print("returning zipped list from get_lang_data():")
+    print()
     return list(zip(word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
 
 

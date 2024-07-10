@@ -20,28 +20,6 @@ templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
 import sys
 
-# # AtlasClient class definition
-# class AtlasClient():
-    
-#     def __init__(self, atlas_uri, dbname):
-#         self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-#         self.database = self.mongodb_client[dbname]
-
-#     def ping(self):
-#         self.mongodb_client.admin.command('ping')
-
-#     def get_collection(self, collection_name):
-#         collection = self.database[collection_name]
-#         return collection
-
-#     def find(self, collection_name, filter={}, limit=0):
-#         collection = self.database[collection_name]
-#         items = list(collection.find(filter=filter, limit=limit))
-#         return items
-    
-#     def get_database(self, dbname):
-#         selected_database = self.mongodb_client[dbname]
-#         return selected_database
 
 DB_NAME = 'local-dev'
 COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
@@ -134,10 +112,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     display_triple = []
     for text, start, end in triple:
         print("Fetching locations for all texts . . . ")
-        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text)
+        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text) 
         print("Locations loaded.")
         print("\n\nFetching all location words for all texts . . .")
-        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text)
+        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text) # Words per location
         print("Location words loaded.\n\n")
         print("text: ", text)
         # book = DefinitionTools.get_text(text, language).book
@@ -151,6 +129,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         print("loaded the book")
         titles += (book.get_words(start, end))
+        print("titles += (book.get_words(start, end)): ")
+        print(titles)
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     try:
         print(book)
@@ -173,11 +153,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
                 frequency_dict[title[0]] += 1
 
         titles_no_dups = new_titles
-        print("titles: ", titles)
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
+    print("titles_no_dups: ", titles_no_dups)
     titles = sorted(titles, key=lambda x: x[1])
+    print("titles: ", titles)
 
     dict_db = atlas_client.get_database('dictionaries') # access the 'dictionaries' database
     dict_name = "bridge_latin_dictionary"
@@ -187,10 +168,13 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(dict_db, titles, dict_name, local_def, local_lem))
     words_no_dups = MongoDefinitionTools.mg_get_lang_data(dict_db, titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
+    section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
+    print("Printing section: ")
+    print(section)
 
-    section =", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
+
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
@@ -198,11 +182,25 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
+
+    print("calling build_html_for_clusterize() with the following parameters: ")
+    print("words: ", words)
+    print("POS_list: ", POS_list)
+    print("columnheaders: ", columnheaders)
+    print("row_filters: ", row_filters)
+    print("style: ", style)
+    print("context: ", context)
+    print("frequency_dict: ", frequency_dict)
+    print("titles: ", titles)
+    print("global_filters: ", global_filters)
+    print("words_no_dups: ", words_no_dups)
+    print("titles_no_dups: ", titles_no_dups)
+    
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
-    print("returning")
     response = templates.TemplateResponse("result.html", context)
-    print("response made")
+    print("response made, returning response: ")
+    print(response)
     return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
