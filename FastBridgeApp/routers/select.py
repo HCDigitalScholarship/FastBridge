@@ -63,7 +63,6 @@ async def select_section(request : Request, textname: str , language: str):
     print("Calling select_section()")
     print("Unformatted textname: ", textname)
     locations_list = MongoDefinitionTools.mg_get_locations(db, language, textname)
-    print(f"locations_list for {textname}: ", locations_list)
     return locations_list
  
 def filter_helper(row_filters, POS):
@@ -105,7 +104,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         running_list = False
     local_def = False
     local_lem = False
-    print("Printing triple: ", triple)
+    # print("Printing triple: ", triple)
     words = []
     titles =[]
     print("entering for loop")
@@ -121,7 +120,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         # book = DefinitionTools.get_text(text, language).book
         book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
         print("PRINTING BOOK")
-        print(book)
+        # print(book)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -129,7 +128,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         print("loaded the book")
         titles += (book.get_words(start, end))
-        print("titles += (book.get_words(start, end)): ")
         print(titles)
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     try:
@@ -156,9 +154,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
-    print("titles_no_dups: ", titles_no_dups)
+    # print("titles_no_dups: ", titles_no_dups)
     titles = sorted(titles, key=lambda x: x[1])
-    print("titles: ", titles)
+    # print("titles: ", titles)
 
     dict_db = atlas_client.get_database('dictionaries') # access the 'dictionaries' database
     dict_name = "bridge_latin_dictionary"
@@ -184,23 +182,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
 
     print("calling build_html_for_clusterize() with the following parameters: ")
-    print("words: ", words)
-    print("POS_list: ", POS_list)
-    print("columnheaders: ", columnheaders)
-    print("row_filters: ", row_filters)
-    print("style: ", style)
-    print("context: ", context)
-    print("frequency_dict: ", frequency_dict)
-    print("titles: ", titles)
-    print("global_filters: ", global_filters)
-    print("words_no_dups: ", words_no_dups)
-    print("titles_no_dups: ", titles_no_dups)
+    # print("words: ", words)
+    # print("POS_list: ", POS_list)
+    # print("columnheaders: ", columnheaders)
+    # print("row_filters: ", row_filters)
+    # print("style: ", style)
+    # print("context: ", context)
+    # print("frequency_dict: ", frequency_dict)
+    # print("titles: ", titles)
+    # print("global_filters: ", global_filters)
+    # print("words_no_dups: ", words_no_dups)
+    # print("titles_no_dups: ", titles_no_dups)
     
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     response = templates.TemplateResponse("result.html", context)
     print("response made, returning response: ")
-    print(response)
     return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
@@ -232,7 +229,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        book = DefinitionTools.get_text(text, language).book
+        # book = DefinitionTools.get_text(text, language).book
+        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -268,8 +266,6 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
-
-
 
     ##print(titles)
 
@@ -352,6 +348,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
+def get_formatted_text():
+    return    
+
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
     print("Calling build_table()")
     render_words = []
@@ -398,5 +397,8 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
 
     return render_words
+
+
+    
 
 

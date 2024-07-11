@@ -38,32 +38,6 @@ class AtlasClient ():
     def get_database(self, dbname):
         selected_database = self.mongodb_client[dbname]
         return selected_database
-   
-
-
-# def main():
-#     DB_NAME = 'local-dev'
-#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-# def main():
-#     DB_NAME = 'local-dev'
-#     COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-#     ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-#     atlas_client.ping()
-#     print('Connected to Atlas instance! We are good to go!!')
-#     db = atlas_client.database
-#     mg_get_locations(db, "Latin", COLLECTION_NAME)
-#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
-
-#     atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-#     atlas_client.ping()
-#     print('Connected to Atlas instance! We are good to go!!')
-#     db = atlas_client.database
-#     mg_get_locations(db, "Latin", COLLECTION_NAME)
-#     mg_get_location_words(db, "Latin", COLLECTION_NAME)
 
 
 # Decorators
@@ -80,22 +54,6 @@ def timer_decorator(func):
         return result, elapsed_time
     return wrapper
 
-
-# def connect_to_local_deployment():
-# 	try:
-# 		# start connection code heri
-
-# 		uri = "mongodb://localhost:27017/"
-# 		client = MongoClient(uri)
-
-# 		# end connection code here
-# 		client.admin.command("ping")
-# 		print("Connected successfully")
-# 		# other application code
-# 		client.close()
-# 	except Exception as e:
-# 		raise Exception(
-# 			"The following error occurred: ", e)
 
 def get_field_subset(db, fields, text_name):
     '''
@@ -278,8 +236,8 @@ def mg_get_location_words(db, language: str, collection_name: str):
             print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
             exit(1)  
 
-    print(f"Text word count for {collection_name}:")
-    print(text_word_count)
+    # print(f"Text word count for {collection_name}:")
+    # print(text_word_count)
     return text_word_count
 
 def mg_render_titles(db,language: str, dropdown : str = ""):
@@ -382,7 +340,12 @@ def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_
     dict_fields = ['TITLE', 'PRINCIPAL_PARTS', 'PRINCIPAL_PARTS_NO_DIACRITICALS', 'SIMPLE_LEMMA', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK']
     row_filters = ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD']
     Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text"])
-    locations_list = [word[5].replace('_', ".") for word in words_from_text]
+    print("word: ", words_from_text[0])
+    print(type(words_from_text[0][5]))
+    if type(words_from_text[0][5]) == str:
+        locations_list = [word[5].replace('_', ".") for word in words_from_text]
+    else:
+        locations_list = [word[5] for word in words_from_text]
     final_row_filters = set()
     word_list = deque()
     computed_row_filters = deque()
@@ -470,11 +433,18 @@ def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_
             pass
         else:
             filtered_global_filters.append(f"{filterl}")
+    
+    new_word_list = []
+    for word in word_list:
+        new_word_list.append(replace_none_with_empty(Word, word))
 
-    print("returning zipped list from get_lang_data():")
-    print()
-    return list(zip(word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
+    return list(zip(new_word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
 
+def replace_none_with_empty(Tuple_def, named_tuple):
+    # print("named_tuple: ", named_tuple)
+    new_values = [val if val is not None else '' for val in named_tuple]
+    # print("new_values: ", new_values)
+    return Tuple_def._make(new_values)
 
 def build_dict_structure(dict_db, dict_name):
     '''
@@ -573,7 +543,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     local_def_flag = False
     local_lem_flag = False
 
-    if("local_definition" in field_data.keys()):
+    if("local_definition" in field_data.keys() and field_data["local_definition"][0] is not None):
         local_def_flag = True
     #if("local_principal_parts" in field_data.keys()):
     #local_lem_flag = True
