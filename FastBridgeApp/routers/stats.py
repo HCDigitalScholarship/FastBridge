@@ -24,19 +24,6 @@ import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
 import MongoDefinitionTools
-from MongoDefinitionTools import AtlasClient
-
-#DB boilerplate
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
-
 
 '''
 Files:
