@@ -1,40 +1,17 @@
 #Meant to be a copy of DefinitionTools but with Mongo queries instead of data/*.py queries
 #Currently running a local MongoDB deployment on dev droplet
 import pymongo
-from pymongo import MongoClient, errors
 import dns # required for connecting with SRV
-from pymongo import MongoClient
 from DefinitionTools import get_text
 import text
 import importlib
 from collections import namedtuple, deque
 import re
 import time 
+from mongo_connection import db, dict_db
 
 
-class AtlasClient():
-    
-    def __init__(self, atlas_uri, dbname):
-        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
-
-    def ping(self):
-        self.mongodb_client.admin.command('ping')
-
-    def get_collection(self, collection_name):
-        collection = self.database[collection_name]
-        return collection
-
-    def find(self, collection_name, filter={}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
-    
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
-
-    
+# def main():
 
 
 # Decorators
@@ -52,23 +29,7 @@ def timer_decorator(func):
     return wrapper
 
 
-# def connect_to_local_deployment():
-# 	try:
-# 		# start connection code heri
-
-# 		uri = "mongodb://localhost:27017/"
-# 		client = MongoClient(uri)
-
-# 		# end connection code here
-# 		client.admin.command("ping")
-# 		print("Connected successfully")
-# 		# other application code
-# 		client.close()
-# 	except Exception as e:
-# 		raise Exception(
-# 			"The following error occurred: ", e)
-
-def get_field_subset(db, fields, text_name):
+def get_field_subset(fields, text_name):
     '''
     Retrieve a subset of fields from all documents in a collection and return as a dictionary.
     '''
@@ -89,7 +50,7 @@ def get_field_subset(db, fields, text_name):
     return field_subset
 
 
-def mg_get_slice(db, text_name, start_section, end_section):
+def mg_get_slice(text_name, start_section, end_section):
     '''
     Retrieve documents within a specific sentence range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
     '''
@@ -147,9 +108,9 @@ output2 = func2(*args, **kwargs)
 
 return output1 == output2, (output1, output2)"""
 
-#@timer_decorator
-def mg_get_locations(db, language: str, collection_name: str):
-    """
+
+def mg_get_locations(language: str, collection_name: str):
+    '''
     Get all locations from a collection from MongoDB. A location is usually formatted:
     X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
 
@@ -167,8 +128,8 @@ def mg_get_locations(db, language: str, collection_name: str):
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
+    '''
 
-    """
     print("calling mg_get_locations()")
     print(f"mg_get_locations() received a collection_name of: {collection_name}")
     collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
@@ -197,16 +158,16 @@ def mg_get_locations(db, language: str, collection_name: str):
     if locations_list:
         for i in range(len(locations_list) - 1):
             locations_linked_list[locations_list[i + 1]] = locations_list[i]
-        # locations_linked_list["1"] = "start"
+        locations_linked_list["start"] = "start"
     else:
         print(f"No locations found for {collection_name}")
         exit(1)
 
     return locations_linked_list
 
-@timer_decorator
-def mg_get_location_words(db, language: str, collection_name: str):
-    """
+
+def mg_get_location_words(language: str, collection_name: str):
+    '''
     A text of a given language and collection name, this method gets the headword count by section 
     from MongoDB. 
 
@@ -223,7 +184,7 @@ def mg_get_location_words(db, language: str, collection_name: str):
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
-    """
+    '''
 
     collection = db[collection_name]
 
@@ -247,12 +208,11 @@ def mg_get_location_words(db, language: str, collection_name: str):
             print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
             exit(1)  
 
-    #print(f"Text word count for {collection_name}:")
-    #print(text_word_count)
     return text_word_count
 
-def mg_render_titles(db,language: str, dropdown : str = ""):
-    """
+
+def mg_render_titles(language: str, dropdown : str = ""):
+    '''
     For every text of a given language, this method writes a string of HTML code to display the text titles
     from MongoDB. 
 
@@ -261,8 +221,9 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
 
     Returns:
     titles: A list of HTML code to display the text titles.
-    """
-    title_location_levels = mg_get_location_levels(db, language) # a dict of {"Title": "location_level"}
+    '''
+
+    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
     print("calling mg_render_titles")
     # print("printing mg_get_location_levels", title_location_levels)
     titles = []
@@ -272,7 +233,7 @@ def mg_render_titles(db,language: str, dropdown : str = ""):
     print(titles)
     return "".join(titles)
 
-def mg_get_location_levels(db, language: str):
+def mg_get_location_levels(language: str):
     """
     For every text of a given language, this method gets the location levels
     from MongoDB. 
@@ -319,17 +280,15 @@ def mg_format_sections(locations):
         locations[i] = locations[i].replace('_', '.') #replace underscores with periods
     
     return locations
-    
 
-def mg_get_text(db, title: str):
+
+def mg_get_text(title: str):
     """
-    function meant to retrieve the name of the collection that contains the requested text by title and language
+    Function meant to retrieve the name of the collection that contains the requested text by title
     """
-    
-    
+
     # the list of collections to search through
     collections = db.list_collection_names()
-    print(collections)
 
     # Iterate through collections and search for the document
     if title in collections:
@@ -338,7 +297,8 @@ def mg_get_text(db, title: str):
     else: 
         return None
 
-def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_defs : bool = False, has_local_lems : bool = False):
+
+def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bool = False, has_local_lems : bool = False):
     '''
     Gets the definitions,  and other information, about the head_words in words from the selected text, from the appropriate dictionary. 
     Also gets the Parts of Speech (POS) and column headers to display for this language.
@@ -351,11 +311,14 @@ def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_
     dict_fields = ['TITLE', 'PRINCIPAL_PARTS', 'PRINCIPAL_PARTS_NO_DIACRITICALS', 'SIMPLE_LEMMA', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK']
     row_filters = ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD']
     Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text"])
-    locations_list = [word[5].replace('_', ".") for word in words_from_text]
+    if type(words_from_text[0][5]) == str:
+        locations_list = [word[5].replace('_', ".") for word in words_from_text]
+    else:
+        locations_list = [word[5] for word in words_from_text]
     final_row_filters = set()
     word_list = deque()
     computed_row_filters = deque()
-    dict_data = build_dict_structure(dict_db, dict_name)
+    dict_data = build_dict_structure(dict_name)
 
     # add extra fields if given text has local definitions and/or local lemmas
     if has_local_defs and has_local_lems:
@@ -439,11 +402,23 @@ def mg_get_lang_data(dict_db, words_from_text : list, dict_name: str, has_local_
             pass
         else:
             filtered_global_filters.append(f"{filterl}")
+    
+    updated_word_list = []
+    for word in word_list:
+        updated_word_list.append(replace_none_with_empty(Word, word))
 
-    return list(zip(word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
+    return list(zip(updated_word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
 
 
-def build_dict_structure(dict_db, dict_name):
+def replace_none_with_empty(Tuple_def, named_tuple):
+    '''
+    Replace None values in a named tuple with empty strings ('') which is what the original code expects for the named Word tuples.
+    '''
+    new_values = [val if val is not None else '' for val in named_tuple]
+    return Tuple_def._make(new_values)
+
+
+def build_dict_structure(dict_name):
     '''
     Builds a list of tuples from the MongoDB dictionary data in the same format as get_lang_data() in DefinitionTools.py does from Latin.py.
     '''
@@ -457,6 +432,7 @@ def build_dict_structure(dict_db, dict_name):
         filtered_fields_tuple = tuple(filtered_fields.values())
         structured_word_dict[head_word] = filtered_fields_tuple
     return structured_word_dict
+
 
 def compare_dicts(mg_built_dict):
     '''
@@ -481,8 +457,8 @@ def compare_dicts(mg_built_dict):
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
 
-#@timer_decorator
-def mg_get_text_as_Text(db, language, text_title, location_list, location_words):
+
+def mg_get_text_as_Text(language, text_title, location_list, location_words):
     '''
     Returns the specified collection as a Text object
 
@@ -510,13 +486,11 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     [8] = case*! 
     [9] = lasla_subordination_code*!
     [10]= grammatical_subcategory*!
-
-
     '''    
 
     #Get the Text from either Atlas or Local Deployment
     print("Loading Text from MongoDB. . .")
-    collection_name = mg_get_text(db, text_title)
+    collection_name = mg_get_text(text_title)
     if(collection_name == None):
         print("Text not found")
         return
@@ -527,7 +501,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     #Get all of the fields possible from the text
     all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
-    field_data = get_field_subset(db, all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
+    field_data = get_field_subset(all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
     print("Fields found:")
     print(field_data.keys())
  
@@ -540,7 +514,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     local_def_flag = False
     local_lem_flag = False
 
-    if("local_definition" in field_data.keys()):
+    if("local_definition" in field_data.keys()) and field_data["local_definition"][0] is not None:
         local_def_flag = True
     #if("local_principal_parts" in field_data.keys()):
     #local_lem_flag = True
@@ -597,7 +571,6 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     if location_example == '1_1_1':
         section_level = 3
 
-
     #Check tuples
     for i in range(4):
         print(tuples[i])
@@ -608,6 +581,7 @@ def mg_get_text_as_Text(db, language, text_title, location_list, location_words)
     print("FInished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
     return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+
 
 def mg_format_title(unformatted_title: str):
     '''
@@ -625,13 +599,15 @@ def mg_format_title(unformatted_title: str):
     formatted_title = unformatted_title.replace('_', ' ')
     return formatted_title
 
+
 def mg_format_lowercase(unformatted_title: str):
     '''
-    Formats a title string to be the same as the lowercase title used in
-    URL request 
+    Formats a title string to be the same as the lowercase title used in URL request 
     '''
+    
     formatted_title = unformatted_title.lower()
     return formatted_title
+
 
 if __name__ == "__main__":
     main()

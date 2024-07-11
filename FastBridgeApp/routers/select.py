@@ -9,63 +9,11 @@ from collections import namedtuple
 import math
 import MongoDefinitionTools
 
-# Importing the MongoClient class from the pymongo library
-import pymongo
-from pymongo import MongoClient, errors
-
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
 import sys
-
-# AtlasClient class definition
-class AtlasClient():
-    
-    def __init__(self, atlas_uri, dbname):
-        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
-
-    def ping(self):
-        self.mongodb_client.admin.command('ping')
-
-    def get_collection(self, collection_name):
-        collection = self.database[collection_name]
-        return collection
-
-    def find(self, collection_name, filter={}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
-    
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
-
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
-
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
-
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
 
 
 @router.get("/")
@@ -73,20 +21,23 @@ async def index(request : Request):
     print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
+
 @router.get("/{language}/")
 async def select(request : Request, language : str):
     print("Calling select()")
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db,language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
+    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
+
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
     print("Calling select_section()")
     print("Unformatted textname: ", textname)
-    locations_list = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    locations_list = MongoDefinitionTools.mg_get_locations(language, textname)
     print(f"locations_list for {textname}: ", locations_list)
     return locations_list
- 
+
+
 def filter_helper(row_filters, POS):
     print("Calling filter_helper()")
     print(row_filters)
@@ -109,6 +60,7 @@ def filter_helper(row_filters, POS):
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(\'{filter}\');" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
 
+
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -126,23 +78,19 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         running_list = False
     local_def = False
     local_lem = False
-    print("Printing triple: ", triple)
+    # print("Printing triple: ", triple)
     words = []
     titles =[]
     print("entering for loop")
     display_triple = []
     for text, start, end in triple:
         print("Fetching locations for all texts . . . ")
-        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text)
+        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
         print("Locations loaded.")
         print("\n\nFetching all location words for all texts . . .")
-        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text)
+        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
         print("Location words loaded.\n\n")
-        print("text: ", text)
-        # book = DefinitionTools.get_text(text, language).book
-        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
-        print("PRINTING BOOK")
-        print(book)
+        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -150,12 +98,13 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         print("loaded the book")
         titles += (book.get_words(start, end))
+        print(titles)
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     try:
         print(book)
     except Exception as e:
         print("GOOD! IT IS GONE")
-    print(local_def, local_lem)
+    print("local_def? ", local_def, " local_lem? ", local_lem)
 
     print("got titles")
     frequency_dict = {}
@@ -171,22 +120,22 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
             else:
                 frequency_dict[title[0]] += 1
 
-
         titles_no_dups = new_titles
-        #print(titles)
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
+    # print("titles_no_dups: ", titles_no_dups)
     titles = sorted(titles, key=lambda x: x[1])
+    # print("titles: ", titles)
 
-    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
-
-    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
-
-
-    section =", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
+    dict_name = "bridge_latin_dictionary"
+    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    
+    section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
+
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
@@ -194,11 +143,11 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
+    
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
-    print("returning")
     response = templates.TemplateResponse("result.html", context)
-    print("response made")
+    print("response made, returning response: ")
     return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
@@ -207,6 +156,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str, running_list: str):
+    print("Calling result()")
     context = {"request": request}
     if running_list == "running":
         running_list = True
@@ -219,7 +169,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        book = DefinitionTools.get_text(text, language).book
+        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        # book = DefinitionTools.get_text(text, language).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
         del book
@@ -228,7 +179,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        book = DefinitionTools.get_text(text, language).book
+        # book = DefinitionTools.get_text(text, language).book
+        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -265,8 +217,6 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
 
-
-
     ##print(titles)
 
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
@@ -290,6 +240,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
 
 
 def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups):
+    print("Calling build_html_for_clusterize()")
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -347,7 +298,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
+
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
+    print("Calling build_table()")
     render_words = []
     print(columnheaders)
     for j in range(len(words)):
@@ -392,5 +345,3 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
 
     return render_words
-
-
