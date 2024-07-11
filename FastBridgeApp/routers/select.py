@@ -8,43 +8,12 @@ import DefinitionTools
 from collections import namedtuple
 import math
 import MongoDefinitionTools
-# from MongoDefinitionTools import AtlasClient
-
-# Importing the MongoClient class from the pymongo library
-# import pymongo
-# from pymongo import MongoClient, errors
 
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
 import sys
-
-
-# DB_NAME = 'local-dev'
-# COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-# ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-# atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-# atlas_client.ping()
-# print('Connected to Atlas instance! We are good to go!!')
-# db = atlas_client.database
-
-# def connect_to_local_deployment():
-# 	try:
-# 		# start connection code heri
-
-# 		uri = "mongodb://localhost:27017/"
-# 		client = MongoClient(uri)
-
-# 		# end connection code here
-# 		client.admin.command("ping")
-# 		print("Connected successfully")
-# 		# other application code
-# 		client.close()
-# 	except Exception as e:
-# 		raise Exception(
-# 			"The following error occurred: ", e)
 
 
 @router.get("/")
