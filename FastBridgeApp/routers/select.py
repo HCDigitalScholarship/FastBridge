@@ -8,11 +8,6 @@ import DefinitionTools
 from collections import namedtuple
 import math
 import MongoDefinitionTools
-from MongoDefinitionTools import AtlasClient
-
-# Importing the MongoClient class from the pymongo library
-import pymongo
-from pymongo import MongoClient, errors
 
 router = APIRouter()
 router_path = Path.cwd()
@@ -21,50 +16,28 @@ templates = Jinja2Templates(directory="templates")
 import sys
 
 
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
-def connect_to_local_deployment():
-	try:
-		# start connection code heri
-
-		uri = "mongodb://localhost:27017/"
-		client = MongoClient(uri)
-
-		# end connection code here
-		client.admin.command("ping")
-		print("Connected successfully")
-		# other application code
-		client.close()
-	except Exception as e:
-		raise Exception(
-			"The following error occurred: ", e)
-
-
 @router.get("/")
 async def index(request : Request):
     print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
+
 @router.get("/{language}/")
 async def select(request : Request, language : str):
     print("Calling select()")
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db,language), 'titles2': MongoDefinitionTools.mg_render_titles(db,language, "2") })
+    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
+
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
     print("Calling select_section()")
     print("Unformatted textname: ", textname)
-    locations_list = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    locations_list = MongoDefinitionTools.mg_get_locations(language, textname)
+    print(f"locations_list for {textname}: ", locations_list)
     return locations_list
- 
+
+
 def filter_helper(row_filters, POS):
     print("Calling filter_helper()")
     print(row_filters)
@@ -86,6 +59,7 @@ def filter_helper(row_filters, POS):
             cssclass = filter.split('_')[0]
             filters+=f'<li> <div class="custom-control custom-checkbox">   <input name="filterChecks" type="checkbox" value="hide" class="custom-control-input {cssclass}" value = "hide" id="{filter}" onchange="hide_show_row(\'{filter}\');" checked> <label class="custom-control-label" for="{filter}">{display_filter}</label></div></li>'
     return filters, loc_style
+
 
 #this is the simple result, if they exclude nothing.
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
@@ -111,16 +85,12 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     display_triple = []
     for text, start, end in triple:
         print("Fetching locations for all texts . . . ")
-        locations_list = MongoDefinitionTools.mg_get_locations(db, language, text) 
+        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
         print("Locations loaded.")
         print("\n\nFetching all location words for all texts . . .")
-        location_words = MongoDefinitionTools.mg_get_location_words(db, language, text) # Words per location
+        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
         print("Location words loaded.\n\n")
-        print("text: ", text)
-        # book = DefinitionTools.get_text(text, language).book
-        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
-        print("PRINTING BOOK")
-        # print(book)
+        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -158,18 +128,11 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     titles = sorted(titles, key=lambda x: x[1])
     # print("titles: ", titles)
 
-    dict_db = atlas_client.get_database('dictionaries') # access the 'dictionaries' database
     dict_name = "bridge_latin_dictionary"
-    # words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
-    # words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
     
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(dict_db, titles, dict_name, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(dict_db, titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
-
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
-    print("Printing section: ")
-    print(section)
-
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
 
@@ -180,19 +143,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-
-    print("calling build_html_for_clusterize() with the following parameters: ")
-    # print("words: ", words)
-    # print("POS_list: ", POS_list)
-    # print("columnheaders: ", columnheaders)
-    # print("row_filters: ", row_filters)
-    # print("style: ", style)
-    # print("context: ", context)
-    # print("frequency_dict: ", frequency_dict)
-    # print("titles: ", titles)
-    # print("global_filters: ", global_filters)
-    # print("words_no_dups: ", words_no_dups)
-    # print("titles_no_dups: ", titles_no_dups)
     
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
@@ -219,7 +169,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
+        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         # book = DefinitionTools.get_text(text, language).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
@@ -348,8 +298,6 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
-def get_formatted_text():
-    return    
 
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
     print("Calling build_table()")
@@ -397,8 +345,3 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
 
     return render_words
-
-
-    
-
-

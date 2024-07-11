@@ -7,15 +7,17 @@
 #      - "5000:5000"
 
 
-version: "3.8"
+version: '3.3'
 services:
   web:
     build: .
     command: uvicorn main:app --host=0.0.0.0 --port=${PORT:-5001} --reload
     volumes:
-      # - ~/repos/github.com/public/FastBridge/FastBridgeApp:/app/FastBridgeApp
-      - /Users/sabinemejia/Desktop/Bridge/FastBridge/FastBridgeApp:/app/FastBridgeApp
+      - /srv/FastBridge/FastBridgeApp:/app/FastBridgeApp
     ports:
       - "5001:5001"
     environment:
       - PORT=5001
+    # network_mode: host # uncomment when working with MongoDB on dev server 
+
+  
