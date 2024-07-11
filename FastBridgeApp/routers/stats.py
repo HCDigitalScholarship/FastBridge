@@ -241,6 +241,8 @@ class TextAnalyzer():
 
 
     def get_textname(self):
+        print("self.texts[0][2]:", self.texts[0][2])
+        print("self.texts[0][1]:", self.texts[0][1])
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -256,7 +258,9 @@ class TextAnalyzer():
             end_index = self.texts[0][0].sections[self.texts[0][2]]
             word_count = end_index - start_index
             if self.texts[0][1] == 'start' and self.texts[0][2] == 'end':
+                print("Checking for full selection:")
                 word_count = self.texts[0][0].words[-1][1]
+                print("word_count:", word_count)
             return word_count
         else:
             sum = 0
@@ -648,11 +652,14 @@ class TextAnalyzer():
     def plot_word_freq(self, plot_num = 1):
         if len(self.texts) == 0:
             return
+        # question: checking for 1 or more texts or value of text (i.e. word) is 1?
         elif len(self.texts) == 1:
             text_slice = get_slice(
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
+            print("text_slice in plot_word_freq:", text_slice)
             df = pd.DataFrame(text_slice, columns=[
-                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count", 
+                              "empty", "empty", "empty", "empty"])
             word_frequency = df['Word'].value_counts().reset_index()
             word_frequency.columns = ['Word', 'Frequency']
 
@@ -770,7 +777,18 @@ class TextAnalyzer():
 
             # Apply Savitzky-Golay filter
             # window size 51, polynomial order 3
-            smoothed_scores = savgol_filter(rolling_average, 101, 3)
+            
+            #Selection must have 101 words
+            if(self.num_words() >20):
+                savgol_num = 20
+            elif(self.num_words()>50):
+                savgol_num = 50
+            else:
+                savgol_num = 100
+
+            smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
+            
+            #smoothed_scores = savgol_filter(rolling_average, 101, 3)
 
             x_indexes = list(range(len(words)))
 
