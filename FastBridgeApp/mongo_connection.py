@@ -12,9 +12,10 @@ try:
     client.admin.command("ping")
     print("Connected successfully to MongoDB")
 
-    db = client.get_database("Latin")  # This will use the database specified in the URI
+    db = client.get_database("Latin")  
+    print("Connected to text database:", db.name)
     dict_db = client.get_database("Latin-Dicts")
-    print("Connected to database:", db.name)
+    print("Connected to dictionary database:", dict_db.name)
 
 except ConnectionFailure as e:
     print(f"Failed to connect to MongoDB: {e}")
@@ -22,6 +23,3 @@ except ConnectionFailure as e:
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
     raise
-
-
-
