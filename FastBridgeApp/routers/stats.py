@@ -657,9 +657,10 @@ class TextAnalyzer():
             text_slice = get_slice(
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
             print("text_slice in plot_word_freq:", text_slice)
-            df = pd.DataFrame(text_slice, columns=[
-                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count", 
-                              "empty", "empty", "empty", "empty"])
+            df = pd.DataFrame(text_slice, columns=["Word", "Index", "Lemma", "Definition", "Notes", 
+                                                   "Section", "Word Count", "Sentence", "Case", 
+                                                   "Lasla_Subordination_Code", 
+                                                   "Grammatical_Subcategory"])
             word_frequency = df['Word'].value_counts().reset_index()
             word_frequency.columns = ['Word', 'Frequency']
 
