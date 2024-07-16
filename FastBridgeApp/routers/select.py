@@ -180,7 +180,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     display_triple =[]
     for text, start, end in source:
         # book = DefinitionTools.get_text(text, language).book
-        book = MongoDefinitionTools.mg_get_text_as_Text(db, language, text, locations_list, location_words)
+        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:

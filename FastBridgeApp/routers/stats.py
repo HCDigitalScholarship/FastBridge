@@ -224,9 +224,9 @@ class TextAnalyzer():
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
         print(f"\n\n\n{form_request}\n\n\n")
-        location_list = MongoDefinitionTools.mg_get_locations(db, language, form_request)
-        location_words, l_word_time = MongoDefinitionTools.mg_get_location_words(db, language, form_request)
-        self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(db, language, form_request, location_list, location_words),start_section, end_section))
+        location_list = MongoDefinitionTools.mg_get_locations(language, form_request)
+        location_words = MongoDefinitionTools.mg_get_location_words(language, form_request)
+        self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
         
        #(get_text(form_request, language).book, start_section, end_section))
 
@@ -1713,14 +1713,14 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(db, language), 'titles2': MongoDefinitionTools.mg_render_titles(db, language, "2")})
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
     print("reaching section endpoint")
-    sectionDict = MongoDefinitionTools.mg_get_locations(db, language, textname)
+    sectionDict = MongoDefinitionTools.mg_get_locations(language, textname)
     return sectionDict
 
 
