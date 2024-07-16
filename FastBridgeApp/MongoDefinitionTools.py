@@ -38,14 +38,17 @@ def get_field_subset(fields, text_name):
     field_subset = {}
 
     for field in fields:
-        cursor = collection.find({}, {field: 1}) 
         field_list = []
+        field_present = False
+
+        cursor = collection.find({}, {field: 1}) 
         for document in cursor:
-            try:
+            if field in document:
                 field_list.append(document[field])
-            except KeyError:
-                pass
-        field_subset[field] = field_list
+                field_present = True
+            
+        if field_present:
+            field_subset[field] = field_list    
 
     return field_subset
 
@@ -501,7 +504,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     #Get all of the fields possible from the text
     all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
-    field_data = get_field_subset(all_possible_fields, collection_name)#this now contains all fields present in the text file, some may not be present
+    field_data = get_field_subset(all_possible_fields, collection_name) #this now contains all fields present in the text file, some may not be present
     print("Fields found:")
     print(field_data.keys())
  
