@@ -222,9 +222,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
     ##print(titles)
-    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
 
-    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    dict_name = "bridge_latin_dictionary"
+    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0]
 
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
