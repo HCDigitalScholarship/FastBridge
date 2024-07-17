@@ -338,14 +338,21 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
     # go through every word in the given text and check for data in the row_filters fields, if more than one piece of data, split it and add both as filters in final_row_filters, if it's "T", change to "0"
     for i in range(len(words_from_text)):
         to_add = f""
-        datum = (words_from_text[i][0],) + dict_data[words_from_text[i][0]] + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
+        try: 
+            datum = (words_from_text[i][0],) + dict_data[words_from_text[i][0]] + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
+        except KeyError:
+            print("KEY ERROR!")
+            empty_dict_data = ('','','','','','','','','','','','','')
+            datum = (words_from_text[i][0],) + (empty_dict_data) + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
+            # print(words_from_text[i][0])
+            print(datum)
+            continue
         if has_local_defs and has_local_lems:
             datum = datum + (local_defs_list[i], local_lems_list[i])
         elif has_local_defs:
             datum = datum + (local_defs_list[i],)
         elif has_local_lems:
             datum = datum + ('', local_lems_list[i])
-
         datum = Word(*datum)
         word_list.append(datum)
         to_add+= datum.PART_OF_SPEECH + " "
