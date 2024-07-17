@@ -524,7 +524,8 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     local_def_flag = False
     local_lem_flag = False
 
-    if("local_definition" in field_data.keys()) and field_data["local_definition"][0] is not None:
+
+    if("local_definition" in field_data.keys()) and any(value is not None for value in field_data["local_definition"]):
         local_def_flag = True
     #if("local_principal_parts" in field_data.keys()):
     #local_lem_flag = True
