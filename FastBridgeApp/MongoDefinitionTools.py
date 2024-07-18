@@ -9,6 +9,7 @@ from collections import namedtuple, deque
 import re
 import time 
 from mongo_connection import db, dict_db
+from text_title_rename_dict import title_renaming_dict
 
 
 # def main():
@@ -607,8 +608,8 @@ def mg_format_title(unformatted_title: str):
     formatted_title (str): The formatted title string.
     
     '''
-    formatted_title = unformatted_title.replace('_', ' ')
-    return formatted_title
+    #formatted_title = unformatted_title.replace('_', ' ')
+    return title_renaming_dict[unformatted_title]
 
 
 def mg_format_lowercase(unformatted_title: str):
