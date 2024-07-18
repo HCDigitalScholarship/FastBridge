@@ -14,6 +14,7 @@ import matplotlib.font_manager as fm
 import time
 import numpy as np
 from scipy.signal import savgol_filter
+from pymongo import MongoClient
 
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
@@ -94,74 +95,48 @@ colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
 
 
 @timer_decorator
-def get_latin_dictionary(file_path):  # for reading in DICTIONARY file
+def mg_get_latin_dictionary(db):
     word_dictionary = {}
-    with open(file_path, 'r', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            # print(row)  # Add this line
-            if 'TITLE' in row:
-                word_dictionary[row['TITLE']] = row
-                #else:
-                #print(row)
-            # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
-            # word_dictionary[row["TITLE"]] = row
+    cursor = db.dictionary.find()
+    for row in cursor:
+        if 'TITLE' in row:
+            word_dictionary[row['TITLE']] = row
+        else:
+            print(row)
     return word_dictionary
 
-# Construct the path to the CSV file relative to the script's directory.
-latin_dict_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-
-latin_dict, elapsed_time = get_latin_dictionary(
-    latin_dict_path)
-print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
-
-# Get Diederich
-
+@timer_decorator
+def mg_get_diederich1500(db, collection_name):
+    diederich1500 = {}
+    cursor = db[collection_name].find()
+    for row in cursor:
+        diederich1500[row['TITLE']] = {
+            'LOCATION': row['LOCATION'],
+            'SECTION': row['SECTION'],
+            'RUNNINGCOUNT': row['RUNNINGCOUNT'],
+            'TEXT': row['TEXT']
+        }
+    return diederich1500
 
 @timer_decorator
-def create_hashtable_from_csv(file_path):
-    hashtable = {}
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'],
-                                       'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
-    return hashtable
-
-# Construct the path to the CSV file relative to the script's directory.
-diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-
-print(os.getcwd())
-diederich, diederich_time = create_hashtable_from_csv(
-    diederich_path)
-print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
-
-# Get DCC
-
+def mg_get_dcc(db, collection_name):
+    dcc = set()
+    cursor = db[collection_name].find()
+    for row in cursor:
+        dcc.add(row['TITLE'])
+    return dcc
 
 @timer_decorator
-# For getting the unique tokens, or vocabulary, NO DUPLICATES
-def create_word_set(file_path):
-    word_set = set()
-    with open(file_path, 'r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            word_set.add(row['TITLE'])
-    return word_set
-
-
-@timer_decorator
-def get_diederich300(file_path):
+def mg_get_diederich300(db):
     diederich300 = set()
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        count = 0
-        for row in reader:
-            if count <= 306:  # From Latin vocabulary knowledge and the Readability of Latin texts
-                diederich300.add(row['TITLE'])
-                count += 1
-            else:
-                break
+    cursor = db.diederich300.find()
+    count = 0
+    for row in cursor:
+        if count <= 306:
+            diederich300.add(row['TITLE'])
+            count += 1
+        else:
+            break
     return diederich300
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -213,26 +188,30 @@ def find_hapax_legomena(words):
 # Class that the site uses to handle everything
 
 
-class TextAnalyzer():
+class TextAnalyzer:
 
-    def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
+    MONGO_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+    DB_NAME = "Latin"
 
-        self.dictionary, self.dictionary_time = get_latin_dictionary(
-            dictionary_path)
+    def __init__(self):
+
+        self.client = MongoClient(self.MONGO_URI)
+        self.db = self.client[self.DB_NAME]
+        self.texts = [] 
+
+        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
-        self.diederich, self.diederich_time = create_hashtable_from_csv(
-            diederich_path)
+        self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
 
-        self.diederich300, self.diederich300_time = get_diederich300(
-            diederich_path)
+        self.diederich300, self.diederich300_time = mg_get_diederich300(self.db)
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
 
-        self.dcc, self.dcc_time = create_word_set(dcc_path)
+        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
 
-        self.texts = []  # (Text, start section, end section)
+         # (Text, start section, end section)
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
@@ -415,78 +394,51 @@ class TextAnalyzer():
 
     @round_decorator
     def LexR(self):
-        properNounCats = ["1", "T"]
         if len(self.texts) == 0:
-            return -1
-        elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            out300 = 0
-            outDCC = 0
-            out1500 = 0
-            countWords = 0
-            words = []
-            for word_tuple in text_slice:
-                if word_tuple[0] in self.dictionary:
-                    if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                        if word_tuple[0] not in self.diederich300:
-                            out300 += 1
-                        if word_tuple[0] not in self.dcc:
-                            outDCC += 1
-                        if word_tuple[0] not in self.diederich:
-                            out1500 += 1
-                        countWords += 1
-                        words.append(word_tuple[0])
-            freq300 = (out300/countWords)*100
-            freqDCC = (outDCC/countWords)*100
-            freq1500 = (out1500/countWords)*100
+            return 0
 
-            mean_word_length = sum(len(word) for word in words) / len(words)
-            print(f"Mean word length: {mean_word_length}")
-            print(f"freq300: {freq300}")
-            print(f"freqDCC: {freqDCC}")
-            print(f"freq1500: {freq1500}")
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        diederich300, _ = mg_get_diederich300(self.db)
+        dcc, _ = mg_get_dcc(self.db, "Bridge-Vocab-Latin-List-DCC")
+        diederich1500, _ = mg_get_diederich1500(self.db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
-            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092) +
-                     (self.lex_sophistication()*0.059) + (self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+        out300 = 0
+        outDCC = 0
+        out1500 = 0
+        countWords = 0
 
-            lex_r -= 11.7
-            lex_r += 6
-            lex_r *= 0.833
+        for word_tuple in text_slice:
+            word = word_tuple[0]
+            if word not in diederich300:
+                out300 += 1
+            if word not in dcc:
+                outDCC += 1
+            if word not in diederich1500:
+                out1500 += 1
+            countWords += 1
 
-            return lex_r
-        else:
-            out300 = 0
-            outDCC = 0
-            out1500 = 0
-            countWords = 0
-            words = []
-            for text in self.texts:
-                text_slice = get_slice(text[0], text[1], text[2])
-                for word_tuple in text_slice:
-                    if word_tuple[0] in self.dictionary:
-                        if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                            if word_tuple[0] not in self.diederich300:
-                                out300 += 1
-                            if word_tuple[0] not in self.dcc:
-                                outDCC += 1
-                            if word_tuple[0] not in self.diederich:
-                                out1500 += 1
-                            countWords += 1
-                            words.append(word_tuple[0])
+        if countWords == 0:
+            return 0  # Avoid division by zero
 
-            freq300 = (out300/countWords)*100
-            freqDCC = (outDCC/countWords)*100
-            freq1500 = (out1500/countWords)*100
+        freq300 = (out300 / countWords) * 100
+        freqDCC = (outDCC / countWords) * 100
+        freq1500 = (out1500 / countWords) * 100
 
-            mean_word_length = sum(len(word) for word in words) / len(words)
-            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092) +
-                     (self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+        mean_word_length = get_avg_word_length(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        lexical_sophistication = get_lexical_sophistication(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        lexical_variation = get_lexical_variation(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        logTTR = lexical_variation[3]
+        rootTTR = lexical_variation[1]
 
-            lex_r -= 11.7
-            lex_r += 6
-            lex_r *= 0.833
-            return lex_r
+        lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 * 0.092) +
+                 (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
+
+        lex_r -= 11.7
+        lex_r += 6
+        lex_r *= 0.833
+
+        return lex_r
+
 
     def totalWordsNoProper(self):
         if len(self.texts) == 0:
@@ -500,7 +452,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             return len(words)
@@ -519,7 +471,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
                 vocabulary = set(word for word in words)
@@ -541,8 +493,8 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 if word_tuple[0] in self.dictionary:
                         if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                            if word_tuple[0] in latin_dict:
-                                if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
+                            if word_tuple[0] in self.dictionary:
+                                if int(self.dictionary[word_tuple[0]]["CORPUSFREQ"]) <= 300:
                                     continue
                                 words.append(word_tuple[2])
                             else:
@@ -569,7 +521,7 @@ class TextAnalyzer():
               # word = word_tuple[0]
               # words.append(word)
               # filter out proper nouns
-              # if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+              # if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                    # words.append(word)
 
     @round_decorator
@@ -577,15 +529,11 @@ class TextAnalyzer():
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            # Go through the words of text_slice
-            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
             words = []
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             count0_200 = 0
@@ -596,37 +544,38 @@ class TextAnalyzer():
             count2500plus = 0
 
             for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         count0_200 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 500:
+                    if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 500:
                         count201_500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 500 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if 501 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         count501_1000 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
+                    if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1500:
                         count1001_1500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
+                    if 1500 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2500:
                         count1501_2500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 2500:
                         count2500plus += 1
                         continue
 
-            freq_0_200 = (count0_200/len(words))*100
-            freq_201_500 = (count201_500/len(words))*100
-            freq_501_1000 = (count501_1000/len(words))*100
-            freq_1001_1500 = (count1001_1500/len(words))*100
-            freq_1501_2500 = (count1501_2500/len(words))*100
-            freq_2500_plus = (count2500plus/len(words))*100
+            total_words = len(words)
+            if total_words == 0:
+                return 0, 0, 0, 0, 0, 0  # Avoid division by zero
 
-            
+            freq_0_200 = (count0_200 / total_words) * 100
+            freq_201_500 = (count201_500 / total_words) * 100
+            freq_501_1000 = (count501_1000 / total_words) * 100
+            freq_1001_1500 = (count1001_1500 / total_words) * 100
+            freq_1501_2500 = (count1501_2500 / total_words) * 100
+            freq_2500_plus = (count2500plus / total_words) * 100
 
-            return (freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500,freq_1501_2500,freq_2500_plus)
-
+            return freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500, freq_1501_2500, freq_2500_plus
         else:
             print()
              
@@ -732,199 +681,130 @@ class TextAnalyzer():
 
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, rolling_window_size=50, plot_num = 3):
+    def plot_lin_lex_load(self, plot_num=0):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            words = []
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
             scores = []
-            print(f"Number of words{self.num_words()}")
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)
-
-            for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         scores.append(2)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         scores.append(1)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+                    if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                         scores.append(-1)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+                    if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                         scores.append(-2)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                         scores.append(-4)
                         continue
                 else:
                     scores.append(-4)
                     continue
+
+            if len(scores) == 0:
+                return -1  # Avoid issues with empty scores
 
             # Calculate rolling average of the scores
-            rolling_average = pd.Series(scores).rolling(
-                window=rolling_window_size).mean()
+            rolling_window_size = 25
+            rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
+
+            # Set the window length for the Savitzky-Golay filter
+            savgol_num = 51
+            if len(rolling_average.dropna()) < savgol_num:
+                savgol_num = len(rolling_average.dropna()) // 2 * 2 + 1  # Ensure window length is odd
 
             # Apply Savitzky-Golay filter
-            # window size 51, polynomial order 3
-            #Selection must have 101 words
-            if(self.num_words() >20):
-                savgol_num = 20
-            elif(self.num_words()>50):
-                savgol_num = 50
-            else:
-                savgol_num = 100
+            smoothed_scores = savgol_filter(rolling_average.dropna(), savgol_num, 3)
 
-            smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
-
-            x_indexes = list(range(len(words)))
-
-            # calculate average linear lexical score for the entire text
-            average_score = np.mean(scores)
+            x_indexes = list(range(len(smoothed_scores)))
 
             sns.set_style("ticks")
             sns.set_context("paper")
             plt.figure(figsize=(10, 5))
+            sns.lineplot(x=x_indexes, y=smoothed_scores, color=colorblind_palette[0])
 
-
-            #attempt at overlaying sections onto x axis, seems to be too many sections to render properly
-            # section_words = self.texts[0][0].sections
-
-            # # create a list of tick locations and labels
-            # tick_locations = list(section_words.values())
-            # tick_locations.pop(-1)
-            # tick_locations.pop(-2)
-
-            # tick_labels = list(section_words.keys())
-            # tick_labels.remove('start')
-            # tick_labels.remove('end')
-            
-            sns.lineplot(x=x_indexes, y=smoothed_scores,
-                         errorbar=None, color=colorblind_palette[6])
-
-            # add a horizontal line representing the average linear lexical score
-            plt.axhline(y=average_score,
-                        color=colorblind_palette[4], linestyle='--')
-            
-         
             sns.despine()
-            plt.title(
-                f"Linear Lexical Load of {self.texts[0][0].name}", **title_font)
-            plt.xlabel('Word', **axis_font)
-            plt.ylabel(
-                f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
+            plt.title(f"Rolling Linear Lexical Load of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word Index', **axis_font)
+            plt.ylabel('Smoothed Lexical Load', **axis_font)
 
-            # Get the current Axes instance
-            ax = plt.gca()
-
-            # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
-            # tick_spacing = rolling_window_size  # change this to the size of your slices
-            # ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-
-            # set font properties to x and y tick labels
-            plt.setp(ax.get_xticklabels(), fontproperties=prop)
-            plt.setp(ax.get_yticklabels(), fontproperties=prop)
-
-
-
-
-            # Save plot as an image file instead of showing
-            # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plot_partial = f'/static/assets/plots/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
             plt.savefig(plot_path)
-            plt.close()  # close the plot
+            plt.close()  # Close the plot
 
-            return plot_path  # return the file path of the saved plot
+            return plot_path  # Return the file path of the saved plot
+
         else:
-            # WHEN WE FIGURE OUT WHAT TO DO WITH MULTIPLE TEXT SELECTIONS, CODE HERE, WILL HAVE TO ADD HTML STRUCTURE DYNAMICALLY TO CONTAIN MANY PLOTS
             print()
 
-    def plot_cum_lex_load(self, plot_num = 2):
-        if len(self.texts) == 0:
-            return -1
-        elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            # Go through the words of text_slice
-            # Connect to Dictionary to filter out PROPER, "1" and "T"
-            words = []
-            scores = []
-            for word_tuple in text_slice:
-                word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)
-                
+        def plot_cum_lex_load(self, plot_num=0):
+            if len(self.texts) == 0:
+                return -1
+            elif len(self.texts) == 1:
+                text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
-            for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
-                        scores.append(2)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
-                        scores.append(1)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
-                        scores.append(-1)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
-                        scores.append(-2)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                scores = []
+                for word_tuple in text_slice:
+                    word = word_tuple[0]
+                    if word in self.dictionary:
+                        if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                            scores.append(2)
+                            continue
+                        if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                            scores.append(1)
+                            continue
+                        if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                            scores.append(-1)
+                            continue
+                        if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                            scores.append(-2)
+                            continue
+                        if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                            scores.append(-4)
+                            continue
+                    else:
                         scores.append(-4)
                         continue
-                else:
-                    scores.append(-4)
-                    continue
 
-            #print(scores)
-            cumulative_scores = np.cumsum(scores)
+                if len(scores) == 0:
+                    return -1  # Avoid issues with empty scores
 
-            # Calculate rolling average
-            # rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
+                # Calculate cumulative sum of the scores
+                cumulative_scores = pd.Series(scores).cumsum()
 
-            x_indexes = list(range(len(words)))
+                x_indexes = list(range(len(cumulative_scores)))
 
-            sns.set_style("ticks")
-            sns.set_context("paper")
-            plt.figure(figsize=(10, 5))
-            sns.lineplot(x=x_indexes, y=cumulative_scores,
-                         errorbar=None, color=colorblind_palette[2])
-            sns.despine()
-            plt.title(
-                f"Cumulative Lexical Load of {self.texts[0][0].name}", **title_font)
-            plt.xlabel('Word', **axis_font)
-            plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+                sns.set_style("ticks")
+                sns.set_context("paper")
+                plt.figure(figsize=(10, 5))
+                sns.lineplot(x=x_indexes, y=cumulative_scores, color='blue')  # Replace colorblind_palette[0] with 'blue'
 
-            # Get the current Axes instance
-            ax = plt.gca()
+                sns.despine()
+                plt.title(f"Cumulative Lexical Load of {self.texts[0][0].name}", fontdict={'fontsize': 12})
+                plt.xlabel('Word Index', fontdict={'fontsize': 10})
+                plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-            # set font properties to x and y tick labels
-            plt.setp(ax.get_xticklabels(), fontproperties=prop)
-            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+                plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+                plot_path = parent_dir + plot_partial
 
-            # Save plot as an image file instead of showing
-            # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
-            plt.savefig(plot_path)
-            plt.close()  # close the plot
+                plt.savefig(plot_path)
+                plt.close()  # Close the plot
 
-            #print("Created cumulative lexical load plot!")
-            return plot_path
-        else:
-            print()
+                return plot_path  # Return the file path of the saved plot
+
+            else:
+                print()
 
     def plot_freq_bin(self, plot_num = 4):
         if len(self.texts) == 0:
@@ -938,7 +818,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             count0_200 = 0
@@ -949,23 +829,23 @@ class TextAnalyzer():
             count2500plus = 0
 
             for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         count0_200 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 500:
                         count201_500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 500 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 500 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         count501_1000 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1500:
                         count1001_1500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 1500 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2500:
                         count1501_2500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 2500:
                         count2500plus += 1
                         continue
 
@@ -1229,8 +1109,8 @@ def get_lexical_density(text_object: Text, start_section, end_section):
     lexicalSum = 0
     for word_tuple in text_slice:
         word = word_tuple[0]
-        if word in latin_dict:
-            if latin_dict[word]["PART_OF_SPEECH"] in lexicalCategories:
+        if word in self.dictionary:
+            if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
                 lexicalSum += 1
 
         # if len(spacyString) == 0:
@@ -1265,8 +1145,7 @@ def get_lexical_sophistication(text_object: Text, start_section, end_section):
     if start_section == 'start' and end_section == 'end':
         text_slice = text_object.words
 
-    hashTable = create_hashtable_from_csv(
-        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
+    hashTable, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
     rareCount = 0
     totalWords = 0
@@ -1309,34 +1188,40 @@ def get_lexical_variation(text_object: Text, start_section, end_section):
     return (TTR, RootTTR, CTTR, LogTTR)
 
 
-def get_average_subordinations_per_section(start_location_1, start_location_2, end_location_1, end_location_2):
+def get_average_subordinations_per_section(db, start_location_1, start_location_2, end_location_1, end_location_2):
     '''
-    Goes into Full AP Excel file for text, so different LOCATION numbers, i.e no more 1.4622, now it should be 1_4
+    Goes into Full AP MongoDB collection for text, so different LOCATION numbers, i.e., no more 1.4622, now it should be 1_4
     '''
-    df = pd.read_excel(
-        "FastBridgeApp\Bridge_Latin_Text_Vergilius_Aeneis_VerAen_newAP_localdef_20230310.xlsx")
+    collection = db["Bridge_Latin_Text_Vergilius_Aeneis_VerAen_newAP_localdef_20230310"]
 
-    # Split the 'LOCATION' column into two columns: 'LOCATION_1' and 'LOCATION_2'
-    df[['LOCATION_1', 'LOCATION_2']] = df['LOCATION'].str.split(
-        '_', expand=True).astype(int)
+    # Fetch data from MongoDB
+    cursor = collection.find({
+        'LOCATION_1': {'$gte': start_location_1, '$lte': end_location_1},
+        'LOCATION_2': {'$gte': start_location_2, '$lte': end_location_2}
+    })
 
-    # Filter the DataFrame
-    start_condition = (((df['LOCATION_1'] >= start_location_1) & (
-        df['LOCATION_2'] >= start_location_2)))
+    # Convert cursor to DataFrame
+    df = pd.DataFrame(list(cursor))
 
-    end_condition = (((df['LOCATION_1'] <= end_location_1)
-                     & (df['LOCATION_2'] <= end_location_2)))
+    # Ensure 'LOCATION_1' and 'LOCATION_2' are integers
+    df[['LOCATION_1', 'LOCATION_2']] = df['LOCATION'].str.split('_', expand=True).astype(int)
 
+    # Filter the DataFrame based on start and end locations
+    start_condition = ((df['LOCATION_1'] >= start_location_1) & (df['LOCATION_2'] >= start_location_2))
+    end_condition = ((df['LOCATION_1'] <= end_location_1) & (df['LOCATION_2'] <= end_location_2))
     df = df[start_condition & end_condition]
 
     # Count the total number of non-null entries in the 'SUBORDINATION_CODE' column for each section
-    subordinations_per_section = df['SUBORDINATION_CODE'].notnull().groupby(
-        df['SECTION']).sum()
+    subordinations_per_section = df['SUBORDINATION_CODE'].notnull().groupby(df['SECTION']).sum()
 
     # Count the total number of sections
     num_sections = df['SECTION'].nunique()
 
+    # Calculate the average subordinations
+    if num_sections == 0:
+        return 0  # Avoid division by zero
     average_subordinations = subordinations_per_section.sum() / num_sections
+
     return average_subordinations
 
 
@@ -1408,24 +1293,13 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
     return gen_lex_c
 
 
-def get_lex_r(text_object: Text, start_section, end_section):
-    # Get the Diederich 300 -> Adjusted CSV method
-    diederich300 = set()
-    with open("/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        count = 0
-        for row in reader:
-            if count <= 306:  # From Latin vocabulary knowledge and the Readability of Latin texts
-                diederich300.add(row['TITLE'])
-                count += 1
-            else:
-                break
-
-    dcc = create_word_set(
-        "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv")
-
-    diederich1500 = create_word_set(
-        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+def get_lex_r(db, text_object: Text, start_section, end_section):
+    # Get the Diederich 300 -> Adjusted MongoDB method
+    diederich300, _ = mg_get_diederich300(db)
+    
+    dcc, _ = mg_get_dcc(db, "Bridge-Vocab-Latin-List-DCC")
+    
+    diederich1500, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
     # Stats boilerplate
     start_index = text_object.sections[start_section]
@@ -1449,9 +1323,9 @@ def get_lex_r(text_object: Text, start_section, end_section):
             in1500 += 1
         countWords += 1
 
-    freq300 = in300/countWords
-    freqDCC = inDCC/countWords
-    freq1500 = in1500/countWords
+    freq300 = in300 / countWords
+    freqDCC = inDCC / countWords
+    freq1500 = in1500 / countWords
 
     mean_word_length = get_avg_word_length(
         text_object, start_section, end_section)
@@ -1463,8 +1337,8 @@ def get_lex_r(text_object: Text, start_section, end_section):
     logTTR = lexical_variation[3]
     rootTTR = lexical_variation[1]
 
-    lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500 *
-             0.092)+(lexical_sophistication*0.059)+(logTTR*0.312)+(rootTTR*0.143))
+    lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 *
+             0.092) + (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
 
     lex_r -= 11.7
     lex_r *= 0.833
@@ -1472,70 +1346,70 @@ def get_lex_r(text_object: Text, start_section, end_section):
     return lex_r
 
 
-def plot_cum_lex_load(text_object: Text, start_section, end_section):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
+##def plot_cum_lex_load(text_object: Text, start_section, end_section):
+##    start_index = text_object.sections[start_section]
+##    end_index = text_object.sections[end_section]
+##    text_slice = text_object.words[start_index:end_index]
 
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
+##    if start_section == 'start' and end_section == 'end':
+##        text_slice = text_object.words
 
     # Go through the words of text_slice
     # Connect to Dictionary to filter out PROPER, "1" and "T"
-    words = []
-    scores = []
-    for word_tuple in text_slice:
-        word = word_tuple[0]
+##    words = []
+##    scores = []
+##    for word_tuple in text_slice:
+##        word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-            words.append(word)
+##        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+##            words.append(word)
 
-    for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
-                scores.append(2)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
-                scores.append(1)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
-                scores.append(-1)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
-                scores.append(-2)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
-                scores.append(-4)
-                continue
-        else:
-            scores.append(-4)
-            continue
+##    for word in words:
+##        if word in self.dictionary:
+##            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+##                scores.append(2)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+##                scores.append(1)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+##                scores.append(-1)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+##                scores.append(-2)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+##                scores.append(-4)
+##                continue
+##        else:
+##            scores.append(-4)
+##            continue
 
-    cumulative_scores = np.cumsum(scores)
+##    cumulative_scores = np.cumsum(scores)
 
     # Calculate rolling average
     # rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
 
-    x_indexes = list(range(len(words)))
+##    x_indexes = list(range(len(words)))
 
-    sns.set_style("ticks")
-    sns.set_context("paper")
-    plt.figure(figsize=(10, 5))
-    sns.lineplot(x=x_indexes, y=cumulative_scores,
-                 errorbar=None, color=colorblind_palette[0])
-    sns.despine()
-    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
-    plt.xlabel('Word', **axis_font)
-    plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+##    sns.set_style("ticks")
+##    sns.set_context("paper")
+##    plt.figure(figsize=(10, 5))
+##    sns.lineplot(x=x_indexes, y=cumulative_scores,
+##                 errorbar=None, color=colorblind_palette[0])
+##    sns.despine()
+##    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
+##    plt.xlabel('Word', **axis_font)
+##    plt.ylabel('Cumulative Lexical Load Score', **axis_font)
 
     # Get the current Axes instance
-    ax = plt.gca()
+##    ax = plt.gca()
 
     # set font properties to x and y tick labels
-    plt.setp(ax.get_xticklabels(), fontproperties=prop)
-    plt.setp(ax.get_yticklabels(), fontproperties=prop)
+##    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+##    plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
-    plt.show()
+##    plt.show()
 
 
 def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size=25):
@@ -1553,24 +1427,24 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
     for word_tuple in text_slice:
         word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
             words.append(word)
 
     for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+        if word in self.dictionary:
+            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                 scores.append(2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                 scores.append(1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                 scores.append(-1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                 scores.append(-2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                 scores.append(-4)
                 continue
         else:
@@ -1634,24 +1508,24 @@ def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_div
     for word_tuple in text_slice:
         word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
             words.append(word)
 
     for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+        if word in self.dictionary:
+            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                 scores.append(2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                 scores.append(1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                 scores.append(-1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                 scores.append(-2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                 scores.append(-4)
                 continue
         else:
@@ -1738,7 +1612,6 @@ async def stats_select_section(request: Request, textname: str, language: str):
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str):
     context = {"request": request}
     if running_list == "running":
@@ -1746,50 +1619,31 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     else:
         running_list = False
 
+    analyzer = TextAnalyzer()
+
     if language == "Latin":
-        
-        # Construct the path to the CSV file relative to the script's directory.
-        dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-        diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-        dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-        # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-        # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-        # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-        analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+        pass  # Already initialized TextAnalyzer with the correct data
     else:  # Greek -> Change this when you put in the Greek files
-        analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv",
-                                "FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", "FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+        pass  # If Greek data initialization is different, handle it here
 
-    if '+' not in sourcetexts:#Only 1 text has been added - SingleStats
+    if '+' not in sourcetexts:  # Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
-        #print(str(analyzer))
+        print(str(analyzer))
 
         textname = analyzer.get_textname()
-
-
         word_count = analyzer.num_words()
-        for i in range(10):
-            for j in range(10):
-                print("#")
-            print("\n")
-
-
         vocab_size = analyzer.vocab_size()
-        
         hapax, hapax_percentage = analyzer.hapax_legonema()
         lex_dens = analyzer.lex_density()
-
         lex_sophistication = analyzer.lex_sophistication()
         lex_variation = analyzer.lex_variation()
         lex_r = analyzer.LexR()
-
         total_words_no_p = analyzer.totalWordsNoProper()
         unique_words_no_p = analyzer.uniqueWordsNoProper()
         avgWordLength = analyzer.avgWordLength()
         top20NoDie300 = analyzer.top20NoDie300()
-        freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+        freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
 
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1825,13 +1679,13 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "total_words_no_proper": total_words_no_p,
             "unique_words_no_proper": unique_words_no_p,
             "avg_word_length": avgWordLength,
-            "top20_NoDie300":top20NoDie300,
-            "freq1":freqBin1,
-            "freq2":freqBin2,
+            "top20_NoDie300": top20NoDie300,
+            "freq1": freqBin1,
+            "freq2": freqBin2,
             "freq3": freqBin3,
             "freq4": freqBin4,
-            "freq5":freqBin5,
-            "freq6":freqBin6,
+            "freq5": freqBin5,
+            "freq6": freqBin6,
             "freq_plot_path": freq_relative_plot_path,
             "cum_lex_plot_path": cum_lex_relative_plot_path,
             "lin_lex_plot_path": lin_lex_relative_plot_path,
@@ -1842,49 +1696,37 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         print(f"lin lex rel path: {lin_lex_relative_plot_path}")
         print(f"freq bins rel path: {freq_bins_relative_plot_path}")
         return templates.TemplateResponse("stats-single-text.html", context)
-    else:#multiple texts have been added - Stats: Compare
+    else:  # multiple texts have been added - Stats: Compare
 
-        #Get text information from URL
+        # Get text information from URL
         analyzer_texts = sourcetexts.split('+')
         analyzer_starts = starts.split('+')
         analyzer_ends = ends.split('+')
 
-        #Add text info to analyzer
+        # Add text info to analyzer
         analyzers = []
         for i in range(len(analyzer_texts)):
-            if language == "Latin":
-                # Construct the path to the CSV file relative to the script's directory.
-                dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-                diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-                dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-                # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-                # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-                # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-                analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
-            analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
+            analyzer = TextAnalyzer()
+            analyzer.add_text(analyzer_texts[i], language, analyzer_starts[i], analyzer_ends[i])
             analyzers.append(analyzer)
         
-        #Used multiple TextAnalyzer's, account for dynamicism here
+        # Used multiple TextAnalyzer's, account for dynamicism here
 
         # Getting Metrics, Hapax
-        text_names = [a.texts[0][0].name for a in analyzers] 
+        text_names = [a.texts[0][0].name for a in analyzers]
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
-        
-        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
 
-        #ERROR: when making selections too small . . .
-        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
-        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
-        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
-        
-        #print(text_names)
+        word_freq_paths = [analyzers[i].plot_word_freq(plot_num=0+(4*i)) for i in range(len(analyzers))]
+        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num=1+(4*i)) for i in range(len(analyzers))]
+        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num=2+(4*i)) for i in range(len(analyzers))]
+        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num=3+(4*i)) for i in range(len(analyzers))]
+
+        print(text_names)
 
         texts_and_sections = DefinitionTools.get_sections("Latin")
 
-
-        #add analyzer stats from each text to context
+        # add analyzer stats from each text to context
         context.update({
             "request": request,
             "textNames": text_names,
@@ -1893,23 +1735,14 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "texts_and_sections": texts_and_sections
         })
 
-        #Create stats-multiple-texts.html, 2 columns, 2 dropdown menus
-        #
-
         return templates.TemplateResponse("stats-multiple-texts.html", context)
 
    
 @router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
-    
     context = {"request": request}
-    # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-    # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-    # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-    dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-    diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-    dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-    analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+    
+    analyzer = TextAnalyzer()
     
     analyzer.add_text(text_name, "Latin", section_start, section_end)
 
@@ -1925,78 +1758,54 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     unique_words_no_p = analyzer.uniqueWordsNoProper()
     avgWordLength = analyzer.avgWordLength()
     top20NoDie300 = analyzer.top20NoDie300()
-    freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+    freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
     
-    # plot functions return the location of plot images
-
-    #Technically, the analyzer before caches the plots in project local memory
-    #Since we onlyneed the path,render all the plots before hand to save space and pass
-    # the index through this router to identify which plots we're going with
-
-    plotpath_nums= [0,1,2,3]
-    if selected_index > 0:#if the selected index isn't the first set of graphs
-        plotpath_nums = [num+(4*selected_index) for num in plotpath_nums]
+    # Remove file path references and use database for plots (if applicable)
+    plotpath_nums = [0, 1, 2, 3]
+    if selected_index > 0:  # if the selected index isn't the first set of graphs
+        plotpath_nums = [num + (4 * selected_index) for num in plotpath_nums]
 
     print(plotpath_nums)
 
-    # freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
-    freq_plot_path =  f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[0]}.png'
-    freq_relative_plot_path = os.path.relpath(
-        freq_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+    # Example plot paths assuming they're stored in the database
+    freq_plot_path = f'/plots/plot{plotpath_nums[0]}.png'
+    cum_lex_plot_path = f'/plots/plot{plotpath_nums[1]}.png'
+    lin_lex_plot_path = f'/plots/plot{plotpath_nums[2]}.png'
+    freq_bins_plot_path = f'/plots/plot{plotpath_nums[3]}.png'
 
-    # cum_lex_plot_path = analyzer.plot_cum_lex_load()
-    cum_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[1]}.png'
-    cum_lex_relative_plot_path = os.path.relpath(
-        cum_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
-
-    # lin_lex_plot_path = analyzer.plot_lin_lex_load()
-    lin_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[2]}.png'
-    lin_lex_relative_plot_path = os.path.relpath(
-        lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
-
-    # freq_bins_plot_path = analyzer.plot_freq_bin()
-    freq_bins_plot_path= f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[3]}.png'
-    freq_bins_relative_plot_path = os.path.relpath(
-        freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
-        )
-    
-    now = datetime.utcnow()#for caching issue with plots
+    now = datetime.utcnow()  # for caching issue with plots
     
     context.update({
-            "request": request,
-            "text_name": textname,
-            "start_section": section_start,
-            "end_section": section_end,
-            "word_count": word_count,
-            "vocab_size": vocab_size,
-            "hapax_legomena": hapax,
-            "hapax_percentage": hapax_percentage,
-            "lexical_density": lex_dens,
-            "lexical_sophistication": lex_sophistication,
-            "lexical_variation": lex_variation,
-            "LexR": lex_r,
-            "total_words_no_proper": total_words_no_p,
-            "unique_words_no_proper": unique_words_no_p,
-            "avg_word_length": avgWordLength,
-            "top20_NoDie300":top20NoDie300,
-            "freq1":freqBin1,
-            "freq2":freqBin2,
-            "freq3": freqBin3,
-            "freq4": freqBin4,
-            "freq5":freqBin5,
-            "freq6":freqBin6,
-            "freq_plot_path": freq_relative_plot_path,
-            "cum_lex_plot_path": cum_lex_relative_plot_path,
-            "lin_lex_plot_path": lin_lex_relative_plot_path,
-            "freq_bins_plot_path": freq_bins_relative_plot_path,
-            "now": now
-        })
+        "request": request,
+        "text_name": textname,
+        "start_section": section_start,
+        "end_section": section_end,
+        "word_count": word_count,
+        "vocab_size": vocab_size,
+        "hapax_legomena": hapax,
+        "hapax_percentage": hapax_percentage,
+        "lexical_density": lex_dens,
+        "lexical_sophistication": lex_sophistication,
+        "lexical_variation": lex_variation,
+        "LexR": lex_r,
+        "total_words_no_proper": total_words_no_p,
+        "unique_words_no_proper": unique_words_no_p,
+        "avg_word_length": avgWordLength,
+        "top20_NoDie300": top20NoDie300,
+        "freq1": freqBin1,
+        "freq2": freqBin2,
+        "freq3": freqBin3,
+        "freq4": freqBin4,
+        "freq5": freqBin5,
+        "freq6": freqBin6,
+        "freq_plot_path": freq_plot_path,
+        "cum_lex_plot_path": cum_lex_plot_path,
+        "lin_lex_plot_path": lin_lex_plot_path,
+        "freq_bins_plot_path": freq_bins_plot_path,
+        "now": now
+    })
 
-    
-
-    # Then, you would render these to an HTML string using a new Jinja2 template
-    # This new template should just contain the HTML for the metrics and plots
-    return templates.TemplateResponse('stats-column-data.html',context)
+    return templates.TemplateResponse('stats-column-data.html', context)
 
 
 @router.get("/formulas")
