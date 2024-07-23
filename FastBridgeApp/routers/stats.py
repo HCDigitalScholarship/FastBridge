@@ -762,7 +762,9 @@ class TextAnalyzer():
             # Apply Savitzky-Golay filter
             # window size 51, polynomial order 3
             #Selection must have 101 words
-            if(self.num_words() >20):
+            if(self.num_words() >10):
+                savgol_num = 10
+            elif(self.num_words() >20):
                 savgol_num = 20
             elif(self.num_words()>50):
                 savgol_num = 50
