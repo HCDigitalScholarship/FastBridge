@@ -9,6 +9,7 @@ COPY . /app
 #COPY FastBridge/FastBridgeApp /app/FastBridgeApp
 
 #install all the requirements
+RUN pip install --upgrade pip
 RUN pip install -r /app/requirements.txt
 
 #change the working container directory to FastBridgeApp, so that the run command
