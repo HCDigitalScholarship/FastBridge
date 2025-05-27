@@ -1,28 +1,5 @@
-#FROM python:3.7
-
-#WORKDIR /app
-
-#COPY requirements.txt /app/requirements.txt
-
-#RUN pip install -r /app/requirements.txt
-
-#COPY . /app
-
-#EXPOSE 5000
-
-#WORKDIR /app/FastBridgeApp
-#CMD uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
-
-
-
-
-
-
-
-
-#NEW TRY
 # Use an official Python runtime as a parent image
-FROM python:3.8.17
+FROM python:3.11.9
 
 # Set the working directory in the container
 WORKDIR /app
@@ -32,6 +9,7 @@ COPY . /app
 #COPY FastBridge/FastBridgeApp /app/FastBridgeApp
 
 #install all the requirements
+RUN pip install --upgrade pip
 RUN pip install -r /app/requirements.txt
 
 #change the working container directory to FastBridgeApp, so that the run command
