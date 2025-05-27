@@ -14,8 +14,24 @@ def main():
 '''
 Standardizes all column labels, removes unwanted columns, and changes current column labels to target column labels   
 '''
+def clean_data(df):
+    cols = pd.Series(df.columns)
+    duplicate_columns = cols[cols.duplicated()].unique()  # List of duplicate column names
+
+    for col in duplicate_columns:
+        duplicate_cols = df.loc[:, col]
+        cols_to_drop = [duplicate_cols.columns[i] for i in range(len(duplicate_cols.columns)) if duplicate_cols.iloc[:, i].isnull().all()]
+        df = df.drop(columns=cols_to_drop)
+        
+        if cols_to_drop:
+            print(f"Removed columns with all null values: {cols_to_drop}")
+            
+    df = df.loc[:, df.columns == col]
+
+    return df
+
 def clean_data(folder, datasheet, is_csv):
-    possible_headers = ["head_word", "location", "section", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+    possible_headers = ["head_word", "location", "section", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts", "counter"]
     remove_headers = ["grammatical_category", "_merge"]
     target_headers = {
         "title": "head_word", 
@@ -43,6 +59,9 @@ def clean_data(folder, datasheet, is_csv):
     text_data = text_data.rename(columns=target_headers)
     print("Renamed columns: ", text_data.columns) 
     
+    # Remove duplicate columns if any
+    text_data = clean_data(text_data)
+
     text_data_final = pd.DataFrame(columns=possible_headers)
 
     for header in text_data_final.columns:
@@ -74,13 +93,13 @@ def convert_to_csv(folder):
             print("Current text spreadsheet: ", spreadsheet_name)
             if PurePosixPath(spreadsheet_name).suffix == ".csv":
                 text_data_final = clean_data(root, spreadsheet_name, True)   
-                text_data_final.to_csv(f"Cleaned_Texts/{spreadsheet_name}",  
+                text_data_final.to_csv(f"Cleaned_texts/{spreadsheet_name}",  
                                         index=None, 
                                         header=True)
             elif PurePosixPath(spreadsheet_name).suffix == ".xlsx":
                 text_data_final = clean_data(root, spreadsheet_name, False)
                 spreadsheet_csv_name = spreadsheet_name.strip(".xlsx")    
-                text_data_final.to_csv(f"Texts_New_csv/{spreadsheet_csv_name}.csv",  
+                text_data_final.to_csv(f"Cleaned_texts/{spreadsheet_csv_name}.csv",  
                                         index=None, 
                                         header=True)
             

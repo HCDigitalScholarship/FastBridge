@@ -5,7 +5,7 @@ from subprocess import call
 import sys
 
 # Define the directory containing CSV files and MongoDB details
-csv_directory = '/srv/FastBridge/FastBridgeApp/data_remediation/Cleaned_FastBridge_Files_SAMPLE'
+csv_directory = 'fill_in'
 mongo_uri = 'mongodb://localhost:27017'
 database_name = 'Latin'
 
@@ -19,9 +19,7 @@ def import_json_chunks(json_chunks, collection_name):
     for i, chunk in enumerate(json_chunks):
         temp_json_file = f'temp_{i}.json'
 
-        temp_json_file_size = sys.getsizeof(json_chunk) / (1024 * 1024)
-        print("Size of json file " + str(temp_json_file_size))
-
+        temp_json_file_size = sys.getsizeof(temp_json_file) / (1024 * 1024)
         if temp_json_file_size > 16:
             print("Warning: The size of the JSON object in memory exceeds 16MB")
             sys.exit("Stopping the program")
@@ -34,14 +32,14 @@ def import_json_chunks(json_chunks, collection_name):
         
         # Clean up the temporary JSON file
         os.remove(temp_json_file)
-        print(f"Chunk {i+1}/{len(json_chunks)} of {collection_name}, size: {temp_json_file_size}MB imported successfully.\n")
+        print(f"Chunk {i+1}/{len(json_chunks)} of {collection_name} imported successfully.")
 
 # Loop through each CSV file in the directory
 for csv_file in os.listdir(csv_directory):
     if csv_file.endswith('.csv'):
         # Get path to CSV file
         csv_file_path = os.path.join(csv_directory, csv_file)
-        print(f"Processing file: {csv_file_path}")
+        print(f"Processing file: {csv_file_path}\n")
         
         # Read the CSV file in chunks
         chunk_size = 100_000  # Adjust the chunk size as needed, chunk_size = # rows
