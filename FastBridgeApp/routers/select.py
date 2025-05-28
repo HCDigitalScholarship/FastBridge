@@ -26,7 +26,6 @@ async def index(request : Request):
 async def select(request : Request, language : str):
     print("Calling select()")
     return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
-    # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/sections/{textname}/{language}/")
@@ -298,7 +297,6 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["render_words_optional"] = render_words_optional
     context["columnheaders"] = header_js_obj
     return context
-
 
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
     print("Calling build_table()")
