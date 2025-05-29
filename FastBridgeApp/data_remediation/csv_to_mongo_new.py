@@ -5,7 +5,7 @@ from subprocess import call
 import sys
 
 # Define the directory containing CSV files and MongoDB details
-csv_directory = '/srv/FastBridge/FastBridgeApp/data_remediation/Cleaned_FastBridge_Files_SAMPLE'
+csv_directory = 'fill_in'
 mongo_uri = 'mongodb://localhost:27017'
 database_name = 'Latin'
 
@@ -22,7 +22,6 @@ def import_json_chunks(json_chunks, collection_name):
         temp_json_file_size = sys.getsizeof(temp_json_file) / (1024 * 1024)
         if temp_json_file_size > 16:
             print("Warning: The size of the JSON object in memory exceeds 16MB")
-            print(f"Size of JSON object: {json_size_in_memory:.2f} MB")
             sys.exit("Stopping the program")
         
         with open(temp_json_file, 'w') as file:

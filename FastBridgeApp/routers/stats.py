@@ -14,6 +14,7 @@ import matplotlib.font_manager as fm
 import time
 import numpy as np
 from scipy.signal import savgol_filter
+from pymongo import MongoClient
 
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
@@ -23,6 +24,20 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 # import matplotlib.ticker as ticker #For the x axis ticks
+import MongoDefinitionTools
+from MongoDefinitionTools import AtlasClient
+
+#DB boilerplate
+DB_NAME = 'local-dev'
+COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
+ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+
+atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+atlas_client.ping()
+print('Connected to Atlas instance! We are good to go!!')
+db = atlas_client.database
+
+
 
 '''
 Files:
@@ -80,74 +95,48 @@ colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
 
 
 @timer_decorator
-def get_latin_dictionary(file_path):  # for reading in DICTIONARY file
+def mg_get_latin_dictionary(db):
     word_dictionary = {}
-    with open(file_path, 'r', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            # print(row)  # Add this line
-            if 'TITLE' in row:
-                word_dictionary[row['TITLE']] = row
-            else:
-                print(row)
-            # Use the 'TITLE' field as the key, and store the entire row (which is a dictionary) as the value
-            # word_dictionary[row["TITLE"]] = row
+    cursor = db.dictionary.find()
+    for row in cursor:
+        if 'TITLE' in row:
+            word_dictionary[row['TITLE']] = row
+        else:
+            print(row)
     return word_dictionary
 
-# Construct the path to the CSV file relative to the script's directory.
-latin_dict_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-
-latin_dict, elapsed_time = get_latin_dictionary(
-    latin_dict_path)
-print("Loaded Latin Dictionary: {} seconds".format(elapsed_time))
-
-# Get Diederich
-
+@timer_decorator
+def mg_get_diederich1500(db, collection_name):
+    diederich1500 = {}
+    cursor = db[collection_name].find()
+    for row in cursor:
+        diederich1500[row['TITLE']] = {
+            'LOCATION': row['LOCATION'],
+            'SECTION': row['SECTION'],
+            'RUNNINGCOUNT': row['RUNNINGCOUNT'],
+            'TEXT': row['TEXT']
+        }
+    return diederich1500
 
 @timer_decorator
-def create_hashtable_from_csv(file_path):
-    hashtable = {}
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hashtable[row['TITLE']] = {'LOCATION': row['LOCATION'], 'SECTION': row['SECTION'],
-                                       'RUNNINGCOUNT': row['RUNNINGCOUNT'], 'TEXT': row['TEXT']}
-    return hashtable
-
-# Construct the path to the CSV file relative to the script's directory.
-diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-
-print(os.getcwd())
-diederich, diederich_time = create_hashtable_from_csv(
-    diederich_path)
-print("Loaded Diederich HashTable: {} seconds".format(diederich_time))
-
-# Get DCC
-
+def mg_get_dcc(db, collection_name):
+    dcc = set()
+    cursor = db[collection_name].find()
+    for row in cursor:
+        dcc.add(row['TITLE'])
+    return dcc
 
 @timer_decorator
-# For getting the unique tokens, or vocabulary, NO DUPLICATES
-def create_word_set(file_path):
-    word_set = set()
-    with open(file_path, 'r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            word_set.add(row['TITLE'])
-    return word_set
-
-
-@timer_decorator
-def get_diederich300(file_path):
+def mg_get_diederich300(db):
     diederich300 = set()
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        count = 0
-        for row in reader:
-            if count <= 306:  # From Latin vocabulary knowledge and the Readability of Latin texts
-                diederich300.add(row['TITLE'])
-                count += 1
-            else:
-                break
+    cursor = db.diederich300.find()
+    count = 0
+    for row in cursor:
+        if count <= 306:
+            diederich300.add(row['TITLE'])
+            count += 1
+        else:
+            break
     return diederich300
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -156,16 +145,34 @@ def get_text(form_request: str, language: str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
     """
+    print("HELLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
     return importlib.import_module(f'data.{language}.{form_request}')  # point to the data folder
 
 #used for getting slices of each text
 def get_slice(text_object: Text, start_section, end_section):
+    '''print("text_object.name: ", text_object.name)
+    print("text_object.sections: ", text_object.sections)
+    print("text_object.words: ", text_object.words)
+    print("text_object.linkedlist: ", text_object.section_linkedlist)
+    print("text_object.subsections: ", text_object.subsections)
+    print("text_object.language: ", text_object.language)
+    print("text_object.local_def: ", text_object.local_def)
+    print("text_object.local_lem: ", text_object.local_lem)'''
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
     text_slice = text_object.words[start_index:end_index]
 
     if start_section == 'start' and end_section == 'end':
         text_slice = text_object.words
+    mongo_v = ['PVMEX', 'EXPOLIO/2', 'DONO', 'SOLEO', 'ITALVS/A', 'TVM', 'TV', 'DO', 'MEVS', 'OMNIS', 'EXPLICO', 'DELICIA/1', 'SOLEO', 'ET/2', 'QVALISCVMQVE/2', 'PASSER', 'IVPPITER/N', 'NVGAE', 'QVARE/1', 'PATRONA', 'SINVS', 'APPETO', 'LIBELLVS', 'MODO/1', 'NAMQVE', 'CORNELIVS/N', 'PVELLA', 'MEVS', 'DOCTVS', 'HIC/1', 'QVI/1', 'QVI/1', 'PVTO', 'IAM', 'SVM/1', 'TRES', 'NOVVS', 'LIBELLVS', 'TV', 'QVIS/1', 'ALIQVIS', 'LEPIDVS', 'LABORIOSVS', 'O', 'VNVS', 'VIRGO', 'CVM/3', 'HABEO', 'QVI/1', 'ET/2', 'CHARTA', 'QVISQVIS/2', 'MVLTVM/2', 'PERENNIS', 'DIGITVS', 'TV', 'ARIDVS', 'AEVVM', 'AVDEO', 'SVM/1', 'VNVS', 'MANEO', 'SAECVLVM', 'CVM/2', 'SVVS', 'POSSVM/1', 'PRIMVS', 'ACQVIESCO', 'CARVS', 'ACER/2', 'PVELLA', 'IOCOR', 'LVDO', 'TAM', 'GRATVS', 'SVM/1', 'TAM', 'TV', 'QVI/1', 'SOLVO', 'DIV', 'CREDO', 'TRISTIS', 'CVRA', 'VENVSTVS', 'MORSVS', 'DESIDERIVM', 'MEVS', 'IN', 'SVM/1', 'ET/2', 'CVM/2', 'CVPIDO/N', 'ET/2', 'ET/2', 'INCITO/1', 'CVM/3', 'LVDO', 'EGO', 'QVANTVM/3', 'VENVS/N', 'QVAM/1', 'PERNIX', 'AVREOLVS', 'LEVO/1', 'GRAVIS', 'FERO', 'LVGEO', 'PVELLA', 'MALVM/2', 'SVM/1', 'O', 'TENEO', 'NITENS', 'NESCIOQVIS', 'QVI/1', 'DOLOR', 'LIBET', 'SOLACIOLVM', 'ZONA', 'SICVT/1', 'NEGO', 'QVE', 'ANIMVS', 'ET/2', 'IPSE', 'ARDOR', 'MEVS', 'QVE', 'MEVS', 'MELLITVS', 'IPSE', 'SVVS', 'NOSCO', 'NEC/2', 'GREMIVM', 'REDEO/1', 'QVISQVAM', 'TENEBRAE', 'ORCVS/N', 'BELLVS', 'DEVORO', 'NAM', 'RVBEO', 'HIC/1', 'PROPONTIS/N', 'VE', 'HIC/1', 'EX', 'HERVS', 'VENIO', 'VSQVE', 'PANDO/2', 'VOLO/3', 'VERSVS/1', 'LASERPITIFER', 'SIDVS', 'SACER', 'CATVLLVS/N', 'CVRIOSVS', 'LINGVA', 'TVM', 'NEC/2', 'MENS', 'VALEO', 'ROGO', 'QVIS/1', 'AT/2', 'ANVS/2', 'IBERVS/A', 'SVM/1', 'QVI/1', 'AES', 'HOMO', 'GRABATVS', 'EXTER', 'PVELLA', 'MODO/1', 'CIRCVMSILIO', 'ILLVC', 'ILLE', 'NEGO', 'VBI/1', 'EDO/1', 'AMASTRIS/N', 'LITORALIS', 'HIC/1', 'SENEO', 'MEVS', 'CENTVM', 'ILLE', 'MALVS/3', 'SCORTVM', 'NIHIL', 'QVARE/1', 'BASIATIO', 'SEPVLCRVM', 'SVM/1', 'ILLE', 'NON', 'ROGO', 'CATVLLVS/N', 'MOS', 'TVVS', 'SVM/1', 'OS/1', 'SVAVIOR', 'HOMO', 'NOS', 'IN', 'IS', 'RESPONDEO', 'NEQVE', 'SVI/1', 'DECET', 'SVM/1', 'SED', 'PER', 'EGO', 'QVI/1', 'EGO', 'VE', 'PARTHVS/A', 'NILVS/N', 'HYRCANVS/A', 'QVE', 'FERO', 'SIMVL/1', 'SVM/1', 'SVM/1', 'ILLE', 'HVC', 'QVI/1', 'ISTE', 'CYTORIVS/A', 'COMA', 'TVVS', 'ET/2', 'PHASELVS', 'SVI/1', 'LIMPIDVS', 'HIC/1', 'SVM/1', 'DEINDE', 'CENTVM', 'DEINDE', 'SECVNDVS/1', 'TV', 'NESCIOQVIS', 'AC/1', 'FACIO', 'NOS', 'QVAM/1', 'BASIVM', 'VESANVS', 'QVANTVM/3', 'NVLLVS', 'FIO', 'QVI/1', 'IAM', 'QVOQVE', 'AMO', 'DICO/2', 'EGO', 'TRECENTI', 'QVE', 'MATER', 'EGO', 'FORVM/1', 'HVC', 'QVOMODO/1', 'PROSVM/1', 'VNCTVS/2', 'COHORS', 'SVM/1', 'VT/4', 'COLLOCO', 'EGO', 'COMMODO/1', 'ISTE', 'EGO', 'VTRVM', 'VT/4', 'SIVE/1', 'VE', 'COLORO', 'QVE', 'CAELES/1', 'VISO', 'MODO/1', 'MALE', 'QVI/1', 'MEVS', 'CELER', 'NEQVE', 'HADRIATICVS/A', 'PHASELVS', 'ORIGO', 'IMPOTENS', 'AVRA', 'FRETVM', 'VOTVM', 'ET/2', 'VIVO', 'OCCIDO/1', 'BREVIS', 'DORMIO', 'DEINDE', 'MVLTVS', 'CONTVRBO/2', 'POSSVM/1', 'NAM', 'PVDEO', 'PERAEQVE', 'TREMVLVS/3', 'ISTE', 'QVIS/2', 'IACEO', 'TACEO', 'POSSVM/1', 'VIDEO', 'SOL', 'TV', 'VIDEO', 'NVNC', 'MILLE', 'TV', 'NARRO', 'QVANTVM/3', 'SCORTILLVM', 'TVM', 'LAETVS/2', 'CAPVT', 'DICO/2', 'FACIO', 'INQVIO', 'NON', 'AD/2', 'INQVIO', 'EGO', 'HABEO', 'FVGIO', 'PARO/2', 'MOLESTVS', 'VIVO', 'INDVS/A', 'SEPTEMGEMINVS', 'NVNTIO', 'MORIOR', 'NAM', 'AT/2', 'VNDE/1', 'SVM/1', 'SIBILVM', 'IN', 'AEQVOR', 'SVM/1', 'CVM/3', 'SVI/1', 'DEDICO/1', 'QVE', 'PERPETVVS', 'VNVS', 'NON', 'NIHIL', 'ET/2', 'VALEO', 'ILLIC/1', 'QVISQVIS/2', 'AMOR', 'EGO', 'VIDEO', 'MVLTVS', 'SVPER/2', 'TV', 'CVM/3', 'FVLGEO', 'TV', 'IMPOTENS', 'NOLO', 'IAM', 'OBDVRO', 'TV', 'NVLLVS', 'QVIS/1', 'MANEO', 'ANTESTO', 'PENATES/N', 'VENIO', 'INCOLVMIS', 'QVE', 'QVE', 'SVM/1', 'OTIOSVS', 'VIDEO', 'SVM/1', 'EGO', 'EGO', 'NAM', 'QVI/1', 'EGO', 'MALE', 'EOVS/A', 'AEQVOR', 'NON', 'MAGNVS', 'VIVO', 'PASSER', 'HOMO', 'QVI/1', 'NVNC', 'MOVEO', 'OMNIS', 'O', 'TRABS', 'IMPETVS', 'SIVE/1', 'DICO/2', 'PALMVLA', 'INCIDO/1', 'PES', 'AD/2', 'RVMOR', 'OCCIDO/1', 'CVM/3', 'EGO', 'SCIO', 'DELICIA/1', 'CATVLLVS/N', 'TV', 'LESBIA/N', 'SVM/1', 'NVMERVS', 'ORACVLVM', 'VETVS', 'DESINO', 'ET/2', 'PERDITVS', 'NEC/2', 'CVM/3', 'QVIS/1', 'BEATVS', 'AD/2', 'QVISNAM', 'QVI/1', 'PILVM', 'ILLIC/2', 'TAM', 'MALIGNVS', 'PARO/2', 'RECTVS', 'QVAESO', 'SERAPIS/N', 'RATIO', 'SVI/1', 'ET/2', 'FVRIVS/N', 'CATVLLVS/N', 'VNDA', 'ARABES/N', 'IN', 'BRITANNVS/A', 'OMNIS', 'DICTVM', 'SVVS', 'VALEO', 'MOECHVS', 'PVELLA', 'BENE', 'SED', 'NEGO', 'FACTVM', 'PHASELVS', 'OPVS/2', 'CYCLADES/N', 'QVE', 'POST/2', 'NAM', 'SVM/1', 'COGNITVS/2', 'IMBVO', 'IVPPITER/N', 'SECVNDVS/1', 'IN', 'NOS', 'LVX', 'DEINDE', 'CENTVM', 'VSQVE', 'QVIS/2', 'NE/4', 'NISI', 'ILLEPIDVS', 'TACITVS', 'SERTVM', 'ARGVTATIO', 'TV', 'AD/2', 'BATTVS/N', 'QVAM/1', 'NOX', 'ET/2', 'ET/2', 'QVI/1', 'PERNVMERO/1', 'QVONDAM', 'MVLTVS', 'SED', 'DOLEO', 'PERFERO', 'SCELESTVS', 'QVIS/1', 'VENIO', 'DOMVS', 'AD/2', 'VT/4', 'VARVS/N', 'SANE', 'ILLEPIDVS', 'VT/4', 'INCIDO/1', 'NEC/2', 'AT/2', 'QVI/1', 'AD/2', 'MALVS/3', 'LECTICA', 'AT/2', 'QVI/1', 'VETVS', 'ILLE', 'DEFERO', 'SVI/1', 'AB', 'MALE', 'SIVE/1', 'LITVS/2', 'RHODVS/N', 'VOLO/2', 'BVXIFER', 'IN', 'PER', 'SIVE/1', 'NEQVE', 'LAEVA/3', 'QVIES', 'AMO', 'NVNC', 'SED', 'SENEX/1', 'ET/2', 'VNVS', 'NE/4', 'VOLO/3', 'LECTVS/1', 'INEPTIAE', 'LEPIDVS', 'SVPER/2', 'IVPPITER/N', 'MVLTVS', 'TAM', 'FASCINO', 'QVI/1', 'CANDIDVS', 'VIVO', 'TV', 'EGO', 'VARIVS', 'SVM/1', 'VT/4', 'EGO', 'DICO/2', 'IS', 'NEGLIGENS', 'IN', 'HIC/1', 'VOLVNTAS', 'TAM', 'SVVS', 'ILLE', 'ITER', 'SVM/1', 'BELLVS', 'PASSER', 'FLEO', 'MISELLVS', 'VE', 'SINVS', 'VLTIMVS', 'CACVMEN', 'VTERQVE', 'DEVS', 'GEMELLVS', 'INVIDEO', 'TVVS', 'FEBRICVLOSVS', 'NEC/2', 'IACEO', 'NEQVIQVAM', 'CVBILE', 'DICO/2', 'NAM', 'VERVM/4', 'CVR/1', 'LATVS/1', 'NEC/2', 'TVVS', 'QVAERO', 'INEPTIO', 'DVCO', 'VERE', 'PVELLA', 'AT/2', 'NVNTIVS/1', 'VT/4', 'O', 'SVVS', 'ET/2', 'EGO', 'SVI/1', 'TAMEN', 'SVM/1', 'INCIDO/1', 'ILLIC/2', 'COLLVM', 'ISTE', 'VERVM/4', 'ILLE', 'TAM', 'PENETRO', 'HORRIBILIS', 'QVI/1', 'AD/2', 'QVAM/1', 'VSQVE', 'QVE', 'NOBILIS/2', 'AIO', 'INDE', 'SIVE/1', 'MARE', 'NOVVS', 'DO', 'DEINDE', 'TANTVM/2', 'INELEGANS', 'OLIVVM', 'INAMBVLATIO', 'TAM', 'HABEO', 'QVE', 'VOCO', 'CYRENAE/N', 'HOMO', 'BASIO', 'SATIS/2', 'FVRTIVVS', 'NEC/2', 'NEC/2', 'MISER', 'PEREO/1', 'SOL', 'TV', 'NVNC', 'FVLGEO', 'NVNC', 'VITA', 'LABELLVM/2', 'VAE', 'VERANIVS/N', 'AMICVS/2', 'COLLVM', 'EX', 'NEC/2', 'INQVIO', 'NASCOR', 'COMPARO/2', 'NEC/2', 'NVLLVS', 'HIC/2', 'INQVIO', 'CATVLLVS/N', 'NON', 'LONGVS', 'ALTVS', 'TENTO', 'QVE', 'PASSER', 'PIPIO/2', 'NAVIS', 'NEQVEO', 'INSVLA', 'LINTEVM', 'ET/2', 'RECONDITVS', 'AESTIMO', 'SEMEL', 'AS', 'MILLE', 'FACIO', 'SVM/1', 'TACEO', 'POSSVM/1', 'HIC/1', 'DILIGO/3', 'CLAMO', 'ET/2', 'CVM/3', 'CATVLLVS/N', 'QVO/2', 'PVELLA', 'PVELLA', 'ADEO/1', 'QVIS/1', 'BASIO', 'TVVS', 'EX', 'O', 'APPLICO', 'AVDIO', 'MEVS', 'AMOR', 'VIDEO', 'REPENTE', 'IPSE', 'SVM/1', 'PVELLA', 'SVM/1', 'VT/4', 'IRRVMATOR', 'SVM/1', 'FRANGO', 'PES', 'MEVS', 'INSVLSVS', 'SACAE/N', 'ALPES/N', 'RHENVS/N', 'MONVMENTVM', 'OCVLVS', 'MATER', 'SOLVS', 'O', 'TVRGIDVLVS', 'OCELLVS', 'HOSPES', 'AIO', 'PRAETEREO/1', 'ANTEA', 'SILVA', 'IN', 'SVM/1', 'TOT', 'DEXTERA', 'FERO', 'VLLVS', 'TV', 'REDEO/1', 'AVT', 'FRAGRO', 'BONVM', 'TVVS', 'MALVS/3', 'AMO', 'AMO', 'VOLO/3', 'QVIS/1', 'BEATVS', 'VISO', 'QVE', 'VE', 'NEQVE', 'VENIO', 'HABEO', 'NIHIL', 'NEQVE', 'BITHYNIA/N', 'QVISQVAM', 'REFERO', 'FACIO', 'PROVINCIA', 'IN', 'MODO/1', 'CINNA/N', 'AN', 'QVAM/1', 'COMES', 'SAGITTIFER/2', 'SIVE/1', 'SIVE/1', 'VLTIMVS', 'SODALIS/1', 'BENE', 'AD/2', 'LICET/1', 'MOLLIS', 'SIVE/1', 'DELICIA/1', 'AVFERO', 'NATO', 'SVM/1', 'MINAX', 'ET/2', 'TVVS', 'FACIO', 'SVM/1', 'QVE', 'NOX', 'DEINDE', 'BASIVM', 'MILLE', 'CAELVM/1', 'AC/1', 'QVOT/1', 'AESTVOSVS', 'IBI', 'TV', 'FVGIO', 'MISER', 'OBSTINATVS', 'TV', 'BELLVS', 'MORDEO', 'OBDVRO', 'QVE', 'NATIO/1', 'BEATVS', 'PRAETOR', 'COHORS', 'CERTE', 'NON', 'HOMO', 'EGO', 'PAVLVM/2', 'PARO/2', 'VTOR', 'RESONO/1', 'GRADIOR', 'PAVCI', 'BONVS', 'CAESAR/N', 'GALLICVS/A', 'PER', 'VOS', 'TENEBRICOSVS', 'ILLE', 'NVNC', 'QVI/1', 'VLLVS', 'PONTICVS/A', 'VOCO', 'LACVS', 'GEMELLVS', 'LESBIA/N', 'OMNIS', 'SEVERVS', 'CVM/3', 'FLAVIVS/N', 'FATEOR', 'NON', 'TACEO', 'MAGNVS', 'LIBYS/N', 'INTER', 'TV', 'VENTITO', 'NOS', 'IOCOSVS', 'VOLO/3', 'SECTOR/2', 'NEC/2', 'CATVLLVS/N', 'QVIS/1', 'MEVS', 'TV', 'VNANIMVS', 'FACTVM', 'LOCVS', 'OCVLVS', 'EGO', 'SERMO', 'VNVS', 'POSSVM/1', 'TV', 'QVIS/1', 'SVM/1', 'AVRELIVS/N', 'TRANS/2', 'QVICVMQVE/1', 'MEVS', 'EO/1', 'MALVS/3', 'TVVS', 'PASSER', 'OPERA', 'VIDEO', 'PVELLA', 'PALMVLA', 'NEGO', 'HORRIDVS', 'THRACIVS/A', 'TRVX', 'IVGVM', 'COMATVS', 'SAEPE', 'CYTORVS/N', 'TV', 'AB', 'ATQVE/1', 'POSSVM/1', 'MILLE', 'ALTER', 'MILLE', 'BASIVM', 'HIC/1', 'ATTRITVS/2', 'QVATIO', 'QVE', 'QVE', 'EFFVTVO', 'MALVM/1', 'SATIS/2', 'CANDIDVS', 'NOLO', 'REQVIRO', 'NE/2', 'SVM/1', 'NON', 'INVENVSTVS', 'QVIS/1', 'IAM', 'CVR/1', 'QVI/1', 'OCTO', 'BEATVS', 'NEC/2', 'MEVS', 'SIVE/1', 'LITVS/2', 'QVI/1', 'PARO/2', 'CVM/2', 'MVLTVM/2', 'AMO', 'DOMINA', 'EGO', 'LOQVOR', 'PONTICVS/A', 'ET/2', 'SVM/1', 'STO', 'SIMVL/1', 'CASTOR/N', 'PRIVS', 'CASTOR/N', 'SOL', 'CVM/3', 'ALTER', 'SCIO', 'SVM/1', 'ATQVE/1', 'VIDVVS', 'NOX', 'SYRIVS/A', 'PVLVINVS', 'QVE', 'DICO/2', 'QVE', 'ARENA', 'AVT', 'AMOR', 'DVCO', 'ILLE', 'QVI/1', 'OBDVRO', 'NEC/2', 'NEC/2', 'INVITVS', 'QVIS/1', 'SVM/1', 'TV', 'FRATER', 'DESTINATVS', 'IVCVNDVS', 'OMNIS', 'DVCO', 'EGO', 'PRAESERTIM', 'PRAETOR', 'QVOD/1', 'POSSVM/1', 'HIC/2', 'CINAEDVS/2', 'VOLO/3', 'MANEO', 'PVELLA', 'GAIVS/N', 'ET/2', 'TVNDO', 'PVELLA', 'TRECENTI', 'MARRVCINVS/A', 'TANGO', 'AMOR', 'LINTEVM', 'NON', 'MANVS/1', 'FVGIO', 'POLLIO/N', 'QVI/1', 'SINISTER', 'EGO', 'IDENTIDEM', 'CADO', 'VTOR', 'IOCVS', 'ATQVE/1', 'TOLLO', 'AMO', 'VELVT/1', 'COMPLECTOR', 'FRATER', 'MEVS', 'ARATRVM', 'SVM/1', 'PRAETEREO/1', 'RES', 'QVI/1', 'VINVM', 'NON', 'BELLVS', 'SVM/1', 'NVLLVS', 'TENEO', 'NEC/2', 'ILLE', 'NEGLIGENS', 'PVTO', 'INEPTVS', 'TV', 'QVAMVIS/1', 'SIMVL/1', 'CREDO', 'ILIA', 'IN', 'INVENVSTVS', 'OMNIS', 'RVMPO', 'VT/4', 'VERE', 'SVM/1', 'CREDO', 'ANTE/2', 'ET/2', 'FVRTVM', 'TVVS', 'RESPECTO', 'CVLPA', 'SED', 'PRATVM', 'VLTIMVS', 'ASINIVS/N', 'FLOS', 'SORDIDVS', 'SVM/1', 'HIC/1', 'MVTO/2', 'VOLO/3', 'TALENTVM', 'NECESSE', 'POSTQVAM', 'FACETIAE', 'DEVS', 'EGO', 'FAVEO', 'REMITTO', 'MEVS', 'PAVCI', 'TRECENTI', 'MOVEO', 'DISERTVS', 'SODALIS/1', 'SAETABVS/A', 'CENO', 'FABVLLVS/N', 'EGO', 'AESTIMATIO', 'MNEMOSYNON', 'AMO', 'SVM/1', 'VERVM/4', 'SVDARIVM', 'BENE', 'TV', 'AC/1', 'LINTEVM', 'MEVS', 'MITTO', 'ENIM/2', 'EXSPECTO', 'VERANIOLVS/N', 'ET/2', 'APVD', 'SALSVS', 'PVER', 'AVT', 'EX', 'MVNVS', 'FABVLLVS/N', 'NAM', 'SI/2', 'VEL/1', 'EGO', 'LEPOR', 'VERANIVS/N', 'HIC/1', 'QVARE/1', 'QVI/1', 'NON', 'EGO', 'SVM/1', 'FABVLLVS/N', 'MEVS', 'HENDECASYLLABVS', 'VT/4', 'ET/2', 'AVT', 'IBERVS/A', 'VINVM', 'DIES', 'SIVE/1', 'SINE', 'SACCVLVS', 'ACCIPIO', 'PVELLA', 'CVPIDO/N', 'NAM', 'AMOR', 'ELEGANS', 'VE', 'DO', 'DEVS', 'SI/2', 'ET/2', 'CANDIDVS', 'SAL', 'VENVSTVS', 'VNGVENTVM', 'DONO', 'BONVS', 'QVI/1', 'MEVS', 'TV', 'ET/2', 'CACHINNVS', 'AFFERO', 'CENA', 'NOSTER', 'QVI/1', 'CVM/3', 'AFFERO', 'HIC/1', 'TOTVS', 'BENE', 'SVM/1', 'ROGO', 'VT/4', 'ET/2', 'ARANEA', 'QVIS/2', 'SI/2', 'PLENVS', 'QVE', 'OLFACIO', 'NON', 'MAGNVS', 'OMNIS', 'INQVIO', 'CONTRA/2', 'SVAVIS', 'NAM', 'PVELLA', 'VENVS/N', 'SVM/1', 'ATQVE/1', 'SED', 'TVVS', 'MERVS', 'CVM/2', 'TV', 'CENO', 'CATVLLVS/N', 'NAM', 'FACIO', 'NASVS', 'DO', 'QVIS/1', 'CVR/1', 'IVCVNDVS', 'SI/2', 'AC/1', 'SVM/1', 'MALVM/1', 'ODI', 'PERDO', 'QVIS/1', 'MITTO', 'TV', 'QVI/1', 'MVNVS', 'DISPEREO/1', 'LOQVOR', 'LITTERATOR', 'EGO', 'CALVVS/N', 'TV', 'MVLTVS', 'IMPIVS', 'DEVS', 'AC/1', 'TV', 'NISI', 'SED', 'OCVLVS', 'EGO', 'FABVLLVS/N', 'ODIVM', 'TV', 'MVNVS', 'ISTE', 'VE', 'MALE', 'VT/4', 'DO', 'FACIO', 'AMO', 'MVLTVM/2', 'QVOD/1', 'CLIENS', 'SVLLA/N', 'TV', 'SVM/1', 'ISTE', 'SVSPICOR', 'VATINIANVS/A', 'POETA', 'TANTVM/2', 'QVOD/1', 'HIC/1', 'NON', 'BENE', 'MEVS', 'TOT', 'NOVVS', 'REPERIO', 'DEVS', 'SACER', 'NON', 'HIC/1', 'TV', 'CONTINVVS', 'ABEO/1', 'MITTO', 'VT/4', 'SVFFENVS/N', 'VNDE/1', 'LIBRARIVS/1', 'LVCEO', 'SVPPLICIVM', 'CAESIVS/N', 'REMVNEROR', 'ABEO/1', 'AC/1', 'MALVS/3', 'SCILICET', 'HORRIBILIS', 'MALE', 'TV', 'COLLIGO/3', 'ET/2', 'PEREO/1', 'AD/2', 'INTEREA', 'MALVS/3', 'QVI/1', 'NON', 'LIBELLVS', 'LABOR/1', 'MAGNVS', 'AD/2', 'BEATVS', 'SATVRNALIA/N', 'AFFERO', 'PES', 'SAECVLVM', 'NON', 'DIES', 'VOS', 'ILLVC', 'VENENVM', 'TVVS', 'BONVS', 'FALSVS', 'SCRINIVM', 'AQVINVS/N', 'NAM', 'CVRRO', 'OMNIS', 'TV', 'TVVS', 'CATVLLVS/N', 'DIES', 'SI/2', 'VALEO', 'INCOMMODVM', 'SIC', 'POETA', 'EGO', 'HINC', 'HIC/1', 'QVIS/2', 'FORTE', 'MANVS/1', 'VESTER', 'NOS', 'LECTOR', 'AVRELIVS/N', 'ANIMVS', 'PVDENS', 'CASTVS/2', 'LIBET', 'PVTO', 'AH', 'QVE', 'AC/1', 'MODO/1', 'DICO/2', 'INFESTVS', 'AB', 'VT/4', 'ADMOVEO', 'ET/2', 'NIHIL', 'IN', 'RES', 'PENIS', 'TV', 'PARO/2', 'SI/2', 'TVM', 'SI/2', 'VT/4', 'POPVLVS/1', 'IN', 'HVC', 'QVOD/1', 'QVI/1', 'SI/2', 'INTEGELLVS', 'CONSERVO', 'METVO', 'MOVEO', 'SVM/1', 'PORTA', 'VOS', 'QVI/1', 'PETO', 'PLATEA/1', 'AB', 'QVE', 'QVE', 'QVI/1', 'TV', 'MALVS/3', 'ISTE', 'LIBET', 'VOLO/3', 'TVVS', 'MISER', 'MVGILIS', 'PAEDICO/2', 'QVISQVAM', 'EXPETO', 'QVE', 'VEREOR', 'MALVS/3', 'SVM/1', 'MEVS', 'TVVS', 'VENIA', 'SVVS', 'OCCVPATVS', 'QVA/1', 'PVDENTER', 'NOSTER', 'PES', 'EGO', 'PVER', 'PRAETEREO/1', 'QVANTVM/3', 'MENS', 'QVE', 'MALVS/3', 'PERCVRRO', 'RAPHANVS', 'TV', 'ILLVC', 'NON', 'VT/4', 'VECORS', 'VT/4', 'QVI/1', 'TV', 'VBI/1', 'HIC/1', 'INSIDIAE', 'ATTRAHO', 'LACESSO', 'FORIS/2', 'IN', 'TANTVS', 'FVROR/1', 'CVLPA', 'MODO/1', 'MEVS', 'EGO', 'IMPELLO', 'SCELESTVS', 'NON', 'AMOR', 'CVPIO', 'PVDICVS', 'VNVS', 'CAPVT', 'HORREO', 'INEPTIAE', 'COMMENDO', 'EGO', 'BONVS', 'EXCIPIO', 'QVE', 'FATVM', 'PATEO', 'QVE', 'ET/2', 'PVER', 'VERVM/4', 'TV', 'NAM', 'VERSICVLVS', 'ET/2', 'PVTO', 'HABEO', 'PIVS', 'QVI/1', 'LEGO/2', 'MAS', 'QVI/1', 'TVM', 'LEPOR', 'SVM/1', 'DICO/2', 'DECET', 'SAL', 'PATHICVS', 'PVDICVS', 'CINAEDVS/2', 'FVRIVS/N', 'MOLLICVLVS', 'POSSVM/1', 'DVRVS', 'QVOD/1', 'SI/2', 'ET/2', 'AC/1', 'PRVRIO', 'PILOSVS', 'MALE', 'SVM/1', 'NIHIL', 'AC/1', 'INCITO/1', 'NON', 'PVER', 'PVTO', 'EGO', 'AVRELIVS/N', 'MEVS', 'PARVM/2', 'VERSICVLVS', 'HIC/1', 'IPSE', 'PARVM/2', 'QVI/1', 'VOS', 'PVDICVS', 'EGO', 'POETA', 'QVI/1', 'DENIQVE', 'CASTVS/2', 'MOLLICVLVS', 'IRRVMO', 'LVMBVS', 'MILLE', 'NECESSE', 'EX', 'SVM/1', 'SVM/1', 'SED', 'MOVEO', 'QVOD/1', 'QVI/1', 'EGO', 'MVLTVS', 'PARO/2', 'NEQVEO', 'ET/2', 'TVVS', 'VEREOR', 'FIO', 'HIC/1', 'SVBSILIO', 'SACRVM', 'HABEO', 'SED', 'QVI/1', 'DO', 'PONTICVLVS', 'NE/4', 'BONVS', 'EX', 'RECVMBO', 'VOLO/3', 'O', 'PONS', 'INEPTVS', 'SVPINVS', 'IN', 'SALVM', 'EGO', 'COLONIA/1', 'MEVS', 'STO', 'LONGVS', 'VOS', 'PAEDICO/2', 'BASIVM', 'IRRVMO', 'TV', 'IN', 'PONS', 'VEL/1', 'SVSCIPIO', 'MVNVS', 'MAGNVS', 'SIC', 'IN', 'LVDO', 'TVVS', 'CRVS', 'ASSVLA', 'CAVVS/2', 'SALIO/1', 'EO/1', 'DE', 'MVNICEPS', 'QVIDAM', 'CVPIO', 'PALVS/2', 'LIBIDO', 'RISVS', 'ET/2', 'COLONIA/1', 'REDIVIVVS', 'QVE', 'QVE', 'VT/4', 'INSVLSVS', 'PVER', 'SED', 'IS', 'SI/2', 'AVT', 'SVM/1', 'NAM', 'FRVSTRA', 'IDEM', 'QVE', 'AVT', 'AVT', 'POSSVM/1', 'MANTICA', 'TERGVM', 'PATER', 'ET/2', 'ET/2', 'DENS', 'LIGNEVS', 'INCENDIVM', 'TV', 'PVTIDVS', 'SVM/1', 'VELVT/1', 'LIGVR/A', 'SECVRIS', 'SVM/1', 'POTIS', 'CLAM/1', 'INSIDIAE', 'QVARE/1', 'VARVS/N', 'NEC/2', 'PALIMPSESTVS', 'BELLVS', 'ABHORREO', 'RVRSVS', 'RES', 'SED', 'SERVVS/1', 'NEQVE', 'FVRIVS/N', 'NAM', 'NIHIL', 'ATQVI', 'VERVM/4', 'ASSERVO', 'SVM/1', 'DILIGENS', 'IACEO', 'OMNIS', 'TALIS', 'PONS', 'VETERNVS/1', 'SVM/1', 'VNA', 'SITIO', 'SIC', 'HIC/1', 'VIDEO', 'PVTO', 'SVI/1', 'ATTRIBVO', 'VEL/1', 'CVM/2', 'PARENS/1', 'CORPVS', 'ALNVS', 'QVAM/1', 'STVPOR', 'PRONVS', 'QVOQVE', 'DERELINQVO', 'SVM/1', 'INSTRVO', 'LONGVS', 'MVLTVS', 'SVM/1', 'PVMEX', 'VMBILICVS', 'SATVR', 'ET/2', 'HIC/1', 'SI/2', 'POEMA', 'BEATVS', 'SVM/1', 'QVISQVAM', 'IN', 'VIDEO', 'CIMEX', 'IGNIS', 'COMEDO/2', 'BENE', 'IMPIVS', 'AVT', 'BIMVLVS', 'HIC/1', 'QVE', 'PVELLA', 'IN', 'SI/2', 'QVOT/1', 'DOLEO', 'DISCO', 'VERSVS/1', 'DECEM', 'QVIS/2', 'IPSE', 'MIROR', 'IDEM', 'ERROR', 'QVI/1', 'NEQVE', 'VERVM/4', 'QVI/1', 'CVM/2', 'FACTVM', 'NON', 'ALIVS', 'FACIO', 'SVBLEVO/1', 'ISTE', 'TVVS', 'ET/2', 'STOLIDVS', 'MVLA', 'AD/2', 'EGO', 'LICET/1', 'SVFFENVS/N', 'FACIO', 'PVTO', 'ILLE', 'QVIS/1', 'INFACETVS', 'TAM', 'NEQVE', 'VIDEO', 'SVFFENVS/N', 'ARANEVS/1', 'TIMEO', 'PERICVLVM', 'MAGIS/2', 'EO/1', 'IN', 'PER', 'PALVS/2', 'PATER', 'PRAECEPS/2', 'NEC/2', 'TREMVLVS/3', 'TENELLVLVS', 'PVELLA', 'NEC/2', 'NON', 'CVPIO', 'SED', 'ATQVE/1', 'DESINO', 'VRBANVS', 'ET/2', 'LORVM', 'RVS', 'IN', 'NEC/2', 'POSSVM/1', 'NON', 'BENE', 'LVTVM/1', 'HOMO', 'QVI/1', 'SVM/1', 'DELICATVS/2', 'ET/2', 'LIBET', 'AVDIO', 'IS', 'FERREVS', 'SOLEA', 'AVT', 'ALIVS', 'SVM/1', 'HAEREO', 'QVI/1', 'PROBE', 'DICAX', 'REFERO', 'AC/1', 'AVT', 'INFACETVS', 'SVM/1', 'CVM/3', 'NOVERCA', 'TVVS', 'NON', 'VENENVM', 'ARIDVS', 'HABEO', 'FLOS', 'HAEDVS', 'EX', 'PARS', 'SVVS', 'IPSE', 'CAENVM', 'MODO/1', 'AVT', 'AMOR', 'DVM/2', 'NOSCO', 'SVM/1', 'RVBER', 'NON', 'IN', 'TV', 'CASVS', 'QVIS/2', 'LVDO', 'NIHIL', 'QVIS/1', 'SIMVL/1', 'NON', 'SI/2', 'PVER', 'PVDICVS', 'NE/4', 'FIO', 'AVT', 'HIC/1', 'VIDEO', 'SIMVL/1', 'NEQVE', 'SVI/1', 'TAM', 'NIMIRVM', 'NEQVE', 'FALLO', 'ARCA', 'SVM/1', 'SILEX', 'CORNV', 'ET/2', 'TANTVMDEM/2', 'SENTIO', 'SVM/1', 'NVNC', 'ANIMVS', 'IN', 'VT/4', 'TENAX', 'ANNVS', 'IOCOR', 'TV', 'IS', 'TACEO', 'IPSE', 'AH', 'SED', 'FACIO', 'IRRVMO', 'MEMBRANA', 'CVM/3', 'AC/1', 'GAVDEO', 'OMNIS', 'VMQVAM', 'QVI/1', 'CONIVX', 'CONCOQVO', 'DOLVS', 'SVM/1', 'QVE', 'INSTAR', 'CVM/3', 'VLNA', 'VT/4', 'VNVS', 'MEVS', 'VIDEO', 'NIHIL', 'VTRVM', 'DE', 'VOLO/3', 'TANGO', 'FINIS', 'ET/2', 'ET/2', 'EGO', 'MILLE', 'DIRIGO', 'NOVVS', 'ILLE', 'MVTO/2', 'SVM/1', 'POEMA', 'SVVS', 'SVM/1', 'OMNIS', 'NON', 'GRAVIS', 'BEATVS', 'CAPVT', 'PONS', 'QVE', 'TOTVS', 'LACVS', 'SINO', 'FOSSA', 'NVLLVS', 'NESCIO', 'EXCITO/1', 'HIC/1', 'IN', 'PAEDICO/2', 'OMNIS', 'EXPERIOR', 'EGO', 'FACIO', 'IS', 'QVOD/1', 'ET/2', 'HOMO', 'OMNIS', 'PLVMBVM', 'LEGO/2', 'VRBANVS', 'NON', 'NEQVE', 'PARENS/1', 'NEC/2', 'VALEO', 'RVINA', 'SICCVS', 'QVARE/1', 'FRIGVS', 'PROFVNDVS', 'PES', 'LIVIDVS', 'VORAGO', 'NEC/2', 'SVI/1', 'VSQVAM', 'SVM/1', 'SVPINVS', 'GRAVIS', 'AVRELIVS/N', 'PATER', 'IRRVMATIO', 'ESVRIO/2', 'VT/4', 'REGIVS', 'VNVS', 'SVM/1', 'TRITVS/2', 'QVI/1', 'SVM/1', 'SVM/1', 'PVLCHRE', 'SOL', 'MAGIS/2', 'SAPIO', 'DORMIO', 'VIRIDIS', 'NVBO', 'NIGER', 'VVA', 'PILVM', 'IN', 'NEC/2', 'NAM', 'PRIOR', 'ISTE', 'AEQVO', 'CAPRIMVLGVS', 'SVFFENVS/N', 'FOSSOR', 'TANTVM/2', 'SCVRRA', 'SVM/1', 'PVLCHRE', 'NON', 'ESVRITIO', 'SVM/1', 'IN', 'SVPPERNATVS', 'SVM/1', 'AN', 'MITTO', 'REPENTE', 'VORAGO', 'ESVRITIO', 'MEVS', 'LATVS/1', 'NVNC', 'VENVSTVS', 'MVLTVS', 'PERSCRIBO', 'IN', 'NOVVS', 'CHARTA', 'TV', 'LIBER/1', 'MODO/1', 'RES', 'IDEM', 'ATTINGO', 'IDEM', 'SCRIBO', 'QVE', 'ALIQVIS', 'QVI/1', 'QVISQVE/2', 'NEQVE', 'ET/2', 'MIRVS', 'SI/2', 'ET/2', 'NON', 'SVDOR', 'MVCVS', 'AB', 'ABSVM/1', 'IN', 'SALIVA', 'ET/2', 'FRICO', 'SI/2', 'INQVINO', 'ADDO', 'HIC/1', 'NEC/2', 'QVE', 'LAPILLVS', 'ET/2', 'HIC/1', 'PARVVM', 'MALVS/3', 'POSSVM/1', 'QVI/1', 'ET/2', 'NEC/2', 'TV', 'AC/1', 'QVOD/1', 'SALILLVM', 'DIGITVS', 'NOLO', 'CVLVS', 'MVNDVS/2', 'ABSVM/1', 'TOTVS', 'CACO', 'ANNVS', 'ATQVE/1', 'TERO', 'QVE', 'SVM/1', 'QVI/1', 'DECIES', 'COMMODVM/1', 'FVRIVS/N', 'SOLEO', 'TV', 'DVRVS', 'TAM', 'PITVITA', 'IS', 'TV', 'SPERNO', 'CENTVM', 'FABA', 'AD/2', 'NASVS', 'BEATVS', 'MANVS/1', 'PVRVS', 'SVM/1', 'MVNDITIES', 'NON', 'VMQVAM', 'PVTO', 'TV', 'SESTERTIVM', 'DESINO', 'ALIVS', 'FLOSCVLVS', 'BEATVS', 'ANNVS', 'PRECOR', 'HIC/1', 'NON', 'QVI/2', 'NEQVE', 'SIC', 'SVM/1', 'DIVITIAE', 'QVI/1', 'IN', 'SVM/1', 'NON', 'AVT', 'HOMO', 'SINO', 'QVI/1', 'ISTE', 'MALO', 'AMO', 'SATIS/2', 'DO', 'SED', 'SVM/1', 'AVT', 'ARCA', 'SERVVS/1', 'INQVIO', 'SVM/1', 'QVOT/1', 'NAM', 'IVVENTIVS/N', 'MIDAS/N', 'SVM/1', 'AB', 'ILLE', 'BELLVS', 'NEQVE', 'TV', 'POSTHAC', 'QVAM/1', 'O', 'MODO/1']
+
+    '''
+    for x in text_slice:
+        if x[0] not in mongo_v:
+            print(x[0])
+        else:
+            mongo_v.remove(x[0])
+    '''
 
     return text_slice
 
@@ -179,31 +186,39 @@ def find_hapax_legomena(words):
 # Class that the site uses to handle everything
 
 
-class TextAnalyzer():
+class TextAnalyzer:
 
-    def __init__(self, dictionary_path: str, diederich_path: str, dcc_path: str):
+    MONGO_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+    DB_NAME = "Latin"
 
-        self.dictionary, self.dictionary_time = get_latin_dictionary(
-            dictionary_path)
+    def __init__(self):
+
+        self.client = MongoClient(self.MONGO_URI)
+        self.db = self.client[self.DB_NAME]
+        self.texts = [] 
+
+        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
-        self.diederich, self.diederich_time = create_hashtable_from_csv(
-            diederich_path)
+        self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
 
-        self.diederich300, self.diederich300_time = get_diederich300(
-            diederich_path)
+        self.diederich300, self.diederich300_time = mg_get_diederich300(self.db)
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
 
-        self.dcc, self.dcc_time = create_word_set(dcc_path)
+        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
 
-        self.texts = []  # (Text, start section, end section)
+         # (Text, start section, end section)
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
-        self.texts.append(
-            (get_text(form_request, language).book, start_section, end_section))
+        print(f"\n\n\n{form_request}\n\n\n")
+        location_list = MongoDefinitionTools.mg_get_locations(language, form_request)
+        location_words, l_word_time = MongoDefinitionTools.mg_get_location_words(language, form_request)
+        self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
+        
+       #(get_text(form_request, language).book, start_section, end_section))
 
     def get_textname(self):
         if len(self.texts) == 0:
@@ -377,78 +392,51 @@ class TextAnalyzer():
 
     @round_decorator
     def LexR(self):
-        properNounCats = ["1", "T"]
         if len(self.texts) == 0:
-            return -1
-        elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            out300 = 0
-            outDCC = 0
-            out1500 = 0
-            countWords = 0
-            words = []
-            for word_tuple in text_slice:
-                if word_tuple[0] in self.dictionary:
-                    if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                        if word_tuple[0] not in self.diederich300:
-                            out300 += 1
-                        if word_tuple[0] not in self.dcc:
-                            outDCC += 1
-                        if word_tuple[0] not in self.diederich:
-                            out1500 += 1
-                        countWords += 1
-                        words.append(word_tuple[0])
-            freq300 = (out300/countWords)*100
-            freqDCC = (outDCC/countWords)*100
-            freq1500 = (out1500/countWords)*100
+            return 0
 
-            mean_word_length = sum(len(word) for word in words) / len(words)
-            print(f"Mean word length: {mean_word_length}")
-            print(f"freq300: {freq300}")
-            print(f"freqDCC: {freqDCC}")
-            print(f"freq1500: {freq1500}")
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        diederich300, _ = mg_get_diederich300(self.db)
+        dcc, _ = mg_get_dcc(self.db, "Bridge-Vocab-Latin-List-DCC")
+        diederich1500, _ = mg_get_diederich1500(self.db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
-            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092) +
-                     (self.lex_sophistication()*0.059) + (self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+        out300 = 0
+        outDCC = 0
+        out1500 = 0
+        countWords = 0
 
-            lex_r -= 11.7
-            lex_r += 6
-            lex_r *= 0.833
+        for word_tuple in text_slice:
+            word = word_tuple[0]
+            if word not in diederich300:
+                out300 += 1
+            if word not in dcc:
+                outDCC += 1
+            if word not in diederich1500:
+                out1500 += 1
+            countWords += 1
 
-            return lex_r
-        else:
-            out300 = 0
-            outDCC = 0
-            out1500 = 0
-            countWords = 0
-            words = []
-            for text in self.texts:
-                text_slice = get_slice(text[0], text[1], text[2])
-                for word_tuple in text_slice:
-                    if word_tuple[0] in self.dictionary:
-                        if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                            if word_tuple[0] not in self.diederich300:
-                                out300 += 1
-                            if word_tuple[0] not in self.dcc:
-                                outDCC += 1
-                            if word_tuple[0] not in self.diederich:
-                                out1500 += 1
-                            countWords += 1
-                            words.append(word_tuple[0])
+        if countWords == 0:
+            return 0  # Avoid division by zero
 
-            freq300 = (out300/countWords)*100
-            freqDCC = (outDCC/countWords)*100
-            freq1500 = (out1500/countWords)*100
+        freq300 = (out300 / countWords) * 100
+        freqDCC = (outDCC / countWords) * 100
+        freq1500 = (out1500 / countWords) * 100
 
-            mean_word_length = sum(len(word) for word in words) / len(words)
-            lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500*0.092) +
-                     (self.lex_sophistication()*0.059)+(self.lex_variation()[3]*0.312)+(self.lex_variation()[1]*0.143))
+        mean_word_length = get_avg_word_length(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        lexical_sophistication = get_lexical_sophistication(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        lexical_variation = get_lexical_variation(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        logTTR = lexical_variation[3]
+        rootTTR = lexical_variation[1]
 
-            lex_r -= 11.7
-            lex_r += 6
-            lex_r *= 0.833
-            return lex_r
+        lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 * 0.092) +
+                 (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
+
+        lex_r -= 11.7
+        lex_r += 6
+        lex_r *= 0.833
+
+        return lex_r
+
 
     def totalWordsNoProper(self):
         if len(self.texts) == 0:
@@ -462,7 +450,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             return len(words)
@@ -481,7 +469,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
                 vocabulary = set(word for word in words)
@@ -503,8 +491,8 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 if word_tuple[0] in self.dictionary:
                         if self.dictionary[word_tuple[0]]["PROPER"] not in properNounCats:
-                            if word_tuple[0] in latin_dict:
-                                if int(latin_dict[word_tuple[0]]["CORPUSFREQ"]) <= 300:
+                            if word_tuple[0] in self.dictionary:
+                                if int(self.dictionary[word_tuple[0]]["CORPUSFREQ"]) <= 300:
                                     continue
                                 words.append(word_tuple[2])
                             else:
@@ -531,7 +519,7 @@ class TextAnalyzer():
               # word = word_tuple[0]
               # words.append(word)
               # filter out proper nouns
-              # if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+              # if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                    # words.append(word)
 
     @round_decorator
@@ -539,15 +527,11 @@ class TextAnalyzer():
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            # Go through the words of text_slice
-            # Connect to Dictionary to filter out PROPER, "1" and "T"
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
             words = []
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             count0_200 = 0
@@ -558,37 +542,38 @@ class TextAnalyzer():
             count2500plus = 0
 
             for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         count0_200 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 500:
+                    if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 500:
                         count201_500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 500 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if 501 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         count501_1000 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
+                    if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1500:
                         count1001_1500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
+                    if 1500 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2500:
                         count1501_2500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 2500:
                         count2500plus += 1
                         continue
 
-            freq_0_200 = (count0_200/len(words))*100
-            freq_201_500 = (count201_500/len(words))*100
-            freq_501_1000 = (count501_1000/len(words))*100
-            freq_1001_1500 = (count1001_1500/len(words))*100
-            freq_1501_2500 = (count1501_2500/len(words))*100
-            freq_2500_plus = (count2500plus/len(words))*100
+            total_words = len(words)
+            if total_words == 0:
+                return 0, 0, 0, 0, 0, 0  # Avoid division by zero
 
-            
+            freq_0_200 = (count0_200 / total_words) * 100
+            freq_201_500 = (count201_500 / total_words) * 100
+            freq_501_1000 = (count501_1000 / total_words) * 100
+            freq_1001_1500 = (count1001_1500 / total_words) * 100
+            freq_1501_2500 = (count1501_2500 / total_words) * 100
+            freq_2500_plus = (count2500plus / total_words) * 100
 
-            return (freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500,freq_1501_2500,freq_2500_plus)
-
+            return freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500, freq_1501_2500, freq_2500_plus
         else:
             print()
              
@@ -617,7 +602,7 @@ class TextAnalyzer():
             text_slice = get_slice(
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
             df = pd.DataFrame(text_slice, columns=[
-                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count", "Sentence", "Case", "Lasla_Subordination_Code", "Grammatical_Subcategory"])
             word_frequency = df['Word'].value_counts().reset_index()
             word_frequency.columns = ['Word', 'Frequency']
 
@@ -659,7 +644,7 @@ class TextAnalyzer():
                 text_slices_concat += get_slice(text[0], text[1], text[2])
 
             df = pd.DataFrame(text_slices_concat, columns=[
-                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+                              "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count", "Sentence", "Case", "Lasla_Subordination_Code", "Grammatical_Subcategory"])
             word_frequency = df['Word'].value_counts().reset_index()
             word_frequency.columns = ['Word', 'Frequency']
 
@@ -694,189 +679,130 @@ class TextAnalyzer():
 
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, rolling_window_size=50, plot_num = 3):
+    def plot_lin_lex_load(self, plot_num=0):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            words = []
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
             scores = []
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)
-
-            for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         scores.append(2)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         scores.append(1)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+                    if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                         scores.append(-1)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+                    if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                         scores.append(-2)
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                         scores.append(-4)
                         continue
                 else:
                     scores.append(-4)
                     continue
+
+            if len(scores) == 0:
+                return -1  # Avoid issues with empty scores
 
             # Calculate rolling average of the scores
-            rolling_average = pd.Series(scores).rolling(
-                window=rolling_window_size).mean()
+            rolling_window_size = 25
+            rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
+
+            # Set the window length for the Savitzky-Golay filter
+            savgol_num = 51
+            if len(rolling_average.dropna()) < savgol_num:
+                savgol_num = len(rolling_average.dropna()) // 2 * 2 + 1  # Ensure window length is odd
 
             # Apply Savitzky-Golay filter
-            # window size 51, polynomial order 3
-            smoothed_scores = savgol_filter(rolling_average, 101, 3)
+            smoothed_scores = savgol_filter(rolling_average.dropna(), savgol_num, 3)
 
-            x_indexes = list(range(len(words)))
-
-            # calculate average linear lexical score for the entire text
-            average_score = np.mean(scores)
+            x_indexes = list(range(len(smoothed_scores)))
 
             sns.set_style("ticks")
             sns.set_context("paper")
             plt.figure(figsize=(10, 5))
+            sns.lineplot(x=x_indexes, y=smoothed_scores, color=colorblind_palette[0])
 
-
-            #attempt at overlaying sections onto x axis, seems to be too many sections to render properly
-            # section_words = self.texts[0][0].sections
-
-            # # create a list of tick locations and labels
-            # tick_locations = list(section_words.values())
-            # tick_locations.pop(-1)
-            # tick_locations.pop(-2)
-
-            # tick_labels = list(section_words.keys())
-            # tick_labels.remove('start')
-            # tick_labels.remove('end')
-            
-            sns.lineplot(x=x_indexes, y=smoothed_scores,
-                         errorbar=None, color=colorblind_palette[6])
-
-            # add a horizontal line representing the average linear lexical score
-            plt.axhline(y=average_score,
-                        color=colorblind_palette[4], linestyle='--')
-            
-         
             sns.despine()
-            plt.title(
-                f"Linear Lexical Load of {self.texts[0][0].name}", **title_font)
-            plt.xlabel('Word', **axis_font)
-            plt.ylabel(
-                f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
+            plt.title(f"Rolling Linear Lexical Load of {self.texts[0][0].name}", **title_font)
+            plt.xlabel('Word Index', **axis_font)
+            plt.ylabel('Smoothed Lexical Load', **axis_font)
 
-            # Get the current Axes instance
-            ax = plt.gca()
-
-            # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
-            # tick_spacing = rolling_window_size  # change this to the size of your slices
-            # ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-
-            # set font properties to x and y tick labels
-            plt.setp(ax.get_xticklabels(), fontproperties=prop)
-            plt.setp(ax.get_yticklabels(), fontproperties=prop)
-
-
-
-
-            # Save plot as an image file instead of showing
-            # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
             plot_partial = f'/static/assets/plots/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
             plt.savefig(plot_path)
-            plt.close()  # close the plot
+            plt.close()  # Close the plot
 
-            return plot_path  # return the file path of the saved plot
+            return plot_path  # Return the file path of the saved plot
+
         else:
-            # WHEN WE FIGURE OUT WHAT TO DO WITH MULTIPLE TEXT SELECTIONS, CODE HERE, WILL HAVE TO ADD HTML STRUCTURE DYNAMICALLY TO CONTAIN MANY PLOTS
             print()
 
-    def plot_cum_lex_load(self, plot_num = 2):
-        if len(self.texts) == 0:
-            return -1
-        elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            # Go through the words of text_slice
-            # Connect to Dictionary to filter out PROPER, "1" and "T"
-            words = []
-            scores = []
-            for word_tuple in text_slice:
-                word = word_tuple[0]
-                # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-                    words.append(word)
-                
+        def plot_cum_lex_load(self, plot_num=0):
+            if len(self.texts) == 0:
+                return -1
+            elif len(self.texts) == 1:
+                text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
-            for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
-                        scores.append(2)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
-                        scores.append(1)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
-                        scores.append(-1)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
-                        scores.append(-2)
-                        continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+                scores = []
+                for word_tuple in text_slice:
+                    word = word_tuple[0]
+                    if word in self.dictionary:
+                        if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                            scores.append(2)
+                            continue
+                        if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                            scores.append(1)
+                            continue
+                        if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                            scores.append(-1)
+                            continue
+                        if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                            scores.append(-2)
+                            continue
+                        if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                            scores.append(-4)
+                            continue
+                    else:
                         scores.append(-4)
                         continue
-                else:
-                    scores.append(-4)
-                    continue
 
-            #print(scores)
-            cumulative_scores = np.cumsum(scores)
+                if len(scores) == 0:
+                    return -1  # Avoid issues with empty scores
 
-            # Calculate rolling average
-            # rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
+                # Calculate cumulative sum of the scores
+                cumulative_scores = pd.Series(scores).cumsum()
 
-            x_indexes = list(range(len(words)))
+                x_indexes = list(range(len(cumulative_scores)))
 
-            sns.set_style("ticks")
-            sns.set_context("paper")
-            plt.figure(figsize=(10, 5))
-            sns.lineplot(x=x_indexes, y=cumulative_scores,
-                         errorbar=None, color=colorblind_palette[2])
-            sns.despine()
-            plt.title(
-                f"Cumulative Lexical Load of {self.texts[0][0].name}", **title_font)
-            plt.xlabel('Word', **axis_font)
-            plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+                sns.set_style("ticks")
+                sns.set_context("paper")
+                plt.figure(figsize=(10, 5))
+                sns.lineplot(x=x_indexes, y=cumulative_scores, color='blue')  # Replace colorblind_palette[0] with 'blue'
 
-            # Get the current Axes instance
-            ax = plt.gca()
+                sns.despine()
+                plt.title(f"Cumulative Lexical Load of {self.texts[0][0].name}", fontdict={'fontsize': 12})
+                plt.xlabel('Word Index', fontdict={'fontsize': 10})
+                plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-            # set font properties to x and y tick labels
-            plt.setp(ax.get_xticklabels(), fontproperties=prop)
-            plt.setp(ax.get_yticklabels(), fontproperties=prop)
+                plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+                plot_path = parent_dir + plot_partial
 
-            # Save plot as an image file instead of showing
-            # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
-            plt.savefig(plot_path)
-            plt.close()  # close the plot
+                plt.savefig(plot_path)
+                plt.close()  # Close the plot
 
-            return plot_path
-        else:
-            print()
+                return plot_path  # Return the file path of the saved plot
+
+            else:
+                print()
 
     def plot_freq_bin(self, plot_num = 4):
         if len(self.texts) == 0:
@@ -890,7 +816,7 @@ class TextAnalyzer():
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
             count0_200 = 0
@@ -901,23 +827,23 @@ class TextAnalyzer():
             count2500plus = 0
 
             for word in words:
-                if word in latin_dict:
-                    if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                         count0_200 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 500:
                         count201_500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 500 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 500 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                         count501_1000 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 1500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1500:
                         count1001_1500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 1500 and int(latin_dict[word]["CORPUSFREQ"]) <= 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 1500 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2500:
                         count1501_2500 += 1
                         continue
-                    if int(latin_dict[word]["CORPUSFREQ"]) > 2500:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 2500:
                         count2500plus += 1
                         continue
 
@@ -1181,8 +1107,8 @@ def get_lexical_density(text_object: Text, start_section, end_section):
     lexicalSum = 0
     for word_tuple in text_slice:
         word = word_tuple[0]
-        if word in latin_dict:
-            if latin_dict[word]["PART_OF_SPEECH"] in lexicalCategories:
+        if word in self.dictionary:
+            if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
                 lexicalSum += 1
 
         # if len(spacyString) == 0:
@@ -1207,8 +1133,6 @@ def get_lexical_density(text_object: Text, start_section, end_section):
 
 
 def get_lexical_sophistication(text_object: Text, start_section, end_section):
-    # import os
-    # print(os.getcwd())
 
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
@@ -1217,8 +1141,7 @@ def get_lexical_sophistication(text_object: Text, start_section, end_section):
     if start_section == 'start' and end_section == 'end':
         text_slice = text_object.words
 
-    hashTable = create_hashtable_from_csv(
-        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020.csv")
+    hashTable, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
     rareCount = 0
     totalWords = 0
@@ -1261,34 +1184,40 @@ def get_lexical_variation(text_object: Text, start_section, end_section):
     return (TTR, RootTTR, CTTR, LogTTR)
 
 
-def get_average_subordinations_per_section(start_location_1, start_location_2, end_location_1, end_location_2):
+def get_average_subordinations_per_section(db, start_location_1, start_location_2, end_location_1, end_location_2):
     '''
-    Goes into Full AP Excel file for text, so different LOCATION numbers, i.e no more 1.4622, now it should be 1_4
+    Goes into Full AP MongoDB collection for text, so different LOCATION numbers, i.e., no more 1.4622, now it should be 1_4
     '''
-    df = pd.read_excel(
-        "FastBridgeApp\Bridge_Latin_Text_Vergilius_Aeneis_VerAen_newAP_localdef_20230310.xlsx")
+    collection = db["Bridge_Latin_Text_Vergilius_Aeneis_VerAen_newAP_localdef_20230310"]
 
-    # Split the 'LOCATION' column into two columns: 'LOCATION_1' and 'LOCATION_2'
-    df[['LOCATION_1', 'LOCATION_2']] = df['LOCATION'].str.split(
-        '_', expand=True).astype(int)
+    # Fetch data from MongoDB
+    cursor = collection.find({
+        'LOCATION_1': {'$gte': start_location_1, '$lte': end_location_1},
+        'LOCATION_2': {'$gte': start_location_2, '$lte': end_location_2}
+    })
 
-    # Filter the DataFrame
-    start_condition = (((df['LOCATION_1'] >= start_location_1) & (
-        df['LOCATION_2'] >= start_location_2)))
+    # Convert cursor to DataFrame
+    df = pd.DataFrame(list(cursor))
 
-    end_condition = (((df['LOCATION_1'] <= end_location_1)
-                     & (df['LOCATION_2'] <= end_location_2)))
+    # Ensure 'LOCATION_1' and 'LOCATION_2' are integers
+    df[['LOCATION_1', 'LOCATION_2']] = df['LOCATION'].str.split('_', expand=True).astype(int)
 
+    # Filter the DataFrame based on start and end locations
+    start_condition = ((df['LOCATION_1'] >= start_location_1) & (df['LOCATION_2'] >= start_location_2))
+    end_condition = ((df['LOCATION_1'] <= end_location_1) & (df['LOCATION_2'] <= end_location_2))
     df = df[start_condition & end_condition]
 
     # Count the total number of non-null entries in the 'SUBORDINATION_CODE' column for each section
-    subordinations_per_section = df['SUBORDINATION_CODE'].notnull().groupby(
-        df['SECTION']).sum()
+    subordinations_per_section = df['SUBORDINATION_CODE'].notnull().groupby(df['SECTION']).sum()
 
     # Count the total number of sections
     num_sections = df['SECTION'].nunique()
 
+    # Calculate the average subordinations
+    if num_sections == 0:
+        return 0  # Avoid division by zero
     average_subordinations = subordinations_per_section.sum() / num_sections
+
     return average_subordinations
 
 
@@ -1360,24 +1289,13 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
     return gen_lex_c
 
 
-def get_lex_r(text_object: Text, start_section, end_section):
-    # Get the Diederich 300 -> Adjusted CSV method
-    diederich300 = set()
-    with open("/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        count = 0
-        for row in reader:
-            if count <= 306:  # From Latin vocabulary knowledge and the Readability of Latin texts
-                diederich300.add(row['TITLE'])
-                count += 1
-            else:
-                break
-
-    dcc = create_word_set(
-        "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv")
-
-    diederich1500 = create_word_set(
-        "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv")
+def get_lex_r(db, text_object: Text, start_section, end_section):
+    # Get the Diederich 300 -> Adjusted MongoDB method
+    diederich300, _ = mg_get_diederich300(db)
+    
+    dcc, _ = mg_get_dcc(db, "Bridge-Vocab-Latin-List-DCC")
+    
+    diederich1500, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
     # Stats boilerplate
     start_index = text_object.sections[start_section]
@@ -1401,9 +1319,9 @@ def get_lex_r(text_object: Text, start_section, end_section):
             in1500 += 1
         countWords += 1
 
-    freq300 = in300/countWords
-    freqDCC = inDCC/countWords
-    freq1500 = in1500/countWords
+    freq300 = in300 / countWords
+    freqDCC = inDCC / countWords
+    freq1500 = in1500 / countWords
 
     mean_word_length = get_avg_word_length(
         text_object, start_section, end_section)
@@ -1415,8 +1333,8 @@ def get_lex_r(text_object: Text, start_section, end_section):
     logTTR = lexical_variation[3]
     rootTTR = lexical_variation[1]
 
-    lex_r = ((mean_word_length*0.457)+(freq300*0.063)+(freqDCC*0.076)+(freq1500 *
-             0.092)+(lexical_sophistication*0.059)+(logTTR*0.312)+(rootTTR*0.143))
+    lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 *
+             0.092) + (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
 
     lex_r -= 11.7
     lex_r *= 0.833
@@ -1424,70 +1342,70 @@ def get_lex_r(text_object: Text, start_section, end_section):
     return lex_r
 
 
-def plot_cum_lex_load(text_object: Text, start_section, end_section):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
+##def plot_cum_lex_load(text_object: Text, start_section, end_section):
+##    start_index = text_object.sections[start_section]
+##    end_index = text_object.sections[end_section]
+##    text_slice = text_object.words[start_index:end_index]
 
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
+##    if start_section == 'start' and end_section == 'end':
+##        text_slice = text_object.words
 
     # Go through the words of text_slice
     # Connect to Dictionary to filter out PROPER, "1" and "T"
-    words = []
-    scores = []
-    for word_tuple in text_slice:
-        word = word_tuple[0]
+##    words = []
+##    scores = []
+##    for word_tuple in text_slice:
+##        word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
-            words.append(word)
+##        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+##            words.append(word)
 
-    for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
-                scores.append(2)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
-                scores.append(1)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
-                scores.append(-1)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
-                scores.append(-2)
-                continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
-                scores.append(-4)
-                continue
-        else:
-            scores.append(-4)
-            continue
+##    for word in words:
+##        if word in self.dictionary:
+##            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+##                scores.append(2)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+##                scores.append(1)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+##                scores.append(-1)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+##                scores.append(-2)
+##                continue
+##            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+##                scores.append(-4)
+##                continue
+##        else:
+##            scores.append(-4)
+##            continue
 
-    cumulative_scores = np.cumsum(scores)
+##    cumulative_scores = np.cumsum(scores)
 
     # Calculate rolling average
     # rolling_average = pd.Series(cumulative_scores).rolling(window=rolling_window_size).mean()
 
-    x_indexes = list(range(len(words)))
+##    x_indexes = list(range(len(words)))
 
-    sns.set_style("ticks")
-    sns.set_context("paper")
-    plt.figure(figsize=(10, 5))
-    sns.lineplot(x=x_indexes, y=cumulative_scores,
-                 errorbar=None, color=colorblind_palette[0])
-    sns.despine()
-    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
-    plt.xlabel('Word', **axis_font)
-    plt.ylabel('Cumulative Lexical Load Score', **axis_font)
+##    sns.set_style("ticks")
+##    sns.set_context("paper")
+##    plt.figure(figsize=(10, 5))
+##    sns.lineplot(x=x_indexes, y=cumulative_scores,
+##                 errorbar=None, color=colorblind_palette[0])
+##    sns.despine()
+##    plt.title(f"Cumulative Lexical Load of {text_object.name}", **title_font)
+##    plt.xlabel('Word', **axis_font)
+##    plt.ylabel('Cumulative Lexical Load Score', **axis_font)
 
     # Get the current Axes instance
-    ax = plt.gca()
+##    ax = plt.gca()
 
     # set font properties to x and y tick labels
-    plt.setp(ax.get_xticklabels(), fontproperties=prop)
-    plt.setp(ax.get_yticklabels(), fontproperties=prop)
+##    plt.setp(ax.get_xticklabels(), fontproperties=prop)
+##    plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
-    plt.show()
+##    plt.show()
 
 
 def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size=25):
@@ -1505,24 +1423,24 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
     for word_tuple in text_slice:
         word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
             words.append(word)
 
     for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+        if word in self.dictionary:
+            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                 scores.append(2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                 scores.append(1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                 scores.append(-1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                 scores.append(-2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                 scores.append(-4)
                 continue
         else:
@@ -1586,24 +1504,24 @@ def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_div
     for word_tuple in text_slice:
         word = word_tuple[0]
         # filter out proper nouns
-        if word in latin_dict and latin_dict[word]["PROPER"] not in ["1", "T"]:
+        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
             words.append(word)
 
     for word in words:
-        if word in latin_dict:
-            if int(latin_dict[word]["CORPUSFREQ"]) <= 200:
+        if word in self.dictionary:
+            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
                 scores.append(2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 200 and int(latin_dict[word]["CORPUSFREQ"]) <= 1000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
                 scores.append(1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 1000 and int(latin_dict[word]["CORPUSFREQ"]) <= 2000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
                 scores.append(-1)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 2000 and int(latin_dict[word]["CORPUSFREQ"]) <= 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
                 scores.append(-2)
                 continue
-            if int(latin_dict[word]["CORPUSFREQ"]) > 5000:
+            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                 scores.append(-4)
                 continue
         else:
@@ -1678,20 +1596,18 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2")})
+    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
     # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
     print("reaching section endpoint")
-    sectionDict = DefinitionTools.get_sections(language)
-    sectionBook = sectionDict[textname]
-    return sectionBook
+    sectionDict = MongoDefinitionTools.mg_get_locations(language, textname)
+    return sectionDict
 
 
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-@router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str):
     context = {"request": request}
     if running_list == "running":
@@ -1699,22 +1615,14 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     else:
         running_list = False
 
+    analyzer = TextAnalyzer()
+
     if language == "Latin":
-        
-        # Construct the path to the CSV file relative to the script's directory.
-        dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-        diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-        dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-        # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-        # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-        # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-        analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+        pass  # Already initialized TextAnalyzer with the correct data
     else:  # Greek -> Change this when you put in the Greek files
-        analyzer = TextAnalyzer("FastBridgeApp\\bridge_latin_dictionary.csv",
-                                "FastBridgeApp\Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv", "FastBridgeApp\Bridge-Vocab-Latin-List-DCC.csv")
+        pass  # If Greek data initialization is different, handle it here
 
-    if '+' not in sourcetexts:#Only 1 text has been added - SingleStats
+    if '+' not in sourcetexts:  # Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
         print(str(analyzer))
@@ -1731,7 +1639,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         unique_words_no_p = analyzer.uniqueWordsNoProper()
         avgWordLength = analyzer.avgWordLength()
         top20NoDie300 = analyzer.top20NoDie300()
-        freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+        freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
 
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1767,13 +1675,13 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "total_words_no_proper": total_words_no_p,
             "unique_words_no_proper": unique_words_no_p,
             "avg_word_length": avgWordLength,
-            "top20_NoDie300":top20NoDie300,
-            "freq1":freqBin1,
-            "freq2":freqBin2,
+            "top20_NoDie300": top20NoDie300,
+            "freq1": freqBin1,
+            "freq2": freqBin2,
             "freq3": freqBin3,
             "freq4": freqBin4,
-            "freq5":freqBin5,
-            "freq6":freqBin6,
+            "freq5": freqBin5,
+            "freq6": freqBin6,
             "freq_plot_path": freq_relative_plot_path,
             "cum_lex_plot_path": cum_lex_relative_plot_path,
             "lin_lex_plot_path": lin_lex_relative_plot_path,
@@ -1784,47 +1692,37 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         print(f"lin lex rel path: {lin_lex_relative_plot_path}")
         print(f"freq bins rel path: {freq_bins_relative_plot_path}")
         return templates.TemplateResponse("stats-single-text.html", context)
-    else:#multiple texts have been added - Stats: Compare
+    else:  # multiple texts have been added - Stats: Compare
 
-        #Get text information from URL
+        # Get text information from URL
         analyzer_texts = sourcetexts.split('+')
         analyzer_starts = starts.split('+')
         analyzer_ends = ends.split('+')
 
-        #Add text info to analyzer
+        # Add text info to analyzer
         analyzers = []
         for i in range(len(analyzer_texts)):
-            if language == "Latin":
-                # Construct the path to the CSV file relative to the script's directory.
-                dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-                diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-                dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-
-                # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-                # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-                # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-                analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
-            analyzer.add_text(analyzer_texts[i],language, analyzer_starts[i], analyzer_ends[i])
+            analyzer = TextAnalyzer()
+            analyzer.add_text(analyzer_texts[i], language, analyzer_starts[i], analyzer_ends[i])
             analyzers.append(analyzer)
         
-        #Used multiple TextAnalyzer's, account for dynamicism here
+        # Used multiple TextAnalyzer's, account for dynamicism here
 
         # Getting Metrics, Hapax
-        text_names = [a.texts[0][0].name for a in analyzers] 
+        text_names = [a.texts[0][0].name for a in analyzers]
         text_starts = [a.texts[0][1] for a in analyzers]
         text_ends = [a.texts[0][2] for a in analyzers]
-        
-        word_freq_paths = [analyzers[i].plot_word_freq(plot_num = 0+(4*i)) for i in range(len(analyzers))]
-        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num = 1+(4*i)) for i in range(len(analyzers))]
-        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num = 2+(4*i)) for i in range(len(analyzers))]
-        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num = 3+(4*i)) for i in range(len(analyzers))]
-        
+
+        word_freq_paths = [analyzers[i].plot_word_freq(plot_num=0+(4*i)) for i in range(len(analyzers))]
+        cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num=1+(4*i)) for i in range(len(analyzers))]
+        lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num=2+(4*i)) for i in range(len(analyzers))]
+        freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num=3+(4*i)) for i in range(len(analyzers))]
+
         print(text_names)
 
         texts_and_sections = DefinitionTools.get_sections("Latin")
 
-
-        #add analyzer stats from each text to context
+        # add analyzer stats from each text to context
         context.update({
             "request": request,
             "textNames": text_names,
@@ -1833,23 +1731,14 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "texts_and_sections": texts_and_sections
         })
 
-        #Create stats-multiple-texts.html, 2 columns, 2 dropdown menus
-        #
-
         return templates.TemplateResponse("stats-multiple-texts.html", context)
 
    
 @router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
-    
     context = {"request": request}
-    # dictionary_path = "/FastBridge/FastBridgeApp/bridge_latin_dictionary.csv"
-    # diederich_path = "/FastBridge/FastBridgeApp/Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv"
-    # dcc_path = "/FastBridge/FastBridgeApp/Bridge-Vocab-Latin-List-DCC.csv"
-    dictionary_path = os.path.join(parent_dir, 'bridge_latin_dictionary.csv')
-    diederich_path = os.path.join(parent_dir, 'Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020_BridgeImport.csv')
-    dcc_path = os.path.join(parent_dir, 'Bridge-Vocab-Latin-List-DCC.csv')
-    analyzer = TextAnalyzer(dictionary_path, diederich_path, dcc_path)
+    
+    analyzer = TextAnalyzer()
     
     analyzer.add_text(text_name, "Latin", section_start, section_end)
 
@@ -1865,78 +1754,54 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     unique_words_no_p = analyzer.uniqueWordsNoProper()
     avgWordLength = analyzer.avgWordLength()
     top20NoDie300 = analyzer.top20NoDie300()
-    freqBin1,freqBin2,freqBin3,freqBin4,freqBin5,freqBin6 = analyzer.freqBinMetrics()
+    freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
     
-    # plot functions return the location of plot images
-
-    #Technically, the analyzer before caches the plots in project local memory
-    #Since we onlyneed the path,render all the plots before hand to save space and pass
-    # the index through this router to identify which plots we're going with
-
-    plotpath_nums= [0,1,2,3]
-    if selected_index > 0:#if the selected index isn't the first set of graphs
-        plotpath_nums = [num+(4*selected_index) for num in plotpath_nums]
+    # Remove file path references and use database for plots (if applicable)
+    plotpath_nums = [0, 1, 2, 3]
+    if selected_index > 0:  # if the selected index isn't the first set of graphs
+        plotpath_nums = [num + (4 * selected_index) for num in plotpath_nums]
 
     print(plotpath_nums)
 
-    # freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
-    freq_plot_path =  f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[0]}.png'
-    freq_relative_plot_path = os.path.relpath(
-        freq_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
+    # Example plot paths assuming they're stored in the database
+    freq_plot_path = f'/plots/plot{plotpath_nums[0]}.png'
+    cum_lex_plot_path = f'/plots/plot{plotpath_nums[1]}.png'
+    lin_lex_plot_path = f'/plots/plot{plotpath_nums[2]}.png'
+    freq_bins_plot_path = f'/plots/plot{plotpath_nums[3]}.png'
 
-    # cum_lex_plot_path = analyzer.plot_cum_lex_load()
-    cum_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[1]}.png'
-    cum_lex_relative_plot_path = os.path.relpath(
-        cum_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
-
-    # lin_lex_plot_path = analyzer.plot_lin_lex_load()
-    lin_lex_plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[2]}.png'
-    lin_lex_relative_plot_path = os.path.relpath(
-        lin_lex_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/')
-
-    # freq_bins_plot_path = analyzer.plot_freq_bin()
-    freq_bins_plot_path= f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plotpath_nums[3]}.png'
-    freq_bins_relative_plot_path = os.path.relpath(
-        freq_bins_plot_path, start='/FastBridge/FastBridgeApp/static/assets/plots/'
-        )
-    
-    now = datetime.utcnow()#for caching issue with plots
+    now = datetime.utcnow()  # for caching issue with plots
     
     context.update({
-            "request": request,
-            "text_name": textname,
-            "start_section": section_start,
-            "end_section": section_end,
-            "word_count": word_count,
-            "vocab_size": vocab_size,
-            "hapax_legomena": hapax,
-            "hapax_percentage": hapax_percentage,
-            "lexical_density": lex_dens,
-            "lexical_sophistication": lex_sophistication,
-            "lexical_variation": lex_variation,
-            "LexR": lex_r,
-            "total_words_no_proper": total_words_no_p,
-            "unique_words_no_proper": unique_words_no_p,
-            "avg_word_length": avgWordLength,
-            "top20_NoDie300":top20NoDie300,
-            "freq1":freqBin1,
-            "freq2":freqBin2,
-            "freq3": freqBin3,
-            "freq4": freqBin4,
-            "freq5":freqBin5,
-            "freq6":freqBin6,
-            "freq_plot_path": freq_relative_plot_path,
-            "cum_lex_plot_path": cum_lex_relative_plot_path,
-            "lin_lex_plot_path": lin_lex_relative_plot_path,
-            "freq_bins_plot_path": freq_bins_relative_plot_path,
-            "now": now
-        })
+        "request": request,
+        "text_name": textname,
+        "start_section": section_start,
+        "end_section": section_end,
+        "word_count": word_count,
+        "vocab_size": vocab_size,
+        "hapax_legomena": hapax,
+        "hapax_percentage": hapax_percentage,
+        "lexical_density": lex_dens,
+        "lexical_sophistication": lex_sophistication,
+        "lexical_variation": lex_variation,
+        "LexR": lex_r,
+        "total_words_no_proper": total_words_no_p,
+        "unique_words_no_proper": unique_words_no_p,
+        "avg_word_length": avgWordLength,
+        "top20_NoDie300": top20NoDie300,
+        "freq1": freqBin1,
+        "freq2": freqBin2,
+        "freq3": freqBin3,
+        "freq4": freqBin4,
+        "freq5": freqBin5,
+        "freq6": freqBin6,
+        "freq_plot_path": freq_plot_path,
+        "cum_lex_plot_path": cum_lex_plot_path,
+        "lin_lex_plot_path": lin_lex_plot_path,
+        "freq_bins_plot_path": freq_bins_plot_path,
+        "now": now
+    })
 
-    
-
-    # Then, you would render these to an HTML string using a new Jinja2 template
-    # This new template should just contain the HTML for the metrics and plots
-    return templates.TemplateResponse('stats-column-data.html',context)
+    return templates.TemplateResponse('stats-column-data.html', context)
 
 
 @router.get("/formulas")
