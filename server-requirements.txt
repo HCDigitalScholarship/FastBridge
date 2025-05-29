@@ -28,7 +28,7 @@ httplib2==0.18.1
 httptools==0.1.2
 idna==2.9
 itsdangerous==1.1.0
-Jinja2==2.11.2
+Jinja2==3.1.6
 MarkupSafe==1.1.1
 more-itertools==8.4.0
 numpy==1.21.3
