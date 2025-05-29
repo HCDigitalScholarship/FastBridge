@@ -20,7 +20,7 @@ WORKDIR /app/FastBridgeApp
 EXPOSE 5001
 
 # Define environment variable for the port
-ENV PORT 5001
+ENV PORT=5001
 
 # Command to run the application
 CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port=5001"]
