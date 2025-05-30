@@ -23,20 +23,8 @@ from fastapi.responses import HTMLResponse
 from datetime import datetime
 import DefinitionTools
 from pathlib import Path
-# import matplotlib.ticker as ticker #For the x axis ticks
 import MongoDefinitionTools
-from MongoDefinitionTools import AtlasClient
-
-#DB boilerplate
-DB_NAME = 'local-dev'
-COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-
-atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-atlas_client.ping()
-print('Connected to Atlas instance! We are good to go!!')
-db = atlas_client.database
-
+from MongoDefinitionTools import AtlasClient, db, dict_db
 
 
 '''
@@ -99,6 +87,7 @@ def mg_get_latin_dictionary(db):
     word_dictionary = {}
     cursor = db.dictionary.find()
     for row in cursor:
+        print(row)
         if 'TITLE' in row:
             word_dictionary[row['TITLE']] = row
         else:
@@ -189,25 +178,31 @@ def find_hapax_legomena(words):
 class TextAnalyzer:
 
     MONGO_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-    DB_NAME = "Latin"
+    DB_NAME = "local-dev"
 
     def __init__(self):
 
         self.client = MongoClient(self.MONGO_URI)
         self.db = self.client[self.DB_NAME]
         self.texts = [] 
+        
+        print(self.db.list_collection_names())
 
         self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
+        print("The dictionary is: ", self.dictionary)
 
         self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
+        print("The Diederich is: ", self.diederich)
 
         self.diederich300, self.diederich300_time = mg_get_diederich300(self.db)
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
+        print("The Diederich 1500 is: ", self.diederich300)
 
         self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
+        print("The SCC is: ", self.dcc)
 
          # (Text, start section, end section)
 
@@ -215,7 +210,7 @@ class TextAnalyzer:
     def add_text(self, form_request: str, language: str, start_section, end_section):
         print(f"\n\n\n{form_request}\n\n\n")
         location_list = MongoDefinitionTools.mg_get_locations(language, form_request)
-        location_words, l_word_time = MongoDefinitionTools.mg_get_location_words(language, form_request)
+        location_words = MongoDefinitionTools.mg_get_location_words(language, form_request)
         self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
         
        #(get_text(form_request, language).book, start_section, end_section))
@@ -746,63 +741,63 @@ class TextAnalyzer:
         else:
             print()
 
-        def plot_cum_lex_load(self, plot_num=0):
-            if len(self.texts) == 0:
-                return -1
-            elif len(self.texts) == 1:
-                text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+    def plot_cum_lex_load(self, plot_num=0):
+        if len(self.texts) == 0:
+            return -1
+        elif len(self.texts) == 1:
+            text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
-                scores = []
-                for word_tuple in text_slice:
-                    word = word_tuple[0]
-                    if word in self.dictionary:
-                        if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
-                            scores.append(2)
-                            continue
-                        if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
-                            scores.append(1)
-                            continue
-                        if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
-                            scores.append(-1)
-                            continue
-                        if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
-                            scores.append(-2)
-                            continue
-                        if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
-                            scores.append(-4)
-                            continue
-                    else:
+            scores = []
+            for word_tuple in text_slice:
+                word = word_tuple[0]
+                if word in self.dictionary:
+                    if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                        scores.append(2)
+                        continue
+                    if 200 < int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                        scores.append(1)
+                        continue
+                    if 1000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                        scores.append(-1)
+                        continue
+                    if 2000 < int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                        scores.append(-2)
+                        continue
+                    if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
                         scores.append(-4)
                         continue
+                else:
+                    scores.append(-4)
+                    continue
 
-                if len(scores) == 0:
-                    return -1  # Avoid issues with empty scores
+            if len(scores) == 0:
+                return -1  # Avoid issues with empty scores
 
-                # Calculate cumulative sum of the scores
-                cumulative_scores = pd.Series(scores).cumsum()
+            # Calculate cumulative sum of the scores
+            cumulative_scores = pd.Series(scores).cumsum()
 
-                x_indexes = list(range(len(cumulative_scores)))
+            x_indexes = list(range(len(cumulative_scores)))
 
-                sns.set_style("ticks")
-                sns.set_context("paper")
-                plt.figure(figsize=(10, 5))
-                sns.lineplot(x=x_indexes, y=cumulative_scores, color='blue')  # Replace colorblind_palette[0] with 'blue'
+            sns.set_style("ticks")
+            sns.set_context("paper")
+            plt.figure(figsize=(10, 5))
+            sns.lineplot(x=x_indexes, y=cumulative_scores, color='blue')  # Replace colorblind_palette[0] with 'blue'
 
-                sns.despine()
-                plt.title(f"Cumulative Lexical Load of {self.texts[0][0].name}", fontdict={'fontsize': 12})
-                plt.xlabel('Word Index', fontdict={'fontsize': 10})
-                plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
+            sns.despine()
+            plt.title(f"Cumulative Lexical Load of {self.texts[0][0].name}", fontdict={'fontsize': 12})
+            plt.xlabel('Word Index', fontdict={'fontsize': 10})
+            plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-                plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-                plot_path = parent_dir + plot_partial
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
 
-                plt.savefig(plot_path)
-                plt.close()  # Close the plot
+            plt.savefig(plot_path)
+            plt.close()  # Close the plot
 
-                return plot_path  # Return the file path of the saved plot
+            return plot_path  # Return the file path of the saved plot
 
-            else:
-                print()
+        else:
+            print()
 
     def plot_freq_bin(self, plot_num = 4):
         if len(self.texts) == 0:
@@ -813,7 +808,9 @@ class TextAnalyzer:
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
+            print("the dictionary is", self.dictionary)
             for word_tuple in text_slice:
+                # print("This is the tuple: ", word_tuple)
                 word = word_tuple[0]
                 # filter out proper nouns
                 if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
@@ -847,6 +844,7 @@ class TextAnalyzer:
                         count2500plus += 1
                         continue
 
+            print("Here", len(words), count0_200, self.texts)
             freq_0_200 = count0_200/len(words)
             freq_201_500 = count201_500/len(words)
             freq_501_1000 = count501_1000/len(words)
@@ -997,7 +995,7 @@ def plot_avg_word_length2(text_object, start_section, end_section):
         text_slice = text_object.words
 
     df = pd.DataFrame(text_slice, columns=[
-                      "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+                    "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
     df['Word Length'] = df['Word'].apply(len)
     avg_word_length = df.groupby('Section')['Word Length'].mean().reset_index()
 
@@ -1007,7 +1005,7 @@ def plot_avg_word_length2(text_object, start_section, end_section):
     step_size = max(1, n_sections // 20)
 
     fig = px.bar(avg_word_length, x='Section', y='Word Length',
-                 hover_data=['Word Length'], labels={'Word Length': 'Average Word Length per Section'})
+                hover_data=['Word Length'], labels={'Word Length': 'Average Word Length per Section'})
 
     fig.update_layout(
         autosize=False,
@@ -1034,7 +1032,7 @@ def plot_word_frequency(text_object: Text, start_section, end_section):
         text_slice = text_object.words
 
     df = pd.DataFrame(text_slice, columns=[
-                      "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
+                    "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
     word_frequency = df['Word'].value_counts().reset_index()
     word_frequency.columns = ['Word', 'Frequency']
 
@@ -1334,7 +1332,7 @@ def get_lex_r(db, text_object: Text, start_section, end_section):
     rootTTR = lexical_variation[1]
 
     lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 *
-             0.092) + (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
+            0.092) + (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
 
     lex_r -= 11.7
     lex_r *= 0.833
@@ -1464,7 +1462,7 @@ def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rol
     sns.set_context("paper")
     plt.figure(figsize=(10, 5))
     sns.lineplot(x=x_indexes, y=smoothed_scores,
-                 errorbar=None, color=colorblind_palette[0])
+                errorbar=None, color=colorblind_palette[0])
 
     # add a horizontal line representing the average linear lexical score
     plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
@@ -1597,7 +1595,6 @@ async def stats_mode_selector(request: Request):
 @router.get("/{language}/")
 async def stats_select(request: Request, language: str):
     return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
-    # return templates.TemplateResponse("select.html", {"request": request, "titles": DefinitionTools.render_titles(language), 'titles2': DefinitionTools.render_titles(language, "2") })
 
 
 @router.get("/select/sections/{textname}/{language}/")
@@ -1822,5 +1819,3 @@ async def stats_cumulative(request: Request, language: str):
     # Perform cumulative statistics calculations or any other operations on sectionBooks
 
     return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
-
-
