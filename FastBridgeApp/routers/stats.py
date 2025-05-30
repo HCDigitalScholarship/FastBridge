@@ -85,9 +85,8 @@ colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
 @timer_decorator
 def mg_get_latin_dictionary(db):
     word_dictionary = {}
-    cursor = db.dictionary.find()
+    cursor = db.bridge_latin_dictionary.find()
     for row in cursor:
-        print(row)
         if 'TITLE' in row:
             word_dictionary[row['TITLE']] = row
         else:
@@ -178,7 +177,7 @@ def find_hapax_legomena(words):
 class TextAnalyzer:
 
     MONGO_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-    DB_NAME = "local-dev"
+    DB_NAME = "dictionaries"
 
     def __init__(self):
 
@@ -186,11 +185,11 @@ class TextAnalyzer:
         self.db = self.client[self.DB_NAME]
         self.texts = [] 
         
-        print(self.db.list_collection_names())
+        # print(self.db.list_collection_names())
 
         self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
-        print("The dictionary is: ", self.dictionary)
+        # print("The dictionary is: ", len(self.dictionary))
 
         self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
@@ -200,7 +199,7 @@ class TextAnalyzer:
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
         print("The Diederich 1500 is: ", self.diederich300)
 
-        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc")
+        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc_latin_core_list")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
         print("The SCC is: ", self.dcc)
 
@@ -624,11 +623,9 @@ class TextAnalyzer:
             plot_partial = f'/static/assets/plots/plot{plot_num}.png'
             plot_path = parent_dir + plot_partial
 
-            #/Users/mikerabayda/repos/github.com/public/FastBridge/FastBridgeApp/static/assets/plots/plot0.png
             # Save plot as an image file instead of showing
             # replace with the actual path and name
             #plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            print(plot_path)
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -808,7 +805,6 @@ class TextAnalyzer:
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
-            print("the dictionary is", self.dictionary)
             for word_tuple in text_slice:
                 # print("This is the tuple: ", word_tuple)
                 word = word_tuple[0]
@@ -1758,13 +1754,11 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     if selected_index > 0:  # if the selected index isn't the first set of graphs
         plotpath_nums = [num + (4 * selected_index) for num in plotpath_nums]
 
-    print(plotpath_nums)
-
     # Example plot paths assuming they're stored in the database
-    freq_plot_path = f'/plots/plot{plotpath_nums[0]}.png'
-    cum_lex_plot_path = f'/plots/plot{plotpath_nums[1]}.png'
-    lin_lex_plot_path = f'/plots/plot{plotpath_nums[2]}.png'
-    freq_bins_plot_path = f'/plots/plot{plotpath_nums[3]}.png'
+    freq_plot_path = f'/plot{plotpath_nums[0]}.png'
+    cum_lex_plot_path = f'/plot{plotpath_nums[1]}.png'
+    lin_lex_plot_path = f'/plot{plotpath_nums[2]}.png'
+    freq_bins_plot_path = f'/plot{plotpath_nums[3]}.png'
 
     now = datetime.utcnow()  # for caching issue with plots
     
