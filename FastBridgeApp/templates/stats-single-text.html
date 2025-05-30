@@ -430,7 +430,7 @@
                             }}</span>
                     </h2>
                     <h3>
-                        <a href="/stats/formulas" class="btn btn-info ml-2" role="button">Formulas</a>
+                        <a href="/stats/formulas" class="btn btn-info ml-2" role="button">Description of Readability Metrics</a>
                     </h3>
 
                 </div>
@@ -439,6 +439,18 @@
                     <div class="grid-item" id="metrics-section">
                         <h2>Metrics</h2>
                         <ul class="statistics-list">
+                            <li id="lexRMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">LexR</span>
+                                    
+                                    </div>
+                                    <div class="value-container">{{ LexR }}</div>
+                                </div>
+                            </li>
+
+                            <hr style="background-color: white;">
+
                             <li id="wordCountMetric">
                                 <div class="list-item-container">
                                     <div class="label-container">
@@ -474,15 +486,6 @@
                                     <div class="value-container">{{ unique_words_no_proper }}</div>
                                 </div>
                             </li>
-                            <li id="lexRMetric">
-                                <div class="list-item-container">
-                                    <div class="label-container">
-                                        <span class="label">LexR</span>
-                                    
-                                    </div>
-                                    <div class="value-container">{{ LexR }}</div>
-                                </div>
-                            </li>
                             <li id="avgWordLength">
                                 <div class="list-item-container">
                                     <div class="label-container">
@@ -510,7 +513,10 @@
                                     <div class="value-container">{{ lexical_sophistication }}</div>
                                 </div>
                             </li>
-                            <li id="lexicalVariation">
+
+                            <hr style="background-color: white;">
+
+                            <li id="lexicalVariation" style="text-align:left;">
                                 <span class="label">Lexical Variation</span>
                                 <ul style="padding-left: 20px;">
                                     <li id="cttrMetric">
@@ -551,7 +557,10 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li id="freqBinFreqs">
+
+                            <hr style="background-color: white;">
+
+                            <li id="freqBinFreqs" style="text-align:left;">
                                 <span class="label">Frequency Bin Count</span>
                                 <ul style="padding-left: 20px;">
                                     <li id="freq_0_200">
