@@ -89,8 +89,8 @@ def mg_get_latin_dictionary(db):
     for row in cursor:
         if 'TITLE' in row:
             word_dictionary[row['TITLE']] = row
-        else:
-            print(row)
+        # else:
+            # print(row)
     return word_dictionary
 
 @timer_decorator
@@ -133,7 +133,6 @@ def get_text(form_request: str, language: str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
     """
-    print("HELLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
     return importlib.import_module(f'data.{language}.{form_request}')  # point to the data folder
 
 #used for getting slices of each text
@@ -620,12 +619,12 @@ class TextAnalyzer:
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
             
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
+            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            # plot_path = parent_dir + plot_partial
 
-            # Save plot as an image file instead of showing
-            # replace with the actual path and name
-            #plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            # working plot path
+            plot_path = f'/plot{plot_num}.png'
+            
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -662,10 +661,12 @@ class TextAnalyzer:
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
-
+            # plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            # plot_path = parent_dir + plot_partial
+            
+            plot_path = f'/plot{plot_num}.png'
+            
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -727,8 +728,10 @@ class TextAnalyzer:
             plt.xlabel('Word Index', **axis_font)
             plt.ylabel('Smoothed Lexical Load', **axis_font)
 
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
+            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            # plot_path = parent_dir + plot_partial
+            
+            plot_path = f'/plot{plot_num}.png'
 
             plt.savefig(plot_path)
             plt.close()  # Close the plot
@@ -785,8 +788,10 @@ class TextAnalyzer:
             plt.xlabel('Word Index', fontdict={'fontsize': 10})
             plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
+            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            # plot_path = parent_dir + plot_partial
+            
+            plot_path = f'/plot{plot_num}.png'
 
             plt.savefig(plot_path)
             plt.close()  # Close the plot
@@ -806,7 +811,6 @@ class TextAnalyzer:
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
             for word_tuple in text_slice:
-                # print("This is the tuple: ", word_tuple)
                 word = word_tuple[0]
                 # filter out proper nouns
                 if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
@@ -840,7 +844,7 @@ class TextAnalyzer:
                         count2500plus += 1
                         continue
 
-            print("Here", len(words), count0_200, self.texts)
+            # print("Here", len(words), count0_200, self.texts)
             freq_0_200 = count0_200/len(words)
             freq_201_500 = count201_500/len(words)
             freq_501_1000 = count501_1000/len(words)
@@ -880,9 +884,12 @@ class TextAnalyzer:
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            plot_path = parent_dir + plot_partial
+            # plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            # plot_path = parent_dir + plot_partial
+            
+            plot_path = f'/plot{plot_num}.png'
+            
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
@@ -1618,8 +1625,6 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     if '+' not in sourcetexts:  # Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
 
-        print(str(analyzer))
-
         textname = analyzer.get_textname()
         word_count = analyzer.num_words()
         vocab_size = analyzer.vocab_size()
@@ -1675,15 +1680,16 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "freq4": freqBin4,
             "freq5": freqBin5,
             "freq6": freqBin6,
-            "freq_plot_path": freq_relative_plot_path,
-            "cum_lex_plot_path": cum_lex_relative_plot_path,
-            "lin_lex_plot_path": lin_lex_relative_plot_path,
-            "freq_bins_plot_path": freq_bins_relative_plot_path
+            "freq_plot_path": freq_plot_path,
+            "cum_lex_plot_path": cum_lex_plot_path,
+            "lin_lex_plot_path": lin_lex_plot_path,
+            "freq_bins_plot_path": freq_bins_plot_path
+            # "freq_plot_path": freq_relative_plot_path,
+            # "cum_lex_plot_path": cum_lex_relative_plot_path,
+            # "lin_lex_plot_path": lin_lex_relative_plot_path,
+            # "freq_bins_plot_path": freq_bins_relative_plot_path
         })
-        print(f"freq rel path: {freq_relative_plot_path}")
-        print(f"cum lex rel path: {cum_lex_relative_plot_path}")
-        print(f"lin lex rel path: {lin_lex_relative_plot_path}")
-        print(f"freq bins rel path: {freq_bins_relative_plot_path}")
+        
         return templates.TemplateResponse("stats-single-text.html", context)
     else:  # multiple texts have been added - Stats: Compare
 
@@ -1710,8 +1716,6 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         cum_lex_plot_paths = [analyzers[i].plot_cum_lex_load(plot_num=1+(4*i)) for i in range(len(analyzers))]
         lin_lex_plot_paths = [analyzers[i].plot_lin_lex_load(plot_num=2+(4*i)) for i in range(len(analyzers))]
         freq_bin_plot_paths = [analyzers[i].plot_freq_bin(plot_num=3+(4*i)) for i in range(len(analyzers))]
-
-        print(text_names)
 
         texts_and_sections = DefinitionTools.get_sections("Latin")
 
