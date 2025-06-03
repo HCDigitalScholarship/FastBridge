@@ -332,7 +332,7 @@ function showTab(n, isNext) {
   var open1 = document.getElementById("openModal1");
   var open2 = document.getElementById("openModal2");
   var len1 = document.getElementById("bridge-result-table1").rows.length;
-  var len2 = document.getElementById("bridge-result-table2").rows.length;
+  // var len2 = document.getElementById("bridge-result-table2").rows.length;
   // fix previous and add buttons
   if (n == 0) {//if current tab is 0
     prev.disabled = true;
@@ -348,11 +348,11 @@ function showTab(n, isNext) {
     prev.disabled = false;
     open2.style.display = "";
     open1.style.display = "none";
-    if (len2 <= 3) {
-      next.disabled = true;
-    } else {
-      next.disabled = false;
-    }
+    // if (len2 <= 3) {
+    //   next.disabled = true;
+    // } else {
+    //   next.disabled = false;
+    // }
     document.getElementById("page-buttons").style.marginTop = "-50px";
   }
   // fix next button
@@ -411,39 +411,41 @@ function nextPrev(n, next) {
     str_other_starts = other_starts.join("+");
     str_other_ends = other_ends.join("+");
 
-    if (in_exclude.length == 0) {
-      path =
-        window.location.href +
-        "result/" +
-        str_sourcetexts +
-        "/" +
-        str_source_starts +
-        "-" +
-        str_source_ends +
-        "/" +
-        "non_running" +
-        "/";
-    } else {
-      path =
-        window.location.href +
-        "result/" +
-        str_sourcetexts +
-        "/" +
-        str_source_starts +
-        "-" +
-        str_source_ends +
-        "/" +
-        in_exclude +
-        "/" +
-        str_othertexts +
-        "/" +
-        str_other_starts +
-        "-" +
-        str_other_ends +
-        "/" +
-        "non_running" +
-        "/";
-    }
+    // took this out of the if statement below
+    path =
+      window.location.href +
+      "result/" +
+      str_sourcetexts +
+      "/" +
+      str_source_starts +
+      "-" +
+      str_source_ends +
+      "/" +
+      "non_running" +
+      "/";
+
+    // if (in_exclude.length == 0) {
+    // } else {
+    //   path =
+    //     window.location.href +
+    //     "result/" +
+    //     str_sourcetexts +
+    //     "/" +
+    //     str_source_starts +
+    //     "-" +
+    //     str_source_ends +
+    //     "/" +
+    //     in_exclude +
+    //     "/" +
+    //     str_othertexts +
+    //     "/" +
+    //     str_other_starts +
+    //     "-" +
+    //     str_other_ends +
+    //     "/" +
+    //     "non_running" +
+    //     "/";
+    // }
     post(path, []);
     return;
   }
@@ -486,12 +488,12 @@ $("#formCheck-2").click(function () {
   console.log(in_exclude);
 });
 
-$("#formCheck-3").click(function () {
-  document.getElementById("myNext").disabled = false;
-  document.getElementById("openModal2").disabled = true;
-  in_exclude = "";
-  console.log(in_exclude);
-});
+// $("#formCheck-3").click(function () {
+//   document.getElementById("myNext").disabled = false;
+//   document.getElementById("openModal2").disabled = true;
+//   in_exclude = "";
+//   console.log(in_exclude);
+// });
 
 /*
 SELECT WORK modal &&table
@@ -638,7 +640,7 @@ $("#bridge-modal-form2-save").click(function () {
   }
 
   // show the selection in a table
-  var table = document.getElementById("bridge-result-table2");
+  // var table = document.getElementById("bridge-result-table2");
   var row = table.insertRow(-1);
   var cell1 = row.insertCell(0);
   var cell2 = row.insertCell(1);
@@ -681,30 +683,30 @@ DEFINE VOCAB modal &&table
 */
 
 // delete row from table
-function deleteRow2(r) {
-  var i = r.parentNode.parentNode.rowIndex;
-  var table = document.getElementById("bridge-result-table2");
-  othertexts.splice(i - 3, 1);
-  other_starts.splice(i - 3, 1);
-  other_ends.splice(i - 3, 1);
-  table.deleteRow(i);
-  if (table.rows.length <= 3) {
-    document.getElementById("myNext").disabled = true;
-  }
-  document.getElementById(
-    "bridge-modal-form2-select2-hidden-field1"
-  ).innerText = "Start";
-  document.getElementById("modal-bridge-form2").reset();
-  document.getElementById(
-    "bridge-modal-form2-select2-hidden-field2"
-  ).innerText = "End";
-  $("#sectionstartdropdown2").empty();
-  $("#sectionenddropdown2").empty();
-  document.getElementById("chosen_text2").innerText = "Select Text";
-  sectionfrom1 = "start";
-  sectionto1 = "end";
-  indexholder1 = {};
-}
+// function deleteRow2(r) {
+//   var i = r.parentNode.parentNode.rowIndex;
+//   var table = document.getElementById("bridge-result-table2");
+//   othertexts.splice(i - 3, 1);
+//   other_starts.splice(i - 3, 1);
+//   other_ends.splice(i - 3, 1);
+//   table.deleteRow(i);
+//   if (table.rows.length <= 3) {
+//     document.getElementById("myNext").disabled = true;
+//   }
+//   document.getElementById(
+//     "bridge-modal-form2-select2-hidden-field1"
+//   ).innerText = "Start";
+//   document.getElementById("modal-bridge-form2").reset();
+//   document.getElementById(
+//     "bridge-modal-form2-select2-hidden-field2"
+//   ).innerText = "End";
+//   $("#sectionstartdropdown2").empty();
+//   $("#sectionenddropdown2").empty();
+//   document.getElementById("chosen_text2").innerText = "Select Text";
+//   sectionfrom1 = "start";
+//   sectionto1 = "end";
+//   indexholder1 = {};
+// }
 
 // from: https://gist.github.com/codeguy/6684588. modified to make whitespace a _ instead of a -
 function string_to_slug(str) {
