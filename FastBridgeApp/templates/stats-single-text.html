@@ -36,6 +36,31 @@
         padding-right: 10px;
         /* adds some space between label and value */
     }
+    .scrollable {
+        max-height: 600px;
+        overflow-y: scroll;
+
+        scrollbar-width: thin;
+        scrollbar-color: #888 transparent;
+    }
+
+    .scrollable::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .scrollable::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb {
+        background-color: #888;    
+        border-radius: 4px;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb:hover {
+        background-color: #555;    
+    }
+
 
     .collapsible {
         cursor: pointer;
@@ -448,6 +473,76 @@
                                     <div class="value-container">{{ LexR }}</div>
                                 </div>
                             </li>
+                            <li id="spacheMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Spache</span>
+                                    
+                                    </div>
+                                    <div class="value-container">{{ spache_score }}</div>
+                                </div>
+                            </li>
+                            <li id="DaleChallMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">
+                                            Dale-Chall
+                                            <i class="fas fa-info-circle info-icon"
+                                            data-img="/assets/img/dale_chall_info.png"
+                                            style="cursor:pointer;" title="Click to view image"></i>
+                                        </span>
+                                    </div>
+                                    <div class="value-container">{{ dale_chall }}</div>
+                                </div>
+                            </li>
+
+                            <li id="ARIMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">
+                                            ARI
+                                            <i class="fas fa-info-circle info-icon"
+                                            data-img="/assets/img/ari_info.png"
+                                            style="cursor:pointer;" title="Click to view image"></i>
+                                        </span>
+                                    </div>
+                                    <div class="value-container">{{ ari }}</div>
+                                </div>
+                            </li>
+
+                            <li id="ColemanLiauMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Coleman-Liau</span>
+                                    </div>
+                                    <div class="value-container">{{ coleman_liau }}</div>
+                                </div>
+                            </li>
+                            <li id="LixMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">Lix</span>
+                                    </div>
+                                    <div class="value-container">{{ lix }}</div>
+                                </div>
+                            </li>
+                            <li id="RIXMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">RIX</span>
+                                    </div>
+                                    <div class="value-container">{{ rix }}</div>
+                                </div>
+                            </li>
+                            
+                            <li id="SMOGMetric">
+                                <div class="list-item-container">
+                                    <div class="label-container">
+                                        <span class="label">SMOG</span>
+                                    </div>
+                                    <div class="value-container">{{ smog }}</div>
+                                </div>
+                            </li>
 
                             <hr style="background-color: white;">
 
@@ -480,7 +575,7 @@
                             <li id="uniqueWordsNoProper">
                                 <div class="list-item-container">
                                     <div class="label-container">
-                                        <span class="label">Unique Words(-proper)</span>
+                                        <span class="label">Unique Words (-proper)</span>
                                     
                                     </div>
                                     <div class="value-container">{{ unique_words_no_proper }}</div>
@@ -631,79 +726,6 @@
                         </ul>
                     </div>
 
-
-                    <!-- <div class="grid-item" id="metrics-section">
-                        <h2>Metrics</h2>
-                        <ul class="statistics-list">
-                            <li id="wordCountMetric"><span class="label">Total Words:</span> {{ word_count }} <i
-                                    class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                    title="The total # of words in this text selection" data-trigger="hover"></i></li>
-                            <ul style="padding-left: 20px;">
-                                <li id="totalWordsNoProper"><span class="label">Total Words(Proper Excluded):</span> {{
-                                    total_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                        data-placement="top"
-                                        title="The total # of words in this text selection, minus proper names"
-                                        data-trigger="hover"></i></li>
-                            </ul>
-                            <li id="vocabSizeMetric"><span class="label">Unique Words:</span> {{ vocab_size }} <i
-                                    class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                    title="The number of UNIQUE words in this text selection" data-trigger="hover"></i>
-                            </li>
-                            <ul style="padding-left: 20px;">
-                                <li id="uniqueWordsNoProper"><span class="label">Unique Words(Proper Excluded):</span>
-                                    {{
-                                    unique_words_no_proper }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                        data-placement="top"
-                                        title="The number of UNIQUE words in this text selection, minus proper names"
-                                        data-trigger="hover"></i></li>
-                            </ul>
-                            <li id=lexRMetric><span class="label">LexR:</span> {{ LexR }} <i class="fas fa-info-circle"
-                                    data-toggle="tooltip" data-placement="top"
-                                    title="((mean_worldlength_enclitic*0.457) + (freq_diederich300_minus_proper*0.063) + (freq_dcc_minus_proper*0.076) + (lex_soph_d*0.092) + (lex_c*0.312) + (lex_r*0.143)-11.7+6)*0.8333333333"
-                                    data-trigger="hover"></i></li>
-                            <li id="avgWordLength"><span class="label">Average Word Length:</span> {{
-                                avg_word_length }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                    data-placement="top" title="Average word length" data-trigger="hover"></i></li>
-
-                            <li id="lexDensityMetric"><span class="label">Lexical Density:</span> {{ lexical_density
-                                }}
-                                <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                    title="# of lexical words / # of total words" data-trigger="hover"></i>
-                            </li>
-                            <li id="lexSophisticationMetric"><span class="label">Lexical Sophistication:</span> {{
-                                lexical_sophistication }} <i class="fas fa-info-circle" data-toggle="tooltip"
-                                    data-placement="top" title="# of rare words / # of total words"
-                                    data-trigger="hover"></i></li>
-                            <li id="lexicalVariation"><span class="label">Lexical Variation:</span>
-                                <ul style="padding-left: 20px;">
-                                    <li id="cttrMetric"><span class="label">CTTR:</span> {{ lexical_variation[2] }}
-                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / square root of (2 * # of total tokens)"
-                                            data-trigger="hover"></i>
-                                    </li>
-                                    <li id="logTTRMetric"><span class="label">LogTTR:</span> {{
-                                        lexical_variation[3]}}
-                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="log # of unique tokens / log # of total tokens"
-                                            data-trigger="hover"></i>
-                                    </li>
-                                    <li id="rttrMetric"><span class="label">Root TTR:</span> {{ lexical_variation[1]
-                                        }}
-                                        <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / square root of total tokens"
-                                            data-trigger="hover"></i>
-                                    </li>
-                                    <li id="ttrMetric"><span class="label">TTR:</span> {{ lexical_variation[0] }} <i
-                                            class="fas fa-info-circle" data-toggle="tooltip" data-placement="top"
-                                            title="# of unique tokens / # of total tokens" data-trigger="hover"></i>
-                                    </li>
-
-                                </ul>
-                            </li>
-
-
-                        </ul>
-                    </div> -->
                     <!-- Plots Section -->
                     <div class="grid-item" id="plots-section">
                         <h2>Plots</h2>
@@ -727,18 +749,15 @@
                     <!-- Hapax Legomena Section -->
                     <div class="grid-item" id="hapax-section">
                         <div style="margin-bottom: 20px;">
-                            <h2>20 Most Characteristic Words<i class="fas fa-info-circle"
+                            <h2>20 Most Characteristic Words <i class="fas fa-info-circle"
                                     data-toggle="tooltip" data-placement="top"
                                     title="Top 20 most frequent words in this text not in the Diederich 300"
                                     data-trigger="hover"></i></h2>
-                            <!-- <p>Hapax Percentage: {{ hapax_percentage }}% <i class="fas fa-info-circle" data-toggle="tooltip"
-                                data-placement="top" title="Percent of total # of words that are Hapax Legomena"
-                                data-trigger="hover"></i></p> -->
                             <button type="button" class="collapsible"></button>
-                            <div class="content">
-                                <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
+                            <div class="content" style="min-height: fit-content;">
+                                <ul class="statistics-list" >
                                     {% for word in top20_NoDie300 %}
-                                    <li>{{ word }}</li>
+                                        <li>{{ word }}</li>
                                     {% endfor %}
                                 </ul>
                             </div>
@@ -749,7 +768,7 @@
                         
                         <button type="button" class="collapsible"></button>
                         <div class="content">
-                            <ul class="statistics-list" style="max-height: 300px; overflow-y: scroll;">
+                            <ul class="statistics-list scrollable">
                                 {% for word in hapax_legonema %}
                                 <li>{{ word }}</li>
                                 {% endfor %}
@@ -788,23 +807,13 @@
 </script>
 <!-- Enlarge Plots -->
 <script>
-    // // Select all plot images
-    // var plotImages = document.querySelectorAll(".plot-img");
-
-    // // Add a click event listener to each image
-    // plotImages.forEach(function (img) {
-    //     img.addEventListener("click", function () {
-    //         // Toggle the "enlarged" class on click
-    //         this.classList.toggle("enlarged");
-    //     });
-    // });
 
     // Get the modal
     var modal = document.getElementById("plotModal");
-
+    
     // Select all plot images
     var plotImages = document.querySelectorAll(".plot-img");
-
+    
     // Add a click event listener to each image
     plotImages.forEach(function (img) {
         img.addEventListener("click", function () {
@@ -813,6 +822,18 @@
             // Get the image and insert it inside the modal
             var modalImg = document.getElementById("img01");
             modalImg.src = this.src;
+        });
+    });
+    
+    var infoIcons = document.querySelectorAll(".info-icon");
+    infoIcons.forEach(function (icon) {
+        icon.addEventListener("click", function () {
+            var imgPath = this.getAttribute("data-img");
+            if (imgPath) {
+                modal.style.display = "block";
+                var modalImg = document.getElementById("img01");
+                modalImg.src = imgPath;
+            }
         });
     });
 
