@@ -3,9 +3,7 @@
 <style>
     body {
         padding-top: 15px;
-        /* Space between the navigation menu and the title */
         padding-bottom: 30px;
-        /* Space between the footer and the grid container */
     }
 
     h3 {
@@ -14,27 +12,20 @@
 
     .statistics-list {
         list-style-type: none;
-        /* removes bullet points */
         text-align: left;
-        /* aligns text to the left */
         width: fit-content;
-        /* fits the width to its content */
         margin: 0 auto;
-        /* centers the block */
         padding: 0;
     }
 
     .statistics-list li {
         font-size: 16px;
         padding: 5px 0;
-        /* adds some vertical spacing between list items */
     }
 
     .statistics-list .label {
         font-weight: bold;
-        /* makes the label bold */
         padding-right: 10px;
-        /* adds some space between label and value */
     }
     .scrollable {
         max-height: 600px;
@@ -75,7 +66,6 @@
 
     .content {
         padding: 0 18px;
-        /*max-height: 0;*/
         overflow: hidden;
         transition: max-height 0.2s ease-out;
     }
@@ -96,25 +86,19 @@
         background-color: rgba(0, 0, 0, 0.6);
         padding: 15px 20px;
         margin-top: 30px;
-        /* Space between navigation bar and title box */
         margin-bottom: 20px;
-        /* space between the title and the grid container */
     }
 
     .grid-container {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        /* creates 3 equal-width columns */
         gap: 20px;
-        /* adds some gap between the grid items */
         margin-bottom: 30px;
-        /* Space between the grid container and the footer */
     }
 
 
     .grid-item {
         background-color: rgba(0, 0, 0, 0.6);
-        /* same as your original color */
         padding: 15px 20px;
     }
 
@@ -122,13 +106,11 @@
         width: 100%;
         transition: transform 0.25s ease-in-out;
         cursor: zoom-in;
-        margin-bottom: 20px;
-        /* Add space between the images */
+        margin-bottom: 3rem;
     }
 
     .plot-img.enlarged {
         transform: scale(3);
-        /* Triple the size of the image when it's clicked */
         cursor: zoom-out;
         z-index: 10;
         position: relative;
@@ -138,11 +120,9 @@
         position: fixed;
         width: 300px;
         top: 120px;
-        /*should the height of the nav bar*/
         right: -300px;
         background-color: rgb(81, 81, 81, 0.9);
         z-index: 100000000;
-        /* Animation  */
         transition-property: all;
         transition-duration: 0.5s;
         transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
@@ -207,41 +187,30 @@
 
     .indent-checkbox {
         padding-left: 40px;
-        /* Adjust this value to what suits you best */
     }
 
     .indent-indent-checkbox {
         padding-left: 60px;
-        /* Adjust this value to what suits you best */
     }
 
     #plots {
-        overflow-y: auto;
         max-height: 800px;/*500px*/
     }
 
     /* The Modal (background) */
     .modal {
         display: none;
-        /* Hidden by default */
         position: fixed;
-        /* Stay in place */
         z-index: 999;
-        /* Sit on top */
         left: 0;
         top: 0;
         padding-top: 200px;
-        /* Add space at the top */
         width: 100%;
-        /* Full width */
         height: 100%;
-        /* Full height */
         overflow: auto;
-        /* Enable scroll if needed */
         background-color: rgb(0, 0, 0);
         /* Fallback color */
         background-color: rgba(0, 0, 0, 0.9);
-        /* Black w/ opacity */
     }
 
     /* Modal Content (Image) */
@@ -249,9 +218,7 @@
         margin: auto;
         display: block;
         max-width: 60%;
-        /* You can adjust this value */
         max-height: 80%;
-        /* You can adjust this value */
         object-fit: contain;
     }
 
@@ -280,16 +247,11 @@
 
     .label-container {
         text-align: right;
-        /* width: 100%; */
-
-        margin-right: 20px; /* Adjust this value to increase or decrease space */
-        
+        margin-right: 20px; 
     }
 
     .value-container {
         text-align: left;
-        /* width: 100%; */
-       
     }
 </style>
 
@@ -479,7 +441,7 @@
                                         <span class="label">Spache</span>
                                     
                                     </div>
-                                    <div class="value-container">{{ spache_score }}</div>
+                                    <div class="value-container">{{ spache }}</div>
                                 </div>
                             </li>
                             <li id="DaleChallMetric">
