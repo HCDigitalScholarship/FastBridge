@@ -898,6 +898,39 @@ class TextAnalyzer:
 
         else:
             print()
+    
+    @round_decorator
+    def spache_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        
+        sections = set()
+        total_words = 0
+        unique_words = set()
+        unfamiliar_words = set()
+
+        for word in text_slice:
+            lemma = word[0]
+            section = word[5]
+            if section is not None:
+                sections.add(section)
+            total_words += 1
+            unique_words.add(lemma)
+            if lemma not in self.dcc:
+                unfamiliar_words.add(lemma)
+
+        if len(sections) <= 1:
+            return "Spache cannot be computed: no sentence segmentation"
+
+        avg_sentence_length = total_words / len(sections)
+        percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
+
+        spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
+        print(f"Spache Score: {spache_score}")
+        return spache_score
+
 
     def __str__(self) -> str:
         toReturn = ""
@@ -1639,6 +1672,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         avgWordLength = analyzer.avgWordLength()
         top20NoDie300 = analyzer.top20NoDie300()
         freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
+        spache_score = analyzer.spache_score()
 
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1681,6 +1715,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "freq4": freqBin4,
             "freq5": freqBin5,
             "freq6": freqBin6,
+            "spache": spache_score,
             "freq_plot_path": freq_plot_path,
             "cum_lex_plot_path": cum_lex_plot_path,
             "lin_lex_plot_path": lin_lex_plot_path,
