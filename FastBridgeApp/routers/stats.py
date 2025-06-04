@@ -90,8 +90,6 @@ def mg_get_latin_dictionary(db):
     for row in cursor:
         if 'TITLE' in row:
             word_dictionary[row['TITLE']] = row
-        # else:
-            # print(row)
     return word_dictionary
 
 @timer_decorator
@@ -207,7 +205,6 @@ class TextAnalyzer:
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
-        print(f"\n\n\n{form_request}\n\n\n")
         location_list = MongoDefinitionTools.mg_get_locations(language, form_request)
         location_words = MongoDefinitionTools.mg_get_location_words(language, form_request)
         self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
@@ -219,8 +216,6 @@ class TextAnalyzer:
             return -1
         elif len(self.texts) == 1:
             return self.texts[0][0].name
-        else:
-            print()
 
     def num_words(self) -> int:
         if len(self.texts) == 0:
@@ -272,6 +267,7 @@ class TextAnalyzer:
                 allwords.append(word)
             hapax_legomena = find_hapax_legomena(allwords)
             hapax_legomena = sorted(hapax_legomena)  # Sort the hapax legomena
+            if len(allwords) < 1: return ([], 0)
             percentage = len(hapax_legomena) / len(allwords) * \
                 100  # Calculate the percentage
             if tupleFlag == True:
@@ -279,7 +275,6 @@ class TextAnalyzer:
             else:
                 return hapax_legomena, percentage
             
-            return hapax_legomena
         else:
             allwords = []
             for text in self.texts:
@@ -306,7 +301,7 @@ class TextAnalyzer:
                         lexicalSum += 1
 
             total_words = self.num_words()
-            lexical_density = lexicalSum/total_words
+            lexical_density = lexicalSum/total_words if total_words > 0 else 0
             return lexical_density
         else:
             lexicalSum = 0
@@ -336,7 +331,7 @@ class TextAnalyzer:
                     rareCount += 1
                 totalWords += 1
 
-            lexical_sophistication = rareCount/totalWords
+            lexical_sophistication = rareCount/totalWords if totalWords > 0 else 0
             return lexical_sophistication
         else:
             rareCount = 0
@@ -361,12 +356,14 @@ class TextAnalyzer:
                              for word_tuple in text_slice]))  # V
             total_words = self.num_words()  # N
 
-            TTR = num_unique/total_words
-            RootTTR = num_unique/sqrt(total_words)
-            CTTR = num_unique/sqrt(2*total_words)
-            LogTTR = log(num_unique)/log(total_words)
+            if total_words > 0:
+                TTR = num_unique/total_words
+                RootTTR = num_unique/sqrt(total_words)
+                CTTR = num_unique/sqrt(2*total_words)
+                LogTTR = log(num_unique)/log(total_words)
 
-            return (TTR, RootTTR, CTTR, LogTTR)
+                return (TTR, RootTTR, CTTR, LogTTR)
+            else: return (0, 0, 0, 0)
         else:
             total_unique = 0
             for text in self.texts:
@@ -448,8 +445,6 @@ class TextAnalyzer:
                     words.append(word)
 
             return len(words)
-        else:
-            print()
 
     def uniqueWordsNoProper(self):
         if len(self.texts) == 0:
@@ -460,6 +455,7 @@ class TextAnalyzer:
             # Go through the words of text_slice
             # Connect to Dictionary to filter out PROPER, "1" and "T"
             words = []
+            vocabulary = set()
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
@@ -468,8 +464,6 @@ class TextAnalyzer:
 
                 vocabulary = set(word for word in words)
             return len(vocabulary)
-        else:
-            print()
 
     def top20NoDie300(self):
         properNounCats = ["1", "T"]
@@ -568,8 +562,6 @@ class TextAnalyzer:
             freq_2500_plus = (count2500plus / total_words) * 100
 
             return freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500, freq_1501_2500, freq_2500_plus
-        else:
-            print()
              
 
     @round_decorator
@@ -584,10 +576,9 @@ class TextAnalyzer:
             words = []
             for word_tuple in text_slice:
                 words.append(word_tuple[0])
-
-            return sum(len(word) for word in words) / len(words)
-        else:
-            print()
+            if len(words) > 0:
+                return sum(len(word) for word in words) / len(words)
+            else: return 0
 
     def plot_word_freq(self, plot_num = 1):
         if len(self.texts) == 0:
@@ -676,7 +667,7 @@ class TextAnalyzer:
 
     def plot_lin_lex_load(self, plot_num=2):
         if len(self.texts) == 0:
-            return -1
+            return "/blank_plot.png"
         elif len(self.texts) == 1:
             text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -704,19 +695,24 @@ class TextAnalyzer:
                     continue
 
             if len(scores) == 0:
-                return -1  # Avoid issues with empty scores
+                return "/blank_plot.png"  
 
             # Calculate rolling average of the scores
             rolling_window_size = 25
+
             rolling_average = pd.Series(scores).rolling(window=rolling_window_size).mean()
-
+            rolling_average.dropna(inplace=True)
+            
             # Set the window length for the Savitzky-Golay filter
-            savgol_num = 51
-            if len(rolling_average.dropna()) < savgol_num:
-                savgol_num = len(rolling_average.dropna()) // 2 * 2 + 1  # Ensure window length is odd
+            savgol_num = min(51, len(rolling_average))
 
-            # Apply Savitzky-Golay filter
-            smoothed_scores = savgol_filter(rolling_average.dropna(), savgol_num, 3)
+            # Make sure window length is odd and at least 3 (minimum allowed for polyorder=3)
+            if savgol_num < 3: return "/blank_plot.png"
+
+            # Ensure window length is odd
+            if savgol_num % 2 == 0: savgol_num -= 1
+
+            smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
 
             x_indexes = list(range(len(smoothed_scores)))
 
@@ -740,12 +736,10 @@ class TextAnalyzer:
             plot_path = f'/plot{plot_num}.png'
             return plot_path  # Return the file path of the saved plot
 
-        else:
-            print()
 
     def plot_cum_lex_load(self, plot_num=0):
         if len(self.texts) == 0:
-            return -1
+            return '/blank_plot.png'
         elif len(self.texts) == 1:
             text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -773,7 +767,7 @@ class TextAnalyzer:
                     continue
 
             if len(scores) == 0:
-                return -1  # Avoid issues with empty scores
+                return '/blank_plot.png'  # Avoid issues with empty scores
 
             # Calculate cumulative sum of the scores
             cumulative_scores = pd.Series(scores).cumsum()
@@ -800,12 +794,10 @@ class TextAnalyzer:
             plot_path = f'/plot{plot_num}.png'
             return plot_path  # Return the file path of the saved plot
 
-        else:
-            print()
 
     def plot_freq_bin(self, plot_num = 4):
         if len(self.texts) == 0:
-            return -1
+            return '/blank_plot.png'
         elif len(self.texts) == 1:
             text_slice = get_slice(
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
@@ -847,12 +839,19 @@ class TextAnalyzer:
                         continue
 
             # print("Here", len(words), count0_200, self.texts)
-            freq_0_200 = count0_200/len(words)
-            freq_201_500 = count201_500/len(words)
-            freq_501_1000 = count501_1000/len(words)
-            freq_1001_1500 = count1001_1500/len(words)
-            freq_1501_2500 = count1501_2500/len(words)
-            freq_2500_plus = count2500plus/len(words)
+            freq_0_200 = 0
+            freq_201_500 = 0
+            freq_501_1000 = 0
+            freq_1001_1500 = 0
+            freq_1501_2500 = 0
+            freq_2500_plus = 0
+            if(len(words) > 0):
+                freq_0_200 = count0_200/len(words)
+                freq_201_500 = count201_500/len(words)
+                freq_501_1000 = count501_1000/len(words)
+                freq_1001_1500 = count1001_1500/len(words)
+                freq_1501_2500 = count1501_2500/len(words)
+                freq_2500_plus = count2500plus/len(words)
 
             data = {'Frequency Range': ['0-200', '201-500', '501-1000', '1001-1500', '1501-2500', '2500+'],
                     'Percentage of Words': [freq_0_200, freq_201_500, freq_501_1000, freq_1001_1500, freq_1501_2500, freq_2500_plus]}
@@ -897,13 +896,10 @@ class TextAnalyzer:
             plot_path = f'/plot{plot_num}.png'
             return plot_path
 
-        else:
-            print()
-    
     @round_decorator
     def spache_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
         
@@ -923,19 +919,18 @@ class TextAnalyzer:
                 unfamiliar_words.add(lemma)
 
         if len(sections) <= 1:
-            return "Spache cannot be computed: no sentence segmentation"
+            return 0
 
         avg_sentence_length = total_words / len(sections)
         percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
 
         spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
-        print(f"Spache Score: {spache_score}")
         return spache_score
     
     @round_decorator
     def dale_chall_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -955,7 +950,7 @@ class TextAnalyzer:
                 difficult_words += 1
 
         if len(sections) <= 1:
-            return "Dale-Chall cannot be computed: no sentence segmentation"
+            return 0
 
         # Compute PDW and ASL
         pdw = (difficult_words / total_words) * 100
@@ -966,13 +961,12 @@ class TextAnalyzer:
         if pdw >= 5:
             score += 3.6365
 
-        print(f"Dale-Chall score: {score}")
         return score
     
     @round_decorator
     def ari_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -991,24 +985,23 @@ class TextAnalyzer:
                 sections.add(section)
 
         if len(sections) <= 1:
-            return "ARI cannot be computed: no sentence segmentation"
+            return 0
 
         sentence_count = len(sections)
 
         # Compute ARI formula
         score = (4.71 * (total_chars / total_words)) + (0.5 * (total_words / sentence_count)) - 21.43
-        print(f"ARI score: {score}")
         return score
 
     @round_decorator
     def coleman_liau_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
         if len(text_slice) < 100:
-            return "Coleman–Liau cannot be computed: fewer than 100 words"
+            return 0
 
         # Only consider the first 100 words
         sample = text_slice[:100]
@@ -1029,13 +1022,12 @@ class TextAnalyzer:
         S = len(sentence_sections)  # Sentences in the first 100 words
 
         score = (0.0588 * L) - (0.296 * S) - 15.8
-        print(f"Coleman score: {score}")
         return score
     
     @round_decorator
     def lix_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -1055,7 +1047,7 @@ class TextAnalyzer:
                 sentence_sections.add(section)
 
         if total_words == 0 or len(sentence_sections) <= 1:
-            return "LIX cannot be computed: insufficient data"
+            return 0
 
         sentence_count = len(sentence_sections)
         percent_long_words = (long_words * 100) / total_words
@@ -1066,7 +1058,7 @@ class TextAnalyzer:
     @round_decorator
     def rix_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -1084,15 +1076,14 @@ class TextAnalyzer:
                 sentence_sections.add(section)
 
         if len(sentence_sections) <= 1:
-            return "RIX cannot be computed: insufficient sentence data"
+            return 0
 
         rix = long_words / len(sentence_sections)
-        print(f"rix score: {rix}")
         return rix
     @round_decorator
     def smog_score(self):
         if len(self.texts) == 0:
-            return "No text loaded"
+            return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -1112,15 +1103,10 @@ class TextAnalyzer:
         sentence_count = len(sentence_sections)
 
         if sentence_count <= 1 or complex_words == 0:
-            return "SMOG cannot be computed: insufficient data"
+            return 0
 
         smog = 1.043 * math.sqrt((complex_words * 30) / sentence_count) + 3.1291
-        print(f"Smog score: :{smog}")
         return smog
-
-
-
-
 
     def __str__(self) -> str:
         toReturn = ""
@@ -1447,7 +1433,9 @@ def get_average_subordinations_per_section(db, start_location_1, start_location_
 
 
 def calculate_average_word_length(words):
-    return sum(len(word) for word in words) / len(words)
+    if len(words) > 0:
+        return sum(len(word) for word in words) / len(words)
+    else: return 0
 
 
 def get_avg_word_length(text_object: Text, start_section, end_section):
@@ -1826,7 +1814,6 @@ async def stats_select(request: Request, language: str):
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
-    print("reaching section endpoint")
     sectionDict = MongoDefinitionTools.mg_get_locations(language, textname)
     return sectionDict
 
