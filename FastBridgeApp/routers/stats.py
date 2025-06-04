@@ -1,6 +1,7 @@
 import os
 import sys
 import importlib
+import math
 from math import log, sqrt
 import pandas as pd
 import seaborn as sns
@@ -930,6 +931,195 @@ class TextAnalyzer:
         spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
         print(f"Spache Score: {spache_score}")
         return spache_score
+    
+    @round_decorator
+    def dale_chall_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        total_words = 0
+        difficult_words = 0
+        sections = set()
+
+        for word in text_slice:
+            lemma = word[0]
+            section = word[5]
+
+            total_words += 1
+            if section is not None:
+                sections.add(section)
+
+            if lemma not in self.diederich:
+                difficult_words += 1
+
+        if len(sections) <= 1:
+            return "Dale-Chall cannot be computed: no sentence segmentation"
+
+        # Compute PDW and ASL
+        pdw = (difficult_words / total_words) * 100
+        asl = total_words / len(sections)
+
+        # Dale-Chall formula
+        score = (0.1579 * pdw) + (0.0496 * asl)
+        if pdw >= 5:
+            score += 3.6365
+
+        print(f"Dale-Chall score: {score}")
+        return score
+    
+    @round_decorator
+    def ari_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        total_words = 0
+        total_chars = 0
+        sections = set()
+
+        for word in text_slice:
+            lemma = word[0]
+            section = word[5]
+
+            total_words += 1
+            total_chars += len(lemma)
+
+            if section is not None:
+                sections.add(section)
+
+        if len(sections) <= 1:
+            return "ARI cannot be computed: no sentence segmentation"
+
+        sentence_count = len(sections)
+
+        # Compute ARI formula
+        score = (4.71 * (total_chars / total_words)) + (0.5 * (total_words / sentence_count)) - 21.43
+        print(f"ARI score: {score}")
+        return score
+
+    @round_decorator
+    def coleman_liau_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        if len(text_slice) < 100:
+            return "Coleman–Liau cannot be computed: fewer than 100 words"
+
+        # Only consider the first 100 words
+        sample = text_slice[:100]
+
+        total_letters = 0
+        sentence_sections = set()
+
+        for word in sample:
+            orthographic_form = word[2] 
+            section = word[5]            
+
+            total_letters += len(orthographic_form)
+
+            if section is not None:
+                sentence_sections.add(section)
+
+        L = total_letters / 100  # Average letters per 100 words
+        S = len(sentence_sections)  # Sentences in the first 100 words
+
+        score = (0.0588 * L) - (0.296 * S) - 15.8
+        print(f"Coleman score: {score}")
+        return score
+    
+    @round_decorator
+    def lix_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        total_words = 0
+        long_words = 0
+        sentence_sections = set()
+
+        for word in text_slice:
+            orthographic_form = word[2]  
+            section = word[5]            
+
+            total_words += 1
+            if len(orthographic_form) > 6:
+                long_words += 1
+
+            if section is not None:
+                sentence_sections.add(section)
+
+        if total_words == 0 or len(sentence_sections) <= 1:
+            return "LIX cannot be computed: insufficient data"
+
+        sentence_count = len(sentence_sections)
+        percent_long_words = (long_words * 100) / total_words
+
+        lix = (total_words / sentence_count) + percent_long_words
+        return lix
+    
+    @round_decorator
+    def rix_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        long_words = 0
+        sentence_sections = set()
+
+        for word in text_slice:
+            orthographic_form = word[2]  # correct index for orthographic form
+            section = word[5]
+
+            if len(orthographic_form) > 6:
+                long_words += 1
+
+            if section is not None:
+                sentence_sections.add(section)
+
+        if len(sentence_sections) <= 1:
+            return "RIX cannot be computed: insufficient sentence data"
+
+        rix = long_words / len(sentence_sections)
+        print(f"rix score: {rix}")
+        return rix
+    @round_decorator
+    def smog_score(self):
+        if len(self.texts) == 0:
+            return "No text loaded"
+
+        text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+
+        complex_words = 0
+        sentence_sections = set()
+
+        for word in text_slice:
+            orthographic_form = word[2]  # orthographic form
+            section = word[5]            # sentence marker
+
+            if len(orthographic_form) > 6:
+                complex_words += 1
+
+            if section is not None:
+                sentence_sections.add(section)
+
+        sentence_count = len(sentence_sections)
+
+        if sentence_count <= 1 or complex_words == 0:
+            return "SMOG cannot be computed: insufficient data"
+
+        smog = 1.043 * math.sqrt((complex_words * 30) / sentence_count) + 3.1291
+        print(f"Smog score: :{smog}")
+        return smog
+
+
+
 
 
     def __str__(self) -> str:
@@ -1673,6 +1863,13 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         top20NoDie300 = analyzer.top20NoDie300()
         freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
         spache_score = analyzer.spache_score()
+        dale_chall = analyzer.dale_chall_score()
+        ari = analyzer.ari_score()
+        coleman_liau = analyzer.coleman_liau_score()
+        lix_score = analyzer.lix_score()
+        rix_score = analyzer.rix_score()
+        smog_score = analyzer.smog_score()
+
 
         # plot functions return the location of plot images
         freq_plot_path = analyzer.plot_word_freq()  # call your plot function here
@@ -1705,6 +1902,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "lexical_sophistication": lex_sophistication,
             "lexical_variation": lex_variation,
             "LexR": lex_r,
+            "smog": smog_score,
             "total_words_no_proper": total_words_no_p,
             "unique_words_no_proper": unique_words_no_p,
             "avg_word_length": avgWordLength,
@@ -1716,6 +1914,11 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
             "freq5": freqBin5,
             "freq6": freqBin6,
             "spache": spache_score,
+            "dale_chall": dale_chall,
+            "ari": ari,
+            "coleman_liau": coleman_liau,
+            "lix": lix_score,
+            "rix": rix_score,
             "freq_plot_path": freq_plot_path,
             "cum_lex_plot_path": cum_lex_plot_path,
             "lin_lex_plot_path": lin_lex_plot_path,
