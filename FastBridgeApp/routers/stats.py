@@ -619,14 +619,14 @@ class TextAnalyzer:
             plt.setp(ax.get_yticklabels(), fontproperties=prop)
 
             
-            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            # plot_path = parent_dir + plot_partial
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
 
-            # working plot path
-            plot_path = f'/plot{plot_num}.png'
-            
             plt.savefig(plot_path)
             plt.close()  # close the plot
+            
+            # working plot path
+            plot_path = f'/plot{plot_num}.png'
 
             return plot_path  # return the file path of the saved plot
         else:
@@ -661,18 +661,19 @@ class TextAnalyzer:
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            # plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            # plot_path = parent_dir + plot_partial
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             
-            plot_path = f'/plot{plot_num}.png'
             
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
+            plot_path = f'/plot{plot_num}.png'
+
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, plot_num=0):
+    def plot_lin_lex_load(self, plot_num=2):
         if len(self.texts) == 0:
             return -1
         elif len(self.texts) == 1:
@@ -728,14 +729,14 @@ class TextAnalyzer:
             plt.xlabel('Word Index', **axis_font)
             plt.ylabel('Smoothed Lexical Load', **axis_font)
 
-            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            # plot_path = parent_dir + plot_partial
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             
-            plot_path = f'/plot{plot_num}.png'
 
             plt.savefig(plot_path)
             plt.close()  # Close the plot
 
+            plot_path = f'/plot{plot_num}.png'
             return plot_path  # Return the file path of the saved plot
 
         else:
@@ -788,14 +789,14 @@ class TextAnalyzer:
             plt.xlabel('Word Index', fontdict={'fontsize': 10})
             plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            # plot_path = parent_dir + plot_partial
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             
-            plot_path = f'/plot{plot_num}.png'
 
             plt.savefig(plot_path)
             plt.close()  # Close the plot
 
+            plot_path = f'/plot{plot_num}.png'
             return plot_path  # Return the file path of the saved plot
 
         else:
@@ -884,15 +885,15 @@ class TextAnalyzer:
 
             # Save plot as an image file instead of showing
             # replace with the actual path and name
-            # plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
-            # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-            # plot_path = parent_dir + plot_partial
+            plot_path = f'/FastBridge/FastBridgeApp/static/assets/plots/plot{plot_num}.png'
+            plot_partial = f'/static/assets/plots/plot{plot_num}.png'
+            plot_path = parent_dir + plot_partial
             
-            plot_path = f'/plot{plot_num}.png'
             
             plt.savefig(plot_path)
             plt.close()  # close the plot
 
+            plot_path = f'/plot{plot_num}.png'
             return plot_path
 
         else:
