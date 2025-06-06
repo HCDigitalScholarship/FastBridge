@@ -25,7 +25,7 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 import MongoDefinitionTools
-from MongoDefinitionTools import AtlasClient, db, dict_db
+from MongoDefinitionTools import AtlasClient, db, dict_db, mg_format_title
 
 
 '''
@@ -580,7 +580,7 @@ class TextAnalyzer:
                 return sum(len(word) for word in words) / len(words)
             else: return 0
 
-    def plot_word_freq(self, plot_num = 1):
+    def plot_word_freq(self, plot_num = 0):
         if len(self.texts) == 0:
             return
         elif len(self.texts) == 1:
@@ -665,7 +665,7 @@ class TextAnalyzer:
 
             return plot_path  # return the file path of the saved plot
 
-    def plot_lin_lex_load(self, plot_num=2):
+    def plot_lin_lex_load(self, plot_num = 2):
         if len(self.texts) == 0:
             return "/blank_plot.png"
         elif len(self.texts) == 1:
@@ -737,7 +737,7 @@ class TextAnalyzer:
             return plot_path  # Return the file path of the saved plot
 
 
-    def plot_cum_lex_load(self, plot_num=0):
+    def plot_cum_lex_load(self, plot_num = 1):
         if len(self.texts) == 0:
             return '/blank_plot.png'
         elif len(self.texts) == 1:
@@ -795,7 +795,7 @@ class TextAnalyzer:
             return plot_path  # Return the file path of the saved plot
 
 
-    def plot_freq_bin(self, plot_num = 4):
+    def plot_freq_bin(self, plot_num = 3):
         if len(self.texts) == 0:
             return '/blank_plot.png'
         elif len(self.texts) == 1:
@@ -1978,6 +1978,13 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     avgWordLength = analyzer.avgWordLength()
     top20NoDie300 = analyzer.top20NoDie300()
     freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
+    spache_score = analyzer.spache_score()
+    dale_chall = analyzer.dale_chall_score()
+    ari = analyzer.ari_score()
+    coleman_liau = analyzer.coleman_liau_score()
+    lix_score = analyzer.lix_score()
+    rix_score = analyzer.rix_score()
+    smog_score = analyzer.smog_score()
     
     # Remove file path references and use database for plots (if applicable)
     plotpath_nums = [0, 1, 2, 3]
@@ -1994,7 +2001,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     
     context.update({
         "request": request,
-        "text_name": textname,
+        "text_name": mg_format_title(textname),
         "start_section": section_start,
         "end_section": section_end,
         "word_count": word_count,
@@ -2005,6 +2012,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
         "lexical_sophistication": lex_sophistication,
         "lexical_variation": lex_variation,
         "LexR": lex_r,
+        "smog": smog_score,
         "total_words_no_proper": total_words_no_p,
         "unique_words_no_proper": unique_words_no_p,
         "avg_word_length": avgWordLength,
@@ -2015,6 +2023,12 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
         "freq4": freqBin4,
         "freq5": freqBin5,
         "freq6": freqBin6,
+        "spache": spache_score,
+        "dale_chall": dale_chall,
+        "ari": ari,
+        "coleman_liau": coleman_liau,
+        "lix": lix_score,
+        "rix": rix_score,
         "freq_plot_path": freq_plot_path,
         "cum_lex_plot_path": cum_lex_plot_path,
         "lin_lex_plot_path": lin_lex_plot_path,

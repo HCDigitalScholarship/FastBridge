@@ -5,14 +5,11 @@
     .dropdown-container {
         position: relative;
         top: 100px;
-        /* adjust as necessary */
     }
 
     .loader {
         border: 16px solid #f3f3f3;
-        /* Light grey */
         border-top: 16px solid #3498db;
-        /* Blue */
         border-radius: 50%;
         width: 50px;
         height: 50px;
@@ -31,19 +28,11 @@
 
     .col-md-6 {
         background-color: rgba(0, 0, 0, 0.5);
-        /* overflow: hidden; */
     }
 
-    /* body {
-        background-image: url('/assets/img/stats_background_2.jpg');
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        /* this will make the background fixed even when scrolling */
-
     .masthead {
-    padding-top: 80px;  /* Adjust this value according to the height of your navbar */
-}
+        padding-top: 80px;  /* Adjust this value according to the height of your navbar */
+    }
 
 </style>
 
@@ -135,7 +124,7 @@
 <!-- updateData -->
 <script>
     function updateData(dropdownId) {
-
+        
         var selectElement = document.getElementById(dropdownId);
         var selectedIndex = selectElement.selectedIndex;
         var textName = selectElement.options[selectedIndex].text;
@@ -184,11 +173,44 @@
                 } else if (dropdownId === "dropdown2") {
                     document.getElementById("column2").innerHTML = data;
                 }
+                setupPlotModal();
                 // Hide the loader after the request is complete
                 loaderElement.style.display = "none";
             });
     }
 </script>
+
+<!-- Enlarging Plots script -->
+<script>
+    function setupPlotModal() {
+        var modal = document.getElementById("plotModal");
+
+        var plotImages = document.querySelectorAll(".plot-img");
+
+        plotImages.forEach(function (img) {
+            img.addEventListener("click", function () {
+                modal.style.display = "block";
+                var modalImg = document.getElementById("img01");
+                modalImg.src = this.src;
+            });
+        });
+
+        var span = document.getElementsByClassName("close")[0];
+        if (span) {
+            span.onclick = function () {
+                modal.style.display = "none";
+            };
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    }
+
+</script>
+
 <!-- updateData for default selection -->
 <script>
     function updateDataDefault(dropdownId) {
@@ -204,21 +226,17 @@
         }
 
         var textName = selectElement.options[selectedIndex].text;
-        // var selectElement = document.getElementById(dropdownId);
-        // var selectedIndex = selectElement.selectedIndex;
-        // var textName = selectElement.options[selectedIndex].text;
 
         // Get the current URL
         var currentUrl = window.location.href;
 
         // Extract the sections from the current URL
         var urlParts = currentUrl.split("/");
-        console.log(urlParts)
 
         //extract starts and ends
         var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
         var starts_and_ends = sections.split("-")
-        console.log(starts_and_ends)
+
         var starts = starts_and_ends[0].split("+")
         var ends = starts_and_ends[1].split("+")
 
@@ -252,6 +270,7 @@
                 } else if (dropdownId === "dropdown2") {
                     document.getElementById("column2").innerHTML = data;
                 }
+                setupPlotModal()
                 // Hide the loader after the request is complete
                 loaderElement.style.display = "none";
             });
@@ -300,9 +319,7 @@
 
 
         // Get the corresponding value from textsAndSections dictionary
-        // var sections = textsAndSections[selectedKey];
 
-        console.log(sections)
         // Get references to dropdown2 and dropdown3
         var dropdown2 = document.getElementById("new-dropdown2");
         var dropdown3 = document.getElementById("new-dropdown3");
@@ -502,8 +519,6 @@
         updateDataDefault('dropdown1');
         updateDataDefault('dropdown2');
         updateDropdowns()
-
-
     }
 
 
