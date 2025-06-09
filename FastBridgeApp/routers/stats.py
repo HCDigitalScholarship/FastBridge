@@ -25,7 +25,7 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 import MongoDefinitionTools
-from MongoDefinitionTools import db, dict_db, mg_format_title
+from MongoDefinitionTools import db, dict_db
 
 
 '''
@@ -264,7 +264,7 @@ class TextAnalyzer:
             allwords = []
             for word_tuple in text_slice:
                 word = word_tuple[2]
-                allwords.append(word)
+                if word: allwords.append(word)
             hapax_legomena = find_hapax_legomena(allwords)
             hapax_legomena = sorted(hapax_legomena)  # Sort the hapax legomena
             if len(allwords) < 1: return ([], 0)
@@ -1040,7 +1040,7 @@ class TextAnalyzer:
             section = word[5]            
 
             total_words += 1
-            if len(orthographic_form) > 6:
+            if orthographic_form and len(orthographic_form) > 6:
                 long_words += 1
 
             if section is not None:
@@ -1069,7 +1069,7 @@ class TextAnalyzer:
             orthographic_form = word[2]  # correct index for orthographic form
             section = word[5]
 
-            if len(orthographic_form) > 6:
+            if orthographic_form and len(orthographic_form) > 6:
                 long_words += 1
 
             if section is not None:
@@ -1094,7 +1094,7 @@ class TextAnalyzer:
             orthographic_form = word[2]  # orthographic form
             section = word[5]            # sentence marker
 
-            if len(orthographic_form) > 6:
+            if orthographic_form and len(orthographic_form) > 6:
                 complex_words += 1
 
             if section is not None:
@@ -2000,7 +2000,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     
     context.update({
         "request": request,
-        "text_name": mg_format_title(textname),
+        "text_name": textname,
         "start_section": section_start,
         "end_section": section_end,
         "word_count": word_count,
