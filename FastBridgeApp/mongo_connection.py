@@ -50,7 +50,7 @@ if on_dev_server:
         raise
 else:
     try: 
-        DB_NAME = 'local-dev'
+        DB_NAME = 'Latin-Texts'
         COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
         ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
 
