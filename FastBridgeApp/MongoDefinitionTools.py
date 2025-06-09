@@ -7,31 +7,9 @@ import importlib
 from collections import namedtuple, deque
 import re
 import time 
-from mongo_connection import db, dict_db
-from text_title_rename_dict import title_renaming_dict
+from mongo_connection import db, dict_db, atlas_client
+from text_title_rename_dict import title_renaming_dict, string_to_slug
 
-
-class AtlasClient():
-    
-    def __init__(self, atlas_uri, dbname):
-        self.mongodb_client = MongoClient(atlas_uri, tls=True, tlsAllowInvalidHostnames=True, tlsAllowInvalidCertificates=True)
-        self.database = self.mongodb_client[dbname]
-
-    def ping(self):
-        self.mongodb_client.admin.command('ping')
-
-    def get_collection(self, collection_name):
-        collection = self.database[collection_name]
-        return collection
-
-    def find(self, collection_name, filter={}, limit=0):
-        collection = self.database[collection_name]
-        items = list(collection.find(filter=filter, limit=limit))
-        return items
-    
-    def get_database(self, dbname):
-        selected_database = self.mongodb_client[dbname]
-        return selected_database
     
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
@@ -164,10 +142,13 @@ def mg_get_locations(language: str, collection_name: str):
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
     '''
+    
+    global db
+    if language == 'Greek': db = atlas_client.get_database("Greek-Texts")
+    else: db = atlas_client.get_database("Latin-Texts")
 
-    print("calling mg_get_locations()")
     print(f"mg_get_locations() received a collection_name of: {collection_name}")
-    collection = db[collection_name]  # Replace 'your_collection_name' with the name of your collection
+    collection = db[collection_name]  
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
     locations_list = ["start"] # locations is a list to store the location data from each document
 
@@ -257,11 +238,17 @@ def mg_render_titles(language: str, dropdown : str = ""):
     Returns:
     titles: A list of HTML code to display the text titles.
     """
+   
+    global db
+    if language == 'Greek': db = atlas_client.get_database("Greek-Texts")
+    else: db = atlas_client.get_database("Latin-Texts")
+        
+
     title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
-    
+
     titles = []
     [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
-    print(titles)
+    
     return "".join(titles)
 
 
@@ -285,14 +272,15 @@ def mg_get_location_levels(language: str):
     # Iterate over each collection (text) in the database
     for collection_name in collection_names:
         collection = db[collection_name]
-
-        location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
         
-        underscore_count = location.count("_") + 1 # Count the number of _ in the location string
+        # uncoment this out when/if you figure out what the location is doing 
+        # location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
+        
+        # underscore_count = location.count("_") + 1 # Count the number of _ in the location string
 
-        title_location_levels[mg_format_title(collection_name)] = underscore_count # Add the location level to the dictionary
+        # title_location_levels[collection_name.split("_")[0]] = underscore_count # Add the location level to the dictionary
+        title_location_levels[collection_name.split("_")[0]] = -1 # Add the location level to the dictionary
 
-    # print(title_location_levels)
     return title_location_levels
 
 def mg_format_sections(locations):
@@ -321,8 +309,8 @@ def mg_get_text(title: str):
     collections = db.list_collection_names()
 
     # Iterate through collections and search for the document
-    if title in collections:
-        return title
+    if title_renaming_dict[title] in collections:
+        return title_renaming_dict[title]
     # if the document isn't found in any collection, return None
     else: 
         return None
@@ -370,7 +358,6 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
             print("KEY ERROR!")
             empty_dict_data = ('','','','','','','','','','','','','')
             datum = (words_from_text[i][0],) + (empty_dict_data) + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
-            # print(words_from_text[i][0])
             print(datum)
             continue
         if has_local_defs and has_local_lems:
@@ -616,23 +603,8 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
 
     print("FInished loading text as Text!!!")
     #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
-    return text.Text(collection_name, location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
-def mg_format_title(unformatted_title: str):
-    '''
-    Formats a title string to be more readable.s By replacing underscores with spaces. 
-    For example,'200_essential_latin_words_list_mahoney'is converted to
-    '200 Essential Latin Words List (Mahoney)'
-    
-    Parameters:
-    unformatted_title (str): The title string to format.
-    
-    Returns: 
-    formatted_title (str): The formatted title string.
-    
-    '''
-    formatted_title = unformatted_title.replace('_', ' ')
-    return formatted_title
 
 def mg_format_title(unformatted_title: str):
     '''
