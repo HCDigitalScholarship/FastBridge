@@ -25,7 +25,7 @@ from datetime import datetime
 import DefinitionTools
 from pathlib import Path
 import MongoDefinitionTools
-from MongoDefinitionTools import AtlasClient, db, dict_db, mg_format_title
+from MongoDefinitionTools import db, dict_db, mg_format_title
 
 
 '''
@@ -1107,6 +1107,215 @@ class TextAnalyzer:
 
         smog = 1.043 * math.sqrt((complex_words * 30) / sentence_count) + 3.1291
         return smog
+    
+    def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size=25):
+        start_index = text_object.sections[start_section]
+        end_index = text_object.sections[end_section]
+        text_slice = text_object.words[start_index:end_index]
+
+        if start_section == 'start' and end_section == 'end':
+            text_slice = text_object.words
+
+        # Go through the words of text_slice
+        # Connect to Dictionary to filter out PROPER, "1" and "T"
+        words = []
+        scores = []
+        for word_tuple in text_slice:
+            word = word_tuple[0]
+            # filter out proper nouns
+            if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                words.append(word)
+
+        for word in words:
+            if word in self.dictionary:
+                if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                    scores.append(2)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                    scores.append(1)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                    scores.append(-1)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                    scores.append(-2)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                    scores.append(-4)
+                    continue
+            else:
+                scores.append(-4)
+                continue
+
+        # Calculate rolling average of the scores
+        rolling_average = pd.Series(scores).rolling(
+            window=rolling_window_size).mean()
+
+        # Apply Savitzky-Golay filter
+        # window size 51, polynomial order 3
+        smoothed_scores = savgol_filter(rolling_average, 101, 3)
+
+        x_indexes = list(range(len(words)))
+
+        # calculate average linear lexical score for the entire text
+        average_score = np.mean(scores)
+
+        sns.set_style("ticks")
+        sns.set_context("paper")
+        plt.figure(figsize=(10, 5))
+        sns.lineplot(x=x_indexes, y=smoothed_scores,
+                    errorbar=None, color=colorblind_palette[0])
+
+        # add a horizontal line representing the average linear lexical score
+        plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
+
+        sns.despine()
+        plt.title(f"Linear Lexical Load of {text_object.name}", **title_font)
+        plt.xlabel('Word', **axis_font)
+        plt.ylabel(
+            f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
+
+        # Get the current Axes instance
+        ax = plt.gca()
+
+        # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
+        # tick_spacing = rolling_window_size  # change this to the size of your slices
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+
+        # set font properties to x and y tick labels
+        plt.setp(ax.get_xticklabels(), fontproperties=prop)
+        plt.setp(ax.get_yticklabels(), fontproperties=prop)
+
+        plt.show()
+
+
+    def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_divisor=25, slice_override=0):
+        start_index = text_object.sections[start_section]
+        end_index = text_object.sections[end_section]
+        text_slice = text_object.words[start_index:end_index]
+
+        if start_section == 'start' and end_section == 'end':
+            text_slice = text_object.words
+
+        # Go through the words of text_slice
+        # Connect to Dictionary to filter out PROPER, "1" and "T"
+        words = []
+        scores = []
+        for word_tuple in text_slice:
+            word = word_tuple[0]
+            # filter out proper nouns
+            if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                words.append(word)
+
+        for word in words:
+            if word in self.dictionary:
+                if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                    scores.append(2)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                    scores.append(1)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                    scores.append(-1)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                    scores.append(-2)
+                    continue
+                if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                    scores.append(-4)
+                    continue
+            else:
+                scores.append(-4)
+                continue
+
+        # Convert scores to an array of floats->FOR PADDING
+        scores = np.array(scores, dtype=float)
+
+        slice_size = len(scores)//slice_divisor
+
+        if slice_override != 0:
+            slice_size = slice_override
+
+        # Calculate the remainder of the division
+        remainder = len(scores) % slice_size
+
+        # If there's a remainder, pad the scores array
+        if remainder != 0:
+            # Calculate how many elements we need to add
+            pad_size = slice_size - remainder
+
+        # Pad the scores array with np.nan values
+        scores = np.pad(scores, (0, pad_size), mode='constant',
+                        constant_values=np.nan)
+
+        # Reshape the scores into 2D array where each row corresponds to a slice of words
+        scores_matrix = np.array(scores).reshape((-1, slice_size))
+
+        sns.set_style("ticks")
+        sns.set_context("paper")
+        plt.figure(figsize=(10, 5))
+
+        # Create a heatmap
+        sns.heatmap(scores_matrix, cmap='cividis')
+
+        sns.despine()
+        plt.title(
+            f"Heatmap of Linear Lexical Load of {text_object.name}", **title_font)
+        plt.xlabel('Word within Word Slice', **axis_font)
+        plt.ylabel(f'{slice_size}-Word Slice', **axis_font)
+
+        # calculate average linear lexical score for the entire text
+        average_score = np.mean(scores)
+
+        # Get the current Axes instance
+        ax = plt.gca()
+
+        # set font properties to x and y tick labels
+        plt.setp(ax.get_xticklabels(), fontproperties=prop)
+        plt.setp(ax.get_yticklabels(), fontproperties=prop)
+
+        plt.show()
+        
+    def get_lexical_density(text_object: Text, start_section, end_section):
+        # nlp = spacy.load("la_core_web_trf")
+        start_index = text_object.sections[start_section]
+        end_index = text_object.sections[end_section]
+        text_slice = text_object.words[start_index:end_index]
+
+        if start_section == 'start' and end_section == 'end':
+            text_slice = text_object.words
+
+        # FINDING LEXICAL WORDS
+        # spacyString = ""
+
+        lexicalCategories = ["Adjective", "Adverb", "Noun", "Verb"]
+        lexicalSum = 0
+        for word_tuple in text_slice:
+            word = word_tuple[0]
+            if word in self.dictionary:
+                if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
+                    lexicalSum += 1
+
+            # if len(spacyString) == 0:
+            #     spacyString = word
+            # else:
+            #     spacyString += f" {word}"
+
+        # doc = nlp(spacyString)
+
+        # lexicalSum = 0
+        # lexicalCategories = ['NOUN', 'ADV', 'PROPN', 'ADJ', 'VERB']
+        # for token in doc:
+        #     if token.pos_ in lexicalCategories:
+        #         lexicalSum += 1
+
+        # FINDING TOTAL WORDS IN SECTION
+        total_words = get_number_of_words(text_object, start_section, end_section)
+
+        lexical_density = lexicalSum/total_words
+
+        return lexical_density
+
 
     def __str__(self) -> str:
         toReturn = ""
@@ -1300,47 +1509,6 @@ def get_hapax_legomena(text_object: Text, start_section, end_section):
 
     hapax_legomena = find_hapax_legomena(allwords)
     return hapax_legomena
-
-
-def get_lexical_density(text_object: Text, start_section, end_section):
-    # nlp = spacy.load("la_core_web_trf")
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    # FINDING LEXICAL WORDS
-    # spacyString = ""
-
-    lexicalCategories = ["Adjective", "Adverb", "Noun", "Verb"]
-    lexicalSum = 0
-    for word_tuple in text_slice:
-        word = word_tuple[0]
-        if word in self.dictionary:
-            if self.dictionary[word]["PART_OF_SPEECH"] in lexicalCategories:
-                lexicalSum += 1
-
-        # if len(spacyString) == 0:
-        #     spacyString = word
-        # else:
-        #     spacyString += f" {word}"
-
-    # doc = nlp(spacyString)
-
-    # lexicalSum = 0
-    # lexicalCategories = ['NOUN', 'ADV', 'PROPN', 'ADJ', 'VERB']
-    # for token in doc:
-    #     if token.pos_ in lexicalCategories:
-    #         lexicalSum += 1
-
-    # FINDING TOTAL WORDS IN SECTION
-    total_words = get_number_of_words(text_object, start_section, end_section)
-
-    lexical_density = lexicalSum/total_words
-
-    return lexical_density
 
 
 def get_lexical_sophistication(text_object: Text, start_section, end_section):
@@ -1620,176 +1788,6 @@ def get_lex_r(db, text_object: Text, start_section, end_section):
 
 ##    plt.show()
 
-
-def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size=25):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    # Go through the words of text_slice
-    # Connect to Dictionary to filter out PROPER, "1" and "T"
-    words = []
-    scores = []
-    for word_tuple in text_slice:
-        word = word_tuple[0]
-        # filter out proper nouns
-        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
-            words.append(word)
-
-    for word in words:
-        if word in self.dictionary:
-            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
-                scores.append(2)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
-                scores.append(1)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
-                scores.append(-1)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
-                scores.append(-2)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
-                scores.append(-4)
-                continue
-        else:
-            scores.append(-4)
-            continue
-
-    # Calculate rolling average of the scores
-    rolling_average = pd.Series(scores).rolling(
-        window=rolling_window_size).mean()
-
-    # Apply Savitzky-Golay filter
-    # window size 51, polynomial order 3
-    smoothed_scores = savgol_filter(rolling_average, 101, 3)
-
-    x_indexes = list(range(len(words)))
-
-    # calculate average linear lexical score for the entire text
-    average_score = np.mean(scores)
-
-    sns.set_style("ticks")
-    sns.set_context("paper")
-    plt.figure(figsize=(10, 5))
-    sns.lineplot(x=x_indexes, y=smoothed_scores,
-                errorbar=None, color=colorblind_palette[0])
-
-    # add a horizontal line representing the average linear lexical score
-    plt.axhline(y=average_score, color=colorblind_palette[1], linestyle='--')
-
-    sns.despine()
-    plt.title(f"Linear Lexical Load of {text_object.name}", **title_font)
-    plt.xlabel('Word', **axis_font)
-    plt.ylabel(
-        f'{rolling_window_size}-Word Rolling Average of Linear Lexical Load Score', **axis_font)
-
-    # Get the current Axes instance
-    ax = plt.gca()
-
-    # set x-axis ticks to window size?  -> Only activate this if you want to see all the numbers jumble up at the bottom
-    # tick_spacing = rolling_window_size  # change this to the size of your slices
-    # ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-
-    # set font properties to x and y tick labels
-    plt.setp(ax.get_xticklabels(), fontproperties=prop)
-    plt.setp(ax.get_yticklabels(), fontproperties=prop)
-
-    plt.show()
-
-
-def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_divisor=25, slice_override=0):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    # Go through the words of text_slice
-    # Connect to Dictionary to filter out PROPER, "1" and "T"
-    words = []
-    scores = []
-    for word_tuple in text_slice:
-        word = word_tuple[0]
-        # filter out proper nouns
-        if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
-            words.append(word)
-
-    for word in words:
-        if word in self.dictionary:
-            if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
-                scores.append(2)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
-                scores.append(1)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
-                scores.append(-1)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
-                scores.append(-2)
-                continue
-            if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
-                scores.append(-4)
-                continue
-        else:
-            scores.append(-4)
-            continue
-
-    # Convert scores to an array of floats->FOR PADDING
-    scores = np.array(scores, dtype=float)
-
-    slice_size = len(scores)//slice_divisor
-
-    if slice_override != 0:
-        slice_size = slice_override
-
-    # Calculate the remainder of the division
-    remainder = len(scores) % slice_size
-
-    # If there's a remainder, pad the scores array
-    if remainder != 0:
-        # Calculate how many elements we need to add
-        pad_size = slice_size - remainder
-
-    # Pad the scores array with np.nan values
-    scores = np.pad(scores, (0, pad_size), mode='constant',
-                    constant_values=np.nan)
-
-    # Reshape the scores into 2D array where each row corresponds to a slice of words
-    scores_matrix = np.array(scores).reshape((-1, slice_size))
-
-    sns.set_style("ticks")
-    sns.set_context("paper")
-    plt.figure(figsize=(10, 5))
-
-    # Create a heatmap
-    sns.heatmap(scores_matrix, cmap='cividis')
-
-    sns.despine()
-    plt.title(
-        f"Heatmap of Linear Lexical Load of {text_object.name}", **title_font)
-    plt.xlabel('Word within Word Slice', **axis_font)
-    plt.ylabel(f'{slice_size}-Word Slice', **axis_font)
-
-    # calculate average linear lexical score for the entire text
-    average_score = np.mean(scores)
-
-    # Get the current Axes instance
-    ax = plt.gca()
-
-    # set font properties to x and y tick labels
-    plt.setp(ax.get_xticklabels(), fontproperties=prop)
-    plt.setp(ax.get_yticklabels(), fontproperties=prop)
-
-    plt.show()
-
-
 # Routing
 router = APIRouter()
 router_path = Path.cwd()
@@ -1835,6 +1833,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
 
     if '+' not in sourcetexts:  # Only 1 text has been added - SingleStats
         analyzer.add_text(sourcetexts, language, starts, ends)
+        print(analyzer.texts)
 
         textname = analyzer.get_textname()
         word_count = analyzer.num_words()
