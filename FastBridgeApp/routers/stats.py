@@ -200,6 +200,7 @@ class TextAnalyzer:
             return -1
         elif len(self.texts) == 1:
             return self.texts[0][0].name
+        
 
     def num_words(self) -> int:
         if len(self.texts) == 0:
@@ -1046,7 +1047,7 @@ class TextAnalyzer:
         sentence_sections = set()
 
         for word in text_slice:
-            orthographic_form = word[2]  # correct index for orthographic form
+            orthographic_form = word[2]  
             section = word[5]
 
             if orthographic_form and len(orthographic_form) > 6:
@@ -1088,7 +1089,7 @@ class TextAnalyzer:
         smog = 1.043 * math.sqrt((complex_words * 30) / sentence_count) + 3.1291
         return smog
     
-    def plot_rolling_lin_lex_load(text_object: Text, start_section, end_section, rolling_window_size=25):
+    def plot_rolling_lin_lex_load(self, text_object: Text, start_section, end_section, rolling_window_size=25):
         start_index = text_object.sections[start_section]
         end_index = text_object.sections[end_section]
         text_slice = text_object.words[start_index:end_index]
@@ -1169,7 +1170,7 @@ class TextAnalyzer:
         plt.show()
 
 
-    def plot_linear_heatmap(text_object: Text, start_section, end_section, slice_divisor=25, slice_override=0):
+    def plot_linear_heatmap(self, text_object: Text, start_section, end_section, slice_divisor=25, slice_override=0):
         start_index = text_object.sections[start_section]
         end_index = text_object.sections[end_section]
         text_slice = text_object.words[start_index:end_index]
@@ -1256,7 +1257,7 @@ class TextAnalyzer:
 
         plt.show()
         
-    def get_lexical_density(text_object: Text, start_section, end_section):
+    def get_lexical_density(self, text_object: Text, start_section, end_section):
         # nlp = spacy.load("la_core_web_trf")
         start_index = text_object.sections[start_section]
         end_index = text_object.sections[end_section]
