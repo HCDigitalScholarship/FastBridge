@@ -136,14 +136,6 @@ def get_text(form_request: str, language: str):
 
 #used for getting slices of each text
 def get_slice(text_object: Text, start_section, end_section):
-    '''print("text_object.name: ", text_object.name)
-    print("text_object.sections: ", text_object.sections)
-    print("text_object.words: ", text_object.words)
-    print("text_object.linkedlist: ", text_object.section_linkedlist)
-    print("text_object.subsections: ", text_object.subsections)
-    print("text_object.language: ", text_object.language)
-    print("text_object.local_def: ", text_object.local_def)
-    print("text_object.local_lem: ", text_object.local_lem)'''
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
     text_slice = text_object.words[start_index:end_index]
@@ -163,13 +155,11 @@ def get_slice(text_object: Text, start_section, end_section):
     return text_slice
 
 
-def find_hapax_legomena(words):
+def find_hapax_legomena(words, dictionary:dict):
     word_frequencies = defaultdict(int)
     for word in words:
-        word_frequencies[word] += 1
+        word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
     return [word for word, freq in word_frequencies.items() if freq == 1]
-
-# Class that the site uses to handle everything
 
 
 class TextAnalyzer:
@@ -183,11 +173,8 @@ class TextAnalyzer:
         self.db = self.client[self.DB_NAME]
         self.texts = [] 
         
-        # print(self.db.list_collection_names())
-
         self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
-        # print("The dictionary is: ", len(self.dictionary))
 
         self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
         print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
@@ -201,15 +188,12 @@ class TextAnalyzer:
         print("DCC Loaded: {} seconds".format(self.dcc_time))
         print("The SCC is: ", self.dcc)
 
-         # (Text, start section, end section)
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
         location_list = MongoDefinitionTools.mg_get_locations(language, form_request)
         location_words = MongoDefinitionTools.mg_get_location_words(language, form_request)
         self.texts.append((MongoDefinitionTools.mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
-        
-       #(get_text(form_request, language).book, start_section, end_section))
 
     def get_textname(self):
         if len(self.texts) == 0:
@@ -262,14 +246,18 @@ class TextAnalyzer:
             text_slice = get_slice(
                 self.texts[0][0], self.texts[0][1], self.texts[0][2])
             allwords = []
+            
             for word_tuple in text_slice:
-                word = word_tuple[2]
+                word = word_tuple[0]
                 if word: allwords.append(word)
-            hapax_legomena = find_hapax_legomena(allwords)
+                
+            hapax_legomena = find_hapax_legomena(allwords, self.dictionary)
             hapax_legomena = sorted(hapax_legomena)  # Sort the hapax legomena
+            
             if len(allwords) < 1: return ([], 0)
             percentage = len(hapax_legomena) / len(allwords) * \
                 100  # Calculate the percentage
+                
             if tupleFlag == True:
                 return (hapax_legomena, percentage)
             else:
@@ -482,18 +470,17 @@ class TextAnalyzer:
                             if word_tuple[0] in self.dictionary:
                                 if int(self.dictionary[word_tuple[0]]["CORPUSFREQ"]) <= 300:
                                     continue
-                                words.append(word_tuple[2])
+                                words.append(word_tuple[0])
                             else:
-                                words.append(word_tuple[2])
+                                words.append(word_tuple[0])
 
-            word_counts = {}
-
+            word_counts = defaultdict(int)
 
             for word in words:
-                if word in word_counts:
-                    word_counts[word] += 1
-                else:
-                    word_counts[word] = 1
+                # incase word isn't in dictionary. Shouldnt be the case. use commented code below if verified
+                lemma = self.dictionary.get(word, {}).get('SIMPLE_LEMMA')
+                if lemma: word_counts[lemma] += 1
+                # word_counts[self.dictionary[word]['SIMPLE_LEMMA']] += 1
 
             # Sort the dictionary by value in descending order and get the top 20
             top_20_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:20]
@@ -503,12 +490,6 @@ class TextAnalyzer:
             
             return top_20_words
 
-
-              # word = word_tuple[0]
-              # words.append(word)
-              # filter out proper nouns
-              # if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
-                   # words.append(word)
 
     @round_decorator
     def freqBinMetrics(self):
@@ -838,7 +819,6 @@ class TextAnalyzer:
                         count2500plus += 1
                         continue
 
-            # print("Here", len(words), count0_200, self.texts)
             freq_0_200 = 0
             freq_201_500 = 0
             freq_501_1000 = 0
@@ -1499,13 +1479,6 @@ def get_hapax_legomena(text_object: Text, start_section, end_section):
         allwords.append(word)
 
     firstSection = text_object.words[0][5]
-
-    # find hapax legomena per section
-    '''
-    for section, words in sections.items():
-        hapax_legomena = find_hapax_legomena(words)
-        print(f"Section {section}")
-        print(f"  Hapax legomena: {hapax_legomena}")'''
 
     hapax_legomena = find_hapax_legomena(allwords)
     return hapax_legomena
