@@ -66,14 +66,14 @@ def get_field_subset(fields, text_name):
 
 def mg_get_slice(text_name, start_section, end_section):
     '''
-    Retrieve documents within a specific sentence range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
+    Retrieve documents within a specific section range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
     '''
 
     collection = db[text_name]
-    cursor = collection.find({'sentence': {'$gte': start_section, '$lte': end_section}})
+    cursor = collection.find({'section': {'$gte': start_section, '$lte': end_section}})
     
     if cursor is None:
-        return "Start or end sentence not found in the collection."
+        return "Start or end section not found in the collection."
     
     #head_words = [document['head_word'] for document in cursor]
     
@@ -82,7 +82,7 @@ def mg_get_slice(text_name, start_section, end_section):
 
     for document in cursor_list:
         document_tuple = []
-        for field in ['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']:
+        for field in ['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency', 'section']:
             if field in document:
                 document_tuple.append(document[field])
             else:
@@ -125,7 +125,7 @@ return output1 == output2, (output1, output2)"""
 def mg_get_locations(language: str, collection_name: str):
     '''
     Get all locations from a collection from MongoDB. A location is usually formatted:
-    X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the sentence number.
+    X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the section number.
 
     Parameters:
     db = Mongo Atlas, local deployment
@@ -468,13 +468,6 @@ def compare_dicts(mg_built_dict):
     else:
         differing_keys = set(mg_built_dict.keys()).symmetric_difference(lang.keys())
 
-        '''for key in mg_built_dict.keys() | lang.keys():
-            if mg_built_dict.get(key) != lang.get(key):
-                continue
-                print(f"Key '{key}':")
-                print(f"  mg_built_dict value: {mg_built_dict.get(key)}")
-                print(f"  lang value: {lang.get(key)}")'''
-
         if differing_keys:
             print("Keys in mg_built_dict or lang but not both:")
             print(f"  {differing_keys}")
@@ -504,7 +497,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     [4] = local_principal_parts*
     [5] = location 
     [6] = frequency
-    [7] = sentence*
+    [7] = section
     [8] = case*! 
     [9] = lasla_subordination_code*!
     [10]= grammatical_subcategory*!
@@ -521,7 +514,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     print(f"{collection_name} successfully loaded")
 
     #Get all of the fields possible from the text
-    all_possible_fields =  ["head_word", "location", "sentence", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+    all_possible_fields =  ["head_word", "location", "section", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
     field_data = get_field_subset(all_possible_fields, collection_name) #this now contains all fields present in the text file, some may not be present
     print("Fields found:")
@@ -543,15 +536,12 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     #local_lem_flag = True
 
     #Create the tuple by looping through field_data
-    #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, sentence, case, lasla_subordination_code)
-    #Guaranteed Fields: ["head_word", "location", "sentence", "counter", "orthographic_form"]
+    #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, section, case, lasla_subordination_code)
+    #Guaranteed Fields: ["head_word", "location", "section", "counter", "orthographic_form"]
     tuples = []
     frequencies = {}
     
-    print("Creating tuples . . .")
-   
     #Calculate word frequency within text, independent of selected range to put into tuple
-    print("Calculating frequencies . . .")
     for head_word in field_data["head_word"]:
         if head_word in frequencies:
             frequencies[head_word] += 1
@@ -566,8 +556,8 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
             temp_list[3] = field_data["local_definition"][i]
         if local_lem_flag:
             temp_list[4] = field_data["local_principal_parts"][i]
-        if "sentence" in field_data.keys():
-            temp_list[7] = field_data["sentence"][i]
+        if "section" in field_data.keys():
+            temp_list[7] = field_data["section"][i]
         if "case" in field_data.keys():
             temp_list[8] = field_data["case"][i]
         if "lasla_subordination_code" in field_data.keys():
@@ -586,23 +576,15 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     #get the section_level
     section_level = 0 #1 level for Location 1, 2 for 1_1, 3 for 1_1_1
     location_example = tuples[0][5]
-    print(f"location example: {location_example}")
+    
     if location_example == "1":
         section_level = 1
     if location_example == '1_1':
         section_level = 2
     if location_example == '1_1_1':
-        section_level = 3
+        section_level = 3 
 
-    #Check tuples
-    for i in range(4):
-        print(tuples[i])
-
-    #check section level
-    print(f"section level: {section_level}")    
-
-    print("FInished loading text as Text!!!")
-    #book = text.Text(collection_name, section_words, _____,section_list,______,"Latin",local_def_flag,local_lem_flag)
+    print("Finished loading text as Text!!!")
     return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
 
@@ -619,7 +601,6 @@ def mg_format_title(unformatted_title: str):
     formatted_title (str): The formatted title string.
     
     '''
-    #formatted_title = unformatted_title.replace('_', ' ')
     return title_renaming_dict[unformatted_title]
 
 def mg_format_lowercase(unformatted_title: str):
