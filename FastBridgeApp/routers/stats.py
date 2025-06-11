@@ -110,7 +110,7 @@ def mg_get_dcc(db, collection_name):
     dcc = set()
     cursor = db[collection_name].find()
     for row in cursor:
-        dcc.add(row['TITLE'])
+        dcc.add(row['head_word'])
     return dcc
 
 @timer_decorator
@@ -159,7 +159,7 @@ def find_hapax_legomena(words, dictionary:dict):
     word_frequencies = defaultdict(int)
     for word in words:
         word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
-    return [word for word, freq in word_frequencies.items() if freq == 1]
+    return [word.capitalize() for word, freq in word_frequencies.items() if freq == 1]
 
 
 class TextAnalyzer:
@@ -170,23 +170,22 @@ class TextAnalyzer:
     def __init__(self):
 
         self.client = MongoClient(self.MONGO_URI)
-        self.db = self.client[self.DB_NAME]
         self.texts = [] 
+        self.num_words_ct = None
         
-        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(self.db)
+        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(dict_db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
-        self.diederich, self.diederich_time = mg_get_diederich1500(self.db, "diederich1500")
-        print("Diederich 1500 Loaded: {} seconds".format(self.diederich_time))
-        print("The Diederich is: ", self.diederich)
+        self.diederich1500, self.diederich1500_time = mg_get_diederich1500(db, "diederich1500")
+        print("Diederich 1500 Loaded: {} seconds".format(self.diederich1500_time))
+        print("The Diederich is: ", self.diederich1500)
 
-        self.diederich300, self.diederich300_time = mg_get_diederich300(self.db)
+        self.diederich300, self.diederich300_time = mg_get_diederich300(db)
         print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
         print("The Diederich 1500 is: ", self.diederich300)
 
-        self.dcc, self.dcc_time = mg_get_dcc(self.db, "dcc_latin_core_list")
+        self.dcc, self.dcc_time = mg_get_dcc(db, "DCC Latin Core_LOCAL_LIST")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
-        print("The SCC is: ", self.dcc)
 
 
     # Add working file for subordinations/section?
@@ -200,23 +199,17 @@ class TextAnalyzer:
         else: return " and ".join([text[0].name for text in self.texts])
 
     def num_words(self) -> int:
-        if not self.texts:
-            return -1
+        if self.num_words_ct: return self.num_words_ct # no need to recompute every time
+        if not self.texts: return -1
 
         total = 0
         for text in self.texts:
-            start_index = text[0].sections[text[1]]
-            end_index = text[0].sections[text[2]]
-
-            if text[1] == 'start' and text[2] == 'end':
-                word_count = text[0].words[-1][1]
-            else:
-                word_count = end_index - start_index
-
-            total += word_count
-
-        return total
-
+            text_slice = get_slice(text[0], text[1], text[2])
+            # head_word is a guaranteed field so len(text_slice) should be sufficient
+            total += len(text_slice) 
+        
+        self.num_words_ct = total
+        return self.num_words_ct
 
     def vocab_size(self) -> int:
         if len(self.texts) == 0:
@@ -288,7 +281,7 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                if word not in self.diederich:
+                if word not in self.diederich1500:
                     rare_count += 1
                 total_words += 1
 
@@ -329,9 +322,6 @@ class TextAnalyzer:
             return 0
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
-        diederich300, _ = mg_get_diederich300(self.db)
-        dcc, _ = mg_get_dcc(self.db, "Bridge-Vocab-Latin-List-DCC")
-        diederich1500, _ = mg_get_diederich1500(self.db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
 
         out300 = 0
         outDCC = 0
@@ -340,11 +330,11 @@ class TextAnalyzer:
 
         for word_tuple in text_slice:
             word = word_tuple[0]
-            if word not in diederich300:
+            if word not in self.diederich300:
                 out300 += 1
-            if word not in dcc:
+            if word not in self.dcc:
                 outDCC += 1
-            if word not in diederich1500:
+            if word not in self.diederich1500:
                 out1500 += 1
             countWords += 1
 
@@ -750,6 +740,12 @@ class TextAnalyzer:
         return f'/plot{plot_num}.png'
 
 
+    def _flatten_texts(self):
+        text_slice = []
+        for text in self.texts:
+            text_slice.extend(get_slice(text[0], text[1], text[2]))
+        return text_slice
+    
     @round_decorator
     def spache_score(self):
         if len(self.texts) == 0:
@@ -764,7 +760,7 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word in text_slice:
                 lemma = word[0]
-                section = word[5]
+                section = word[7]
                 if section is not None:
                     sections.add(section)
                 total_words += 1
@@ -774,7 +770,6 @@ class TextAnalyzer:
 
         if len(sections) <= 1:
             return 0
-
         avg_sentence_length = total_words / len(sections)
         percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
 
@@ -795,13 +790,13 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word in text_slice:
                 lemma = word[0]
-                section = word[5]
+                section = word[7]
 
                 total_words += 1
                 if section is not None:
                     sections.add(section)
 
-                if lemma not in self.diederich:
+                if lemma not in self.dcc:
                     difficult_words += 1
 
         if len(sections) <= 1:
@@ -831,14 +826,13 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word in text_slice:
                 lemma = word[0]
-                section = word[5]
+                section = word[7]
 
                 total_words += 1
                 total_chars += len(lemma)
 
                 if section is not None:
                     sections.add(section)
-
         if len(sections) <= 1 or total_words == 0:
             return 0
 
@@ -848,26 +842,23 @@ class TextAnalyzer:
         score = (4.71 * (total_chars / total_words)) + (0.5 * (total_words / sentence_count)) - 21.43
         return score
 
-
     @round_decorator
     def coleman_liau_score(self):
         if len(self.texts) == 0:
             return 0
 
-        full_text_slice = []
-        for text in self.texts:
-            full_text_slice.extend(get_slice(text[0], text[1], text[2]))
+        text_slice = self._flatten_texts()
 
-        if len(full_text_slice) < 100:
+        if len(text_slice) < 100:
             return 0
 
-        sample = full_text_slice[:100]
+        sample = text_slice[:100]
         total_letters = 0
         sentence_sections = set()
 
         for word in sample:
             orthographic_form = word[2] 
-            section = word[5]            
+            section = word[7]            
 
             total_letters += len(orthographic_form)
 
@@ -880,66 +871,46 @@ class TextAnalyzer:
         score = (0.0588 * L) - (0.296 * S) - 15.8
         return score
 
-    
-    @round_decorator
-    def lix_score(self):
-        if len(self.texts) == 0:
-            return 0
-
-        text_slice = []
-        for text in self.texts:
-            text_slice.extend(get_slice(text[0], text[1], text[2]))
-
+    def _get_word_stats(self, text_slice): # helper for lix and rix
         total_words = 0
         long_words = 0
         sentence_sections = set()
 
         for word in text_slice:
             orthographic_form = word[2]
-            section = word[5]
+            section = word[7]
 
             if orthographic_form:
                 total_words += 1
-                if len(orthographic_form) > 6:
-                    long_words += 1
+                if len(orthographic_form) > 6: long_words += 1
 
-            if section is not None:
-                sentence_sections.add(section)
+            if section is not None: sentence_sections.add(section)
 
-        sentence_count = len(sentence_sections)
+        return total_words, long_words, len(sentence_sections)
 
-        if total_words == 0 or sentence_count <= 1:
+    @round_decorator
+    def lix_score(self):
+        if not self.texts:
             return 0
+
+        text_slice = self._flatten_texts()
+        total_words, long_words, sentence_count = self._get_word_stats(text_slice)
+
+        if total_words == 0 or sentence_count <= 1: return 0
 
         percent_long_words = (long_words * 100) / total_words
         lix = (total_words / sentence_count) + percent_long_words
-
+        
         return lix
 
-    
     @round_decorator
     def rix_score(self):
-        if len(self.texts) == 0:
+        if not self.texts:
             return 0
 
-        text_slice = []
-        for text in self.texts:
-            text_slice.extend(get_slice(text[0], text[1], text[2]))
+        text_slice = self._flatten_texts()
+        _, long_words, sentence_count = self._get_word_stats(text_slice)
 
-        long_words = 0
-        sentence_sections = set()
-
-        for word in text_slice:
-            orthographic_form = word[2]
-            section = word[5]
-
-            if orthographic_form and len(orthographic_form) > 6:
-                long_words += 1
-
-            if section is not None:
-                sentence_sections.add(section)
-
-        sentence_count = len(sentence_sections)
         if sentence_count <= 1:
             return 0
 
@@ -951,16 +922,14 @@ class TextAnalyzer:
         if len(self.texts) == 0:
             return 0
 
-        text_slice = []
-        for text in self.texts:
-            text_slice.extend(get_slice(text[0], text[1], text[2]))
+        text_slice = self._flatten_texts()
 
         complex_words = 0
         sentence_sections = set()
 
         for word in text_slice:
             orthographic_form = word[2]  # orthographic form
-            section = word[5]            # sentence marker
+            section = word[7]            
 
             if orthographic_form and len(orthographic_form) > 6:
                 complex_words += 1
@@ -1303,32 +1272,6 @@ def plot_word_frequency(text_object: Text, start_section, end_section):
     plt.setp(ax.get_xticklabels(), fontproperties=prop)
     plt.setp(ax.get_yticklabels(), fontproperties=prop)
     plt.show()
-
-
-def get_hapax_legomena(text_object: Text, start_section, end_section):
-    '''
-    Returns all of the words used once from each section, separated by section, it's just printing but can return in zip()
-    '''
-    # Get words from each section
-    # sections = defaultdict(list)
-    allwords = []
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    for word_tuple in text_slice:
-        word = word_tuple[0]
-        section = word_tuple[5]
-        # sections[section].append(word)
-        allwords.append(word)
-
-    firstSection = text_object.words[0][5]
-
-    hapax_legomena = find_hapax_legomena(allwords)
-    return hapax_legomena
 
 
 def get_lexical_sophistication(text_object: Text, start_section, end_section):
