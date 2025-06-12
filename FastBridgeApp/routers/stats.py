@@ -97,12 +97,7 @@ def mg_get_diederich1500(db, collection_name):
     diederich1500 = {}
     cursor = db[collection_name].find()
     for row in cursor:
-        diederich1500[row['TITLE']] = {
-            'LOCATION': row['LOCATION'],
-            'SECTION': row['SECTION'],
-            'RUNNINGCOUNT': row['RUNNINGCOUNT'],
-            'TEXT': row['TEXT']
-        }
+        diederich1500[row['head_word']] = row
     return diederich1500
 
 @timer_decorator
@@ -125,9 +120,21 @@ def mg_get_diederich300(db):
         else:
             break
     return diederich300
+
+@timer_decorator
+def mg_get_diederich(collection_name):
+    diederich300 = set()
+    diederich1500 = set()
+    cursor = db[collection_name].find()
+    for row in cursor:
+        if row['counter'] <= 306:
+            diederich300.add(row['head_word'])
+        diederich1500.add(row['head_word'])
+    return diederich300, diederich1500
+
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-#
+
 def get_text(form_request: str, language: str):
     """
     Imports the text that was requested. This way, we only load the texts that the user is requesting each time.
@@ -164,25 +171,24 @@ def find_hapax_legomena(words, dictionary:dict):
 
 class TextAnalyzer:
 
-    MONGO_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
-    DB_NAME = "dictionaries"
-
     def __init__(self):
 
-        self.client = MongoClient(self.MONGO_URI)
         self.texts = [] 
         self.num_words_ct = None
         
         self.dictionary, self.dictionary_time = mg_get_latin_dictionary(dict_db)
         print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
 
-        self.diederich1500, self.diederich1500_time = mg_get_diederich1500(db, "diederich1500")
-        print("Diederich 1500 Loaded: {} seconds".format(self.diederich1500_time))
-        print("The Diederich is: ", self.diederich1500)
+        (result, self.diederich_time) = mg_get_diederich("Diederich Frequency List (General)_LIST")
+        self.diederich300, self.diederich1500 = result
 
-        self.diederich300, self.diederich300_time = mg_get_diederich300(db)
-        print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
-        print("The Diederich 1500 is: ", self.diederich300)
+        # self.diederich1500, self.diederich1500_time = mg_get_diederich1500(db, "Diederich Frequency List (General)_LIST")
+        # print("Diederich 1500 Loaded: {} seconds".format(self.diederich1500_time))
+        # print("The Diederich is: ", self.diederich1500)
+
+        # self.diederich300, self.diederich300_time = mg_get_diederich300(db)
+        # print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
+        # print("The Diederich 1500 is: ", self.diederich300)
 
         self.dcc, self.dcc_time = mg_get_dcc(db, "DCC Latin Core_LOCAL_LIST")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
@@ -772,6 +778,7 @@ class TextAnalyzer:
             return 0
         avg_sentence_length = total_words / len(sections)
         percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
+        print(len(unfamiliar_words), len(unique_words), total_words, len(sections), percent_unfamiliar, avg_sentence_length)
 
         spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
         return spache_score
