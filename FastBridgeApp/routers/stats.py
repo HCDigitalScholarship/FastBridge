@@ -182,14 +182,6 @@ class TextAnalyzer:
         (result, self.diederich_time) = mg_get_diederich("Diederich Frequency List (General)_LIST")
         self.diederich300, self.diederich1500 = result
 
-        # self.diederich1500, self.diederich1500_time = mg_get_diederich1500(db, "Diederich Frequency List (General)_LIST")
-        # print("Diederich 1500 Loaded: {} seconds".format(self.diederich1500_time))
-        # print("The Diederich is: ", self.diederich1500)
-
-        # self.diederich300, self.diederich300_time = mg_get_diederich300(db)
-        # print("Diederich 300 Loaded: {} seconds".format(self.diederich300_time))
-        # print("The Diederich 1500 is: ", self.diederich300)
-
         self.dcc, self.dcc_time = mg_get_dcc(db, "DCC Latin Core_LOCAL_LIST")
         print("DCC Loaded: {} seconds".format(self.dcc_time))
 
@@ -202,7 +194,8 @@ class TextAnalyzer:
 
     def get_textname(self):
         if len(self.texts) == 0: return -1
-        else: return " and ".join([text[0].name for text in self.texts])
+        elif len(self.texts) == 1: return self.texts[0][0].name
+        else: return " + ".join([text[0].name for text in self.texts])
 
     def num_words(self) -> int:
         if self.num_words_ct: return self.num_words_ct # no need to recompute every time
@@ -235,8 +228,7 @@ class TextAnalyzer:
 
     @round_decorator
     def hapax_legonema(self, tupleFlag=False):
-        if not self.texts:
-            return ([], 0) if tupleFlag else []
+        if not self.texts: return ([], 0)
 
         allwords = []
         for text in self.texts:
@@ -246,14 +238,13 @@ class TextAnalyzer:
                 if word:
                     allwords.append(word)
 
-        if not allwords:
-            return ([], 0) if tupleFlag else []
+        if not allwords: return ([], 0)
 
         hapax_legomena = find_hapax_legomena(allwords, self.dictionary)
         hapax_legomena = sorted(hapax_legomena)
         percentage = len(hapax_legomena) / len(allwords) * 100
 
-        return (hapax_legomena, percentage) if tupleFlag else (hapax_legomena, percentage)
+        return (hapax_legomena, percentage)
 
     @round_decorator
     def lex_density(self):
@@ -778,7 +769,6 @@ class TextAnalyzer:
             return 0
         avg_sentence_length = total_words / len(sections)
         percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
-        print(len(unfamiliar_words), len(unique_words), total_words, len(sections), percent_unfamiliar, avg_sentence_length)
 
         spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
         return spache_score
@@ -1492,6 +1482,36 @@ def get_lex_r(db, text_object: Text, start_section, end_section):
 
     return lex_r
 
+def stats_compare_result(request, context, sourcetexts, starts, ends, language):
+    analyzer_texts = sourcetexts.split('+')
+    analyzer_starts = starts.split('+')
+    analyzer_ends = ends.split('+')
+
+    # Add text info to analyzer
+    analyzers = []
+    for i in range(len(analyzer_texts)):
+        analyzer = TextAnalyzer()
+        analyzer.add_text(analyzer_texts[i], language, analyzer_starts[i], analyzer_ends[i])
+        analyzers.append(analyzer)
+    
+
+    # Getting Metrics, Hapax
+    text_names = [a.texts[0][0].name for a in analyzers]
+    text_starts = [a.texts[0][1] for a in analyzers]
+    text_ends = [a.texts[0][2] for a in analyzers]
+
+    texts_and_sections = DefinitionTools.get_sections("Latin")
+
+    # add analyzer stats from each text to context
+    context.update({
+        "request": request,
+        "textNames": text_names,
+        "textStarts": text_starts,
+        "textEnds": text_ends,
+        "texts_and_sections": texts_and_sections
+    })
+
+    return templates.TemplateResponse("stats-multiple-texts.html", context)
 
 # Routing
 router = APIRouter()
@@ -1510,9 +1530,12 @@ async def stats_index(request: Request):
 async def stats_mode_selector(request: Request):
     return templates.TemplateResponse("stats-mode-selector.html", {"request": request})
 
-@router.get("/{language}/")
-async def stats_select(request: Request, language: str):
-    return templates.TemplateResponse("stats_select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
+@router.get("/{language}/{mode}/")
+async def stats_select(request: Request, language: str, mode: str):
+    return templates.TemplateResponse("stats_select.html", {"request": request,
+                                                            "mode": mode,
+                                                            "titles": MongoDefinitionTools.mg_render_titles(language), 
+                                                            'titles2': MongoDefinitionTools.mg_render_titles(language, "2")})
 
 
 @router.get("/select/sections/{textname}/{language}/")
@@ -1521,11 +1544,13 @@ async def stats_select_section(request: Request, textname: str, language: str):
     return sectionDict
 
 
-@router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str):
+@router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
     context = {"request": request}
     running_list = running_list == "running"
 
+    if mode == 'Compare': return stats_compare_result(request, context, sourcetexts, starts, ends, language)
+    
     analyzer = TextAnalyzer()
 
     # check for multiple texts
@@ -1576,9 +1601,9 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     # freq_bins_relative_plot_path = os.path.relpath(freq_bins_plot_path, start=base_path)
 
     context.update({
-        "text_name": textname,
-        "start_section": starts,
-        "end_section": ends,
+        "text_name": textname if not multiple_texts else textname.split(" + "),
+        "start_section": starts if not multiple_texts else starts.split("+"),
+        "end_section": ends if not multiple_texts else ends.split("+"),
         "word_count": word_count,
         "vocab_size": vocab_size,
         "hapax_legonema": hapax,
