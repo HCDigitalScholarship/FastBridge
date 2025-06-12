@@ -93,33 +93,12 @@ def mg_get_latin_dictionary(db):
     return word_dictionary
 
 @timer_decorator
-def mg_get_diederich1500(db, collection_name):
-    diederich1500 = {}
-    cursor = db[collection_name].find()
-    for row in cursor:
-        diederich1500[row['head_word']] = row
-    return diederich1500
-
-@timer_decorator
 def mg_get_dcc(db, collection_name):
     dcc = set()
     cursor = db[collection_name].find()
     for row in cursor:
         dcc.add(row['head_word'])
     return dcc
-
-@timer_decorator
-def mg_get_diederich300(db):
-    diederich300 = set()
-    cursor = db.diederich300.find()
-    count = 0
-    for row in cursor:
-        if count <= 306:
-            diederich300.add(row['TITLE'])
-            count += 1
-        else:
-            break
-    return diederich300
 
 @timer_decorator
 def mg_get_diederich(collection_name):
@@ -265,7 +244,6 @@ class TextAnalyzer:
         lexical_density = lexical_sum / total_words if total_words > 0 else 0
         return lexical_density
 
-
     @round_decorator
     def lex_sophistication(self):
         if len(self.texts) == 0:
@@ -284,7 +262,6 @@ class TextAnalyzer:
 
         lexical_sophistication = rare_count / total_words if total_words > 0 else 0
         return lexical_sophistication
-
 
     @round_decorator
     def lex_variation(self):
@@ -312,11 +289,10 @@ class TextAnalyzer:
         else:
             return (0, 0, 0, 0)
 
-
     @round_decorator
     def LexR(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         text_slice = get_slice(self.texts[0][0], self.texts[0][1], self.texts[0][2])
 
@@ -336,15 +312,15 @@ class TextAnalyzer:
             countWords += 1
 
         if countWords == 0:
-            return 0  # Avoid division by zero
+            return 'NA'  # Avoid division by zero
 
         freq300 = (out300 / countWords) * 100
         freqDCC = (outDCC / countWords) * 100
         freq1500 = (out1500 / countWords) * 100
 
-        mean_word_length = get_avg_word_length(self.texts[0][0], self.texts[0][1], self.texts[0][2])
-        lexical_sophistication = get_lexical_sophistication(self.texts[0][0], self.texts[0][1], self.texts[0][2])
-        lexical_variation = get_lexical_variation(self.texts[0][0], self.texts[0][1], self.texts[0][2])
+        mean_word_length = self.avgWordLength()
+        lexical_sophistication = self.lex_sophistication()
+        lexical_variation = self.lex_variation()
         logTTR = lexical_variation[3]
         rootTTR = lexical_variation[1]
 
@@ -356,7 +332,6 @@ class TextAnalyzer:
         lex_r *= 0.833
 
         return lex_r
-
 
     def totalWordsNoProper(self):
         if len(self.texts) == 0:
@@ -374,7 +349,6 @@ class TextAnalyzer:
 
         return len(words)
 
-
     def uniqueWordsNoProper(self):
         if len(self.texts) == 0:
             return -1
@@ -389,7 +363,6 @@ class TextAnalyzer:
                     vocabulary.add(word)
 
         return len(vocabulary)
-
 
     def top20NoDie300(self):
         properNounCats = ["1", "T"]
@@ -477,7 +450,7 @@ class TextAnalyzer:
             words.extend(word_tuple[0] for word_tuple in text_slice)
 
         if len(words) > 0: return sum(len(word) for word in words) / len(words)
-        else: return 0
+        else: return 'NA'
 
     def plot_word_freq(self, plot_num=0):
         if len(self.texts) == 0:
@@ -524,7 +497,6 @@ class TextAnalyzer:
         
         # Return a relative path suitable for front-end use
         return f'/plot{plot_num}.png'
-
 
     def plot_lin_lex_load(self, plot_num=2):
         if len(self.texts) == 0:
@@ -592,7 +564,6 @@ class TextAnalyzer:
 
         return f'/plot{plot_num}.png'
 
-
     def plot_cum_lex_load(self, plot_num=1):
         if len(self.texts) == 0:
             return '/blank_plot.png'
@@ -644,7 +615,6 @@ class TextAnalyzer:
         plt.close()
 
         return f'/plot{plot_num}.png'
-
 
     def plot_freq_bin(self, plot_num=3):
         if len(self.texts) == 0:
@@ -736,7 +706,6 @@ class TextAnalyzer:
 
         return f'/plot{plot_num}.png'
 
-
     def _flatten_texts(self):
         text_slice = []
         for text in self.texts:
@@ -746,7 +715,7 @@ class TextAnalyzer:
     @round_decorator
     def spache_score(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         sections = set()
         total_words = 0
@@ -766,18 +735,17 @@ class TextAnalyzer:
                     unfamiliar_words.add(lemma)
 
         if len(sections) <= 1:
-            return 0
+            return 'NA'
         avg_sentence_length = total_words / len(sections)
         percent_unfamiliar = (len(unfamiliar_words) / len(unique_words)) * 100
 
         spache_score = (0.121 * avg_sentence_length) + (0.082 * percent_unfamiliar) + 0.659
         return spache_score
 
-    
     @round_decorator
     def dale_chall_score(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         total_words = 0
         difficult_words = 0
@@ -797,7 +765,7 @@ class TextAnalyzer:
                     difficult_words += 1
 
         if len(sections) <= 1:
-            return 0
+            return 'NA'
 
         # Compute PDW and ASL
         pdw = (difficult_words / total_words) * 100
@@ -813,7 +781,7 @@ class TextAnalyzer:
     @round_decorator
     def ari_score(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         total_words = 0
         total_chars = 0
@@ -831,7 +799,7 @@ class TextAnalyzer:
                 if section is not None:
                     sections.add(section)
         if len(sections) <= 1 or total_words == 0:
-            return 0
+            return 'NA'
 
         sentence_count = len(sections)
 
@@ -842,12 +810,12 @@ class TextAnalyzer:
     @round_decorator
     def coleman_liau_score(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         text_slice = self._flatten_texts()
 
         if len(text_slice) < 100:
-            return 0
+            return 'NA'
 
         sample = text_slice[:100]
         total_letters = 0
@@ -888,12 +856,12 @@ class TextAnalyzer:
     @round_decorator
     def lix_score(self):
         if not self.texts:
-            return 0
+            return 'NA'
 
         text_slice = self._flatten_texts()
         total_words, long_words, sentence_count = self._get_word_stats(text_slice)
 
-        if total_words == 0 or sentence_count <= 1: return 0
+        if total_words == 0 or sentence_count <= 1: return 'NA'
 
         percent_long_words = (long_words * 100) / total_words
         lix = (total_words / sentence_count) + percent_long_words
@@ -903,13 +871,13 @@ class TextAnalyzer:
     @round_decorator
     def rix_score(self):
         if not self.texts:
-            return 0
+            return 'NA'
 
         text_slice = self._flatten_texts()
         _, long_words, sentence_count = self._get_word_stats(text_slice)
 
         if sentence_count <= 1:
-            return 0
+            return 'NA'
 
         rix = long_words / sentence_count
         return rix
@@ -917,7 +885,7 @@ class TextAnalyzer:
     @round_decorator
     def smog_score(self):
         if len(self.texts) == 0:
-            return 0
+            return 'NA'
 
         text_slice = self._flatten_texts()
 
@@ -937,7 +905,7 @@ class TextAnalyzer:
         sentence_count = len(sentence_sections)
 
         if sentence_count <= 1 or complex_words == 0:
-            return 0
+            return 'NA'
 
         smog = 1.043 * math.sqrt((complex_words * 30) / sentence_count) + 3.1291
         return smog
@@ -1109,7 +1077,6 @@ class TextAnalyzer:
 
         plt.show()
 
-
     def __str__(self) -> str:
         toReturn = ""
         toReturn += f"Number of words:\t{self.num_words()}\n"
@@ -1126,35 +1093,7 @@ class TextAnalyzer:
 
 # All functions below the hashtag line can find attributes of text in specific sections
 
-# Function to get the number of words in a text
-def get_number_of_words(text_object: Text, start_section, end_section):
-    '''
-    Find the number of words in a predefined section of the book by subtracting the word numbers within Text.sections
-    '''
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    word_count = end_index - start_index
-    if start_section == 'start' and end_section == 'end':
-        word_count = text_object.words[-1][1]
-    return word_count
-
-# Function to get the size of the text's vocabulary
-
-
-def get_vocabulary_size(text_object: Text, start_section, end_section):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    vocabulary = set(word[0] for word in text_slice)
-    return len(vocabulary)
-
 # Function to display distribution of average word length
-
-
 def plot_avg_word_length(text_object: Text, start_section, end_section):
     start_index = text_object.sections[start_section]
     end_index = text_object.sections[end_section]
@@ -1237,92 +1176,6 @@ def plot_avg_word_length2(text_object, start_section, end_section):
     fig.show()
 
 
-# Function to display distribution of word frequency
-def plot_word_frequency(text_object: Text, start_section, end_section):
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    df = pd.DataFrame(text_slice, columns=[
-                    "Word", "Index", "Lemma", "Definition", "Notes", "Section", "Word Count"])
-    word_frequency = df['Word'].value_counts().reset_index()
-    word_frequency.columns = ['Word', 'Frequency']
-
-    sns.set_style("ticks")
-    sns.set_context("paper")
-    plt.figure(figsize=(10, 5))
-    sns.barplot(data=word_frequency[:30], x='Word',
-                y='Frequency', palette=colorblind_palette)
-    sns.despine()
-    plt.title(f"Word Frequency of {text_object.name}", **title_font)
-    plt.xlabel('Word', **axis_font)
-    plt.ylabel('Frequency', **axis_font)
-    plt.xticks(rotation=90)
-
-    # Get the current Axes instance
-    ax = plt.gca()
-
-    # set font properties to x and y tick labels
-    plt.setp(ax.get_xticklabels(), fontproperties=prop)
-    plt.setp(ax.get_yticklabels(), fontproperties=prop)
-    plt.show()
-
-
-def get_lexical_sophistication(text_object: Text, start_section, end_section):
-
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    hashTable, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
-
-    rareCount = 0
-    totalWords = 0
-    for word_tuple in text_slice:
-        if word_tuple[0] not in hashTable:
-            rareCount += 1
-        totalWords += 1
-
-    lexical_sophistication = rareCount/totalWords
-    return lexical_sophistication
-
-
-def calculate_unique_words(text_object: Text, start_section, end_section):
-    '''
-    Calculate the total amount of unique words
-    '''
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    # unique_words = len(set(word[0] for word in text_instance.words))
-    unique_words = len(set([word_tuple[0] for word_tuple in text_slice]))
-    return unique_words
-
-
-def get_lexical_variation(text_object: Text, start_section, end_section):
-    num_unique = calculate_unique_words(
-        text_object, start_section, end_section)  # V
-    total_words = get_number_of_words(
-        text_object, start_section, end_section)  # N
-
-    TTR = num_unique/total_words
-    RootTTR = num_unique/sqrt(total_words)
-    CTTR = num_unique/sqrt(2*total_words)
-    LogTTR = log(num_unique)/log(total_words)
-
-    return (TTR, RootTTR, CTTR, LogTTR)
-
-
 def get_average_subordinations_per_section(db, start_location_1, start_location_2, end_location_1, end_location_2):
     '''
     Goes into Full AP MongoDB collection for text, so different LOCATION numbers, i.e., no more 1.4622, now it should be 1_4
@@ -1358,32 +1211,6 @@ def get_average_subordinations_per_section(db, start_location_1, start_location_
     average_subordinations = subordinations_per_section.sum() / num_sections
 
     return average_subordinations
-
-
-def calculate_average_word_length(words):
-    if len(words) > 0:
-        return sum(len(word) for word in words) / len(words)
-    else: return 0
-
-
-def get_avg_word_length(text_object: Text, start_section, end_section):
-    '''
-    Get mean word length for a section
-    '''
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    sections = []
-    for word_tuple in text_slice:
-        word = word_tuple[0]
-        sections.append(word)
-
-    average_word_length = calculate_average_word_length(sections)
-    return average_word_length
 
 
 def get_gen_lex_r(text_object: Text, start_section, end_section):
@@ -1429,58 +1256,6 @@ def get_gen_lex_c(text_object: Text, start_section, end_section):
     gen_lex_c = log(countTokens)/log(countTitles)
     return gen_lex_c
 
-
-def get_lex_r(db, text_object: Text, start_section, end_section):
-    # Get the Diederich 300 -> Adjusted MongoDB method
-    diederich300, _ = mg_get_diederich300(db)
-    
-    dcc, _ = mg_get_dcc(db, "Bridge-Vocab-Latin-List-DCC")
-    
-    diederich1500, _ = mg_get_diederich1500(db, "Bridge_Latin_List_Diederich_all_prep_fastbridge_7_2020")
-
-    # Stats boilerplate
-    start_index = text_object.sections[start_section]
-    end_index = text_object.sections[end_section]
-    text_slice = text_object.words[start_index:end_index]
-
-    if start_section == 'start' and end_section == 'end':
-        text_slice = text_object.words
-
-    # Bad naming standards, these are counting which words are NOT in these lists
-    in300 = 0
-    inDCC = 0
-    in1500 = 0
-    countWords = 0
-    for word_tuple in text_slice:
-        if word_tuple[0] not in diederich300:
-            in300 += 1
-        if word_tuple[0] not in dcc:
-            inDCC += 1
-        if word_tuple[0] not in diederich1500:
-            in1500 += 1
-        countWords += 1
-
-    freq300 = in300 / countWords
-    freqDCC = inDCC / countWords
-    freq1500 = in1500 / countWords
-
-    mean_word_length = get_avg_word_length(
-        text_object, start_section, end_section)
-    lexical_sophistication = get_lexical_sophistication(
-        text_object, start_section, end_section)
-
-    lexical_variation = get_lexical_variation(
-        text_object, start_section, end_section)
-    logTTR = lexical_variation[3]
-    rootTTR = lexical_variation[1]
-
-    lex_r = ((mean_word_length * 0.457) + (freq300 * 0.063) + (freqDCC * 0.076) + (freq1500 *
-            0.092) + (lexical_sophistication * 0.059) + (logTTR * 0.312) + (rootTTR * 0.143))
-
-    lex_r -= 11.7
-    lex_r *= 0.833
-
-    return lex_r
 
 def stats_compare_result(request, context, sourcetexts, starts, ends, language):
     analyzer_texts = sourcetexts.split('+')
