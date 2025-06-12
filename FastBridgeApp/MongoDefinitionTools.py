@@ -69,7 +69,7 @@ def mg_get_slice(text_name, start_section, end_section):
     Retrieve documents within a specific section range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
     '''
 
-    collection = db[text_name]
+    collection = db[title_renaming_dict[text_name]]
     cursor = collection.find({'section': {'$gte': start_section, '$lte': end_section}})
     
     if cursor is None:
@@ -130,7 +130,7 @@ def mg_get_locations(language: str, collection_name: str):
     Parameters:
     db = Mongo Atlas, local deployment
     language (str): The language to query for. Ie. 'Latin' and the name of the collection.
-    collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
+    collection_name (str): The edited name of the collection to query for. Ie. '50_Most_Important_Latin_Verbs'
 
     Returns:
         locations_linked_list: A dictionary which represent locations in a book, where each key
@@ -147,6 +147,7 @@ def mg_get_locations(language: str, collection_name: str):
     if language == 'Greek': db = atlas_client.get_database("Greek-Texts")
     else: db = atlas_client.get_database("Latin-Texts")
 
+    collection_name = title_renaming_dict[collection_name] # get actual name of text
     print(f"mg_get_locations() received a collection_name of: {collection_name}")
     collection = db[collection_name]  
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
@@ -203,6 +204,7 @@ def mg_get_location_words(language: str, collection_name: str):
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
     '''
 
+    collection_name = title_renaming_dict[collection_name] # get actual name of text
     collection = db[collection_name]
 
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, where 'counter' field is ascending sorted
