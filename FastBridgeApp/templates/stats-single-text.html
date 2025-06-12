@@ -253,6 +253,24 @@
     .value-container {
         text-align: left;
     }
+    .title{
+        font-family: 'Times New Roman', serif; 
+        font-size: 40px; 
+        font-weight: normal; 
+        color: #ffffff;
+    }
+    .section_span{
+        font-family: 'Times New Roman', serif; 
+        font-size: 24px;
+    }
+    .section_label{
+        font-family: Actor, sans-serif; 
+        font-size: 28px; 
+        color: #ffffff; 
+        margin-bottom: 15px; 
+        font-weight: normal; 
+        font-style: normal;
+    }
 </style>
 
 
@@ -406,16 +424,24 @@
                     <p class="intro-text"
                         style="font-family: Cabin, sans-serif;font-size: 30px;margin-bottom: 45px;font-weight: normal;margin-top: 120px;">
                         Readability Statistics for ...</p>
-                    <h1
-                        style="font-family: 'Times New Roman', serif; font-size: 40px; margin-bottom: 45px; font-weight: normal; color: #ffffff;">
-                        {{ text_name }}</h1>
-                    <h2
-                        style="font-family: Actor, sans-serif; font-size: 28px; color: #ffffff; margin-bottom: 15px; font-weight: normal; font-style: normal;">
-                        Start: <span style="font-family: 'Times New Roman', serif; font-size: 24px;">{{ start_section
-                            }}</span>
-                        End: <span style="font-family: 'Times New Roman', serif; font-size: 24px;">{{ end_section
-                            }}</span>
-                    </h2>
+                    {% if text_name is not string %}
+                        {% for title in text_name %}
+                            <h1 class='title'>{{title}}</h1>
+                            <h2 class='section_label'>
+                                Start: <span class='section_span'> {{ start_section[loop.index-1] }} </span>
+                                End: <span class='section_span'> {{ end_section[loop.index-1] }} </span>
+                            </h2>
+                            {%if loop.index < text_name|length%}<h4>+</h4>{%endif%}
+                        {% endfor %}
+                        
+                    {% else %}
+                        <h1 class='title'> {{ text_name }} </h1>
+                        <h2 class='section_label'>
+                            Start: <span class='section_span'> {{ start_section }} </span>
+                            End: <span class='section_span'> {{ end_section }} </span>
+                        </h2>
+                    {% endif %}
+                    <br>
                     <h3>
                         <a href="/stats/formulas" class="btn btn-info ml-2" role="button">Description of Readability Metrics</a>
                     </h3>
