@@ -10,31 +10,30 @@
             <!-- Metrics -->
             <section class="mt-5">
                 <div class="container p-4 mb-5" style="background-color: rgba(0, 0, 0, 0.7); border-radius: 10px; text-align: left;">
-                    <h2 class="text-center">Metrics</h2>
+                    <h2 class="text-center">DEFINITIONS</h2>
                     <p>
-                        <strong>Word:</strong> For the purposes of these analyses, proper names (e.g., Marcus, Roma) are excluded from the calculations.
+                        <strong>Word:</strong> Every different form of the word; i.e. a “token” or N. For the purposes of these analyses, proper names (e.g., Marcus, Roma) are excluded from the calculations.
                         <br>
-                        <strong>Number of Words:</strong> The total number of lemma in the text (i.e., “tokens” or N).
+                        <strong>Unique Word:</strong> Total words irrespective of different forms; i.e. “types” or V; .g. bellum and belli would be two “words” or two “tokens” but only one “unique word” or “type”
                         <br>
-                        <strong>Vocabulary or Unique Words:</strong> The number of different words that appear in the text (i.e., “types” or V). All inflected forms of a word are considered as that word (e.g., “amico” and “amici”, or “agis” and “egerunt”) would count as a single type (“amicus” or “ago”).
-                        <br>
-                        <strong>LexR:</strong> A measurement of lexical readability on a 10-point scale for historical languages that blends data about word length, lexical high frequency, lexical sophistication, and lexical variation.
-                        <br>
-                        <strong>PLexR:</strong> PLexR calculates a text’s readability by replacing LexR’s generic parameters for lexical high frequency and lexical sophistication with customized core and non-core vocabularies.
+                        <strong>Word Length:</strong> The number of characters in a word; e.g. egerunt = 7. Six characters is the typical threshold in readability studies for a “long word.”
                         <br>
                         <strong>Lexical Density:</strong> The number of lexical or content words (nouns, adjectives, verbs, and adverbs) divided by the total number of words in a text.
                         <br>
-                        <strong>Lexical Sophistication:</strong> The number of unusual or advanced words in the text, defined as those words that are not in the Diederich 1500.
+                        <strong>Lexical Sophistication:</strong> The number of unusual or advanced words in the text, defined as those words that are not in the Diederich 1500, or around the 80% vocabulary in a typical text.
                         <br>
-                        <strong>Lexical Variation:</strong> How often individual words are repeated within a text can also contribute to its lexical complexity. Because this metric is biased.
+                        <strong>Lexical Variation:</strong> How often individual words are repeated within a text.
+                        <br>
+                        <strong>TTR:</strong> The ratio of the number of unique words (“types” or V) to the total number of words (“tokens” or N). This formula exhibits bias against shorter texts.
                         <br>
                         <strong>CTTR or Corrected TTR:</strong> Corrected TTR divides the number of types (V) by the square-root of 2 times the number of tokens (N).
                         <br>
                         <strong>Root TTR:</strong> Root TTR divides the number of types (V) by the square-root of the number tokens.
                         <br>
-                        <strong>LogTTR or Herdan’s C:</strong> LogTTR divides the log of the number of types (V) by the log of the number of tokens (N).
+                        <strong>LogTTR or Herdan's C:</strong> LogTTR divides the log of the number of types (V) by the log of the number of tokens (N).
                         <br>
-                        <strong>TTR:</strong> The ratio of the number of unique words (“types”) to the total number of words (“tokens”). This formula exhibits bias against shorter texts.
+                        <strong>Hapax (legomenon):</strong> LogTTR divides the log of the number of types (V) by the log of the number of tokens (N).
+                        <br>
                     </p>
             
                     <h2 class="text-center">Plots</h2>
@@ -46,11 +45,39 @@
                         <strong>Linear Lexical Load:</strong> Assigns a lexical score to each word, displays the change in lexical load of the text selection.
                         <br>
                         <strong>Bin Frequency:</strong> Displays the percentage of words in text selection that fall into certain frequency bins within the Diederich 1500.
+                        <br>
                     </p>
             
-                    <h2 class="text-center">Hapax</h2>
+                    <h2 class="text-center">READABILITY FORMULAE</h2>
                     <p>
-                        <strong>Hapax (legomenon):</strong> A word that only appears once in the selection.
+                        <strong>LexR:</strong> A word that only appears once in the selection.
+                        <br>
+                        <strong>PLexR:</strong> PLexR calculates a text’s readability by replacing LexR’s generic parameters for lexical high frequency and lexical sophistication with customized core and non-core vocabularies. [in development]
+                        <br>
+                        <strong>ARI:</strong> = 4.71 * (Total # of Characters / Total # of Words)) + (0.5 * (Total # of Words / Total # of Sentences) - 21.43
+                        <br>
+                        &nbsp; The Automated Readability Index (ARI) scores map onto US Grade Level.
+                        <br>
+                        <strong>Coleman-Liau Index:</strong> = (0.0588 * (Total # of Characters / Total # of Words) * 100) - (0.296 * ((Total # of Sentences / Total # of Words) * 100)) - 15.8
+                        <br>
+                        &nbsp; Coleman-Liau Index scores map onto US Grade Level.
+                        <br>
+                        <strong>LIX:</strong> = (Total # of Words / Total # of Sentences') + (“Long Words * 100 / Total # of Words')
+                        <br>
+                        &nbsp; Texts with scores greater than 40 are considered difficult.
+                        <br>
+                        <strong>RIX:</strong> = (Long words  / Total Sentences)
+                        <br>
+                        &nbsp; A simpler metric than LIX. Texts with scores greater than 2 are considered difficult.
+                        <br>
+                        <strong>SMOG:</strong> = 1.043 * sqrt(Total # of Long Words * 30 / Total # of Sentences ) + 3.1291
+                        <br>
+                        &nbsp; SMOG scores map onto US Grade Level.
+                        <br>
+                        <strong>Spache:</strong> = (0.121 * Average Sentence Length in Words) + (0.082  * Total # of Unique Unfamiliar Words [words outside the DCC Latin Core]  / Total # of Unique Words') + 0.659
+                        <br>
+                        &nbsp; The Spache formula is designed for texts aimed at young readers (e.g., grades 1-3 in English). A Score of 6 would be typical of texts appropriate for US 9th Grade.
+
                     </p>
                 </div>
             </section>
