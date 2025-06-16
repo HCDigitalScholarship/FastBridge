@@ -144,8 +144,8 @@ def get_slice(text_object: Text, start_section, end_section):
 def find_hapax_legomena(words, dictionary:dict):
     word_frequencies = defaultdict(int)
     for word in words:
-        word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
-    return [word.capitalize() for word, freq in word_frequencies.items() if freq == 1]
+        if(dictionary[word]): word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
+    return [word.capitalize() for word, freq in word_frequencies.items() if freq == 1 and word]
 
 
 class TextAnalyzer:
@@ -749,7 +749,7 @@ class TextAnalyzer:
     @round_decorator
     def dale_chall_score(self):
         if len(self.texts) == 0:
-            return 'NA'
+            return 'NA', 'NA'
 
         total_words = 0
         difficult_words = 0
@@ -769,7 +769,7 @@ class TextAnalyzer:
                     difficult_words += 1
 
         if len(sections) <= 1:
-            return 'NA'
+            return 'NA', 'NA'
 
         # Compute PDW and ASL
         pdw = (difficult_words / total_words) * 100
@@ -779,8 +779,9 @@ class TextAnalyzer:
         score = (0.1579 * pdw) + (0.0496 * asl)
         if pdw >= 5:
             score += 3.6365
-
-        return score
+        new_dale_chall = 64 - (0.95*pdw) - (0.69*asl)
+        
+        return score, new_dale_chall
     
     @round_decorator
     def ari_score(self):
@@ -838,7 +839,6 @@ class TextAnalyzer:
         L = (total_letters / total_words) * 100  # average letters per 100 words
         S = (len(sentence_sections) / total_words) * 100  # average sentences per 100 words
 
-        print(len(sentence_sections), total_words, total_letters, 'check')
         score = (0.0588 * L) - (0.296 * S) - 15.8
         return score
 
@@ -1364,7 +1364,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     top20NoDie300 = analyzer.top20NoDie300()
     freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
     spache_score = analyzer.spache_score()
-    dale_chall = analyzer.dale_chall_score()
+    dale_chall, new_dale_chall = analyzer.dale_chall_score()
     ari = analyzer.ari_score()
     coleman_liau = analyzer.coleman_liau_score()
     lix_score = analyzer.lix_score()
@@ -1408,6 +1408,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "freq5": freqBin5,
         "freq6": freqBin6,
         "spache": spache_score,
+        "new_dale_chall": new_dale_chall,
         "dale_chall": dale_chall,
         "ari": ari,
         "coleman_liau": coleman_liau,
@@ -1447,7 +1448,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     top20NoDie300 = analyzer.top20NoDie300()
     freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
     spache_score = analyzer.spache_score()
-    dale_chall = analyzer.dale_chall_score()
+    dale_chall, new_dale_chall = analyzer.dale_chall_score()
     ari = analyzer.ari_score()
     coleman_liau = analyzer.coleman_liau_score()
     lix_score = analyzer.lix_score()
@@ -1492,6 +1493,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
         "freq5": freqBin5,
         "freq6": freqBin6,
         "spache": spache_score,
+        "new_dale_chall": new_dale_chall,
         "dale_chall": dale_chall,
         "ari": ari,
         "coleman_liau": coleman_liau,
