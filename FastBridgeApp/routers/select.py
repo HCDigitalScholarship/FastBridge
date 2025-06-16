@@ -18,38 +18,28 @@ import sys
 
 @router.get("/")
 async def index(request : Request):
-    print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    print("Calling select()")
     return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
 
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    print("Calling select_section()")
-    print("Unformatted textname: ", textname)
     locations_list = MongoDefinitionTools.mg_get_locations(language, textname)
-    print(f"locations_list for {textname}: ", locations_list)
     return locations_list
 
 
 def filter_helper(row_filters, POS):
-    print("Calling filter_helper()")
-    print(row_filters)
-    print(POS)
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
     for filter, POS_for_filter in row_filters:
-        #print(POS, POS_for_filter, "printing")
         if POS+ " " == POS_for_filter:
             display_filter = filter.replace("_", " ").title()
             if display_filter[-1] == "0":
-                #print(filter, POS_for_filter, "printing")
                 display_filter = display_filter[:-1]
             elif display_filter[-2:] == "99":
                 display_filter = f"Irregular"
@@ -64,48 +54,29 @@ def filter_helper(row_filters, POS):
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
-    print("Calling simple_result()")
     context = {"request": request}
     triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
-    print("made trips")
-    print("sourcetexts: ", sourcetexts)
     if running_list == "running":
-        print("running list")
         running_list = True
     else:
-        print("not running list")
         running_list = False
     local_def = False
     local_lem = False
-    # print("Printing triple: ", triple)
     words = []
     titles =[]
-    print("entering for loop")
     display_triple = []
     for text, start, end in triple:
-        print("Fetching locations for all texts . . . ")
         locations_list = MongoDefinitionTools.mg_get_locations(language, text)
-        print("Locations loaded.")
-        print("\n\nFetching all location words for all texts . . .")
         location_words = MongoDefinitionTools.mg_get_location_words(language, text)
-        print("Location words loaded.\n\n")
         book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
-        print("loaded the book")
         titles += (book.get_words(start, end))
-        print(titles)
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-    try:
-        print(book)
-    except Exception as e:
-        print("GOOD! IT IS GONE")
-    print("local_def? ", local_def, " local_lem? ", local_lem)
 
-    print("got titles")
     frequency_dict = {}
     if True:
         dups = set()
@@ -123,9 +94,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
-    # print("titles_no_dups: ", titles_no_dups)
     titles = sorted(titles, key=lambda x: x[1])
-    # print("titles: ", titles)
 
     dict_name = "bridge_latin_dictionary"
     words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
@@ -146,7 +115,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
     response = templates.TemplateResponse("result.html", context)
-    print("response made, returning response: ")
     return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
@@ -155,7 +123,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str, running_list: str):
-    print("Calling result()")
     context = {"request": request}
     if running_list == "running":
         running_list = True
@@ -168,17 +135,18 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
+        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
+        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
         book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
-        # book = DefinitionTools.get_text(text, language).book
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
         del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
-    ##print("\n")
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        # book = DefinitionTools.get_text(text, language).book
+        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
+        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
         book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
@@ -216,11 +184,9 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
 
-    ##print(titles)
 
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
-    ##print(titles)
 
     dict_name = "bridge_latin_dictionary"
     words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
@@ -235,12 +201,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
     context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
 
-    #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
 
 
 def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups):
-    print("Calling build_html_for_clusterize()")
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -299,16 +263,12 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     return context
 
 def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
-    print("Calling build_table()")
     render_words = []
-    print(columnheaders)
     for j in range(len(words)):
         lst = []
-        #print(words[j])
 
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
-            #print(columnheaders[i][-5:])
             if(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_DEFINITION}</td>'
                 lst.append(words[j][0][-4])
