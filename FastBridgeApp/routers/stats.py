@@ -377,6 +377,7 @@ class TextAnalyzer:
                 word = word_tuple[0] # head_word
                 if word in self.dictionary:
                     word_info = self.dictionary[word]
+                    if not word_info["CORPUSFREQ"]: continue
                     if word_info["PROPER"] not in properNounCats and int(word_info["CORPUSFREQ"]) > 300:
                         lemma = word_info.get("SIMPLE_LEMMA")
                         if lemma: word_counts[lemma] += 1
@@ -511,7 +512,8 @@ class TextAnalyzer:
         for word_tuple in text_slices_concat:
             word = word_tuple[0]
             if word in self.dictionary:
-                freq = int(self.dictionary[word]["CORPUSFREQ"])
+                freq = self.dictionary[word]["CORPUSFREQ"]
+                if not freq: continue
                 if freq <= 200:
                     scores.append(2)
                 elif 200 < freq <= 1000:
@@ -577,7 +579,8 @@ class TextAnalyzer:
         for word_tuple in text_slices_concat:
             word = word_tuple[0]
             if word in self.dictionary:
-                freq = int(self.dictionary[word]["CORPUSFREQ"])
+                freq = self.dictionary[word]["CORPUSFREQ"]
+                if not freq: continue
                 if freq <= 200:
                     scores.append(2)
                 elif 200 < freq <= 1000:
@@ -643,7 +646,8 @@ class TextAnalyzer:
 
         for word in words:
             if word in self.dictionary:
-                freq = int(self.dictionary[word]["CORPUSFREQ"])
+                freq = self.dictionary[word]["CORPUSFREQ"]
+                if not freq: continue
                 if freq <= 200:
                     count0_200 += 1
                 elif freq <= 500:
@@ -809,32 +813,35 @@ class TextAnalyzer:
 
     @round_decorator
     def coleman_liau_score(self):
-        if len(self.texts) == 0:
+        if not self.texts:
             return 'NA'
 
         text_slice = self._flatten_texts()
-
-        if len(text_slice) < 100:
-            return 'NA'
-
-        sample = text_slice[:100]
+        total_words = 0
         total_letters = 0
         sentence_sections = set()
 
-        for word in sample:
-            orthographic_form = word[2] 
-            section = word[7]            
+        for word in text_slice:
+            orthographic_form = word[2]
+            section = word[7]
 
-            total_letters += len(orthographic_form)
+            if orthographic_form:
+                total_words += 1
+                total_letters += len(orthographic_form)
 
             if section is not None:
                 sentence_sections.add(section)
 
-        L = total_letters / 100  # Avg letters per 100 words
-        S = len(sentence_sections)  # Approx. number of sentences in first 100 words
+        if total_words < 1:
+            return 'NA'
 
+        L = (total_letters / total_words) * 100  # average letters per 100 words
+        S = (len(sentence_sections) / total_words) * 100  # average sentences per 100 words
+
+        print(len(sentence_sections), total_words, total_letters, 'check')
         score = (0.0588 * L) - (0.296 * S) - 15.8
         return score
+
 
     def _get_word_stats(self, text_slice): # helper for lix and rix
         total_words = 0
@@ -930,19 +937,20 @@ class TextAnalyzer:
 
         for word in words:
             if word in self.dictionary:
-                if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                if not self.dictionary[word]["CORPUSFREQ"]: continue
+                if self.dictionary[word]["CORPUSFREQ"] <= 200:
                     scores.append(2)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                if self.dictionary[word]["CORPUSFREQ"] > 200 and self.dictionary[word]["CORPUSFREQ"] <= 1000:
                     scores.append(1)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                if self.dictionary[word]["CORPUSFREQ"] > 1000 and self.dictionary[word]["CORPUSFREQ"] <= 2000:
                     scores.append(-1)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                if self.dictionary[word]["CORPUSFREQ"] > 2000 and self.dictionary[word]["CORPUSFREQ"] <= 5000:
                     scores.append(-2)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                if self.dictionary[word]["CORPUSFREQ"] > 5000:
                     scores.append(-4)
                     continue
             else:
@@ -1010,19 +1018,20 @@ class TextAnalyzer:
 
         for word in words:
             if word in self.dictionary:
-                if int(self.dictionary[word]["CORPUSFREQ"]) <= 200:
+                if not self.dictionary[word]["CORPUSFREQ"]: continue
+                if self.dictionary[word]["CORPUSFREQ"] <= 200:
                     scores.append(2)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 200 and int(self.dictionary[word]["CORPUSFREQ"]) <= 1000:
+                if self.dictionary[word]["CORPUSFREQ"] > 200 and self.dictionary[word]["CORPUSFREQ"] <= 1000:
                     scores.append(1)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 1000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 2000:
+                if self.dictionary[word]["CORPUSFREQ"] > 1000 and self.dictionary[word]["CORPUSFREQ"] <= 2000:
                     scores.append(-1)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 2000 and int(self.dictionary[word]["CORPUSFREQ"]) <= 5000:
+                if self.dictionary[word]["CORPUSFREQ"] > 2000 and self.dictionary[word]["CORPUSFREQ"] <= 5000:
                     scores.append(-2)
                     continue
-                if int(self.dictionary[word]["CORPUSFREQ"]) > 5000:
+                if self.dictionary[word]["CORPUSFREQ"] > 5000:
                     scores.append(-4)
                     continue
             else:
