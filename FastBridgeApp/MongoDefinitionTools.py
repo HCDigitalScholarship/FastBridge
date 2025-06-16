@@ -10,7 +10,7 @@ import time
 from mongo_connection import db, dict_db, atlas_client
 from text_title_rename_dict import title_renaming_dict, string_to_slug
 
-    
+
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
 def timer_decorator(func):
@@ -74,8 +74,6 @@ def mg_get_slice(text_name, start_section, end_section):
     
     if cursor is None:
         return "Start or end section not found in the collection."
-    
-    #head_words = [document['head_word'] for document in cursor]
     
     cursor_list = list(cursor)
     document_tuple_list = list()
@@ -248,8 +246,7 @@ def mg_render_titles(language: str, dropdown : str = ""):
 
     title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
 
-    titles = []
-    [titles.append(f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>") for key in title_location_levels.keys()]
+    titles = [f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>" for key in sorted(title_location_levels.keys())]
     
     return "".join(titles)
 
@@ -273,7 +270,7 @@ def mg_get_location_levels(language: str):
 
     # Iterate over each collection (text) in the database
     for collection_name in collection_names:
-        collection = db[collection_name]
+        # collection = db[collection_name]
         
         # uncoment this out when/if you figure out what the location is doing 
         # location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
@@ -281,7 +278,13 @@ def mg_get_location_levels(language: str):
         # underscore_count = location.count("_") + 1 # Count the number of _ in the location string
 
         # title_location_levels[collection_name.split("_")[0]] = underscore_count # Add the location level to the dictionary
-        title_location_levels[collection_name.split("_")[0]] = -1 # Add the location level to the dictionary
+        
+        renamed_collection = collection_name.split("_")[0]
+        
+        title_location_levels[renamed_collection] = -1 # Add the location level to the dictionary
+        
+        fixed_name = string_to_slug(renamed_collection)
+        if fixed_name not in title_renaming_dict: title_renaming_dict[fixed_name] = collection_name
 
     return title_location_levels
 
@@ -360,7 +363,6 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
             print("KEY ERROR!")
             empty_dict_data = ('','','','','','','','','','','','','')
             datum = (words_from_text[i][0],) + (empty_dict_data) + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
-            print(datum)
             continue
         if has_local_defs and has_local_lems:
             datum = datum + (local_defs_list[i], local_lems_list[i])
@@ -377,7 +379,7 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
             if(in_case_multiple):
                 if in_case_multiple == "T":
                     in_case_multiple = "0"
-                in_case_multiple = in_case_multiple.split(",")
+                in_case_multiple = str(in_case_multiple).split(",")
 
                 for case in in_case_multiple:
                     new = f"{row_filters[j]}_{datum.PART_OF_SPEECH}_{case}"
@@ -511,21 +513,13 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     if(collection_name == None):
         print("Text not found")
         return
-    else:
-        print("Text found")
+
     print(f"{collection_name} successfully loaded")
 
     #Get all of the fields possible from the text
     all_possible_fields =  ["head_word", "location", "section", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
     #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
     field_data = get_field_subset(all_possible_fields, collection_name) #this now contains all fields present in the text file, some may not be present
-    print("Fields found:")
-    print(field_data.keys())
- 
-    #Testing field_data
-    for field in field_data.keys():
-        len_field = len(field_data[field])
-        print(f"{field}:\t {len_field}")
 
     #Create boolean flags for local_def, local_lem
     local_def_flag = False
