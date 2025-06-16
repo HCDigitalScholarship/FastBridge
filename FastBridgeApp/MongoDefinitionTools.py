@@ -215,10 +215,10 @@ def mg_get_location_words(language: str, collection_name: str):
         
         if isinstance(location_data, str):
             if location_data not in text_word_count:
-                text_word_count[location_data.replace('_', '.')] = doc.get("counter") - 1
+                text_word_count[location_data.replace('_', '.')] = int(doc.get("counter")) - 1
         elif isinstance(location_data, int):
             if location_data not in text_word_count:
-                text_word_count[location_data] = doc.get("counter") - 1
+                text_word_count[str(location_data)] = int(doc.get("counter")) - 1
         elif isinstance(location_data, None):
             print("No location data found in document {doc['_id']}")
         else:

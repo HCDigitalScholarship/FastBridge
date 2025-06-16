@@ -535,10 +535,10 @@ class TextAnalyzer:
         rolling_average.dropna(inplace=True)
 
         savgol_num = min(51, len(rolling_average))
-        if savgol_num < 3:
-            return "/blank_plot.png"
         if savgol_num % 2 == 0:
             savgol_num -= 1
+        if savgol_num <= 3:
+            return "/blank_plot.png"
 
         smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
         x_indexes = list(range(len(smoothed_scores)))
