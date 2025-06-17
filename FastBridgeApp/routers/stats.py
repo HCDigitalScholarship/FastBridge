@@ -4,9 +4,8 @@ from fastapi.responses import HTMLResponse
 
 import os
 from datetime import datetime
-import DefinitionTools
 from pathlib import Path
-from MongoDefinitionTools import mg_render_titles, mg_get_locations
+from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections
 from TextAnalyzer import TextAnalyzer
 
 
@@ -28,7 +27,7 @@ def stats_compare_result(request, context, sourcetexts, starts, ends, language):
     text_starts = [a.texts[0][1] for a in analyzers]
     text_ends = [a.texts[0][2] for a in analyzers]
 
-    texts_and_sections = DefinitionTools.get_sections("Latin")
+    texts_and_sections = mg_get_sections("Latin")
 
     # add analyzer stats from each text to context
     context.update({
@@ -36,7 +35,7 @@ def stats_compare_result(request, context, sourcetexts, starts, ends, language):
         "textNames": text_names,
         "textStarts": text_starts,
         "textEnds": text_ends,
-        "texts_and_sections": texts_and_sections
+        "texts_and_sections": texts_and_sections,
     })
 
     return templates.TemplateResponse("stats-multiple-texts.html", context)
@@ -200,11 +199,10 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     if selected_index > 0:  # if the selected index isn't the first set of graphs
         plotpath_nums = [num + (4 * selected_index) for num in plotpath_nums]
 
-    # Example plot paths assuming they're stored in the database
-    freq_plot_path = f'/plot{plotpath_nums[0]}.png'
-    cum_lex_plot_path = f'/plot{plotpath_nums[1]}.png'
-    lin_lex_plot_path = f'/plot{plotpath_nums[2]}.png'
-    freq_bins_plot_path = f'/plot{plotpath_nums[3]}.png'
+    freq_plot_path = analyzer.plot_word_freq(plotpath_nums[0])
+    cum_lex_plot_path = analyzer.plot_cum_lex_load(plotpath_nums[1])
+    lin_lex_plot_path = analyzer.plot_lin_lex_load(plotpath_nums[2])
+    freq_bins_plot_path = analyzer.plot_freq_bin(plotpath_nums[3])
 
     now = datetime.now()  # for caching issue with plots
     
@@ -261,7 +259,7 @@ async def stats_cumulative(request: Request, language: str):
     selected_texts = retrieve_selected_texts()
 
     # Process the selected text names and retrieve the corresponding book data
-    sectionDict = DefinitionTools.get_sections(language)
+    sectionDict = mg_get_sections(language)
     sectionBooks = [sectionDict[textname] for textname in selected_texts]
 
     # Perform cumulative statistics calculations or any other operations on sectionBooks
