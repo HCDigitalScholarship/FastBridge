@@ -90,36 +90,6 @@ def mg_get_slice(text_name, start_section, end_section):
     return document_tuple_list
 
 
-def compare_functions(func1, func2, *args, **kwargs):
-    pass
-"""
-Compares the output of two functions with the same arguments.
-
-Parameters:
-func1 (function): The first function to compare.
-func2 (function): The second function to compare.
-*args: Variable length argument list to pass to the functions.
-**kwargs: Arbitrary keyword arguments to pass to the functions.
-
-Returns:
-bool: True if the outputs are equal, False otherwise.
-tuple: The outputs of the functions.
-
-
-Example usage:
-def add(x,y):
-    return x+y
-
-def mult(x,y):
-    return x*y
-
-are_equal, outputs = compare_functions(add, mult, 2, 3)
-"""
-"""output1 = func1(*args, **kwargs)
-output2 = func2(*args, **kwargs)
-
-return output1 == output2, (output1, output2)"""
-
 def mg_get_locations(language: str, collection_name: str):
     '''
     Get all locations from a collection from MongoDB. A location is usually formatted:
@@ -181,6 +151,24 @@ def mg_get_locations(language: str, collection_name: str):
 
     return locations_linked_list
 
+import json
+def mg_get_sections(language):
+    with open('sections.json', 'r', encoding='utf-8') as f:
+        sections = json.load(f)
+
+    return sections
+
+    # sections = {}
+    # for text in title_renaming_dict:
+    #     sections[title_renaming_dict[text].split('_')[0]] = mg_get_locations(language, text)
+    
+
+    # # Save sections to JSON
+    # with open('sections.json', 'w', encoding='utf-8') as f:
+    #     json.dump(sections, f, ensure_ascii=False, indent=4)
+
+    # return sections
+
 
 def mg_get_location_words(language: str, collection_name: str):
     '''
@@ -227,7 +215,7 @@ def mg_get_location_words(language: str, collection_name: str):
 
     return text_word_count
 
-def mg_render_titles(language: str, dropdown : str = ""):
+def mg_render_titles(language: str, dropdown : str = "", other: bool = False):
     """
     For every text of a given language, this method writes a string of HTML code to display the text titles
     from MongoDB. 
@@ -246,6 +234,8 @@ def mg_render_titles(language: str, dropdown : str = ""):
 
     title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
 
+    if other: return list(title_location_levels.keys())
+    
     titles = [f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>" for key in sorted(title_location_levels.keys())]
     
     return "".join(titles)
