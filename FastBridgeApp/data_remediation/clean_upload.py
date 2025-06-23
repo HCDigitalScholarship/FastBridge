@@ -2,20 +2,22 @@ import os
 import pandas as pd
 import json
 import argparse
-from pathlib import PurePosixPath
 from pymongo import MongoClient
 
 mongo_uri = 'mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set'
-database_name = 'Greek-Texts'
+database_name = 'dictionaries'
 client = MongoClient(mongo_uri)
 db = client[database_name]
 
+# For general data
 possible_headers = [
     "head_word", "location", "section", "orthographic_form", "case",
     "grammatical_subcategory", "lasla_subordination_code", "local_definition",
     "local_principal_parts", "counter"
 ]
+
 remove_headers = ["grammatical_category", "_merge"]
+
 target_headers = {
     "title": "head_word", 
     "headword": "head_word", 
@@ -30,6 +32,23 @@ target_headers = {
     "grammatical_category_sub": "grammatical_subcategory",
     "grammaticalsubcategory": "grammatical_subcategory"
 }
+
+# For dictionary-specific schema
+dictionary_expected_columns = [
+    "TITLE", "PRINCIPAL_PARTS", "PRINCIPAL_PARTS_NO_DIACRITICALS", "SIMPLE_LEMMA",
+    "SHORT_DEFINITION", "LONG_DEFINITION", "PART_OF_SPEECH", "LOGEION_LINK",
+    "FORCELLINI_LINK", "ROW_FILTERS", "CONJUGATION", "DECLENSION", "PROPER",
+    "REGULAR", "STOPWORD", "CORPUSFREQ", "LASLA_Combined"
+]
+
+def clean_dictionary_data(df):
+    df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
+    missing = [col for col in dictionary_expected_columns if col not in df.columns]
+    if missing:
+        print(f"Missing expected columns: {missing}")
+        for col in missing:
+            df[col] = None
+    return df[dictionary_expected_columns]
 
 def clean_data(df):
     df.columns = map(str.lower, df.columns)
@@ -75,7 +94,11 @@ def convert_and_import(folder_path):
             else:
                 df = pd.read_csv(file_path)
 
-            cleaned_df = clean_data(df)
+            if database_name.lower() == 'dictionaries':
+                cleaned_df = clean_dictionary_data(df)
+            else:
+                cleaned_df = clean_data(df)
+
             import_dataframe_to_mongo(cleaned_df, collection_name)
 
 if __name__ == "__main__":
