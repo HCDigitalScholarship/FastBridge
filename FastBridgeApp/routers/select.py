@@ -96,7 +96,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
 
-    dict_name = "bridge_latin_dictionary"
+    db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
+    dict_name = db_dicts.get(language, "bridge_latin_dictionary")
+    
     words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
     words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
     
