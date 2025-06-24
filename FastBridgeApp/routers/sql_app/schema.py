@@ -16,7 +16,7 @@ class Text(TextBase):
     sections : str
     owner_id : int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 
@@ -36,4 +36,4 @@ class User(UserBase):
     read_texts: List[Text] = []
     add_access: bool
     class Config:
-        orm_mode = True
+        from_attributes = True

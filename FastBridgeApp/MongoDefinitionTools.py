@@ -323,10 +323,7 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
     dict_fields = ['TITLE', 'PRINCIPAL_PARTS', 'PRINCIPAL_PARTS_NO_DIACRITICALS', 'SIMPLE_LEMMA', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK']
     row_filters = ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD']
     Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text"])
-    if type(words_from_text[0][5]) == str:
-        locations_list = [word[5].replace('_', ".") for word in words_from_text]
-    else:
-        locations_list = [word[5] for word in words_from_text]
+    locations_list = [str(word[5]).replace('_', ".") for word in words_from_text]
     final_row_filters = set()
     word_list = deque()
     computed_row_filters = deque()
