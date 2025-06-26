@@ -215,7 +215,7 @@ def mg_get_location_words(language: str, collection_name: str):
 
     return text_word_count
 
-def mg_render_titles(language: str, dropdown : str = "", other: bool = False):
+def mg_render_titles(language: str, dropdown : str = "", other: bool = False, depth: bool = False):
     """
     For every text of a given language, this method writes a string of HTML code to display the text titles
     from MongoDB. 
@@ -232,7 +232,7 @@ def mg_render_titles(language: str, dropdown : str = "", other: bool = False):
     else: db = atlas_client.get_database("Latin-Texts")
         
 
-    title_location_levels = mg_get_location_levels(language) # a dict of {"Title": "location_level"}
+    title_location_levels = mg_get_location_levels(language, depth=depth) # a dict of {"Title": "location_level"}
 
     if other: return list(title_location_levels.keys())
     
@@ -241,7 +241,7 @@ def mg_render_titles(language: str, dropdown : str = "", other: bool = False):
     return "".join(titles)
 
 
-def mg_get_location_levels(language: str):
+def mg_get_location_levels(language: str, depth: bool = False):
     """
     For every text of a given language, this method gets the location levels
     from MongoDB. 
@@ -260,18 +260,19 @@ def mg_get_location_levels(language: str):
 
     # Iterate over each collection (text) in the database
     for collection_name in collection_names:
-        # collection = db[collection_name]
-        
-        # uncoment this out when/if you figure out what the location is doing 
-        # location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
-        
-        # underscore_count = location.count("_") + 1 # Count the number of _ in the location string
+        if depth:
+            # uncoment this out when/if you figure out what the location is doing 
+            collection = db[collection_name]
+            
+            location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
+            
+            underscore_count = location.count("_") + 1 # Count the number of _ in the location string
 
-        # title_location_levels[collection_name.split("_")[0]] = underscore_count # Add the location level to the dictionary
+            title_location_levels[collection_name.split("_")[0]] = underscore_count # Add the location level to the dictionary
         
         renamed_collection = collection_name.split("_")[0]
         
-        title_location_levels[renamed_collection] = -1 # Add the location level to the dictionary
+        if not depth: title_location_levels[renamed_collection] = -1 # Add the location level to the dictionary
         
         fixed_name = string_to_slug(renamed_collection)
         if fixed_name not in title_renaming_dict: title_renaming_dict[fixed_name] = collection_name
@@ -557,15 +558,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     print("Tuples loaded.")
 
     #get the section_level
-    section_level = 0 #1 level for Location 1, 2 for 1_1, 3 for 1_1_1
-    location_example = tuples[0][5]
-    
-    if location_example == "1":
-        section_level = 1
-    if location_example == '1_1':
-        section_level = 2
-    if location_example == '1_1_1':
-        section_level = 3 
+    section_level = str(tuples[0][5]).count("_") + 1
 
     print("Finished loading text as Text!!!")
     return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
@@ -619,3 +612,10 @@ def get_mongo_dictionary(title: str):
         return result_list
     else:
         return None
+
+def make_quads_or_trips(texts, starts, ends):
+    """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""
+    texts =  texts.split("+")
+    starts = starts.split("+")
+    ends = ends.split("+")
+    return list(zip(texts, starts, ends))
