@@ -115,7 +115,7 @@ function createDropdown(text, dropdown_id) {
 
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
     $.get(
-      "/select/sections/" + text + "/" + languageselected + "/",
+      "/select/sections/" + string_to_slug(text) + "/" + languageselected + "/",
       function (data) {
         let elementS = document.getElementById("dropdownstartoracle2");
         let elementE = document.getElementById("dropdownendoracle2");
@@ -198,7 +198,7 @@ function createDropdown(text, dropdown_id) {
     $("#dropdownendoracle").empty();
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
     $.get(
-      "/select/sections/" + text + "/" + languageselected + "/",
+      "/select/sections/" + string_to_slug(text) + "/" + languageselected + "/",
       function (data) {
         let elementS = document.getElementById("dropdownstartoracle");
         let elementE = document.getElementById("dropdownendoracle");
