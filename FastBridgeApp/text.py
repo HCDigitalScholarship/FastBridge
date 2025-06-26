@@ -96,8 +96,6 @@ class Text(object):
         return start_idx, end_idx
 
 
-
-
     def get_words(self, user_start, user_end):
         """
         Convienent wrapper method. Gets the correct sublist of TITLES, based on user's selection.
@@ -109,18 +107,9 @@ class Text(object):
 
         if end == -1:
             end = len(tmp)
-        wordlist = [tmp[i] + (self.name,) for i in range(start, end)] #adds the source text
+            
+        wordlist = [tmp[i] + (self.name,) for i in range(start, end) if i < len(tmp)] #adds the source text
         return wordlist
-    
-    def get_slice(self, start_section, end_section):
-        if start_section == 'start' and end_section == 'end': return self.words
-        
-        start_index = self.sections[start_section]
-        end_index = self.sections[end_section]
-        text_slice = self.words[start_index:end_index]
-
-
-        return text_slice
 
 
 def next_section(section):
