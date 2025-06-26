@@ -1,91 +1,99 @@
-
-from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
 from pathlib import Path
 import MongoDefinitionTools
 
 router = APIRouter()
-router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
+
+
 @router.get("/")
-async def oracle_index(request : Request):
+async def oracle_index(request: Request):
     return templates.TemplateResponse("index-oracle.html", {"request": request})
 
+
 @router.get("/{language}")
-async def oracle_select(request : Request, language : str):
-    return templates.TemplateResponse("select-oracle.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language, depth=True), 
-                                                             'titles2': MongoDefinitionTools.mg_render_titles(language, dropdown="2", depth=True) })
+async def oracle_select(request: Request, language: str):
+    return templates.TemplateResponse(
+        "select-oracle.html",
+        {
+            "request": request,
+            "titles": MongoDefinitionTools.mg_render_titles(language, depth=True),
+            "titles2": MongoDefinitionTools.mg_render_titles(language, dropdown="2", depth=True),
+        },
+    )
+
 
 @router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_units}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
-async def oracle(request : Request, language : str, etexts : str, e_units:str, e_section_size : str,  known_texts : str, known_starts : str, known_ends : str, e_section_start : str, e_section_end : str):
-    context = {"request": request, "table_data" : []}
+async def oracle(request: Request, language: str, etexts: str, e_units: str, e_section_size: str, known_texts: str, known_starts: str, known_ends: str, e_section_start: str, e_section_end: str):
+    context = {"request": request, "table_data": []}
     table_data = []
-    known = MongoDefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
-    ogknown_words= []
-    for text, start, end in known:
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, 
-                                                        MongoDefinitionTools.mg_get_locations(language, text), 
-                                                        MongoDefinitionTools.mg_get_location_words(language, text))
-        ogknown_words += (book.get_words(start, end))
-    ogknown_tokens = set([(new[0]) for new in ogknown_words])
-    e_section_list = e_section_size.split("+")
-    
-    to_explore = MongoDefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
+    book_cache = {}
+
+    def get_book(text):
+        if text not in book_cache:
+            book_cache[text] = MongoDefinitionTools.mg_get_text_as_Text(
+                language,
+                text,
+                MongoDefinitionTools.mg_get_locations(language, text),
+                MongoDefinitionTools.mg_get_location_words(language, text)
+            )
+        return book_cache[text]
+
+    known_ranges = MongoDefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
+    ogknown_words = []
+    for text, start, end in known_ranges:
+        book = get_book(text)
+        ogknown_words += book.get_words(start, end)
+
+    ogknown_wordforms = [w[0] for w in ogknown_words]
+    ogknown_tokens = set(ogknown_wordforms)
+
+    explore_ranges = MongoDefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
+    section_sizes = list(map(int, e_section_size.split("+")))
     sections_display = ""
-    for (text, e_section_start, e_section_end), e_section_size in zip(to_explore, e_section_list):
-        e_section_size = int(e_section_size)
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, 
-                                                        MongoDefinitionTools.mg_get_locations(language, text), 
-                                                        MongoDefinitionTools.mg_get_location_words(language, text))
 
-        #we can go through the section_linkedlist backwards
-        sections = book.section_linkedlist
-        indexable_sections = list(book.section_linkedlist.keys())
+    for (text, sec_start, sec_end), section_size in zip(explore_ranges, section_sizes):
+        book = get_book(text)
+        section_keys = list(book.section_linkedlist.keys())
 
-        start = indexable_sections.index(e_section_end) - e_section_size
-        end = e_section_end
-        while start >= 0 and indexable_sections[start] != e_section_start:
-            section = f'{indexable_sections[start]} - {end}' #for each row of the table
-            section_words = book.get_words(indexable_sections[start], end)
-            total_tokens = set([(new[0]) for new in section_words])
-            total_words =  (section_words) #need to filter to get out the sorting info.
-            known_tokens = total_tokens.intersection(ogknown_tokens)
-            known_tokens = len(total_tokens.intersection(ogknown_tokens))
+        try:
+            start_idx = max(0, section_keys.index(sec_end) - section_size)
+        except ValueError:
+            continue  # skip if section not found
 
-            total_tokens = len(total_tokens)
-            total_words = [(new[0]) for new in total_words]
-            known_words = (list_intersection(total_words, [(new[0]) for new in ogknown_words]))
+        end_key = sec_end
+        while start_idx >= 0 and section_keys[start_idx] != sec_start:
+            start_key = section_keys[start_idx]
+            section_label = f"{start_key} - {end_key}"
 
-            known_words = len(known_words)
-            total_words = len(total_words)
-            percent1 = round(abs((known_words)/total_words) * 100, 2)
-            percent_1 = f'{percent1}%'
-            percent2 = round(abs((known_tokens)/total_tokens)* 100, 2)
-            percent_2 = f'{percent2}%'
-            link = f'/select/{language}/result/{text}/{indexable_sections[start]}-{end}/exclude/{known_texts}/{known_starts}-{known_ends}/non_running/'
-            
-            table_data.append([section, total_words, total_tokens, known_words, known_tokens, percent_1, percent_2, link])
-            
-            start =  start - 1
-            end = sections[end] #previous sections
-            
-        sections_display+= f"{book.name}: {e_section_start} - {e_section_end}, " #for the top part
-        
-    context["table_data"] = sorted(table_data, key=lambda x: x[3], reverse = True)
+            section_words = book.get_words(start_key, end_key)
+            wordforms = [w[0] for w in section_words]
+            token_set = set(wordforms)
 
+            known_tokens = token_set.intersection(ogknown_tokens)
+            known_words = set(wordforms).intersection(ogknown_wordforms)
+
+            total_word_count = len(wordforms)
+            total_token_count = len(token_set)
+            known_word_count = len(known_words)
+            known_token_count = len(known_tokens)
+
+            percent_words = f"{round(100 * known_word_count / total_word_count, 2)}%" if total_word_count else "0%"
+            percent_tokens = f"{round(100 * known_token_count / total_token_count, 2)}%" if total_token_count else "0%"
+
+            link = f"/select/{language}/result/{text}/{start_key}-{end_key}/exclude/{known_texts}/{known_starts}-{known_ends}/non_running/"
+
+            table_data.append([section_label, total_word_count, total_token_count, known_word_count, known_token_count, percent_words, percent_tokens, link,])
+
+            start_idx -= 1
+            end_key = book.section_linkedlist.get(end_key, "start")
+            if end_key == "start":
+                break
+
+        sections_display += f"{book.name}: {sec_start} - {sec_end}, "
+
+    context["table_data"] = sorted(table_data, key=lambda row: row[3], reverse=True)
     context["etexts"] = sections_display
 
     return templates.TemplateResponse("result-oracle.html", context)
-
-
-
-def list_difference(list1, list2):
-    """Returns a list of items that are in list1 but not in list2."""
-    set2 = set(list2)
-    return list(item for item in list1 if item not in set2)
-
-def list_intersection(list1, list2):
-    """Returns a list of items that are in both list1 and list2."""
-    set2 = set(list2)
-    return [item for item in list1 if item in set2]
