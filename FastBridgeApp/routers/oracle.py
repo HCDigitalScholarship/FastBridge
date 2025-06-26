@@ -43,12 +43,12 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     known_ranges = MongoDefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words = []
     for text, start, end in known_ranges:
-        book = get_book(text)
-        ogknown_words += book.get_words(start, end)
+        ogknown_words += get_book(text).get_words(start, end)
 
-    ogknown_wordforms = [w[0] for w in ogknown_words]
-    ogknown_tokens = set(ogknown_wordforms)
+    og_wordforms = [w[0] for w in ogknown_words]
+    og_token_set = set(og_wordforms)
 
+    # Prepare exploration ranges
     explore_ranges = MongoDefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
     section_sizes = list(map(int, e_section_size.split("+")))
     sections_display = ""
@@ -60,35 +60,40 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
         try:
             start_idx = max(0, section_keys.index(sec_end) - section_size)
         except ValueError:
-            continue  # skip if section not found
+            continue
 
         end_key = sec_end
         while start_idx >= 0 and section_keys[start_idx] != sec_start:
             start_key = section_keys[start_idx]
-            section_label = f"{start_key} - {end_key}"
+            section_range = f"{start_key} - {end_key}"
 
             section_words = book.get_words(start_key, end_key)
             wordforms = [w[0] for w in section_words]
             token_set = set(wordforms)
 
-            known_tokens = token_set.intersection(ogknown_tokens)
-            known_words = set(wordforms).intersection(ogknown_wordforms)
+            known_words = list_intersection(wordforms, og_wordforms)
+            known_word_count = len(known_words)
+
+            known_tokens = token_set.intersection(og_token_set)
+            known_token_count = len(known_tokens)
 
             total_word_count = len(wordforms)
             total_token_count = len(token_set)
-            known_word_count = len(known_words)
-            known_token_count = len(known_tokens)
 
-            percent_words = f"{round(100 * known_word_count / total_word_count, 2)}%" if total_word_count else "0%"
-            percent_tokens = f"{round(100 * known_token_count / total_token_count, 2)}%" if total_token_count else "0%"
+            percent_words = f"{round((known_word_count / total_word_count) * 100, 2)}%" if total_word_count else "0%"
+            percent_tokens = f"{round((known_token_count / total_token_count) * 100, 2)}%" if total_token_count else "0%"
 
-            link = f"/select/{language}/result/{text}/{start_key}-{end_key}/exclude/{known_texts}/{known_starts}-{known_ends}/non_running/"
+            link = (
+                f"/select/{language}/result/{text}/{start_key}-{end_key}/exclude/"
+                f"{known_texts}/{known_starts}-{known_ends}/non_running/"
+            )
 
-            table_data.append([section_label, total_word_count, total_token_count, known_word_count, known_token_count, percent_words, percent_tokens, link,])
+            table_data.append([section_range, total_word_count, total_token_count, known_word_count, known_token_count, percent_words, percent_tokens, link])
 
             start_idx -= 1
-            end_key = book.section_linkedlist.get(end_key, "start")
-            if end_key == "start":
+            if end_key in book.section_linkedlist:
+                end_key = book.section_linkedlist[end_key]
+            else:
                 break
 
         sections_display += f"{book.name}: {sec_start} - {sec_end}, "
@@ -97,3 +102,9 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     context["etexts"] = sections_display
 
     return templates.TemplateResponse("result-oracle.html", context)
+
+
+def list_intersection(list1, list2):
+    """Returns items in both lists, preserving duplicates."""
+    set2 = set(list2)
+    return [item for item in list1 if item in set2]
