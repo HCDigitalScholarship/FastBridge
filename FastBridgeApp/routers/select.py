@@ -4,6 +4,7 @@ import text
 import math
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
 from MongoDefinitionTools import mg_get_location_levels, mg_get_location_words, mg_get_locations, make_quads_or_trips
+import json 
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -112,12 +113,13 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
+    columnheaders.append("Corpus_Frequency")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
     
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
 
     response = templates.TemplateResponse("result.html", context)
     return response
@@ -200,16 +202,17 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
+    columnheaders.append("Corpus_Frequency")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
 
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups):
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -255,8 +258,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
-    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups)
-    render_words_optional = build_table(words, columnheaders, frequency_dict, titles) #needs to be optional to comply with LALSA
+    corpus_freq = get_corpus_freq(language)
+    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq)
+    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq) #needs to be optional to comply with LALSA
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
@@ -267,7 +271,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
-def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
+def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict):
     render_words = []
     for j in range(len(words)):
         lst = []
@@ -296,6 +300,10 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "TOTAL_COUNT_IN_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
                 lst.append(words[j][0].Total_Count_in_Text)
+            elif(columnheaders[i] == "Corpus_Frequency"):
+                freq = corpus_freq.get(words[j][0].TITLE, "NA")
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'
+                lst.append(freq)
             else:
                 tuple_id = columnheaders[i]
                 value = getattr(words[j][0], tuple_id)
@@ -309,3 +317,10 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
 
     return render_words
+
+def get_corpus_freq(language):
+    file_path = f"data/Static/{language.lower()}_headword_counts.json"
+    with open(file_path, "r") as f:
+        corpus_freq = json.load(f)
+        
+    return corpus_freq
