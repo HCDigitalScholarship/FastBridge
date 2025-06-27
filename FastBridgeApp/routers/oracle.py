@@ -19,7 +19,7 @@ async def oracle_select(request: Request, language: str):
         {
             "request": request,
             "titles": MongoDefinitionTools.mg_render_titles(language, depth=True),
-            "titles2": MongoDefinitionTools.mg_render_titles(language, dropdown="2", depth=True),
+            "titles2": MongoDefinitionTools.mg_render_titles(language, dropdown="2"),
         },
     )
 
