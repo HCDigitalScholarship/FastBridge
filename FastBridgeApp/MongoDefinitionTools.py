@@ -371,7 +371,6 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
         try: 
             datum = (words_from_text[i][0],) + dict_data[words_from_text[i][0]] + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
         except KeyError:
-            print("KEY ERROR!")
             empty_dict_data = ('','','','','','','','','','','','','')
             datum = (words_from_text[i][0],) + (empty_dict_data) + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
             continue
