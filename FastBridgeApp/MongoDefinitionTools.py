@@ -240,6 +240,29 @@ def mg_render_titles(language: str, dropdown : str = "", other: bool = False, de
     
     return "".join(titles)
 
+def get_title_location_levels(language: str, depth: bool = False):
+    """
+    Get the title location levels from MongoDB for a given language.
+    """
+    global db
+    if language == 'Greek':
+        db = atlas_client.get_database("Greek-Texts")
+    else:
+        db = atlas_client.get_database("Latin-Texts")
+
+    return mg_get_location_levels(language, depth=depth)
+
+
+def render_titles(title_location_levels: dict, dropdown: str = "") -> str:
+    """
+    Generate HTML links from a title_location_levels dictionary.
+    """
+    return "".join(
+        f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>"
+        for key in sorted(title_location_levels.keys())
+    )
+
+
 
 def mg_get_location_levels(language: str, depth: bool = False):
     """

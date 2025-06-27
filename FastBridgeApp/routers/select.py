@@ -1,19 +1,13 @@
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-import importlib
 import text
-from pathlib import Path
-import DefinitionTools
-from collections import namedtuple
 import math
-import MongoDefinitionTools
+from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
+from MongoDefinitionTools import mg_get_location_levels, mg_get_location_words, mg_get_locations, make_quads_or_trips
 
 router = APIRouter()
-router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
-import sys
 
 
 @router.get("/")
@@ -23,12 +17,21 @@ async def index(request : Request):
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
+    title_location_levels = get_title_location_levels(language, depth=True)
+
+    return templates.TemplateResponse(
+        "select.html",
+        {
+            "request": request,
+            "titles": render_titles(title_location_levels),
+            "titles2": render_titles(title_location_levels, dropdown="2"),
+        },
+    )
 
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    locations_list = MongoDefinitionTools.mg_get_locations(language, textname)
+    locations_list = mg_get_locations(language, textname)
     return locations_list
 
 
@@ -55,7 +58,7 @@ def filter_helper(row_filters, POS):
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
-    triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
+    triple = make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
         running_list = True
     else:
@@ -66,9 +69,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     titles =[]
     display_triple = []
     for text, start, end in triple:
-        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
-        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -99,8 +102,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
     
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
     
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
@@ -132,14 +135,14 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         running_list = False
     local_def = False
     local_lem = False
-    source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends) #returns a list
-    other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends) #anotherList
+    source = make_quads_or_trips(sourcetexts, starts, ends) #returns a list
+    other = make_quads_or_trips(othertexts, otherstarts, otherends) #anotherList
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
-        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
         del book
@@ -147,9 +150,9 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
-        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -191,8 +194,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = sorted(titles, key=lambda x: x[1])
 
     dict_name = "bridge_latin_dictionary"
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0]
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0]
 
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")

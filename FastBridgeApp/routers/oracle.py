@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-import MongoDefinitionTools
+from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_text_as_Text, mg_get_locations, mg_get_location_words, make_quads_or_trips
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -14,12 +14,14 @@ async def oracle_index(request: Request):
 
 @router.get("/{language}")
 async def oracle_select(request: Request, language: str):
+    title_location_levels = get_title_location_levels(language, depth=True)
+
     return templates.TemplateResponse(
         "select-oracle.html",
         {
             "request": request,
-            "titles": MongoDefinitionTools.mg_render_titles(language, depth=True),
-            "titles2": MongoDefinitionTools.mg_render_titles(language, dropdown="2"),
+            "titles": render_titles(title_location_levels),
+            "titles2": render_titles(title_location_levels, dropdown="2"),
         },
     )
 
@@ -32,15 +34,15 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
 
     def get_book(text):
         if text not in book_cache:
-            book_cache[text] = MongoDefinitionTools.mg_get_text_as_Text(
+            book_cache[text] = mg_get_text_as_Text(
                 language,
                 text,
-                MongoDefinitionTools.mg_get_locations(language, text),
-                MongoDefinitionTools.mg_get_location_words(language, text)
+                mg_get_locations(language, text),
+                mg_get_location_words(language, text)
             )
         return book_cache[text]
 
-    known_ranges = MongoDefinitionTools.make_quads_or_trips(known_texts, known_starts, known_ends)
+    known_ranges = make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words = []
     for text, start, end in known_ranges:
         ogknown_words += get_book(text).get_words(start, end)
@@ -49,7 +51,7 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     og_token_set = set(og_wordforms)
 
     # Prepare exploration ranges
-    explore_ranges = MongoDefinitionTools.make_quads_or_trips(etexts, e_section_start, e_section_end)
+    explore_ranges = make_quads_or_trips(etexts, e_section_start, e_section_end)
     section_sizes = list(map(int, e_section_size.split("+")))
     sections_display = ""
 
