@@ -14,84 +14,22 @@ class Text(object):
 
     def get_section(self, range_start, range_end):
         """
-        Normalizes the range_start and range_end section identifiers to match the expected
-        self.subsections format, then returns a tuple of (start_index, end_index) for self.words.
+        Returns the tuple (start_index, end_index) for the words that fall between
+        the given section identifiers. Assumes range_start and range_end are valid keys.
         """
 
-        def normalize_section(section, is_start):
-            if section in ("start", "end"):
-                return section
+        if range_start not in self.section_linkedlist:
+            raise ValueError(f"Invalid start section: {range_start}")
+        if range_end not in self.section_linkedlist and range_end != "end":
+            raise ValueError(f"Invalid end section: {range_end}")
 
-            num_dots = section.count(".")
-            if self.subsections == 0 or self.subsections == 1:
-                # Accept anything as-is for flat structures
-                return section
+        # Get corresponding keys in self.sections
+        start_idx = self.sections[self.section_linkedlist[range_start]] + 1
 
-            elif self.subsections == 2:
-                if num_dots == 0:
-                    return section + ".1"
-                elif num_dots == 1:
-                    return section
-                elif num_dots > 1:
-                    raise ValueError(f"Too many subsections in '{section}' for expected level 2.")
-
-            elif self.subsections == 3:
-                if num_dots == 0:
-                    return section + ".1.1"
-                elif num_dots == 1:
-                    return section + ".1"
-                elif num_dots == 2:
-                    return section
-                else:
-                    raise ValueError(f"Too many subsections in '{section}' for expected level 3.")
-
-            raise ValueError(f"Unsupported subsection level: {self.subsections}")
-
-        def resolve_end(section):
-            if section in ("start", "end"):
-                return section
-
-            normalized = normalize_section(section, is_start=False)
-
-            if normalized in self.section_linkedlist:
-                return normalized
-
-            try:
-                # Try next section if normalized key is missing
-                base = section.rstrip("abcdefghijklmnopqrstuvwxyz")  # remove trailing letter if any
-                next_sec = next_section(base)
-
-                if self.subsections == 1:
-                    return next_sec
-                elif self.subsections == 2:
-                    return next_sec + ".1"
-                elif self.subsections == 3:
-                    return next_sec + ".1.1"
-            except Exception as e:
-                raise KeyError(f"Could not resolve section end '{section}' due to: {e}")
-
-        # Normalize range_start
-        try:
-            internal_range_start = normalize_section(range_start, is_start=True)
-        except Exception as e:
-            raise ValueError(f"Failed to normalize start section '{range_start}': {e}")
-
-        # Normalize and resolve range_end
-        try:
-            internal_range_end = resolve_end(range_end)
-        except Exception as e:
-            raise ValueError(f"Failed to normalize end section '{range_end}': {e}")
-
-
-        # Convert to indices
-        try:
-            start_idx = self.sections[self.section_linkedlist[internal_range_start]] + 1
-            if internal_range_end in ("start", "end"):
-                end_idx = self.sections[internal_range_end] + 1  # Assume end is mapped
-            else:
-                end_idx = self.sections[internal_range_end] + 1
-        except KeyError as e:
-            raise KeyError(f"Missing key in section_linkedlist or sections: {e}")
+        if range_end == "end":
+            end_idx = self.sections["end"] + 1
+        else:
+            end_idx = self.sections[range_end] + 1
 
         return start_idx, end_idx
 

@@ -549,15 +549,16 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     
     #Calculate word frequency within text, independent of selected range to put into tuple
     for head_word in field_data["head_word"]:
-        if head_word in frequencies:
-            frequencies[head_word] += 1
-        else:
-            frequencies[head_word] = 1
-
+        frequencies[head_word] = frequencies.get(head_word, 0) + 1
+    
+    #get the section_level
+    section_level = 0
+    
     for i in range(len(field_data["head_word"])):
         # Create a list instead of a tuple for mutability
         temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
-
+        
+        section_level = max(section_level, str(field_data["location"][i]).count("_") + 1)
         if local_def_flag:
             temp_list[3] = field_data["local_definition"][i]
         if local_lem_flag:
@@ -577,12 +578,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
 
     #sort the tuples by counter in case it is not sorted in DB
     tuples = sorted(tuples, key=lambda word: word[1])
-    print("Tuples loaded.")
-
-    #get the section_level
-    section_level = str(tuples[0][5]).count("_") + 1
-
-    print("Finished loading text as Text!!!")
+    
     return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
 
 
