@@ -571,7 +571,13 @@ class TextAnalyzer:
         if len(scores) == 0:
             return '/blank_plot.png'
 
-        cumulative_scores = pd.Series(scores).cumsum()
+        # cumulative_scores = pd.Series(scores).cumsum()
+        
+        # adding deflator
+        average_score = sum(scores) / len(scores)
+        adjusted_scores = [score - average_score for score in scores]
+        cumulative_scores = pd.Series(adjusted_scores).cumsum()
+
         x_indexes = list(range(len(cumulative_scores)))
 
         sns.set_style("ticks")
