@@ -358,16 +358,15 @@ function nextPrevOracle(n, next) {
   if (currentTab >= x.length) {
     //...the form gets submitted:
     //   document.getElementById("regForm").submit();
-    knowntexts = knowntexts.toString().replace(",", "+");
-    known_starts = known_starts.toString().replace(",", "+");
-    known_ends = known_ends.toString().replace(",", "+");
+    knowntexts = knowntexts.join("+");
+    known_starts = known_starts.join("+");
+    known_ends = known_ends.join("+");
 
-    etexts = etexts.toString().replace(",", "+");
-    estarts = estarts.toString().replace(",", "+");
-    eends = eends.toString().replace(",", "+");
-    eunits = eunits.toString().replace(",", "+");
-    e_section_size = e_section_size.toString().replace(",", "+");
-
+    etexts = etexts.join("+");
+    estarts = estarts.join("+");
+    eends = eends.join("+");
+    eunits = eunits.join("+");
+    e_section_size = e_section_size.join("+");
     window.location.href =
       window.location.href +
       "/result/" +
