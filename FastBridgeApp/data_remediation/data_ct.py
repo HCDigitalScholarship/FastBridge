@@ -30,4 +30,5 @@ def aggregate_field_counts(client, db_name, field_name, output_file="output_coun
 
     print(f"Saved aggregated counts to {output_file}")
 
-aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="headword_counts.json")
+aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
+aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
