@@ -127,14 +127,11 @@ def mg_get_locations(language: str, collection_name: str):
         if isinstance(location_data, str):
             if location_data != locations_list[-1]:
                 locations_list.append(location_data)
-        elif isinstance(location_data, int):
-            if str(location_data) != locations_list[-1]:
-                locations_list.append(str(location_data))
         elif location_data is None:
             print(f"No location data found in document {doc.get('_id')}, {collection_name}")
         else:
-            print(f"Unexpected location type: {type(location_data)} in {collection_name}")
-            exit(1)
+            if str(location_data) != locations_list[-1]:
+                locations_list.append(str(location_data))
     
     locations_list.append("end")
     locations_list = mg_format_sections(locations_list) # Replaces the "_" in the location string with "."
@@ -166,7 +163,7 @@ def mg_get_sections(language):
     # # Save sections to JSON
     # with open('sections.json', 'w', encoding='utf-8') as f:
     #     json.dump(sections, f, ensure_ascii=False, indent=4)
-
+    # print("Sections saved to sections.json")
     # return sections
 
 
@@ -200,15 +197,19 @@ def mg_get_location_words(language: str, collection_name: str):
     # Iterate over each document in the collection and extract the location data
     for doc in documents:
         location_data = doc.get("location")
+        # print("Location data:", location_data)
         
-        if isinstance(location_data, str):
+        if location_data is None:
+            print("No location data found in document {doc['_id']}")
+        elif isinstance(location_data, str):
             if location_data not in text_word_count:
                 text_word_count[location_data.replace('_', '.')] = int(doc.get("counter")) - 1
         elif isinstance(location_data, int):
             if location_data not in text_word_count:
                 text_word_count[str(location_data)] = int(doc.get("counter")) - 1
-        elif isinstance(location_data, None):
-            print("No location data found in document {doc['_id']}")
+        elif isinstance(location_data, float):
+            if location_data not in text_word_count:
+                text_word_count[str(location_data).replace(".0", "")] = int(doc.get("counter")) - 1
         else:
             print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
             exit(1)  
@@ -556,7 +557,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     
     for i in range(len(field_data["head_word"])):
         # Create a list instead of a tuple for mutability
-        temp_list = [field_data["head_word"][i], field_data["counter"][i], field_data["orthographic_form"][i], "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
+        temp_list = [field_data["head_word"][i], field_data["counter"][i], str(field_data["orthographic_form"][i]), "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
         
         section_level = max(section_level, str(field_data["location"][i]).count("_") + 1)
         if local_def_flag:
