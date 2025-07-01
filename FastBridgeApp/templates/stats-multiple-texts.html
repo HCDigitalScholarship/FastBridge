@@ -102,7 +102,7 @@
                     <div class="col-md-6">
                         <select class="form-control" id="dropdown2" onchange="updateData('dropdown2')">
                             {% for name in textNames %}
-                            <option value="{{ loop.index0 }}">{{ name }}</option>
+                                <option value="{{ loop.index0 }}" {% if loop.index0 == 1 %}selected{% endif %}>{{ name }}</option>
                             {% endfor %}
                         </select>
                         <div class="loader" id="loader2" style="display: none;"></div>
@@ -124,77 +124,91 @@
 <!-- updateData -->
 <script>
     function updateData(dropdownId) {
-        
         var selectElement = document.getElementById(dropdownId);
         var selectedIndex = selectElement.selectedIndex;
-        var textName = selectElement.options[selectedIndex].text;
+        var selectedValue = selectElement.value;
 
-        // Get the current URL
-        var currentUrl = window.location.href;
+        let textName, sectionStart, sectionEnd;
 
-        // Extract the sections from the current URL
-        var urlParts = currentUrl.split("/");
-        console.log(urlParts)
+        if (selectedValue.includes('+')) {
+            const parts = selectedValue.split('+');
+            textName = string_to_slug(parts[0]);
+            sectionStart = parts[1];
+            sectionEnd = parts[2];
+        } else {
+            var currentUrl = window.location.href;
+            var urlParts = currentUrl.split("/");
 
-        //extract starts and ends
-        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
-        var starts_and_ends = sections.split("-")
-        console.log(starts_and_ends)
-        var starts = starts_and_ends[0].split("+")
-        var ends = starts_and_ends[1].split("+")
+            // Extract section data
+            var sections = urlParts[urlParts.length - 3];
+            var starts_and_ends = sections.split("-");
+            var starts = starts_and_ends[0].split("+");
+            var ends = starts_and_ends[1].split("+");
 
-        //extract textname
-        var text_names_raw = urlParts[urlParts.length - 4];
-        var text_names = text_names_raw.split("+")
-        var selected_text_filename = text_names[selectedIndex]
+            // Extract textname
+            var text_names_raw = urlParts[urlParts.length - 4];
+            var text_names = text_names_raw.split("+");
 
-        var sectionStart = starts[selectedIndex];
-        var sectionEnd = ends[selectedIndex];
-
-        // Construct the URL for the GET request
-        var url = "/stats/get_metrics/" + selected_text_filename + "/" + sectionStart + "-" + sectionEnd + "/" + selectedIndex;
-
-
-        // Show the loader before starting the request
-        var loaderElement;
-        if (dropdownId === "dropdown1") {
-            loaderElement = document.getElementById("loader1");
-        } else if (dropdownId === "dropdown2") {
-            loaderElement = document.getElementById("loader2");
+            textName = text_names[selectedIndex];
+            sectionStart = starts[selectedIndex];
+            sectionEnd = ends[selectedIndex];
         }
+
+        var url = `/stats/get_metrics/${textName}/${sectionStart}-${sectionEnd}/${selectedIndex}`;
+
+        // Show the loader
+        var loaderElement = dropdownId === "dropdown1"
+            ? document.getElementById("loader1")
+            : document.getElementById("loader2");
+
         loaderElement.style.display = "block";
 
-        // Make the GET request and update the page with the received data
+        // Fetch and update
         fetch(url)
             .then(response => response.text())
             .then(data => {
-                if (dropdownId === "dropdown1") {
-                    document.getElementById("column1").innerHTML = data;
-                } else if (dropdownId === "dropdown2") {
-                    document.getElementById("column2").innerHTML = data;
-                }
+                const columnId = dropdownId === "dropdown1" ? "column1" : "column2";
+                document.getElementById(columnId).innerHTML = data;
                 setupPlotModal();
-                // Hide the loader after the request is complete
                 loaderElement.style.display = "none";
             });
     }
+
 </script>
 
 <!-- Enlarging Plots script -->
 <script>
     function setupPlotModal() {
+        // Get the modal
         var modal = document.getElementById("plotModal");
 
+        // Get the image element inside the modal
+        var modalImg = document.getElementById("img01");
+
+        // Select all plot images
         var plotImages = document.querySelectorAll(".plot-img");
 
+        // Add click listener to each plot image
         plotImages.forEach(function (img) {
             img.addEventListener("click", function () {
                 modal.style.display = "block";
-                var modalImg = document.getElementById("img01");
                 modalImg.src = this.src;
             });
         });
 
+        // Select all info icons with data-img attributes
+        var infoIcons = document.querySelectorAll(".info-icon");
+        infoIcons.forEach(function (icon) {
+            icon.addEventListener("click", function () {
+                var imgPath = this.getAttribute("data-img");
+                if (imgPath) {
+                    modal.style.display = "block";
+                    modalImg.src = imgPath;
+                }
+            });
+        });
+
+        // Get the <span> element that closes the modal
         var span = document.getElementsByClassName("close")[0];
         if (span) {
             span.onclick = function () {
@@ -202,6 +216,7 @@
             };
         }
 
+        // Close the modal if the user clicks outside the modal content
         window.onclick = function (event) {
             if (event.target == modal) {
                 modal.style.display = "none";
@@ -209,6 +224,7 @@
         };
     }
 
+    document.addEventListener("DOMContentLoaded", setupPlotModal);
 </script>
 
 <!-- updateData for default selection -->
@@ -306,29 +322,81 @@
 <script>
 
     var textsAndSections = {{ texts_and_sections| tojson | safe }};
+    function versionCompare(a, b) {
+        const aParts = a.split('.').map(Number);
+        const bParts = b.split('.').map(Number);
+        const len = Math.max(aParts.length, bParts.length);
+
+        for (let i = 0; i < len; i++) {
+            const aVal = aParts[i] || 0;
+            const bVal = bParts[i] || 0;
+
+            if (aVal < bVal) return -1;
+            if (aVal > bVal) return 1;
+        }
+        return 0; // equal
+    }
 
     function updateDropdowns() {
         // Get the selected key from dropdown1
         var selectedKey = document.getElementById("new-dropdown1").value;
-        console.log(selectedKey);
         // Get the corresponding object from textsAndSections dictionary
         var sectionObj = textsAndSections[selectedKey];
 
         // Convert the object to a list of section numbers
         var sections = Object.keys(sectionObj);
+        
+        // Sort the sections (alphabetically by default, or use a custom sort for numbers)
+        sections.sort((a, b) => {
+            // Handle "start" and "end"
+            if (a === "start") return -1;
+            if (b === "start") return 1;
+            if (a === "end") {
+                if (b === "start") return 1; 
+                return -1;
+            }
+            if (b === "end") {
+                if (a === "start") return -1;
+                return 1;
+            }
 
+            // Helper to split into numeric and alpha components
+            const splitPart = part =>
+                part.match(/\d+|[a-zA-Z]+/g).map(sub => (isNaN(sub) ? sub : Number(sub)));
 
-        // Get the corresponding value from textsAndSections dictionary
+            const aParts = a.split('.').flatMap(splitPart);
+            const bParts = b.split('.').flatMap(splitPart);
+            const len = Math.max(aParts.length, bParts.length);
+
+            for (let i = 0; i < len; i++) {
+                const aVal = aParts[i];
+                const bVal = bParts[i];
+
+                if (aVal === undefined) return -1;
+                if (bVal === undefined) return 1;
+
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    if (aVal !== bVal) return aVal - bVal;
+                } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    if (aVal !== bVal) return aVal.localeCompare(bVal);
+                } else {
+                    return typeof aVal === 'number' ? -1 : 1;
+                }
+            }
+
+            return 0;
+        });
+
 
         // Get references to dropdown2 and dropdown3
         var dropdown2 = document.getElementById("new-dropdown2");
         var dropdown3 = document.getElementById("new-dropdown3");
 
-        // Clear existing options from dropdown2 and dropdown3
+        // Clear existing options
         dropdown2.innerHTML = '';
         dropdown3.innerHTML = '';
 
-        // Populate dropdown2 and dropdown3 with sections
+        // Populate dropdowns with sorted sections
         sections.forEach(function (section) {
             var option2 = document.createElement("option");
             option2.text = section;
@@ -341,76 +409,63 @@
             dropdown3.add(option3);
         });
     }
+
 </script>
 
 <!-- 'Add New Text' Submit button -->
 <script>
-    document.getElementById("submit-btn").addEventListener("click", function () {
+    function string_to_slug(str) {
+        str = str.replace(/^\s+|\s+$/g, ""); // trim
+        str = str.toLowerCase();
 
+        // remove accents, swap ñ for n, etc
+        var from = "àáäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to = "aaaaeeeeiiiioooouuuunc      ";
+        for (var i = 0, l = from.length; i < l; i++) {
+            str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
+        }
+
+        str = str
+            .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
+            .replace(/\s+/g, "_"); // collapse whitespace and replace by _
+
+        return str;
+    }
+
+    function optionExists(dropdown, value) {
+        return Array.from(dropdown.options).some(option => option.value === value);
+    }
+
+    document.getElementById("submit-btn").addEventListener("click", function () {
         var textname = document.getElementById("new-dropdown1").value;
         var section_start = document.getElementById("new-dropdown2").value;
         var section_end = document.getElementById("new-dropdown3").value;
 
-        // Get the current URL
-        var currentUrl = window.location.href;
 
-        // Extract the sections from the current URL
-        var urlParts = currentUrl.split("/");
-        console.log(urlParts)
+        var value = `${textname}+${section_start}+${section_end}`;
+        var displayText = `${textname} (${section_start}-${section_end})`;
 
-        //extract starts and ends
-        var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
-        var starts_and_ends = sections.split("-")
-        console.log(starts_and_ends)
-        var starts = starts_and_ends[0].split("+")
-        var ends = starts_and_ends[1].split("+")
+        if (!optionExists(dropdown1, value)) {
+            var option1 = document.createElement("option");
+            option1.text = displayText;
+            option1.value = value;
+            dropdown1.add(option1);
 
-        //extract text names
-        var text_names_raw = urlParts[urlParts.length - 4];
-        var text_names = text_names_raw.split("+")
-
-        //add new selected text, starts, ends to array
-        text_names.push(textname)
-        starts.push(section_start)
-        ends.push(section_end)
-
-        //put text_names, starts, ends back into proper string URL format
-        textnames_url = ""
-        starts_url = ""
-        ends_url = ""
-
-        for (var i = 0; i < text_names.length; i++) {
-            if (i != text_names.length - 1) {
-                textnames_url += (text_names[i] + "+")
-            }
-            else {
-                textnames_url += text_names[i]
-            }
+            var option2 = document.createElement("option");
+            option2.text = displayText;
+            option2.value = value;
+            dropdown2.add(option2);
+            
+            var dropdownToUpdate = Math.random() < 0.5 ? dropdown1 : dropdown2;
+            dropdownToUpdate.value = value;
+    
+            const button = document.getElementById('back-btn-1');
+            button.click();
+            updateData(dropdownToUpdate.id);
         }
-        for (var i = 0; i < starts.length; i++) {
-            if (i != starts.length - 1) {
-                starts_url += (starts[i] + "+")
-            }
-            else {
-                starts_url += starts[i]
-            }
-        }
-        for (var i = 0; i < ends.length; i++) {
-            if (i != ends.length - 1) {
-                ends_url += (ends[i] + "+")
-            }
-            else {
-                ends_url += ends[i]
-            }
-        }
-        console.log(starts_url);
-        console.log(ends_url);
-        // Construct the URL for the GET request
-        var url = "/stats/Latin/result/" + textnames_url + "/" + starts_url + "-" + ends_url + "/non_running"
 
-        //redirect to the URL
-        window.location.href = url
     });
+
 </script>
 
 <!-- 'Delete Text' Submit button -->

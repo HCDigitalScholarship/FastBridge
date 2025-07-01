@@ -1,55 +1,49 @@
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-import importlib
 import text
-from pathlib import Path
-import DefinitionTools
-from collections import namedtuple
 import math
-import MongoDefinitionTools
+from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
+from MongoDefinitionTools import mg_get_location_levels, mg_get_location_words, mg_get_locations, make_quads_or_trips
+import json 
 
 router = APIRouter()
-router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /select"""
-import sys
 
 
 @router.get("/")
 async def index(request : Request):
-    print("Calling index()")
     return templates.TemplateResponse("list-index.html", {"request": request})
 
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    print("Calling select()")
-    return templates.TemplateResponse("select.html", {"request": request, "titles": MongoDefinitionTools.mg_render_titles(language), 'titles2': MongoDefinitionTools.mg_render_titles(language, "2") })
+    title_location_levels = get_title_location_levels(language, depth=True)
+
+    return templates.TemplateResponse(
+        "select.html",
+        {
+            "request": request,
+            "titles": render_titles(title_location_levels),
+            "titles2": render_titles(title_location_levels, dropdown="2"),
+        },
+    )
 
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    print("Calling select_section()")
-    print("Unformatted textname: ", textname)
-    locations_list = MongoDefinitionTools.mg_get_locations(language, textname)
-    print(f"locations_list for {textname}: ", locations_list)
+    locations_list = mg_get_locations(language, textname)
     return locations_list
 
 
 def filter_helper(row_filters, POS):
-    print("Calling filter_helper()")
-    print(row_filters)
-    print(POS)
     loc_style = ""
     filters = f""
     ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]) #I am sorry this was too cool not to use: https://stackoverflow.com/questions/9647202/ordinal-numbers-replacement
     for filter, POS_for_filter in row_filters:
-        #print(POS, POS_for_filter, "printing")
         if POS+ " " == POS_for_filter:
             display_filter = filter.replace("_", " ").title()
             if display_filter[-1] == "0":
-                #print(filter, POS_for_filter, "printing")
                 display_filter = display_filter[:-1]
             elif display_filter[-2:] == "99":
                 display_filter = f"Irregular"
@@ -64,48 +58,29 @@ def filter_helper(row_filters, POS):
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
-    print("Calling simple_result()")
     context = {"request": request}
-    triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
-    print("made trips")
-    print("sourcetexts: ", sourcetexts)
+    triple = make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
-        print("running list")
         running_list = True
     else:
-        print("not running list")
         running_list = False
     local_def = False
     local_lem = False
-    # print("Printing triple: ", triple)
     words = []
     titles =[]
-    print("entering for loop")
     display_triple = []
     for text, start, end in triple:
-        print("Fetching locations for all texts . . . ")
-        locations_list = MongoDefinitionTools.mg_get_locations(language, text)
-        print("Locations loaded.")
-        print("\n\nFetching all location words for all texts . . .")
-        location_words = MongoDefinitionTools.mg_get_location_words(language, text)
-        print("Location words loaded.\n\n")
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
-        print("loaded the book")
         titles += (book.get_words(start, end))
-        print(titles)
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-    try:
-        print(book)
-    except Exception as e:
-        print("GOOD! IT IS GONE")
-    print("local_def? ", local_def, " local_lem? ", local_lem)
 
-    print("got titles")
     frequency_dict = {}
     if True:
         dups = set()
@@ -123,13 +98,13 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         del dups
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
-    # print("titles_no_dups: ", titles_no_dups)
     titles = sorted(titles, key=lambda x: x[1])
-    # print("titles: ", titles)
 
-    dict_name = "bridge_latin_dictionary"
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
+    dict_name = db_dicts.get(language, "bridge_latin_dictionary")
+    
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
     
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
@@ -138,15 +113,15 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
+    columnheaders.append("Corpus_Frequency")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
     
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
 
     response = templates.TemplateResponse("result.html", context)
-    print("response made, returning response: ")
     return response
 
 #full case, now that I worked out the simpler idea URLs wise, it is easier to keep these seperate
@@ -155,7 +130,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 @router.post("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 @router.get("/{language}/result/{sourcetexts}/{starts}-{ends}/{in_exclude}/{othertexts}/{otherstarts}-{otherends}/{running_list}/")
 async def result(request : Request, starts : str, ends : str, sourcetexts : str, in_exclude : str, othertexts : str, otherstarts : str, otherends : str, language : str, running_list: str):
-    print("Calling result()")
     context = {"request": request}
     if running_list == "running":
         running_list = True
@@ -163,23 +137,24 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         running_list = False
     local_def = False
     local_lem = False
-    source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends) #returns a list
-    other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends) #anotherList
+    source = make_quads_or_trips(sourcetexts, starts, ends) #returns a list
+    other = make_quads_or_trips(othertexts, otherstarts, otherends) #anotherList
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
-        # book = DefinitionTools.get_text(text, language).book
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
         del book
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
-    ##print("\n")
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        # book = DefinitionTools.get_text(text, language).book
-        book = MongoDefinitionTools.mg_get_text_as_Text(language, text, locations_list, location_words)
+        locations_list = mg_get_locations(language, text)
+        location_words = mg_get_location_words(language, text)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -216,31 +191,28 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles_no_dups = [title for title in titles_no_dups if (title[0]) in to_operate]
     titles =  [title for title in titles if (title[0]) in to_operate]
 
-    ##print(titles)
 
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
-    ##print(titles)
 
     dict_name = "bridge_latin_dictionary"
-    words, POS_list, columnheaders, row_filters, global_filters = (MongoDefinitionTools.mg_get_lang_data(titles, dict_name, local_def, local_lem))
-    words_no_dups = MongoDefinitionTools.mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0]
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0]
 
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
+    columnheaders.append("Corpus_Frequency")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
 
-    #print(context["words"][0])
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups):
-    print("Calling build_html_for_clusterize()")
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -286,8 +258,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
 
-    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups)
-    render_words_optional = build_table(words, columnheaders, frequency_dict, titles) #needs to be optional to comply with LALSA
+    corpus_freq = get_corpus_freq(language)
+    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq)
+    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq) #needs to be optional to comply with LALSA
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
@@ -298,17 +271,13 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
-def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict):
-    print("Calling build_table()")
+def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict):
     render_words = []
-    print(columnheaders)
     for j in range(len(words)):
         lst = []
-        #print(words[j])
 
         to_add_to_render_words = f'<tr class="{words[j][1]}">'
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
-            #print(columnheaders[i][-5:])
             if(columnheaders[i] == "LOCAL_DEFINITION"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_DEFINITION}</td>'
                 lst.append(words[j][0][-4])
@@ -331,6 +300,10 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "TOTAL_COUNT_IN_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
                 lst.append(words[j][0].Total_Count_in_Text)
+            elif(columnheaders[i] == "Corpus_Frequency"):
+                freq = corpus_freq.get(words[j][0].TITLE, "NA")
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'
+                lst.append(freq)
             else:
                 tuple_id = columnheaders[i]
                 value = getattr(words[j][0], tuple_id)
@@ -344,3 +317,10 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
         render_words.append({"values" : lst , "markup" : to_add_to_render_words, "active" : True})
 
     return render_words
+
+def get_corpus_freq(language):
+    file_path = f"data/Static/{language.lower()}_headword_counts.json"
+    with open(file_path, "r") as f:
+        corpus_freq = json.load(f)
+        
+    return corpus_freq
