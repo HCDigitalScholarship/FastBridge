@@ -14,66 +14,51 @@ Lemmatizer tries to do the boring part of lemmatizing texts, matching all the le
 
 # Local development
 
-To whom this reaches, definitely follow these directions chronilogically to get setup the quickest, you'll be installing virtual environement, and loading the packages into the environment rather than your machine directly.   
-
+To whom this reaches, definitely follow these directions chronilogically to get setup the quickest, you'll be installing virtual environement, and loading the packages into the environment rather than your machine directly.
 
 ## 1. Set up a virtual environment
 
 `pip install virtualenv`
 
-`python3.8 -m venv env`
+`python3 -m venv env`
 
-`source env/bin/activate` - activate the envrionemnt in the terminal
+Linux/Mac: `source env/bin/activate` Windows: `env/Scripts/activate` - activate the envrionemnt in the terminal
 
 `python -m pip install --upgrade pip` - not really necessary but useful.
 
 `pip install -r requirements.txt` - install the packages into the environment
 
-### Notes from Mike Rabayda:
+### Notes
 
-Use python 3.8 -> python 3.7 is now deprecated
-This means use pip3.8, and start `python3` commands with `python3.8`
+Use python 3.11
 
-## Requirements.txt notes 
+## Requirements.txt notes
+
 if cltk, numpy, protobuf,  stanza have version numbers specified in requirements.txt, remove them, let pip do the work when reinstalling requiremnts
 
 make sure to specifiy PyYAML==6.0.1 in requirements.txt
 
 may also have to pip install pybind11 before using pip install -r requirements.txt -> pybind11 is used by fasttext which is imported by cltk in requirements.txt
 
-
-
-## Useful commands:
+## Useful commands
 
 `deactivate` = get out of python env
 
 `rm -r env` = remove current python environment, useful for reinstalling dependencies
 
-`uvicorn main:app --host=0.0.0.0 --port=${PORT:-5001} `
+`uvicorn main:app --host=0.0.0.0 --port=${PORT:-5001}`
 = use this instead of heroku to locally host the app, you must be in FastBridge/FastBridgeApp for this to work , can use other port numbers but I've been using 5001.
 
-
-
 while running uvicorn:
-`Ctrl + C   `    =    stop uvicorn processes, useful for making a change in code, saving, then hosting new changes locally
+`Ctrl + C`    =    stop uvicorn processes, useful for making a change in code, saving, then hosting new changes locally
 
 If out of uvicorn, but you cannot run the host command due to activity on that port:
-`lsof -i :5001 `    =  list the current activity on port 5001(or whatever you chose previously), look for the PID number if anything shows up
+`lsof -i :5001`    =  list the current activity on port 5001(or whatever you chose previously), look for the PID number if anything shows up
 `kill -9 PID_CODE`  = using the PID you identified using lsof, kill that process, then try hosting through port 5001 again
 
 the app will be running on http://localhost:5001/, so navigate to that in your browser to test the changes
 
-
-
-
-
-
-## IMPORTANT - BELOW THIS LINE IS OLD README SETUP ONLY.  DO NOT DELETE.
-
-
-
-
-
+## IMPORTANT - BELOW THIS LINE IS OLD README SETUP ONLY.  DO NOT DELETE
 
 `heroku local`
 
@@ -101,7 +86,6 @@ This project is configured to automatically deploy the `dev` branch to heroku.
 The dev app is available at: https://fastbridge-dev.herokuapp.com
 
 *As of June 2022 the heroku dev app is broken due to issues with running out of ram. We recommend just doing local development*
-
 
 ## Deploying to dev/production on DigitalOcean
 

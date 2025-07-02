@@ -3,102 +3,94 @@
 
 <body>
     <header class="masthead"
-        style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        style="background-image: url('/assets/img/stats_background_2.jpg'); background-size: cover;">
         <div class="container">
-            <h1 class="mt-5">Formulas Explanation</h1>
-            <p class="lead">Here you will find the explanations for the formulas used in our metrics.</p>
-
+            
             <!-- Metrics -->
-            <section>
-                <h2>Metrics</h2>
-                <p>
-                    <strong>Word:</strong> For the purposes of these analyses, proper names (e.g., Marcus, Roma) are
-                    excluded from the
-                    calculations.
-                    <br>
-                    <strong>Number of Words:</strong> The total number of lemma in the text (i.e., “tokens” or N).
-                    <br>
-                    <strong>Vocabulary or Unique Words:</strong> The number of different words that appear in the text
-                    (i.e., “types” or
-                    V). All inflected forms of a word are considered as that word (e.g., “amico” and “amici”, or “agis”
-                    and
-                    “egerunt”)
-                    would count as a single type (“amicus” or “ago”).
-                    <br>
-                    <strong>LexR:</strong> A measurement of lexical readability on a 10-point scale for historical
-                    languages
-                    that blends
-                    data about word length, lexical high frequency, lexical sophistication, and lexical variation.
-                    <br>
-                    <strong>PLexR:</strong> PLexR calculates a text’s readability by replacing LexR’s generic parameters
-                    for
-                    lexical
-                    high frequency and lexical sophistication with customized core and non-core vocabularies.
-                    <br>
-                    <strong>Lexical Density:</strong> The number of lexical or content words (nouns, adjectives, verbs,
-                    and
-                    adverbs)
-                    divided by the total number of words in a text.
-                    <br>
-                    <strong>Lexical Sophistication:</strong> The number of unusual or advanced words in the text,
-                    defined as
-                    those words
-                    that are not in the Diederich 1500.
-                    <br>
-                    <strong>Lexical Variation:</strong> How often individual words are repeated within a text can also
-                    contribute to its
-                    lexical complexity. Because this metric is biased.
-                    <br>
-                    <strong>CTTR or Corrected TTR:</strong> Corrected TTR divides the number of types (V) by the
-                    square-root
-                    of 2 times
-                    the number of tokens (N).
-                    <br>
-                    <strong>Root TTR:</strong> Root TTR divides the number of types (V) by the square-root of the number
-                    tokens.
-                    <br>
-                    <strong>LogTTR or Herdan’s C:</strong> LogTTR divides the log of the number of types (V) by the log
-                    of
-                    the number of
-                    tokens (N).
-                    <br>
-                    <strong>TTR:</strong> The ratio of the number of unique words (“types”) to the total number of words
-                    (“tokens”).
-                    This formula exhibits bias against shorter texts.
-                </p>
-            </section>
+            <section class="mt-5">
+                <div class="container p-4 mb-5" style="background-color: rgba(0, 0, 0, 0.7); border-radius: 10px; text-align: left; color: white;">
 
-            <!-- Plots -->
-            <section>
-                <h2>Plots</h2>
-                <p>
-                    <strong>Word Frequency:</strong> plots a histogram of the most common words found in text selection,
-                    no
-                    exclusions.
-                    <br>
-                    <strong>Cumulative Lexical Load:</strong> assigns a lexical score to each word of the text, displays
-                    the
-                    ever-growing cumulative difficulty/load of the text.
-                    <br>
-                    <strong>Linear Lexical Load:</strong> assigns a lexical score to each word, displays the change in
-                    lexical load of the text selection.
-                    <br>
-                    <strong>Bin Frequency:</strong> displays the percentage of words in text selection that fall into
-                    certain frequency bins within the Diederich 1500.
-                </p>
-            </section>
+                    <style>
+                        .definition-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 3rem;
+                        }
+                        .definition-table td {
+                            padding: 10px 15px;
+                            vertical-align: top;
+                        }
+                        .definition-table tr:not(:last-child) {
+                            border-bottom: 20px solid transparent;
+                        }
+                        .section-heading {
+                            margin-top: 3rem;
+                            margin-bottom: 1.5rem;
+                            text-align: center;
+                        }
+                    </style>
+                    <div>
+                    <h1 class="section-heading">Formulas Explanation</h1>
+                    <p style="text-align: center;">Here you will find the explanations for the formulas used in our metrics.</p>
+                    </div>
+                    <h2 class="section-heading">DEFINITIONS</h2>
+                    <table class="definition-table">
+                        <tbody>
+                            <tr><td><strong>Word or Token:</strong></td><td>Every different form of the word; i.e. a “token” or N. For the purposes of these analyses, proper names (e.g., Marcus, Roma) are excluded from the calculations.</td></tr>
+                            <tr><td><strong>Unique Word or Type:</strong></td><td>Total words irrespective of different forms; i.e. “types” or V; e.g. bellum and belli would be two “words” or two “tokens” but only one “unique word” or “type”.</td></tr>
+                            <tr><td><strong>Word Length:</strong></td><td>The number of characters in a word; e.g. egerunt = 7. Six characters is the typical threshold in readability studies for a “long word.”</td></tr>
+                            <tr><td><strong>Hapax (legomenon):</strong></td><td>LogTTR divides the log of the number of types (V) by the log of the number of tokens (N).</td></tr>
+                            <tr><td><strong>Bin Frequency (# on graph):</strong></td><td>The percentage of words in text selection that fall into certain frequency bins within the Diederich 1500.</td></tr>
+                        </tbody>
+                    </table>
 
-            <!-- Hapax -->
-            <section>
-                <h2>Hapax</h2>
-                <p>
-                    <strong>Hapax (legomenon):</strong> a word that only appears once in the selection.
-                </p>
-            </section>
+                    <h2 class="section-heading">PLOTS</h2>
+                    <table class="definition-table">
+                        <tbody>
+                            <tr><td><strong>Word Frequency:</strong></td><td>Plots a histogram of the most common words found in text selection, no exclusions.</td></tr>
+                            <tr><td><strong>Cumulative Lexical Load:</strong></td><td>Assigns a lexical score to each word of the text, displays the ever-growing cumulative difficulty/load of the text.</td></tr>
+                            <tr><td><strong>Linear Lexical Load:</strong></td><td>Assigns a lexical score to each word, displays the change in lexical load of the text selection.</td></tr>
+                            <tr><td><strong>Bin Frequency:</strong></td><td>Displays the percentage of words in text selection that fall into certain frequency bins within the Diederich 1500.</td></tr>
+                        </tbody>
+                    </table>
 
+                    <h2 class="section-heading">READABILITY FORMULAE</h2>
+                    <table class="definition-table">
+                        <tbody>
+                            <tr><td><strong>LexR:</strong>
+                                </td><td>LexR measures a text's lexical readability on a 10-point scale for historical languages that blends data about word length, lexical high frequency, lexical sophistication, and lexical variation.<br>LexR = ((mean word length * 0.217) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (% outside Diederich 300 * 0.058) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (% outside DCC * 0.067) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (% outside Diederich 1500 * 0.077) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Lexical Density * 0.059) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (LogTTR * 4.993) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Root TTR * 0.134) 
+                                            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 12.666) x 0.833
+                                            <br>
+                                Where, - 12.666 is the constant to set base score at 0; the coefficient 0.833 converts the score to a 10-point scale.
+                                </td></tr>
+                            <tr><td><strong>PLexR:</strong></td><td>PLexR calculates a text's readability by replacing LexR's generic parameters for lexical high frequency and lexical sophistication with customized core and non-core vocabularies. [in development]</td></tr>
+                            <tr><td><strong>ARI:</strong></td><td>A measurement comprising word length and sentence length. A measurement comprising word length and sentence length. The Automated Readability Index (ARI) scores map onto US Grade Level.<br><br>ARI = 4.71 * (Total # of Characters / Tokens)) + (0.5 * (Tokens / Total # of Sentences) - 21.43</td></tr>
+                            <tr><td><strong>Coleman-Liau Index:</strong></td><td>A measurement comprising word length and sentence length. Coleman-Liau Index scores map onto US Grade Level.<br><br>CLI = (0.0588 * (Total # of Characters / Tokens) * 100) - (0.296 * ((Total # of Sentences / Tokens) * 100)) - 15.8</td></tr>
+                            <tr><td><strong>Dale-Chall:</strong></td><td>A measurement comprising unfamiliar vocabulary and sentence length. A score of 9 would typically indicate a college-level text; a score of 10+ would indicate post-graduate level difficulty.<br><br>DC = (0.1579 * Percentage of Difficult Words [Not in DCC Latin Core]) + (0.0496 * Average Sentence Length [+ 3.6365, if Percentage of Difficulty Word >= 5%]</td></tr>
+                            <tr><td><strong>Dale-Chall (New):</strong></td><td>A measurement comprising unfamiliar vocabulary and sentence length.<br><br>NDC = 64-(0.95 (Unfamiliar Tokens/Tokens * 100))-(0.69* (Tokens / total # of sentences))</td></tr>
+                            <tr><td><strong>LIX:</strong></td><td>A measurement comprising long words and sentence length. Texts with scores greater than 40 are considered difficult.<br><br>LIX = (Tokens / Total # of Sentences') + (Long Words * 100 / Tokens')</td></tr>
+                            <tr><td><strong>RIX:</strong></td><td>A simpler metric than LIX. Texts with scores greater than 2 are considered difficult.<br><br>RIX = (Long words / Total Sentences)</td></tr>
+                            <tr><td><strong>SMOG:</strong></td><td>A measurement comprising long words and sentence length. SMOG scores map onto US Grade Level.<br><br>SMOG = 1.043 * sqrt(Total # of Long Words * 30 / Total # of Sentences) + 3.1291</td></tr>
+                            <tr><td><strong>Spache:</strong></td><td>A measurement comprising sentence length and unfamiliar words, designed for texts aimed at young readers (e.g., grades 1-3 in English). A Score of 6 would be typical of texts appropriate for US 9th Grade.<br><br>Spache = (0.121 * Average Sentence Length in Words) + (0.082  * Unfamiliar Types [words outside the DCC Latin Core]  / Types')) + 0.659</td></tr>
+                            <tr><td><strong>Lexical Density:</strong></td><td>The number of lexical or content words (nouns, adjectives, verbs, and adverbs) divided by the total number of words in a text.<br><br>LexDen = (Total Number of Nouns + Adjectives + Verbs + Adverbs + Numbers + Idioms in Text)/Tokens * 100</td></tr>
+                            <tr><td><strong>Lexical Sophistication:</strong></td><td>The number of unusual or advanced words in the text, defined as those words that are not in the Diederich 1500, or around the 80% vocabulary in a typical text.<br><br>LexSoph = (100 - Types in Diederich 1500)/Tokens * 100</td></tr>
+                            <tr><td><strong>Lexical Variation:</strong></td><td>How often individual words are repeated within a text.</td></tr>
+                            <tr><td><strong>TTR:</strong></td><td>The ratio of the number of unique words (“types” or V) to the total number of words (“tokens” or N). This formula exhibits bias against shorter texts.<br><br>TTR = Types / Tokens</td></tr>
+                            <tr><td><strong>CTTR or Corrected TTR:</strong></td><td>Corrected TTR divides the number of types (V) by the square-root of 2 times the number of tokens (N).<br><br>CTTR = Types / SQRT (Tokens * 2)</td></tr>
+                            <tr><td><strong>Root TTR:</strong></td><td>Root TTR divides the number of types (V) by the square-root of the number tokens. <br> RTTR = Types / SQRT (Tokens)</td></tr>
+                            <tr><td><strong>LogTTR or Herdan's C:</strong></td><td>LogTTR divides the log of the number of types (V) by the log of the number of tokens (N).<br><br>LogTTR = Types / Log (Tokens)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </header>
 </body>
-{% endblock %}
 
-</html>
+{% endblock %}

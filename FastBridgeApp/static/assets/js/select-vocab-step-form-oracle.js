@@ -44,11 +44,9 @@ function add_text(text_name, dropdown_id, depth) {
 
   myFunction(dropdown_id);
   id = document.getElementById(dropdown_id).previousElementSibling.id;
-  // console.log(id);
   display = document.getElementById(id);
   $(display).change(createDropdown(text_name, dropdown_id));
   display.innerText = text_name;
-  // console.log(document.getElementById('myInput'));
 
   if (depth == 1) {
     new_placeholder = "1";
@@ -63,7 +61,6 @@ function add_text(text_name, dropdown_id, depth) {
   ).innerHTML = "Select Unit";
   $("#unitdropdown").empty();
   let element = document.getElementById("unitdropdown");
-  console.log(element);
   for (var i = 1; i <= depth; i++) {
     let a = document.createElement("a");
     a.innerHTML = i;
@@ -115,7 +112,7 @@ function createDropdown(text, dropdown_id) {
 
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
     $.get(
-      "/select/sections/" + text + "/" + languageselected + "/",
+      "/select/sections/" + string_to_slug(text) + "/" + languageselected + "/",
       function (data) {
         let elementS = document.getElementById("dropdownstartoracle2");
         let elementE = document.getElementById("dropdownendoracle2");
@@ -135,9 +132,6 @@ function createDropdown(text, dropdown_id) {
         holdsectiondata = keyholder.sort(sortAlphaNum);
         holdsectiondata.push("end");
         holdsectiondata.unshift("start");
-        console.log(holdsectiondata);
-
-        console.log(elementS);
         for (var i = 0; i < holdsectiondata.length; i++) {
           let a = document.createElement("a");
           let b = document.createElement("a");
@@ -162,12 +156,10 @@ function createDropdown(text, dropdown_id) {
 
           elementS.appendChild(a);
           elementE.appendChild(b);
-          // console.log(key);
 
           //end section button onclick function
           b.addEventListener("click", function () {
             sectionto2 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             myFunction("dropdownendoracle2");
             display = document.getElementById(
               "oracle-modal-form2-select2-hidden-field2"
@@ -177,7 +169,6 @@ function createDropdown(text, dropdown_id) {
           //start section button onclick function
           a.addEventListener("click", function () {
             sectionfrom2 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             myFunction("dropdownstartoracle2");
             display = document.getElementById(
               "oracle-modal-form2-select2-hidden-field1"
@@ -198,7 +189,7 @@ function createDropdown(text, dropdown_id) {
     $("#dropdownendoracle").empty();
     //fetching the url for the given text_name and using the dictionary, containing the sections, create a dropdown.
     $.get(
-      "/select/sections/" + text + "/" + languageselected + "/",
+      "/select/sections/" + string_to_slug(text) + "/" + languageselected + "/",
       function (data) {
         let elementS = document.getElementById("dropdownstartoracle");
         let elementE = document.getElementById("dropdownendoracle");
@@ -219,9 +210,6 @@ function createDropdown(text, dropdown_id) {
         holdsectiondata = keyholder.sort(sortAlphaNum);
         holdsectiondata.push("end");
         holdsectiondata.unshift("start");
-        console.log(holdsectiondata);
-
-        console.log(elementS);
         for (var i = 0; i < holdsectiondata.length; i++) {
           let a = document.createElement("a");
           let b = document.createElement("a");
@@ -246,12 +234,10 @@ function createDropdown(text, dropdown_id) {
 
           elementS.appendChild(a);
           elementE.appendChild(b);
-          // console.log(key);
 
           //end section button onclick function
           b.addEventListener("click", function () {
             sectionto1 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             myFunction("dropdownendoracle");
             display = document.getElementById(
               "oracle-modal-form1-select2-hidden-field2"
@@ -261,7 +247,6 @@ function createDropdown(text, dropdown_id) {
           //start section button onclick function
           a.addEventListener("click", function () {
             sectionfrom1 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             myFunction("dropdownstartoracle");
             display = document.getElementById(
               "oracle-modal-form1-select2-hidden-field1"
@@ -373,16 +358,15 @@ function nextPrevOracle(n, next) {
   if (currentTab >= x.length) {
     //...the form gets submitted:
     //   document.getElementById("regForm").submit();
-    knowntexts = knowntexts.toString().replace(",", "+");
-    known_starts = known_starts.toString().replace(",", "+");
-    known_ends = known_ends.toString().replace(",", "+");
+    knowntexts = knowntexts.join("+");
+    known_starts = known_starts.join("+");
+    known_ends = known_ends.join("+");
 
-    etexts = etexts.toString().replace(",", "+");
-    estarts = estarts.toString().replace(",", "+");
-    eends = eends.toString().replace(",", "+");
-    eunits = eunits.toString().replace(",", "+");
-    e_section_size = e_section_size.toString().replace(",", "+");
-
+    etexts = etexts.join("+");
+    estarts = estarts.join("+");
+    eends = eends.join("+");
+    eunits = eunits.join("+");
+    e_section_size = e_section_size.join("+");
     window.location.href =
       window.location.href +
       "/result/" +
@@ -472,15 +456,12 @@ $("#oracle-modal-form2-save").click(function () {
   }
   selectionvalue = $("#oracle-modal-form2-select2").val();
   if (selectionvalue == "yes") {
-    console.log("start: " + sectionfrom2);
-    console.log("end: " + sectionto2);
     if (sectionfrom2 == "end" || sectionto2 == "start") {
       alert("please select a valid range");
       return false;
     } else if (sectionto2 == "end" || sectionfrom2 == "start") {
       var sections = `${sectionfrom2}-${sectionto2}`;
     } else if (!isNaN(sectionto2) && !isNaN(sectionfrom2)) {
-      console.log("both floats");
       if (
         Number(sectionfrom2) > Number(sectionto2) ||
         Number(sectionto2) === Number(sectionfrom2)
@@ -491,7 +472,6 @@ $("#oracle-modal-form2-save").click(function () {
         var sections = `${sectionfrom2}-${sectionto2}`;
       }
     } else if (!isNaN(sectionto2) || !isNaN(sectionfrom2)) {
-      console.log("one float");
       if (sectionfrom2 > sectionto2 || sectionto2 === sectionfrom2) {
         alert("please select a valid range");
         return false;
@@ -499,7 +479,6 @@ $("#oracle-modal-form2-save").click(function () {
         var sections = `${sectionfrom2}-${sectionto2}`;
       }
     } else {
-      console.log("else clause");
       var sections = `${sectionfrom2}-${sectionto2}`;
     }
   } else {
@@ -594,15 +573,12 @@ $("#oracle-modal-form1-save").click(function () {
     alert("please enter a valid text");
     return false;
   }
-  console.log("start: " + sectionfrom1);
-  console.log("end: " + sectionto1);
   if (sectionfrom1 == "end" || sectionto1 == "start") {
     alert("please select a valid range");
     return false;
   } else if (sectionto1 == "end" || sectionfrom1 == "start") {
     var sections = `${sectionfrom1}-${sectionto1}`;
   } else if (!isNaN(sectionto1) && !isNaN(sectionfrom1)) {
-    console.log("both floats");
     if (
       Number(sectionfrom1) > Number(sectionto1) ||
       Number(sectionto1) === Number(sectionfrom1)
@@ -613,7 +589,6 @@ $("#oracle-modal-form1-save").click(function () {
       var sections = `${sectionfrom1}-${sectionto1}`;
     }
   } else if (!isNaN(sectionto1) || !isNaN(sectionfrom1)) {
-    console.log("one float");
     if (sectionfrom1 > sectionto1 || sectionto1 === sectionfrom1) {
       alert("please select a valid range");
       return false;
@@ -621,7 +596,6 @@ $("#oracle-modal-form1-save").click(function () {
       var sections = `${sectionfrom1}-${sectionto1}`;
     }
   } else {
-    console.log("else clause");
     var sections = `${sectionfrom1}-${sectionto1}`;
   }
 
@@ -633,7 +607,6 @@ $("#oracle-modal-form1-save").click(function () {
   } else {
     var size = "9";
   }
-  console.log(size);
   etexts.push(string_to_slug(book));
   estarts.push(sectionfrom1);
   eends.push(sectionto1);
