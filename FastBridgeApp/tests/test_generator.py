@@ -19,9 +19,9 @@ from language_texts import greek_titles, latin_titles
 section_map_file = Path(parent) / "sections.json"
 if section_map_file.exists():
     with section_map_file.open() as f:
-        latin_section_map = json.load(f)
-    # update greek section map once it is available
-    greek_section_map = {}
+        section_maps = json.load(f)
+    latin_section_map = section_maps.get("Latin", {})
+    greek_section_map = section_maps.get("Greek", {})
 else:
     print("section.json file not found. using empty section map with start and end as defaults.")
     latin_section_map = {}
