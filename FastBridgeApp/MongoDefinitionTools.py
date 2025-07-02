@@ -9,7 +9,7 @@ import re
 import time 
 from mongo_connection import db, dict_db, atlas_client
 from text_title_rename_dict import title_renaming_dict, string_to_slug
-
+import json
 
 # Decorators
 # times the method you give to it, apply using @timer_decorator above method
@@ -148,23 +148,11 @@ def mg_get_locations(language: str, collection_name: str):
 
     return locations_linked_list
 
-import json
 def mg_get_sections(language):
     with open('sections.json', 'r', encoding='utf-8') as f:
         sections = json.load(f)
 
-    return sections
-
-    # sections = {}
-    # for text in title_renaming_dict:
-    #     sections[title_renaming_dict[text].split('_')[0]] = mg_get_locations(language, text)
-    
-
-    # # Save sections to JSON
-    # with open('sections.json', 'w', encoding='utf-8') as f:
-    #     json.dump(sections, f, ensure_ascii=False, indent=4)
-    # print("Sections saved to sections.json")
-    # return sections
+    return sections[language]
 
 
 def mg_get_location_words(language: str, collection_name: str):
