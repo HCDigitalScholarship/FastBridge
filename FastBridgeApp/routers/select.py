@@ -320,7 +320,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
 
 def get_corpus_freq(language):
     file_path = f"data/Static/{language.lower()}_headword_counts.json"
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding='utf-8') as f:
         corpus_freq = json.load(f)
         
     return corpus_freq
