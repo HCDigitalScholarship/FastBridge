@@ -610,6 +610,7 @@ $("#oracle-modal-form1-save").click(function () {
   etexts.push(string_to_slug(book));
   estarts.push(sectionfrom1);
   eends.push(sectionto1);
+  unitValue = unitValue || "1"; // default to 1 if not set
   eunits.push(unitValue);
   e_section_size.push(size);
 
