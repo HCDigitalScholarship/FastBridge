@@ -1,7 +1,5 @@
 import pymongo
 from pymongo import MongoClient, errors
-import dns # required for connecting with SRV
-from DefinitionTools import get_text
 import text
 import importlib
 from collections import namedtuple, deque
@@ -158,7 +156,7 @@ def mg_get_sections(language):
 def mg_get_location_words(language: str, collection_name: str):
     '''
     A text of a given language and collection name, this method gets the headword count by section 
-    from MongoDB. 
+    from MongoDB, using a local continuous counter.
 
     Parameters:
     db = Mongo Atlas, local deployment
@@ -168,41 +166,42 @@ def mg_get_location_words(language: str, collection_name: str):
     Returns:
         text_word_count: A dictionary in which:
             Keys: Represent a location in the text
-            Values: Represent the headword count in that location
+            Values: Represent the local continuous index for the last instance that location appeared.
                 Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
     '''
 
-    collection_name = title_renaming_dict[collection_name] # get actual name of text
+    collection_name = title_renaming_dict[collection_name]  # get actual name of text
     collection = db[collection_name]
 
-    documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, where 'counter' field is ascending sorted
+    documents = collection.find().sort("counter", 1)  # Sort by 'counter' field ascending
 
-    text_word_count = {"start": -1, "end": -2}
+    text_word_count = {"start": 0, "end": -2}
+    local_index = 0
 
-    # Iterate over each document in the collection and extract the location data
     for doc in documents:
         location_data = doc.get("location")
-        # print("Location data:", location_data)
-        
+
         if location_data is None:
-            print("No location data found in document {doc['_id']}")
-        elif isinstance(location_data, str):
-            if location_data not in text_word_count:
-                text_word_count[location_data.replace('_', '.')] = int(doc.get("counter")) - 1
-        elif isinstance(location_data, int):
-            if location_data not in text_word_count:
-                text_word_count[str(location_data)] = int(doc.get("counter")) - 1
-        elif isinstance(location_data, float):
-            if location_data not in text_word_count:
-                text_word_count[str(location_data).replace(".0", "")] = int(doc.get("counter")) - 1
+            print(f"No location data found in document {doc.get('_id')}")
+            continue
+
+        # Normalize location to string and use as key
+        if isinstance(location_data, str):
+            key = location_data.replace('_', '.')
+        elif isinstance(location_data, (int, float)):
+            key = str(location_data).replace(".0", "")
         else:
-            print(f"Unexpected data type for 'location' in document {doc['_id']}: {type(location_data)}")
-            exit(1)  
+            print(f"Unexpected data type for 'location' in document {doc.get('_id')}: {type(location_data)}")
+            exit(1)
+
+        text_word_count[key] = local_index
+        local_index += 1
 
     return text_word_count
+
 
 def mg_render_titles(language: str, dropdown : str = "", other: bool = False, depth: bool = False):
     """
@@ -568,7 +567,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     #sort the tuples by counter in case it is not sorted in DB
     tuples = sorted(tuples, key=lambda word: word[1])
     
-    return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, "Latin", local_def_flag, local_lem_flag)#99 is subsections, what do?
+    return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)#99 is subsections, what do?
 
 
 def mg_format_title(unformatted_title: str):
