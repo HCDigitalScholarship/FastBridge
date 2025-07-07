@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 import text
 import math
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
-from MongoDefinitionTools import mg_get_location_levels, mg_get_location_words, mg_get_locations, make_quads_or_trips
+from MongoDefinitionTools import mg_get_location_levels, mg_get_locations, make_quads_or_trips
 import json 
 
 router = APIRouter()
@@ -70,8 +70,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     titles =[]
     display_triple = []
     for text, start, end in triple:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
@@ -142,8 +141,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
@@ -152,8 +150,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set() #builds a set
     display_triple =[]
     for text, start, end in source:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def

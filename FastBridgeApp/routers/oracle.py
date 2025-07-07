@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_text_as_Text, mg_get_locations, mg_get_location_words, make_quads_or_trips
+from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_text_as_Text, mg_get_locations, make_quads_or_trips
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -33,12 +33,13 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     book_cache = {}
 
     def get_book(text):
+        location_list, location_words = mg_get_locations(language, text, get_index=True)
         if text not in book_cache:
             book_cache[text] = mg_get_text_as_Text(
                 language,
                 text,
-                mg_get_locations(language, text),
-                mg_get_location_words(language, text)
+                location_list,
+                location_words,
             )
         return book_cache[text]
 

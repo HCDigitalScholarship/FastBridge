@@ -88,7 +88,7 @@ def mg_get_slice(text_name, start_section, end_section):
     return document_tuple_list
 
 
-def mg_get_locations(language: str, collection_name: str):
+def mg_get_locations(language: str, collection_name: str, get_index: bool = False):
     '''
     Get all locations from a collection from MongoDB. A location is usually formatted:
     X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the section number.
@@ -104,6 +104,12 @@ def mg_get_locations(language: str, collection_name: str):
             Keys: Represent the current section
             Values: Represent the preceding section
                 Eg. {'1.1': 'start', '1.2': '1.1', '1.3': '1.2', '1.4': '1.3', '1.5': '1.4', '1.6': '1.5'}
+                
+    and (optionally)
+        text_word_count: A dictionary in which:
+            Keys: Represent a location in the text
+            Values: Represent the local continuous index for the last instance that location appeared.
+                Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
 
     Raises:
     errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
@@ -118,6 +124,10 @@ def mg_get_locations(language: str, collection_name: str):
     collection = db[collection_name]  
     documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
     locations_list = ["start"] # locations is a list to store the location data from each document
+    
+    if get_index:
+        text_word_count = {"start": 0, "end": -2}
+        local_index = 0
 
     # Iterate over each document in the collection and extract the location data
     for doc in documents:
@@ -125,11 +135,17 @@ def mg_get_locations(language: str, collection_name: str):
         if isinstance(location_data, str):
             if location_data != locations_list[-1]:
                 locations_list.append(location_data)
+            if get_index: key = location_data.replace('_', '.')
         elif location_data is None:
             print(f"No location data found in document {doc.get('_id')}, {collection_name}")
         else:
             if str(location_data) != locations_list[-1]:
                 locations_list.append(str(location_data))
+            if get_index:  key = str(location_data).replace(".0", "")
+
+        if get_index: 
+            text_word_count[key] = local_index
+            local_index += 1
     
     locations_list.append("end")
     locations_list = mg_format_sections(locations_list) # Replaces the "_" in the location string with "."
@@ -144,7 +160,7 @@ def mg_get_locations(language: str, collection_name: str):
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    return locations_linked_list
+    return locations_linked_list, text_word_count if get_index else locations_linked_list
 
 def mg_get_sections(language):
     with open('sections.json', 'r', encoding='utf-8') as f:
@@ -484,7 +500,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     language = "Latin", or "Greek"
     text_title = The title of the text as it appears in Mongo, must match the same name as a collection in DB, but will tell you if not found
     location_list = result of mg_get_locations() with the same text_title
-    location_words = result of mg_get_location_words() with the same text_title
+    location_words = result of mg_get_location_words() or second return value in location_list (with get_index=True) with the same text_title
 
     Returns:
     A Text object(see text.py) containing all normal Text fields from that class, but adding some more fields to the_text tuples for each head_word:
@@ -537,6 +553,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     
     #Calculate word frequency within text, independent of selected range to put into tuple
     for head_word in field_data["head_word"]:
+        head_word = head_word.upper()  # Ensure head_word is uppercase for consistency
         frequencies[head_word] = frequencies.get(head_word, 0) + 1
     
     #get the section_level
@@ -544,7 +561,7 @@ def mg_get_text_as_Text(language, text_title, location_list, location_words):
     
     for i in range(len(field_data["head_word"])):
         # Create a list instead of a tuple for mutability
-        temp_list = [field_data["head_word"][i], field_data["counter"][i], str(field_data["orthographic_form"][i]), "", "", field_data["location"][i], frequencies[field_data["head_word"][i]], "", "", "", ""]
+        temp_list = [field_data["head_word"][i].upper(), field_data["counter"][i], str(field_data["orthographic_form"][i]), "", "", field_data["location"][i], frequencies[field_data["head_word"][i].upper()], "", "", "", ""]
         
         section_level = max(section_level, str(field_data["location"][i]).count("_") + 1)
         if local_def_flag:

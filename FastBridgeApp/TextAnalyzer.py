@@ -12,7 +12,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 from pathlib import Path
-from MongoDefinitionTools import db, dict_db, mg_get_locations, mg_get_location_words, mg_get_text_as_Text
+from MongoDefinitionTools import db, dict_db, mg_get_locations, mg_get_text_as_Text
 
 
 # Get the directory containing the current script.
@@ -97,7 +97,13 @@ def get_slice(text_object: Text, start_section, end_section):
 def find_hapax_legomena(words, dictionary:dict):
     word_frequencies = defaultdict(int)
     for word in words:
-        if(dictionary[word]): word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
+        if word and word in dictionary:
+            if(dictionary[word]): word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
+        elif word.upper() in dictionary:
+            print(f"Using uppercase version for word '{word}'")
+            word_frequencies[dictionary[word.upper()]['SIMPLE_LEMMA']] += 1
+        else:
+            print(f"Word '{word}' not found in dictionary, skipping.")
     return [word.capitalize() for word, freq in word_frequencies.items() if freq == 1 and word]
 
 
@@ -120,8 +126,7 @@ class TextAnalyzer:
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
-        location_list = mg_get_locations(language, form_request)
-        location_words = mg_get_location_words(language, form_request)
+        location_list, location_words = mg_get_locations(language, form_request, get_index=True)
         self.texts.append((mg_get_text_as_Text(language, form_request, location_list, location_words),start_section, end_section))
 
     def get_textname(self):
