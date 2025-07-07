@@ -24,8 +24,7 @@ class Text(object):
             raise ValueError(f"Invalid end section: {range_end}")
 
         # Get corresponding keys in self.sections
-        start_idx = self.sections[self.section_linkedlist[range_start]] + 1
-
+        start_idx = self.sections[self.section_linkedlist[range_start]] # start is defined as index of end of previous section
         if range_end == "end":
             end_idx = self.sections["end"] + 1
         else:
@@ -34,7 +33,7 @@ class Text(object):
         return start_idx, end_idx
 
 
-    def get_words(self, user_start, user_end):
+    def get_words(self, user_start, user_end, stats=False, oracle=False):
         """
         Convienent wrapper method. Gets the correct sublist of TITLES, based on user's selection.
         """
@@ -43,11 +42,10 @@ class Text(object):
         start, end = self.get_section(user_start, user_end)
         tmp = self.words
 
-        if end == -1:
-            end = len(tmp)
+        if end == -1: end = len(tmp)
             
-        wordlist = [tmp[i] + (self.name,) for i in range(start, end) if i < len(tmp)] #adds the source text
-        return wordlist
+        if oracle: return [tmp[i][0] for i in range(start, end)] #returns only the wordforms, not the full tuple
+        else: return [tmp[i] + (self.name,) if not stats else tmp[i] for i in range(start, end)] #adds the source text for select only
 
 
 def next_section(section):
