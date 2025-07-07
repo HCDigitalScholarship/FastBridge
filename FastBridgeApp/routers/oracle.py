@@ -45,10 +45,9 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     known_ranges = make_quads_or_trips(known_texts, known_starts, known_ends)
     ogknown_words = []
     for text, start, end in known_ranges:
-        ogknown_words += get_book(text).get_words(start, end)
+        ogknown_words += get_book(text).get_words(start, end,oracle=True)
 
-    og_wordforms = [w[0] for w in ogknown_words]
-    og_token_set = set(og_wordforms)
+    og_token_set = set(ogknown_words)
 
     # Prepare exploration ranges
     explore_ranges = make_quads_or_trips(etexts, e_section_start, e_section_end)
@@ -60,20 +59,27 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
         section_keys = list(book.section_linkedlist.keys())
 
         try:
-            start_idx = max(0, section_keys.index(sec_end) - section_size)
+            start_idx = section_keys.index(sec_start) if sec_start != "start" else 0
+            end_idx_limit = section_keys.index(sec_end)
         except ValueError:
             continue
-
-        end_key = sec_end
-        while start_idx >= 0 and section_keys[start_idx] != sec_start:
+        
+        while start_idx + section_size - 1 <= end_idx_limit:
+            end_idx = start_idx + section_size - 1
             start_key = section_keys[start_idx]
+            end_key = section_keys[end_idx]
+            
+            # skip start and end (implicitly defined sections)
+            if start_key == "start" or end_key == "end":
+                start_idx += 1
+                continue
+            
             section_range = f"{start_key} - {end_key}"
 
-            section_words = book.get_words(start_key, end_key)
-            wordforms = [w[0] for w in section_words]
+            wordforms = book.get_words(start_key, end_key, oracle=True)
             token_set = set(wordforms)
 
-            known_words = list_intersection(wordforms, og_wordforms)
+            known_words = list_intersection(wordforms, ogknown_words)
             known_word_count = len(known_words)
 
             known_tokens = token_set.intersection(og_token_set)
@@ -90,16 +96,22 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
                 f"{known_texts}/{known_starts}-{known_ends}/non_running/"
             )
 
-            table_data.append([section_range, total_word_count, total_token_count, known_word_count, known_token_count, percent_words, percent_tokens, link])
+            table_data.append([
+                section_range,
+                total_word_count,
+                total_token_count,
+                known_word_count,
+                known_token_count,
+                percent_words,
+                percent_tokens,
+                link
+            ])
 
-            start_idx -= 1
-            if end_key in book.section_linkedlist:
-                end_key = book.section_linkedlist[end_key]
-            else:
-                break
+            start_idx += 1  # slide window forward
 
         sections_display += f"{book.name}: {sec_start} - {sec_end}, "
 
+    sections_display = sections_display.rstrip(", ")
     context["table_data"] = sorted(table_data, key=lambda row: row[3], reverse=True)
     context["etexts"] = sections_display
 
