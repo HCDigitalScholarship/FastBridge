@@ -160,10 +160,10 @@ def mg_get_locations(language: str, collection_name: str, get_index: bool = Fals
         print(f"No locations found for {collection_name}")
         exit(1)
 
-    return locations_linked_list, text_word_count if get_index else locations_linked_list
+    return (locations_linked_list, text_word_count) if get_index else locations_linked_list
 
 def mg_get_sections(language):
-    with open('sections.json', 'r', encoding='utf-8') as f:
+    with open('FastBridgeApp/data/Static/sections.json', 'r', encoding='utf-8') as f:
         sections = json.load(f)
 
     return sections[language]

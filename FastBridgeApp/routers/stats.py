@@ -63,7 +63,13 @@ async def stats_select(request: Request, language: str, mode: str):
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
-    sectionDict = mg_get_locations(language, textname)
+    try:
+        with open('FastBridgeApp/data/Static/sections.json', 'r', encoding='utf-8') as f:
+            sections = json.load(f)
+            print(sections[language][textname], "sections.json")
+            return sections[language][textname]
+    except FileNotFoundError:
+        sectionDict = mg_get_locations(language, textname, get_index=False)
     return sectionDict
 
 

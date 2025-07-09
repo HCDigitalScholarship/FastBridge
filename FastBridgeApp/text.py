@@ -24,7 +24,8 @@ class Text(object):
             raise ValueError(f"Invalid end section: {range_end}")
 
         # Get corresponding keys in self.sections
-        start_idx = self.sections[self.section_linkedlist[range_start]] # start is defined as index of end of previous section
+        # start is defined as index of end of previous section + 1 (index of previous section is the location last word of the previous section 0-indexed)
+        start_idx = self.sections[self.section_linkedlist[range_start]] + 1 
         if range_end == "end":
             end_idx = self.sections["end"] + 1
         else:
