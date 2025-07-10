@@ -162,9 +162,19 @@ def mg_get_locations(language: str, collection_name: str, get_index: bool = Fals
 
     return (locations_linked_list, text_word_count) if get_index else locations_linked_list
 
-def mg_get_sections(language):
-    with open('FastBridgeApp/data/Static/sections.json', 'r', encoding='utf-8') as f:
+def mg_get_sections(language, textname: str = ""):
+    with open('data/Static/sections.json', 'r', encoding='utf-8') as f:
         sections = json.load(f)
+
+    if textname:
+        possible_textname = title_renaming_dict.get(textname, textname)
+        if "_" in possible_textname:
+            textname = possible_textname.split("_")[0]
+        try:
+            if textname in sections[language]:
+                return sections[language][textname]
+        except KeyError:
+            return {"start": "start", "end": "start"}
 
     return sections[language]
 

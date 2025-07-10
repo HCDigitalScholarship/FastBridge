@@ -3,9 +3,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 import os
+import json
 from datetime import datetime
 from pathlib import Path
-from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections
+from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections, title_renaming_dict
 from TextAnalyzer import TextAnalyzer
 
 
@@ -63,13 +64,12 @@ async def stats_select(request: Request, language: str, mode: str):
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
+    
     try:
-        with open('FastBridgeApp/data/Static/sections.json', 'r', encoding='utf-8') as f:
-            sections = json.load(f)
-            print(sections[language][textname], "sections.json")
-            return sections[language][textname]
-    except FileNotFoundError:
+        sectionDict = mg_get_sections(language, textname)
+    except Exception as e:
         sectionDict = mg_get_locations(language, textname, get_index=False)
+        
     return sectionDict
 
 
