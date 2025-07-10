@@ -207,7 +207,8 @@ function createDropdown(text, dropdown_id) {
           }
         }
 
-        holdsectiondata = keyholder.sort(sortAlphaNum);
+        // holdsectiondata = keyholder.sort(sortAlphaNum);
+        holdsectiondata = keyholder;
         holdsectiondata.push("end");
         holdsectiondata.unshift("start");
         for (var i = 0; i < holdsectiondata.length; i++) {
