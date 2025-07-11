@@ -53,16 +53,17 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     # Prepare exploration ranges
     explore_ranges = make_quads_or_trips(etexts, e_section_start, e_section_end)
     section_sizes = list(map(int, e_section_size.split("+")))
+    units = list(map(int, e_units.split("+")))
     sections_display = ""
 
-    for (text, sec_start, sec_end), section_size in zip(explore_ranges, section_sizes):
+    for (text, sec_start, sec_end), section_size, unit in zip(explore_ranges, section_sizes, units):
         book = get_book(text)
         section_keys = list(book.section_linkedlist.keys())
 
         try:
             start_idx = section_keys.index(sec_start) if sec_start != "start" else 0
             end_idx_limit = section_keys.index(sec_end)
-            section_keys = handle_units(int(e_units), section_keys[start_idx:end_idx_limit + 1])
+            section_keys = handle_units(unit, section_keys[start_idx:end_idx_limit + 1])
             start_idx, end_idx_limit = 0, len(section_keys) - 1
         except ValueError:
             continue
