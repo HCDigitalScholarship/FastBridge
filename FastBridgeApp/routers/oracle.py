@@ -62,6 +62,8 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
         try:
             start_idx = section_keys.index(sec_start) if sec_start != "start" else 0
             end_idx_limit = section_keys.index(sec_end)
+            section_keys = handle_units(int(e_units), section_keys[start_idx:end_idx_limit + 1])
+            start_idx, end_idx_limit = 0, len(section_keys) - 1
         except ValueError:
             continue
         
@@ -123,3 +125,22 @@ def list_intersection(list1, list2):
     """Returns items in both lists, preserving duplicates."""
     set2 = set(list2)
     return [item for item in list1 if item in set2]
+
+
+def handle_units(unit: int, section_keys: list) -> list:
+    if unit != 2 and unit != 3:
+        return section_keys
+    seen = set()
+    filtered = []
+
+    for key in section_keys:
+        if unit == 3:
+            prefix = key.split(".")[0]
+        elif unit == 2:
+            prefix = ".".join(key.split(".")[:2])
+
+        if prefix not in seen:
+            seen.add(prefix)
+            filtered.append(key)
+            
+    return filtered
