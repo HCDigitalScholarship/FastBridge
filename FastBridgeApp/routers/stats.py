@@ -74,6 +74,7 @@ async def stats_select_section(request: Request, textname: str, language: str):
 
 
 @router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+@router.get("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
     context = {"request": request}
     running_list = running_list == "running"
