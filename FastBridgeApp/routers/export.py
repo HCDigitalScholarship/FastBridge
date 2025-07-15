@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse,FileResponse
 import importlib
 import pdb
 from pathlib import Path
-import DefinitionTools
+from MongoDefinitionTools import mg_get_text_as_Text, mg_get_locations, make_quads_or_trips, mg_get_lang_data
 from collections import namedtuple
 import math
 import pandas as pd 
@@ -14,9 +14,6 @@ templates = Jinja2Templates(directory="templates")
 """Expected Prefix: /export"""
 import sys
 import io
-
-
-
 
 def filter_helper(row_filters, POS):
     loc_style = ""
@@ -41,16 +38,12 @@ def filter_helper(row_filters, POS):
 async def simple_result(request : Request, starts : str, ends : str, sourcetexts : str, language : str, running_list: str):
     context = {"request": request}
     data = await request.json()
-    # print("print data at line 44 export.py")
-    #print(data)
     data = data['data']
 
     # Get columns to show, remove those marked 'hide'
     display =[key for key in data.keys() if data[key] == 'hide']  
-    print("display at line 48 export.py")
-    print(display)
         
-    triple = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
+    triple = make_quads_or_trips(sourcetexts, starts, ends)
     if running_list == "running":
         running_list = True
     else:
@@ -64,8 +57,9 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
 
     # iterate over each text, in triple
     for text, start, end in triple:
-        
-        book = DefinitionTools.get_text(text, language).book
+
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -73,10 +67,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-    try:
-        print(book)
-    except Exception as e:
-        print("GOOD! IT IS GONE")
 
     # what does this section do? 
     frequency_dict = {}
@@ -98,10 +88,11 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         del new_titles
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
     titles = sorted(titles, key=lambda x: x[1])
+    db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
+    dict_name = db_dicts.get(language, "bridge_latin_dictionary")
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
 
-    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
-
-    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
 
     section =", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
@@ -118,14 +109,10 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         for word in words:   
             word = word[0]._asdict() 
             #TODO add logic to drop from results without match to current filters 
-            print("at line 135 in export.py")
-            # print(word)
             row = dict(word)
-            # print(row)
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
             row['Location'] = row['Appearance']
             del row['Appearance']
-            print(row)
             data.append(row)
             
         display.remove('running')
@@ -134,25 +121,17 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         for word in words_no_dups:
             word= word[0]._asdict() 
             row = dict(word)
-            # print(row)  
-            print("at line 135 in export.py")
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
             row['Location'] = row['Appearance']
             del row['Appearance']
-            # print(word)
-            print(row)
             data.append(row)
 
-    # print('display at line 149') 
-    # print(frequency_dict)     
     df = pd.DataFrame(data)
     display_column_list = [] #final render list which will help export correct csv
     lenDisplay = len(display)
     for i in range(lenDisplay):
         if (display[i] in columnheaders):
             display_column_list.append(display[i])
-    print("print at line 157 export.py")
-    print(display_column_list)
 
 
     # include only columns that were selected by the user
@@ -181,12 +160,13 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         running_list = False
     local_def = False
     local_lem = False
-    source = DefinitionTools.make_quads_or_trips(sourcetexts, starts, ends)
-    other = DefinitionTools.make_quads_or_trips(othertexts, otherstarts, otherends)
+    source = make_quads_or_trips(sourcetexts, starts, ends)
+    other = make_quads_or_trips(othertexts, otherstarts, otherends)
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        book = DefinitionTools.get_text(text, language).book
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
         del book
@@ -194,7 +174,8 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles = set()
     display_triple =[]
     for text, start, end in source:
-        book = DefinitionTools.get_text(text, language).book
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
+        book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
@@ -232,10 +213,14 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     titles =  [title for title in titles if (title[0]) in to_operate]
 
     titles_no_dups = sorted(titles_no_dups, key=lambda x: x[1])
+    
+    db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
+    dict_name = db_dicts.get(language, "bridge_latin_dictionary")
+    
     titles = sorted(titles, key=lambda x: x[1])
-    words, POS_list, columnheaders, row_filters, global_filters = (DefinitionTools.get_lang_data(titles, language, local_def, local_lem))
+    words, POS_list, columnheaders, row_filters, global_filters = (mg_get_lang_data(titles, dict_name, local_def, local_lem))
 
-    words_no_dups = DefinitionTools.get_lang_data(titles_no_dups, language, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
+    words_no_dups = mg_get_lang_data(titles_no_dups, dict_name, local_def, local_lem)[0] #these maybe should be split up again into something like: get words from titles, get POS list for selection, get columnheaders...
 
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
@@ -249,14 +234,10 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         for word in words:   
             word = word[0]._asdict() 
             #TODO add logic to drop from results without match to current filters 
-            # print("at line 266 in export.py")
-            # print(word)
             row = dict(word)
-            # print(row)
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
             row['Location'] = row['Appearance']
             del row['Appearance']
-            # print(row)
             data.append(row)
             
         display.remove('running')
@@ -265,25 +246,17 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         for word in words_no_dups:
             word= word[0]._asdict() 
             row = dict(word)
-            # print(row)  
-            # print("at line 281 in export.py")
             row.update({'Count_in_Selection': frequency_dict[row['TITLE']]})
             row['Location'] = row['Appearance']
             del row['Appearance']
-            # # print(word)
-            # print(row)
             data.append(row)
 
-    print('display at line 287') 
-    print(data[0])  ## added print               
     df = pd.DataFrame(data)
     display_column_list = [] #final render list which will help export correct csv
     lenDisplay = len(display)
     for i in range(lenDisplay):
         if (display[i] in columnheaders):
             display_column_list.append(display[i])
-    print("print at line 295 export.py")
-    print(display_column_list)
 
     # include only columns that were selected by the user
     df = df[display_column_list] 
