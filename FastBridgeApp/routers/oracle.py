@@ -78,6 +78,8 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
         except ValueError:
             continue
         
+        if unit == 2: section_size += 1  # Adjust section size for unit 2 -- need entire section
+        
         while start_idx + section_size - 1 <= end_idx_limit:
             end_idx = start_idx + section_size - 1
             start_key = section_keys[start_idx]
