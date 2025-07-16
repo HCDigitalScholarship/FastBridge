@@ -18,14 +18,23 @@ async def index(request : Request):
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    title_location_levels = get_title_location_levels(language, depth=False)
+    try:
+        with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        titles = cache.get("titles", "")
+        titles2 = cache.get("titles2", "")
+    except Exception as e:
+        print("Error loading titles:", e)
+        title_location_levels = get_title_location_levels(language, depth=False)
+        titles = render_titles(title_location_levels)
+        titles2 = render_titles(title_location_levels, dropdown="2")
 
     return templates.TemplateResponse(
         "select.html",
         {
             "request": request,
-            "titles": render_titles(title_location_levels),
-            "titles2": render_titles(title_location_levels, dropdown="2"),
+            "titles": titles,
+            "titles2": titles2,
         },
     )
 

@@ -57,9 +57,18 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/{mode}/")
 async def stats_select(request: Request, language: str, mode: str):
+    try:
+        with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        titles = cache.get("titles", "")
+    except Exception as e:
+        print("Error loading titles:", e)
+        title_location_levels = get_title_location_levels(language, depth=False)
+        titles = render_titles(title_location_levels)
+    
     return templates.TemplateResponse("stats_select.html", {"request": request,
                                                             "mode": mode,
-                                                            "titles": mg_render_titles(language)})
+                                                            "titles": titles})
 
 
 @router.get("/select/sections/{textname}/{language}/")
