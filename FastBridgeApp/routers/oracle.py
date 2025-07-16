@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_text_as_Text, mg_get_locations, make_quads_or_trips
+import json
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -14,14 +15,23 @@ async def oracle_index(request: Request):
 
 @router.get("/{language}")
 async def oracle_select(request: Request, language: str):
-    title_location_levels = get_title_location_levels(language, depth=True)
+    try:
+        with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        titles = cache.get("titles", "")
+        titles2 = cache.get("titles2", "")
+    except Exception as e:
+        print("Error loading titles:", e)
+        title_location_levels = get_title_location_levels(language, depth=True)
+        titles = render_titles(title_location_levels)
+        titles2 = render_titles(title_location_levels, dropdown="2")
 
     return templates.TemplateResponse(
         "select-oracle.html",
         {
             "request": request,
-            "titles": render_titles(title_location_levels),
-            "titles2": render_titles(title_location_levels, dropdown="2"),
+            "titles": titles,
+            "titles2": titles2,
         },
     )
 

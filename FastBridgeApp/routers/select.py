@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 import text
 import math
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
-from MongoDefinitionTools import mg_get_location_levels, mg_get_locations, make_quads_or_trips
+from MongoDefinitionTools import mg_get_location_levels, mg_get_locations, make_quads_or_trips, mg_get_sections
 import json 
 
 router = APIRouter()
@@ -18,7 +18,7 @@ async def index(request : Request):
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    title_location_levels = get_title_location_levels(language, depth=True)
+    title_location_levels = get_title_location_levels(language, depth=False)
 
     return templates.TemplateResponse(
         "select.html",
@@ -32,8 +32,11 @@ async def select(request : Request, language : str):
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    locations_list = mg_get_locations(language, textname)
-    return locations_list
+    try:
+        sectionDict = mg_get_sections(language, textname)
+    except Exception as e:
+        sectionDict = mg_get_locations(language, textname, get_index=False)
+    return sectionDict
 
 
 def filter_helper(row_filters, POS):

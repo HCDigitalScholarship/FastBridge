@@ -76,8 +76,34 @@ def get_sections(language):
 
     return sections
 
+def update_render_cache(language):
+    """
+    Update the render cache for titles in a given language.
+    
+    Args:
+        language (str): The language to update the cache for.
+        
+    Returns:
+        None
+    """
+    from MongoDefinitionTools import get_title_location_levels, render_titles
+
+    cache_path = f"FastBridgeApp/data/Static/{language}_titles.json"
+
+    print("Making new cache for", language)
+    title_location_levels = get_title_location_levels(language, depth=True)
+    titles = render_titles(title_location_levels)
+    titles2 = render_titles(title_location_levels, dropdown="2")
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump({"titles": titles, "titles2": titles2}, f, ensure_ascii=False, indent=2)
+
+    return titles, titles2
+
 # aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
 # aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
 
-get_sections("Latin")
-get_sections("Greek")
+# get_sections("Latin")
+# get_sections("Greek")
+
+update_render_cache("Latin")
+update_render_cache("Greek")
