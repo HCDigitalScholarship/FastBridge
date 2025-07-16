@@ -73,17 +73,20 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
         try:
             start_idx = section_keys.index(sec_start) if sec_start != "start" else 0
             end_idx_limit = section_keys.index(sec_end)
-            section_keys = handle_units(unit, section_keys[start_idx:end_idx_limit + 1])
+            section_keys = section_keys[start_idx:end_idx_limit + 1] if unit == 1 else handle_units(unit, section_keys[start_idx:end_idx_limit + 1])
             start_idx, end_idx_limit = 0, len(section_keys) - 1
         except ValueError:
             continue
         
-        if unit == 2: section_size += 1  # Adjust section size for unit 2 -- need entire section
-        
         while start_idx + section_size - 1 <= end_idx_limit:
             end_idx = start_idx + section_size - 1
-            start_key = section_keys[start_idx]
-            end_key = section_keys[end_idx]
+            
+            if unit != 1:
+                start_key = section_keys[start_idx][0]
+                end_key = section_keys[end_idx][1]
+            else:
+                start_key = section_keys[start_idx]
+                end_key = section_keys[end_idx]
             
             # skip start and end (implicitly defined sections)
             if start_key == "start" or end_key == "end":
@@ -141,11 +144,10 @@ def list_intersection(list1, list2):
 
 
 def handle_units(unit: int, section_keys: list) -> list:
-    if unit != 2 and unit != 3:
+    if unit != 2 and unit != 3: # will never be the case, but just in case
         return section_keys
-    seen = set()
-    filtered = []
 
+    seen = {}
     for key in section_keys:
         if unit == 3:
             prefix = key.split(".")[0]
@@ -153,7 +155,8 @@ def handle_units(unit: int, section_keys: list) -> list:
             prefix = ".".join(key.split(".")[:2])
 
         if prefix not in seen:
-            seen.add(prefix)
-            filtered.append(key)
-            
-    return filtered
+            seen[prefix] = [key, key]  # first and last key are the same for now
+        else:
+            seen[prefix][1] = key      # update last key
+
+    return list(seen.values())
