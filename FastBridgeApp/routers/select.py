@@ -91,7 +91,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-
+    print(titles[0], "is the first title")  # Debugging line to check the first title in the list
     frequency_dict = {}
     if True:
         dups = set()
@@ -120,7 +120,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
-
+    print("the column headers are: ", columnheaders)
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
@@ -306,9 +306,12 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "SOURCE_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
-            elif(columnheaders[i] == "TOTAL_COUNT_IN_TEXT"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
+            elif(columnheaders[i] == "Total_Count_in_Text"):
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(words[j][0].Total_Count_in_Text)
+                lst.append(frequency_dict[words[j][0][0]])
+                # to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
+                # print("Total Count in Text", frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Corpus_Frequency"):
                 freq = corpus_freq.get(words[j][0].TITLE, "NA")
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'

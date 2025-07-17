@@ -369,8 +369,7 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
 
     # add extra fields if given text has local definitions and/or local lemmas
     if has_local_defs and has_local_lems:
-        local_defs_list =[word[3] for word in words_from_text]
-        local_lems_list =[word[4] for word in words_from_text]
+        local_defs_list, local_lems_list = zip(*[(w[3], w[4]) for w in words_from_text])
         Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_DEFINITION", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
     elif has_local_defs:
         local_defs_list =[word[3] for word in words_from_text]
