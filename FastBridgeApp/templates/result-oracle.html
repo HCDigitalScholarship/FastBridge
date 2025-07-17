@@ -4,7 +4,7 @@
 <body>
   <section id="result" class="download-section content-section text-center" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
     <div class="container" style="border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
-      <h2> Now showing sections of {{ etexts }} by lexical readability </h2>
+      <h2> Now showing location(s) of {{ etexts }} by lexical readability </h2>
 
       <div class="container rounded p-3 mb-2 bg-secondary text-white">
         <div class="row">
@@ -18,13 +18,13 @@
         <table class="table table-striped" id="sortable-table">
           <thead>
             <tr>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(0)">Sections</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(0)">Location(s)</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(5)">% Words Known</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(6)">% Token Known</th>
               <th style="color: rgb(255,255,255);" onclick="sortTable(1)">Total Words</th>
               <th style="color: rgb(255,255,255);" onclick="sortTable(2)">Total Tokens</th>
               <th style="color: rgb(255,255,255);" onclick="sortTable(3)">Words Known</th>
               <th style="color: rgb(255,255,255);" onclick="sortTable(4)">Tokens Known</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(5)">% Words Known</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(6)">% Token Known</th>
               <th style="color: rgb(255,255,255);">Link</th>
             </tr>
           </thead>
@@ -32,12 +32,12 @@
             {% for section, total_words, total_tokens, known_words, known_tokes, percent_1, percent_2, link in table_data %}
               <tr>
                 <td style="color:white;">{{ section }}</td>
+                <td style="color: white;">{{ percent_1 }}</td>
+                <td style="color: white;">{{ percent_2 }}</td>
                 <td style="color: white;">{{ total_words }}</td>
                 <td style="color: white;">{{ total_tokens }}</td>
                 <td style="color: white;">{{ known_words }}</td>
                 <td style="color: white;">{{ known_tokes }}</td>
-                <td style="color: white;">{{ percent_1 }}</td>
-                <td style="color: white;">{{ percent_2 }}</td>
                 <td style="color: #d8d9da;">
                   <a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{{ link }}"></a>
                 </td>

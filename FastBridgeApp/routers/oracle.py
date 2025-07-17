@@ -36,8 +36,8 @@ async def oracle_select(request: Request, language: str):
     )
 
 
-@router.get("/{language}/result/{etexts}/{e_section_start}/{e_section_end}/{e_units}/{e_section_size}/{known_texts}/{known_starts}-{known_ends}")
-async def oracle(request: Request, language: str, etexts: str, e_units: str, e_section_size: str, known_texts: str, known_starts: str, known_ends: str, e_section_start: str, e_section_end: str):
+@router.get("/{language}/result/{etexts}/{e_location_start}/{e_location_end}/{e_levels}/{e_location_size}/{known_texts}/{known_starts}-{known_ends}")
+async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_location_size: str, known_texts: str, known_starts: str, known_ends: str, e_location_start: str, e_location_end: str):
     context = {"request": request, "table_data": []}
     table_data = []
     book_cache = {}
@@ -61,39 +61,39 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
     og_token_set = set(ogknown_words)
 
     # Prepare exploration ranges
-    explore_ranges = make_quads_or_trips(etexts, e_section_start, e_section_end)
-    section_sizes = list(map(int, e_section_size.split("+")))
-    units = list(map(int, e_units.split("+")))
-    sections_display = ""
+    explore_ranges = make_quads_or_trips(etexts, e_location_start, e_location_end)
+    location_sizes = list(map(int, e_location_size.split("+")))
+    levels = list(map(int, e_levels.split("+")))
+    locations_display = ""
 
-    for (text, sec_start, sec_end), section_size, unit in zip(explore_ranges, section_sizes, units):
+    for (text, sec_start, sec_end), location_size, level in zip(explore_ranges, location_sizes, levels):
         book = get_book(text)
-        section_keys = list(book.section_linkedlist.keys())
+        location_keys = list(book.section_linkedlist.keys())
 
         try:
-            start_idx = section_keys.index(sec_start) if sec_start != "start" else 0
-            end_idx_limit = section_keys.index(sec_end)
-            section_keys = section_keys[start_idx:end_idx_limit + 1] if unit == 1 else handle_units(unit, section_keys[start_idx:end_idx_limit + 1])
-            start_idx, end_idx_limit = 0, len(section_keys) - 1
+            start_idx = location_keys.index(sec_start) if sec_start != "start" else 0
+            end_idx_limit = location_keys.index(sec_end)
+            location_keys = location_keys[start_idx:end_idx_limit + 1] if level == 1 else handle_levels(level, location_keys[start_idx:end_idx_limit + 1])
+            start_idx, end_idx_limit = 0, len(location_keys) - 1
         except ValueError:
             continue
         
-        while start_idx + section_size - 1 <= end_idx_limit:
-            end_idx = start_idx + section_size - 1
+        while start_idx + location_size - 1 <= end_idx_limit:
+            end_idx = start_idx + location_size - 1
             
-            if unit != 1:
-                start_key = section_keys[start_idx][0]
-                end_key = section_keys[end_idx][1]
+            if level != 1:
+                start_key = location_keys[start_idx][0]
+                end_key = location_keys[end_idx][1]
             else:
-                start_key = section_keys[start_idx]
-                end_key = section_keys[end_idx]
+                start_key = location_keys[start_idx]
+                end_key = location_keys[end_idx]
             
-            # skip start and end (implicitly defined sections)
+            # skip start and end (implicitly defined locations)
             if start_key == "start" or end_key == "end":
                 start_idx += 1
                 continue
             
-            section_range = f"{start_key} - {end_key}"
+            location_range = f"{start_key} - {end_key}"
 
             wordforms = book.get_words(start_key, end_key, oracle=True)
             token_set = set(wordforms)
@@ -107,8 +107,8 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
             total_word_count = len(wordforms)
             total_token_count = len(token_set)
 
-            percent_words = f"{round((known_word_count / total_word_count) * 100, 2)}%" if total_word_count else "0%"
-            percent_tokens = f"{round((known_token_count / total_token_count) * 100, 2)}%" if total_token_count else "0%"
+            percent_words = f"{round((known_word_count / total_word_count) * 100, 1)}%" if total_word_count else "0%"
+            percent_tokens = f"{round((known_token_count / total_token_count) * 100, 1)}%" if total_token_count else "0%"
 
             link = (
                 f"/select/{language}/result/{text}/{start_key}-{end_key}/exclude/"
@@ -116,7 +116,7 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
             )
 
             table_data.append([
-                section_range,
+                location_range,
                 total_word_count,
                 total_token_count,
                 known_word_count,
@@ -128,11 +128,11 @@ async def oracle(request: Request, language: str, etexts: str, e_units: str, e_s
 
             start_idx += 1  # slide window forward
 
-        sections_display += f"{book.name}: {sec_start} - {sec_end}, "
+        locations_display += f"{book.name}: {sec_start} - {sec_end}, "
 
-    sections_display = sections_display.rstrip(", ")
-    context["table_data"] = sorted(table_data, key=lambda row: row[3], reverse=True)
-    context["etexts"] = sections_display
+    locations_display = locations_display.rstrip(", ")
+    context["table_data"] = sorted(table_data, key=lambda row: float(row[5].strip('%')), reverse=True) # Sort by percent_words known
+    context["etexts"] = locations_display
 
     return templates.TemplateResponse("result-oracle.html", context)
 
@@ -143,15 +143,15 @@ def list_intersection(list1, list2):
     return [item for item in list1 if item in set2]
 
 
-def handle_units(unit: int, section_keys: list) -> list:
-    if unit != 2 and unit != 3: # will never be the case, but just in case
-        return section_keys
+def handle_levels(level: int, location_keys: list) -> list:
+    if level != 2 and level != 3: # will never be the case, but just in case
+        return location_keys
 
     seen = {}
-    for key in section_keys:
-        if unit == 3:
+    for key in location_keys:
+        if level == 3:
             prefix = key.split(".")[0]
-        elif unit == 2:
+        elif level == 2:
             prefix = ".".join(key.split(".")[:2])
 
         if prefix not in seen:
