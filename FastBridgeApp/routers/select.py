@@ -91,7 +91,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         display_triple.append((book.name, start, end))
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-    print(titles[0], "is the first title")  # Debugging line to check the first title in the list
     frequency_dict = {}
     if True:
         dups = set()
@@ -120,7 +119,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
-    print("the column headers are: ", columnheaders)
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
@@ -246,6 +244,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     emtpy = [list(a) for a in zip(emtpy, emtpy2)]
     header_js_obj = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     rules_added = 1 #we set table data width in this stylesheet already
+    renaming_dict = {"Location": "FIRST_APPEARANCE_IN_SELECTION", "SHORT_DEFINITION": "GLOSS", "LONG_DEFINITION": "DEFINITION"}
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "TEXT_SPECIFIC_DEFINITION":
@@ -264,8 +263,9 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             rules_added +=1
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
 
-        other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
-        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
+        new_display = renaming_dict.get(columnheaders[i], columnheaders[i])
+        other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{new_display.replace("_", " ").title()}</th>'
+        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{new_display.replace("_", " ").title()}</label></div></div>'
 
     corpus_freq = get_corpus_freq(language)
     render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq)
@@ -308,10 +308,9 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
                 lst.append(words[j][0][-1])
             elif(columnheaders[i] == "Total_Count_in_Text"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
-                lst.append(words[j][0].Total_Count_in_Text)
                 lst.append(frequency_dict[words[j][0][0]])
+                # lst.append(words[j][0].Total_Count_in_Text)
                 # to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
-                # print("Total Count in Text", frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Corpus_Frequency"):
                 freq = corpus_freq.get(words[j][0].TITLE, "NA")
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'
