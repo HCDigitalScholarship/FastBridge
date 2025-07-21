@@ -1,10 +1,10 @@
-from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-import text
 import math
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
-from MongoDefinitionTools import mg_get_location_levels, mg_get_location_words, mg_get_locations, make_quads_or_trips
-import json 
+from MongoDefinitionTools import mg_get_locations, make_quads_or_trips, mg_get_sections
+import json
+from collections import Counter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -18,22 +18,34 @@ async def index(request : Request):
 
 @router.get("/{language}/")
 async def select(request : Request, language : str):
-    title_location_levels = get_title_location_levels(language, depth=True)
+    try:
+        with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        titles = cache.get("titles", "")
+        titles2 = cache.get("titles2", "")
+    except Exception as e:
+        print("Error loading titles:", e)
+        title_location_levels = get_title_location_levels(language, depth=False)
+        titles = render_titles(title_location_levels)
+        titles2 = render_titles(title_location_levels, dropdown="2")
 
     return templates.TemplateResponse(
         "select.html",
         {
             "request": request,
-            "titles": render_titles(title_location_levels),
-            "titles2": render_titles(title_location_levels, dropdown="2"),
+            "titles": titles,
+            "titles2": titles2,
         },
     )
 
 
 @router.get("/sections/{textname}/{language}/")
 async def select_section(request : Request, textname: str , language: str):
-    locations_list = mg_get_locations(language, textname)
-    return locations_list
+    try:
+        sectionDict = mg_get_sections(language, textname)
+    except Exception as e:
+        sectionDict = mg_get_locations(language, textname, get_index=False)
+    return sectionDict
 
 
 def filter_helper(row_filters, POS):
@@ -69,18 +81,18 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     words = []
     titles =[]
     display_triple = []
+    count_in_text = {}
     for text, start, end in triple:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
+        count_in_text[book.name] = Counter([word[0] for word in book.words])
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
-
     frequency_dict = {}
     if True:
         dups = set()
@@ -109,7 +121,6 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     section = ", ".join(["{text}: {start} - {end}".format(text = text, start = start, end = end) for text, start, end in display_triple])
     #this insane oneliner goes through the triples, and converts it to a nice, human readable, format that we render on the page.
     #context["basic_defs"] = [word[3] for word in words]
-
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
@@ -118,8 +129,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
+
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text)
 
     response = templates.TemplateResponse("result.html", context)
     return response
@@ -142,8 +153,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set()
     display_triple_other =[]
     for text, start, end in other:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         other_titles = other_titles.union(set((book.get_words(start, end)))) #book.get_words gets a list of words, which we convert to a set and then union with the existing set to intersect or remove.
         display_triple_other.append((book.name, start, end))
@@ -151,15 +161,16 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
     titles = set() #builds a set
     display_triple =[]
+    count_in_text = {}
     for text, start, end in source:
-        locations_list = mg_get_locations(language, text)
-        location_words = mg_get_location_words(language, text)
+        locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
         if not local_def:
             local_def = book.local_def
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
+        count_in_text[book.name] = Counter([word[0] for word in book.words])
         titles = titles.union(set((book.get_words(start, end)))) #get a list and then append the list to other list
         del book
 
@@ -207,12 +218,12 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text)
 
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language):
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -237,6 +248,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     emtpy = [list(a) for a in zip(emtpy, emtpy2)]
     header_js_obj = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     rules_added = 1 #we set table data width in this stylesheet already
+    renaming_dict = {"Location": "FIRST_APPEARANCE_IN_SELECTION", "SHORT_DEFINITION": "GLOSS", "LONG_DEFINITION": "DEFINITION"}
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "TEXT_SPECIFIC_DEFINITION":
@@ -255,12 +267,13 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
             rules_added +=1
             headers+= f'<input type="checkbox" class="custom-control-input" value="show" id="{columnheaders[i]}" onchange="hide_show_column(\'{columnheaders[i]}\');">'
 
-        other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{columnheaders[i].replace("_", " ").title()}</th>'
-        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{columnheaders[i].replace("_", " ").title()}</label></div></div>'
+        new_display = renaming_dict.get(columnheaders[i], columnheaders[i])
+        other_headers+=f'<th id="{columnheaders[i]}_head" class="{columnheaders[i]}" onclick="sortTable(\'{columnheaders[i]}\',{i})" >{new_display.replace("_", " ").title()}</th>'
+        headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{new_display.replace("_", " ").title()}</label></div></div>'
 
     corpus_freq = get_corpus_freq(language)
-    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq)
-    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq) #needs to be optional to comply with LALSA
+    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq, count_in_text)
+    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq, count_in_text) #needs to be optional to comply with LALSA
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
@@ -271,7 +284,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
-def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict):
+def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict, count_in_text: dict):
     render_words = []
     for j in range(len(words)):
         lst = []
@@ -297,9 +310,10 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "SOURCE_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
-            elif(columnheaders[i] == "TOTAL_COUNT_IN_TEXT"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
-                lst.append(words[j][0].Total_Count_in_Text)
+            elif(columnheaders[i] == "Total_Count_in_Text"):
+                count = count_in_text[words[j][0].Source_Text][words[j][0].TITLE]
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{count}</td>'
+                lst.append(count)
             elif(columnheaders[i] == "Corpus_Frequency"):
                 freq = corpus_freq.get(words[j][0].TITLE, "NA")
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'

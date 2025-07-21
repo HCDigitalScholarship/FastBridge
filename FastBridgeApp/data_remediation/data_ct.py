@@ -1,4 +1,5 @@
 import os, sys
+from clean_upload import string_to_slug
 
 # Add project root to sys.path in order to import main
 current = os.path.dirname(os.path.realpath(__file__))
@@ -9,7 +10,6 @@ import json
 from collections import defaultdict
 from clean_upload import client
 
-from text_title_rename_dict import title_renaming_dict
 from MongoDefinitionTools import mg_get_locations
 
 def aggregate_field_counts(client, db_name, field_name, output_file="output_counts.json"):
@@ -55,27 +55,55 @@ def get_sections(language):
     
     # Get sections based on the title renaming dictionary
     new_sections = {}
-    for text in title_renaming_dict:
-        new_sections[title_renaming_dict[text].split('_')[0]] = mg_get_locations(language, text)
-
+    for text in db.list_collection_names():
+        text = text.split('_')[0]
+        new_sections[text] = mg_get_locations(language, string_to_slug(text))
+        
     # Read current sections
     try:
-        with open('sections.json', 'r', encoding='utf-8') as f:
+        with open('FastBridgeApp/data/Static/sections.json', 'r', encoding='utf-8') as f:
             sections = json.load(f)
     except FileNotFoundError:
         sections = {}
+        print("sections.json not found, creating a new one.")
 
     sections[language] = new_sections
     
     # Save sections to JSON
-    with open('sections.json', 'w', encoding='utf-8') as f:
+    with open('FastBridgeApp/data/Static/sections.json', 'w', encoding='utf-8') as f:
         json.dump(sections, f, ensure_ascii=False, indent=4)
-    print("Sections saved to sections.json")
-    
+    print("Sections saved to FastBridgeApp/data/Static/sections.json")
+
     return sections
 
-aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
-aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
+def update_render_cache(language):
+    """
+    Update the render cache for titles in a given language.
+    
+    Args:
+        language (str): The language to update the cache for.
+        
+    Returns:
+        None
+    """
+    from MongoDefinitionTools import get_title_location_levels, render_titles
 
-get_sections("Latin")
-get_sections("Greek")
+    cache_path = f"FastBridgeApp/data/Static/{language}_titles.json"
+
+    print("Making new cache for", language)
+    title_location_levels = get_title_location_levels(language, depth=True)
+    titles = render_titles(title_location_levels)
+    titles2 = render_titles(title_location_levels, dropdown="2")
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump({"titles": titles, "titles2": titles2}, f, ensure_ascii=False, indent=2)
+
+    return titles, titles2
+
+# aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
+# aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
+
+# get_sections("Latin")
+# get_sections("Greek")
+
+update_render_cache("Latin")
+update_render_cache("Greek")

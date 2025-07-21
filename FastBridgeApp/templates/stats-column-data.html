@@ -442,17 +442,17 @@
             </div>
         </div>
 
-        <h3>Plots</h3>
+        <h3>Visualizations</h3>
         <div class="row">
             <div id="plots">
+                <img id="freqBinPlot" class="plot-img"
+                    src="{{ request.url_for('plots', path=freq_bins_plot_path) }}?v={{ now }}" alt="Plot Image">
                 <img id="freqPlot" class="plot-img"
                     src="{{ request.url_for('plots', path=freq_plot_path) }}?v={{ now }}" alt="Plot Image">
                 <img id="cumLexPlot" class="plot-img"
                     src="{{ request.url_for('plots', path=cum_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
                 <img id="linLexPlot" class="plot-img"
                     src="{{ request.url_for('plots', path=lin_lex_plot_path) }}?v={{ now }}" alt="Plot Image">
-                <img id="freqBinPlot" class="plot-img"
-                    src="{{ request.url_for('plots', path=freq_bins_plot_path) }}?v={{ now }}" alt="Plot Image">
             </div>
         </div>
         <!-- Plot Modal -->

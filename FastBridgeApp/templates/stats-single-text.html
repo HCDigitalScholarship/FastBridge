@@ -739,16 +739,16 @@
 
                     <!-- Plots Section -->
                     <div class="grid-item" id="plots-section">
-                        <h2>Plots</h2>
+                        <h2>Visualizations</h2>
                         <div id="plots">
+                            <img id="freqBinPlot" class="plot-img"
+                                src="{{ request.url_for('plots', path=freq_bins_plot_path) }}" alt="Plot Image">
                             <img id="freqPlot" class="plot-img"
                                 src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
                             <img id="cumLexPlot" class="plot-img"
                                 src="{{ request.url_for('plots', path=cum_lex_plot_path) }}" alt="Plot Image">
                             <img id="linLexPlot" class="plot-img"
                                 src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
-                            <img id="freqBinPlot" class="plot-img"
-                                src="{{ request.url_for('plots', path=freq_bins_plot_path) }}" alt="Plot Image">
                         </div>
                     </div>
                     <!-- Plot Modal -->

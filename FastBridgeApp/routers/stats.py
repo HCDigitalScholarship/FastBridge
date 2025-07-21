@@ -3,9 +3,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 import os
+import json
 from datetime import datetime
 from pathlib import Path
-from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections
+from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections, title_renaming_dict
 from TextAnalyzer import TextAnalyzer
 
 
@@ -56,18 +57,33 @@ async def stats_mode_selector(request: Request):
 
 @router.get("/{language}/{mode}/")
 async def stats_select(request: Request, language: str, mode: str):
+    try:
+        with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        titles = cache.get("titles", "")
+    except Exception as e:
+        print("Error loading titles:", e)
+        title_location_levels = get_title_location_levels(language, depth=False)
+        titles = render_titles(title_location_levels)
+    
     return templates.TemplateResponse("stats_select.html", {"request": request,
                                                             "mode": mode,
-                                                            "titles": mg_render_titles(language)})
+                                                            "titles": titles})
 
 
 @router.get("/select/sections/{textname}/{language}/")
 async def stats_select_section(request: Request, textname: str, language: str):
-    sectionDict = mg_get_locations(language, textname)
+    
+    try:
+        sectionDict = mg_get_sections(language, textname)
+    except Exception as e:
+        sectionDict = mg_get_locations(language, textname, get_index=False)
+        
     return sectionDict
 
 
 @router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
+@router.get("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
     context = {"request": request}
     running_list = running_list == "running"
