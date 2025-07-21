@@ -1,10 +1,10 @@
-from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-import text
 import math
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_lang_data, mg_get_text_as_Text
-from MongoDefinitionTools import mg_get_location_levels, mg_get_locations, make_quads_or_trips, mg_get_sections
-import json 
+from MongoDefinitionTools import mg_get_locations, make_quads_or_trips, mg_get_sections
+import json
+from collections import Counter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -81,6 +81,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     words = []
     titles =[]
     display_triple = []
+    count_in_text = {}
     for text, start, end in triple:
         locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
@@ -89,6 +90,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
+        count_in_text[book.name] = Counter([word[0] for word in book.words])
         titles += (book.get_words(start, end))
         del book #book SHOULD be out of scope when the loop ends, but is NOT. This causes Python to hold on to the memory pool for all the lists and dictionaries in the book object. Therefore, we need to delete it ourselves
     frequency_dict = {}
@@ -127,8 +129,8 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
+
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text)
 
     response = templates.TemplateResponse("result.html", context)
     return response
@@ -159,6 +161,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     other_titles = set([(new[0]) for new in other_titles]) #remove ordering & local information, we don't need it in this set
     titles = set() #builds a set
     display_triple =[]
+    count_in_text = {}
     for text, start, end in source:
         locations_list, location_words = mg_get_locations(language, text, get_index=True)
         book = mg_get_text_as_Text(language, text, locations_list, location_words)
@@ -167,6 +170,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
         if not local_lem:
             local_lem = book.local_lem #if any target works have them, we need it.
         display_triple.append((book.name, start, end))
+        count_in_text[book.name] = Counter([word[0] for word in book.words])
         titles = titles.union(set((book.get_words(start, end)))) #get a list and then append the list to other list
         del book
 
@@ -214,12 +218,12 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
     style =f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
-    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language)
+    context = build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text)
 
     return templates.TemplateResponse("result.html", context)
 
 
-def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language):
+def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style, context, frequency_dict, titles, global_filters, words_no_dups, titles_no_dups, language, count_in_text):
     checks = f""
     for POS in POS_list:
         filters, new_style = filter_helper(row_filters, POS)
@@ -268,8 +272,8 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
         headers+=f'<label class="custom-control-label" for="{columnheaders[i]}">{new_display.replace("_", " ").title()}</label></div></div>'
 
     corpus_freq = get_corpus_freq(language)
-    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq)
-    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq) #needs to be optional to comply with LALSA
+    render_words = build_table(words_no_dups, columnheaders, frequency_dict, titles_no_dups, corpus_freq, count_in_text)
+    render_words_optional = build_table(words, columnheaders, frequency_dict, titles, corpus_freq, count_in_text) #needs to be optional to comply with LALSA
     context["style"] = style
     context["headers"] = headers
     context["POS_list"] = checks
@@ -280,7 +284,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     context["columnheaders"] = header_js_obj
     return context
 
-def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict):
+def build_table(words: list, columnheaders: list, frequency_dict: dict, titles : dict, corpus_freq: dict, count_in_text: dict):
     render_words = []
     for j in range(len(words)):
         lst = []
@@ -307,10 +311,9 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
                 lst.append(words[j][0][-1])
             elif(columnheaders[i] == "Total_Count_in_Text"):
-                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
-                lst.append(frequency_dict[words[j][0][0]])
-                # lst.append(words[j][0].Total_Count_in_Text)
-                # to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Total_Count_in_Text}</td>'
+                count = count_in_text[words[j][0].Source_Text][words[j][0].TITLE]
+                to_add_to_render_words+= f'<td class="{columnheaders[i]}">{count}</td>'
+                lst.append(count)
             elif(columnheaders[i] == "Corpus_Frequency"):
                 freq = corpus_freq.get(words[j][0].TITLE, "NA")
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'
