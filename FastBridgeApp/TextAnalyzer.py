@@ -89,9 +89,21 @@ def mg_get_diederich(collection_name):
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
-# used for getting slices of each text -- has been simplified, need to refactor usage and delete this function
-def get_slice(text_object: Text, start_section, end_section):
-    return text_object.get_words(start_section, end_section, stats=True)
+# using memoization to cache results of get_slice
+def get_slice_cached():
+    cache = {}
+
+    def inner(text_object: Text, start_section, end_section):
+        key = (id(text_object), start_section, end_section)
+        if key in cache:
+            return cache[key]
+        result = text_object.get_words(start_section, end_section, stats=True)
+        cache[key] = result
+        return result
+
+    return inner
+
+get_slice = get_slice_cached()
 
 
 def find_hapax_legomena(words, dictionary:dict):
@@ -452,8 +464,7 @@ class TextAnalyzer:
         plot_path = parent_dir + plot_partial
         
         
-        # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-        # plt.savefig(plot_path)
+        plt.tight_layout()
         plt.savefig(plot_partial)
         plt.close()
         
@@ -469,12 +480,16 @@ class TextAnalyzer:
         for text in self.texts:
             text_slices_concat += get_slice(text[0], text[1], text[2])
 
+        # Save actual text locations (e.g. "1.2", "3.5", etc.)
+        x_labels_full = [word_tuple[5] for word_tuple in text_slices_concat]
+
         scores = []
         for word_tuple in text_slices_concat:
             word = word_tuple[0]
             if word in self.dictionary:
                 freq = self.dictionary[word]["CORPUSFREQ"]
-                if not freq: continue
+                if not freq:
+                    continue
                 if freq <= 200:
                     scores.append(2)
                 elif 200 < freq <= 1000:
@@ -502,13 +517,23 @@ class TextAnalyzer:
             return "/blank_plot.png"
 
         smoothed_scores = savgol_filter(rolling_average, savgol_num, 3)
-        x_indexes = list(range(len(smoothed_scores)))
+
+        x_numeric = list(range(len(smoothed_scores)))
 
         sns.set_style("ticks")
         sns.set_context("paper")
         plt.figure(figsize=(10, 5))
-        sns.lineplot(x=x_indexes, y=smoothed_scores, color=colorblind_palette[0])
+        sns.lineplot(x=x_numeric, y=smoothed_scores, color=colorblind_palette[0])
         sns.despine()
+
+        # Replace numeric ticks with real word locations (sampled)
+        x_labels_trimmed = x_labels_full[rolling_window_size - 1:]  # match length after rolling
+        num_ticks = 10
+        tick_indices = np.linspace(0, len(x_numeric) - 1, num_ticks, dtype=int)
+        tick_locations = [x_numeric[i] for i in tick_indices]
+        tick_labels = [str(x_labels_trimmed[i]) for i in tick_indices]
+
+        plt.xticks(tick_locations, tick_labels, rotation=45, ha='right')
 
         if len(self.texts) == 1:
             title = f"Rolling Linear Lexical Load of {self.texts[0][0].name}"
@@ -516,18 +541,18 @@ class TextAnalyzer:
             title = f"Rolling Linear Lexical Load of {self.get_textname()}"
         plt.title(title, **title_font)
 
-        plt.xlabel('Word Index', **axis_font)
+        plt.xlabel('Text Location', **axis_font)
         plt.ylabel('Smoothed Lexical Load', **axis_font)
+
+        plt.tight_layout()
 
         plot_partial = f'static/assets/plots/plot{plot_num}.png'
         plot_path = parent_dir + plot_partial
-        
-        # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-        # plt.savefig(plot_path)
         plt.savefig(plot_partial)
         plt.close()
 
         return f'/plot{plot_num}.png'
+
 
     def plot_cum_lex_load(self, plot_num=1):
         if len(self.texts) == 0:
@@ -538,12 +563,16 @@ class TextAnalyzer:
         for text in self.texts:
             text_slices_concat += get_slice(text[0], text[1], text[2])
 
+        # Actual x labels (e.g. word locations like '1.3' or '2.5')
+        x_labels = [word_tuple[5] for word_tuple in text_slices_concat]
+
         scores = []
         for word_tuple in text_slices_concat:
             word = word_tuple[0]
             if word in self.dictionary:
                 freq = self.dictionary[word]["CORPUSFREQ"]
-                if not freq: continue
+                if not freq:
+                    continue
                 if freq <= 200:
                     scores.append(2)
                 elif 200 < freq <= 1000:
@@ -560,35 +589,42 @@ class TextAnalyzer:
         if len(scores) == 0:
             return '/blank_plot.png'
 
-        # cumulative_scores = pd.Series(scores).cumsum()
-        
-        # adding deflator
+        # Adjust scores by average to flatten baseline
         average_score = sum(scores) / len(scores)
         adjusted_scores = [score - average_score for score in scores]
         cumulative_scores = pd.Series(adjusted_scores).cumsum()
 
-        x_indexes = list(range(len(cumulative_scores)))
+        # Numeric x positions for plotting
+        x_numeric = list(range(len(cumulative_scores)))
 
         sns.set_style("ticks")
         sns.set_context("paper")
         plt.figure(figsize=(10, 5))
-        sns.lineplot(x=x_indexes, y=cumulative_scores, color='blue')
+        sns.lineplot(x=x_numeric, y=cumulative_scores, color='blue')
+
+        # Replace numeric ticks with real word location labels
+        num_ticks = 10  # adjust this as needed
+        tick_indices = np.linspace(0, len(x_numeric) - 1, num_ticks, dtype=int)
+        tick_locations = [x_numeric[i] for i in tick_indices]
+        tick_labels = [str(x_labels[i]) for i in tick_indices]  # ensure strings
+
+        plt.xticks(tick_locations, tick_labels, rotation=45, ha='right')
 
         sns.despine()
         title = f"Cumulative Lexical Load of {self.get_textname()}"
         plt.title(title, fontdict={'fontsize': 12})
-        plt.xlabel('Word Index', fontdict={'fontsize': 10})
+        plt.xlabel('Text Location', fontdict={'fontsize': 10})
         plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
         plot_partial = f'static/assets/plots/plot{plot_num}.png'
         plot_path = parent_dir + plot_partial
 
-        # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-        # plt.savefig(plot_path)
+        plt.tight_layout()
         plt.savefig(plot_partial)
         plt.close()
 
         return f'/plot{plot_num}.png'
+
 
     def plot_freq_bin(self, plot_num=3):
         if len(self.texts) == 0:
@@ -676,8 +712,7 @@ class TextAnalyzer:
         plot_partial = f'static/assets/plots/plot{plot_num}.png'
         plot_path = parent_dir + plot_partial
 
-        # plot_partial = f'/static/assets/plots/plot{plot_num}.png'
-        # plt.savefig(plot_path)
+        plt.tight_layout()
         plt.savefig(plot_partial)
         plt.close()
 
