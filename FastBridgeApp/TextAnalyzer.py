@@ -481,7 +481,7 @@ class TextAnalyzer:
             text_slices_concat += get_slice(text[0], text[1], text[2])
 
         # Save actual text locations (e.g. "1.2", "3.5", etc.)
-        x_labels_full = [word_tuple[5].replace('_', '.') for word_tuple in text_slices_concat]
+        x_labels_full = [str(word_tuple[5]).replace('_', '.') for word_tuple in text_slices_concat]
 
         scores = []
         for word_tuple in text_slices_concat:
@@ -564,7 +564,7 @@ class TextAnalyzer:
             text_slices_concat += get_slice(text[0], text[1], text[2])
 
         # Actual x labels (e.g. word locations like '1.3' or '2.5')
-        x_labels = [word_tuple[5].replace('_', '.') for word_tuple in text_slices_concat]
+        x_labels = [str(word_tuple[5]).replace('_', '.') for word_tuple in text_slices_concat]
 
         scores = []
         for word_tuple in text_slices_concat:
