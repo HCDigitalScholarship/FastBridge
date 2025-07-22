@@ -1,7 +1,11 @@
 from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-
+from pydantic import BaseModel
+import google.generativeai as genai
+from uuid import uuid4
+from stats_prompts import get_stats_summary
+from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime
@@ -9,6 +13,10 @@ from pathlib import Path
 from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections, title_renaming_dict
 from TextAnalyzer import TextAnalyzer
 
+load_dotenv()
+
+chat_sessions = {}
+context = {}
 
 def stats_compare_result(request, context, sourcetexts, starts, ends, language):
     analyzer_texts = sourcetexts.split('+')
@@ -85,6 +93,8 @@ async def stats_select_section(request: Request, textname: str, language: str):
 @router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
+    global context
+    
     context = {"request": request}
     running_list = running_list == "running"
 
@@ -281,3 +291,28 @@ async def stats_cumulative(request: Request, language: str):
     # Perform cumulative statistics calculations or any other operations on sectionBooks
 
     return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
+
+class ChatRequest(BaseModel):
+    message: str
+    chat_id: str | None = None
+
+api_key = os.getenv("API_KEY")
+genai.configure(api_key=api_key)
+
+@router.post("/chat")
+def chat(req: ChatRequest):
+    if req.chat_id in chat_sessions:
+        chat = chat_sessions[req.chat_id]
+        response = chat.send_message(req.message)
+        print("using chat session:", req.chat_id)
+    else:
+        print("creating new chat session")
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        chat = model.start_chat()
+        chat_sessions[req.chat_id] = chat
+        response = chat.send_message(get_stats_summary(context=context))
+
+    return {
+        "response": response.text,
+        "chat_id": req.chat_id
+    }

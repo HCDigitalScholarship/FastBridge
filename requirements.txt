@@ -73,3 +73,5 @@ uvicorn==0.34.2
 uvloop
 wcwidth==0.2.5
 websockets==10.4
+python-dotenv==1.1.1
+google-generativeai==0.8.5

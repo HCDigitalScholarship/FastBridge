@@ -1,0 +1,112 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const chatBox = document.getElementById("chat-box");
+    const chatInput = document.getElementById("user-input");
+    const sendButton = document.getElementById("send-button");
+
+    let chatHistory = [];
+    const chatId = crypto.randomUUID();
+
+    async function sendMessage(message) {
+        appendMessage("user", message);
+        chatInput.value = "";
+
+        const loading = document.getElementById("loading");
+        loading.style.display = "block"; 
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const res = await fetch("/stats/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message,
+                history: chatHistory,
+                chat_id: chatId,
+            }),
+            });
+
+            const data = await res.json();
+            const response = data.response;
+
+            appendMessage("bot", response);
+            chatHistory.push({ role: "user", content: message });
+            chatHistory.push({ role: "model", content: response });
+        } catch (err) {
+            console.error("Error:", err);
+            appendMessage("bot", "Something went wrong.");
+        } finally {
+            loading.style.display = "none"; // hide it
+        }
+    }
+
+
+    // function appendMessage(role, content) {
+    //     const messageDiv = document.createElement("div");
+    //     messageDiv.className = role === "user" ? "user-msg" : "bot-msg";
+    //     messageDiv.innerHTML = `<span class="${role}">${role === "user" ? "You" : "Bot"}:</span> ${marked.parse(content)}`;
+    //     chatBox.appendChild(messageDiv);
+    //     chatBox.appendChild(document.getElementById("loading")); // move it to bottom
+    //     chatBox.scrollTop = chatBox.scrollHeight;
+
+    // }
+    async function appendMessage(role, content) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = role === "user" ? "user-msg" : "bot-msg";
+        chatBox.appendChild(messageDiv);
+        chatBox.appendChild(document.getElementById("loading")); // keep loading at bottom
+
+        const prefix = `<span class="${role}">${role === "user" ? "You" : "Bot"}:</span> `;
+        const htmlBody = marked.parse(content);
+
+        // Strip HTML tags for typewriter effect
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlBody;
+        const plainText = tempDiv.innerText || tempDiv.textContent;
+
+        // Typing animation
+        let i = 0;
+        const typingInterval = 10;
+        messageDiv.innerHTML = prefix;
+
+        const typeChar = () => {
+        if (i < plainText.length) {
+            messageDiv.innerHTML = prefix + plainText.slice(0, i + 1);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            i++;
+            setTimeout(typeChar, typingInterval);
+        } else {
+            // Replace plain text with actual HTML markdown after typing
+            messageDiv.innerHTML = prefix + htmlBody;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        };
+
+        typeChar();
+    }
+
+
+
+    sendButton.addEventListener("click", () => {
+        const message = chatInput.value.trim();
+        if (message !== "") sendMessage(message);
+    });
+
+    chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendButton.click();
+        }
+    });
+
+    // Auto-send an initial message
+    sendMessage("Summarize the output of the stats page. What are the key insights?");
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const chatTab = document.getElementById("chatSlideOutTab");
+    const chatSlideOut = document.getElementById("chatSlideOut");
+
+    chatTab.addEventListener("click", () => {
+        chatSlideOut.classList.toggle("showChatSlideOut");
+    });
+});
