@@ -38,12 +38,13 @@ With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin 
   </div>
 
   <div class="mb-3">
-    <label for="format" class="form-label">4. In which format would you like your lemmata? (CLTK is only able to handle texts less than 100 words)</label>
-    <select name="format" id="format" class="form-select">
-      <option>Bridge</option>
-      <option>CLTK</option>
-    </select>
-  </div>
+  <label for="format" class="form-label">4. In which format would you like your lemmata? (Stanza can handle longer texts than Bridge. Must use it for greek. Also it's more accurate for latin than Bridge)</label>
+  <select name="format" id="format" class="form-select">
+    <option>Bridge</option>
+    <option>Stanza</option>
+  </select>
+</div>
+
 
   <div class="mb-3">
     <label for="resulting_filename" class="form-label">5. What do you want your CSV file to be called?</label>
@@ -70,11 +71,11 @@ With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin 
 
 <style>
 ::selection {
-  background: #3399ff;
+  background: #1860a8;
   color: #fff;
 }
 textarea::selection {
-  background: #3399ff;
+  background: #1860a8;
   color: #fff;
 }
 </style>
