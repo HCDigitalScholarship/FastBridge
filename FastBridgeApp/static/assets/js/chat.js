@@ -4,7 +4,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendButton = document.getElementById("send-button");
 
     let chatHistory = [];
-    const chatId = crypto.randomUUID();
+    function generateUUID() {
+    if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+
+    // Fallback UUID v4 generator (RFC4122 compliant)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+    }
+
+    const chatId = generateUUID(); 
+
 
     async function sendMessage(message) {
         appendMessage("user", message);
@@ -39,16 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // function appendMessage(role, content) {
-    //     const messageDiv = document.createElement("div");
-    //     messageDiv.className = role === "user" ? "user-msg" : "bot-msg";
-    //     messageDiv.innerHTML = `<span class="${role}">${role === "user" ? "You" : "Bot"}:</span> ${marked.parse(content)}`;
-    //     chatBox.appendChild(messageDiv);
-    //     chatBox.appendChild(document.getElementById("loading")); // move it to bottom
-    //     chatBox.scrollTop = chatBox.scrollHeight;
-
-    // }
     async function appendMessage(role, content) {
         const messageDiv = document.createElement("div");
         messageDiv.className = role === "user" ? "user-msg" : "bot-msg";
@@ -58,12 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const prefix = `<span class="${role}">${role === "user" ? "You" : "Bot"}:</span> `;
         const htmlBody = marked.parse(content);
 
-        // Strip HTML tags for typewriter effect
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = htmlBody;
         const plainText = tempDiv.innerText || tempDiv.textContent;
 
-        // Typing animation
         let i = 0;
         const typingInterval = 10;
         messageDiv.innerHTML = prefix;
@@ -75,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
             i++;
             setTimeout(typeChar, typingInterval);
         } else {
-            // Replace plain text with actual HTML markdown after typing
             messageDiv.innerHTML = prefix + htmlBody;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -83,8 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         typeChar();
     }
-
-
 
     sendButton.addEventListener("click", () => {
         const message = chatInput.value.trim();
