@@ -254,10 +254,9 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
         "cum_lex_plot_path": cum_lex_plot_path,
         "lin_lex_plot_path": lin_lex_plot_path,
         "freq_bins_plot_path": freq_bins_plot_path,
-        "now": now
     })
 
-    return templates.TemplateResponse('stats-column-data.html', {"context": context, "request": request})
+    return templates.TemplateResponse('stats-column-data.html', {"context": context, "request": request, "now": now})
 
 
 @router.get("/formulas")
