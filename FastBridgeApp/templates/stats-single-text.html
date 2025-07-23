@@ -179,21 +179,21 @@
                     <p class="intro-text"
                         style="font-family: Cabin, sans-serif;font-size: 30px;margin-bottom: 45px;font-weight: normal;margin-top: 120px;">
                         Readability Statistics for ...</p>
-                    {% if text_name is not string %}
-                        {% for title in text_name %}
-                            <h1 class='title'>{{title}}</h1>
+                    {% if context.text_name is not string %}
+                        {% for title in context.text_name %}
+                            <h1 class='title'>{{context.title}}</h1>
                             <h2 class='section_label'>
-                                Start: <span class='section_span'> {{ start_section[loop.index-1] }} </span>
-                                End: <span class='section_span'> {{ end_section[loop.index-1] }} </span>
+                                Start: <span class='section_span'> {{ context.start_section[loop.index-1] }} </span>
+                                End: <span class='section_span'> {{ context.end_section[loop.index-1] }} </span>
                             </h2>
                             {%if loop.index < text_name|length%}<h4>+</h4>{%endif%}
                         {% endfor %}
                         
                     {% else %}
-                        <h1 class='title'> {{ text_name }} </h1>
+                        <h1 class='title'> {{ context.text_name }} </h1>
                         <h2 class='section_label'>
-                            Start: <span class='section_span'> {{ start_section }} </span>
-                            End: <span class='section_span'> {{ end_section }} </span>
+                            Start: <span class='section_span'> {{ context.start_section }} </span>
+                            End: <span class='section_span'> {{ context.end_section }} </span>
                         </h2>
                     {% endif %}
                     <br>
@@ -213,7 +213,7 @@
                                         <span class="label">LexR</span>
                                     
                                     </div>
-                                    <div class="value-container">{{ LexR }}</div>
+                                    <div class="value-container">{{ context.LexR }}</div>
                                 </div>
                             </li>
                             <li id="spacheMetric">
@@ -226,7 +226,7 @@
                                             style="cursor:pointer;" title="Click to view image"></i>
                                         </span>
                                     </div>
-                                    <div class="value-container">{{ spache }}</div>
+                                    <div class="value-container">{{ context.spache }}</div>
                                 </div>
                             </li>
                             <li id="DaleChallMetric">
@@ -235,7 +235,7 @@
                                         <span class="label">Dale-Chall</span>
 
                                     </div>
-                                    <div class="value-container">{{ dale_chall }}</div>
+                                    <div class="value-container">{{ context.dale_chall }}</div>
                                 </div>
                             </li>
                             <li id="NewDaleChallMetric">
@@ -248,7 +248,7 @@
                                             style="cursor:pointer;" title="Click to view image"></i>
                                         </span>
                                     </div>
-                                    <div class="value-container">{{ new_dale_chall }}</div>
+                                    <div class="value-container">{{ context.new_dale_chall }}</div>
                                 </div>
                             </li>
 
@@ -262,7 +262,7 @@
                                             style="cursor:pointer;" title="Click to view image"></i>
                                         </span>
                                     </div>
-                                    <div class="value-container">{{ ari }}</div>
+                                    <div class="value-container">{{ context.ari }}</div>
                                 </div>
                             </li>
 
@@ -271,7 +271,7 @@
                                     <div class="label-container">
                                         <span class="label">Coleman-Liau</span>
                                     </div>
-                                    <div class="value-container">{{ coleman_liau }}</div>
+                                    <div class="value-container">{{ context.coleman_liau }}</div>
                                 </div>
                             </li>
                             <li id="LixMetric">
@@ -284,7 +284,7 @@
                                             style="cursor:pointer;" title="Click to view image"></i>
                                         </span>
                                     </div>
-                                    <div class="value-container">{{ lix }}</div>
+                                    <div class="value-container">{{ context.lix }}</div>
                                 </div>
                             </li>
                             <li id="RIXMetric">
@@ -297,7 +297,7 @@
                                             style="cursor:pointer;" title="Click to view image"></i>
                                         </span>
                                     </div>
-                                    <div class="value-container">{{ rix }}</div>
+                                    <div class="value-container">{{ context.rix }}</div>
                                 </div>
                             </li>
                             
@@ -306,7 +306,7 @@
                                     <div class="label-container">
                                         <span class="label">SMOG</span>
                                     </div>
-                                    <div class="value-container">{{ smog }}</div>
+                                    <div class="value-container">{{ context.smog }}</div>
                                 </div>
                             </li>
 
@@ -317,7 +317,7 @@
                                     <div class="label-container">
                                         <span class="label">Total Words</span>
                                     </div>
-                                    <div class="value-container">{{ word_count }}</div>
+                                    <div class="value-container">{{ context.word_count }}</div>
                                 </div>
                             </li>
                             <li id="totalWordsNoProper">
@@ -326,7 +326,7 @@
                                         <span class="label">Total Words (-proper)</span>
             
                                     </div>
-                                    <div class="value-container">{{ total_words_no_proper }}</div>
+                                    <div class="value-container">{{ context.total_words_no_proper }}</div>
                                 </div>
                             </li>
                             <li id="vocabSizeMetric">
@@ -335,7 +335,7 @@
                                         <span class="label">Unique Words</span>
                                     
                                     </div>
-                                    <div class="value-container">{{ vocab_size }}</div>
+                                    <div class="value-container">{{ context.vocab_size }}</div>
                                 </div>
                             </li>
                             <li id="uniqueWordsNoProper">
@@ -344,7 +344,7 @@
                                         <span class="label">Unique Words (-proper)</span>
                                     
                                     </div>
-                                    <div class="value-container">{{ unique_words_no_proper }}</div>
+                                    <div class="value-container">{{ context.unique_words_no_proper }}</div>
                                 </div>
                             </li>
                             <li id="avgWordLength">
@@ -353,7 +353,7 @@
                                         <span class="label">Average Word Length</span>
                                         
                                     </div>
-                                    <div class="value-container">{{ avg_word_length }}</div>
+                                    <div class="value-container">{{ context.avg_word_length }}</div>
                                 </div>
                             </li>
                             <li id="lexDensityMetric">
@@ -362,7 +362,7 @@
                                         <span class="label">Lexical Density</span>
                                         
                                     </div>
-                                    <div class="value-container">{{ lexical_density }}</div>
+                                    <div class="value-container">{{ context.lexical_density }}</div>
                                 </div>
                             </li>
                             <li id="lexSophisticationMetric">
@@ -371,7 +371,7 @@
                                         <span class="label">Lexical Sophistication</span>
                                         
                                     </div>
-                                    <div class="value-container">{{ lexical_sophistication }}</div>
+                                    <div class="value-container">{{ context.lexical_sophistication }}</div>
                                 </div>
                             </li>
 
@@ -386,7 +386,7 @@
                                                 <span class="label">CTTR</span>
                                                 
                                             </div>
-                                            <div class="value-container">{{ lexical_variation[2] }}</div>
+                                            <div class="value-container">{{ context.lexical_variation[2] }}</div>
                                         </div>
                                     </li>
                                     <li id="logTTRMetric">
@@ -395,7 +395,7 @@
                                                 <span class="label">LogTTR</span>
                                                 
                                             </div>
-                                            <div class="value-container">{{ lexical_variation[3] }}</div>
+                                            <div class="value-container">{{ context.lexical_variation[3] }}</div>
                                         </div>
                                     </li>
                                     <li id="rttrMetric">
@@ -404,7 +404,7 @@
                                                 <span class="label">Root TTR</span>
                                                 
                                             </div>
-                                            <div class="value-container">{{ lexical_variation[1] }}</div>
+                                            <div class="value-container">{{ context.lexical_variation[1] }}</div>
                                         </div>
                                     </li>
                                     <li id="ttrMetric">
@@ -413,7 +413,7 @@
                                                 <span class="label">TTR</span>
                                                 
                                             </div>
-                                            <div class="value-container">{{ lexical_variation[0] }}</div>
+                                            <div class="value-container">{{ context.lexical_variation[0] }}</div>
                                         </div>
                                     </li>
                                 </ul>
@@ -430,7 +430,7 @@
                                                 <span class="label">0-200</span>
                             
                                             </div>
-                                            <div class="value-container">{{ freq1 }}%</div>
+                                            <div class="value-container">{{ context.freq1 }}%</div>
                                         </div>
                                     </li>
                                     <li id="freq_201_500">
@@ -439,7 +439,7 @@
                                                 <span class="label">201-500</span>
                                     
                                             </div>
-                                            <div class="value-container">{{ freq2 }}%</div>
+                                            <div class="value-container">{{ context.freq2 }}%</div>
                                         </div>
                                     </li>
                                     <li id="freq_501_1000">
@@ -448,7 +448,7 @@
                                                 <span class="label">501-1000</span>
                                     
                                             </div>
-                                            <div class="value-container">{{ freq3 }}%</div>
+                                            <div class="value-container">{{ context.freq3 }}%</div>
                                         </div>
                                     </li>
                                     <li id="freq_1001_1500">
@@ -457,7 +457,7 @@
                                                 <span class="label">1001-1500</span>
                                     
                                             </div>
-                                            <div class="value-container">{{ freq4 }}%</div>
+                                            <div class="value-container">{{ context.freq4 }}%</div>
                                         </div>
                                     </li>
                                     <li id="freq_1501_2500">
@@ -466,7 +466,7 @@
                                                 <span class="label">1501-2500</span>
                                     
                                             </div>
-                                            <div class="value-container">{{ freq5 }}%</div>
+                                            <div class="value-container">{{ context.freq5 }}%</div>
                                         </div>
                                     </li>
                                     <li id="freq_2500_plus">
@@ -475,7 +475,7 @@
                                                 <span class="label">2500+</span>
                                     
                                             </div>
-                                            <div class="value-container">{{ freq6 }}%</div>
+                                            <div class="value-container">{{ context.freq6 }}%</div>
                                         </div>
                                     </li>
                                 </ul>
@@ -485,7 +485,7 @@
                                         <span class="label">Hapax Percentage</span>
                             
                                     </div>
-                                    <div class="value-container">{{ hapax_percentage }}%</div>
+                                    <div class="value-container">{{ context.hapax_percentage }}%</div>
                                 </div>
                             </li>
                             
@@ -497,13 +497,13 @@
                         <h2>Visualizations</h2>
                         <div id="plots">
                             <img id="freqBinPlot" class="plot-img"
-                                src="{{ request.url_for('plots', path=freq_bins_plot_path) }}" alt="Plot Image">
+                                src="{{ request.url_for('plots', path=context.freq_bins_plot_path) }}" alt="Plot Image">
                             <img id="freqPlot" class="plot-img"
-                                src="{{ request.url_for('plots', path=freq_plot_path) }}" alt="Plot Image">
+                                src="{{ request.url_for('plots', path=context.freq_plot_path) }}" alt="Plot Image">
                             <img id="cumLexPlot" class="plot-img"
-                                src="{{ request.url_for('plots', path=cum_lex_plot_path) }}" alt="Plot Image">
+                                src="{{ request.url_for('plots', path=context.cum_lex_plot_path) }}" alt="Plot Image">
                             <img id="linLexPlot" class="plot-img"
-                                src="{{ request.url_for('plots', path=lin_lex_plot_path) }}" alt="Plot Image">
+                                src="{{ request.url_for('plots', path=context.lin_lex_plot_path) }}" alt="Plot Image">
                         </div>
                     </div>
                     <!-- Plot Modal -->
@@ -522,7 +522,7 @@
                             <button type="button" class="collapsible"></button>
                             <div class="content" style="min-height: fit-content;">
                                 <ul class="statistics-list" >
-                                    {% for word in top20_NoDie300 %}
+                                    {% for word in context.top20_NoDie300 %}
                                         <li>{{ word }}</li>
                                     {% endfor %}
                                 </ul>
@@ -535,7 +535,7 @@
                         <button type="button" class="collapsible"></button>
                         <div class="content">
                             <ul class="statistics-list scrollable">
-                                {% for word in hapax_legonema %}
+                                {% for word in context.hapax_legomena %}
                                 <li>{{ word }}</li>
                                 {% endfor %}
                             </ul>
@@ -874,6 +874,8 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
-
+<script>
+  const context = {{ context | tojson }};
+</script>
 {% endblock %}
 {% endblock %}

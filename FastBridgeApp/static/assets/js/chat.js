@@ -35,7 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({
                 message,
                 history: chatHistory,
-                chat_id: chatId,
+                chat_id: chatId, 
+                context: context
             }),
             });
 
@@ -98,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Auto-send an initial message
-    sendMessage("Summarize the output of the stats page. What are the key insights?");
+    sendMessage("What are the key insights from the statistical analysis of this text?");
 });
 
 document.addEventListener("DOMContentLoaded", function () {

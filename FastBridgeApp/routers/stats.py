@@ -93,7 +93,7 @@ async def stats_select_section(request: Request, textname: str, language: str):
 async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
     global context
     
-    context = {"request": request}
+    context = {}
     running_list = running_list == "running"
 
     if mode == 'Compare': return stats_compare_result(request, context, sourcetexts, starts, ends, language)
@@ -146,7 +146,7 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "end_section": ends if not multiple_texts else ends.split("+"),
         "word_count": word_count,
         "vocab_size": vocab_size,
-        "hapax_legonema": hapax,
+        "hapax_legomena": hapax,
         "hapax_percentage": hapax_percentage,
         "lexical_density": lex_dens,
         "lexical_sophistication": lex_sophistication,
@@ -176,12 +176,12 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "freq_bins_plot_path": freq_bins_plot_path,
     })
 
-    return templates.TemplateResponse("stats-single-text.html", context)
+    return templates.TemplateResponse("stats-single-text.html", {"context": context, "request": request})
    
 @router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
     global context
-    context = {"request": request}
+    context = {}
     
     analyzer = TextAnalyzer()
     
@@ -221,7 +221,6 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
     now = datetime.now()  # for caching issue with plots
     
     context.update({
-        "request": request,
         "text_name": textname,
         "start_section": section_start,
         "end_section": section_end,
@@ -258,7 +257,7 @@ async def get_metrics_html(request: Request, text_name: str, section_start: str,
         "now": now
     })
 
-    return templates.TemplateResponse('stats-column-data.html', context)
+    return templates.TemplateResponse('stats-column-data.html', {"context": context, "request": request})
 
 
 @router.get("/formulas")
@@ -283,13 +282,13 @@ async def stats_cumulative(request: Request, language: str):
 class ChatRequest(BaseModel):
     message: str
     chat_id: str | None = None
+    context: dict | None = None
 
 api_key = os.getenv("API_KEY")
 genai.configure(api_key=api_key)
 
 @router.post("/chat")
 def chat(req: ChatRequest):
-    global context
     if req.chat_id in chat_sessions:
         chat = chat_sessions[req.chat_id]
         response = chat.send_message(req.message)
@@ -299,7 +298,7 @@ def chat(req: ChatRequest):
         model = genai.GenerativeModel("gemini-2.5-flash")
         chat = model.start_chat()
         chat_sessions[req.chat_id] = chat
-        response = chat.send_message(get_stats_summary(context=context))
+        response = chat.send_message(get_stats_summary(context=req.context))
 
     return {
         "response": response.text,
