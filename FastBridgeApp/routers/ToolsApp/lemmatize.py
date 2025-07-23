@@ -23,7 +23,6 @@ router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 
-# 🔷 Download Stanza models & load pipelines at startup
 stanza.download("la")
 stanza.download("grc")
 
@@ -123,10 +122,12 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         if not word_clean:
             continue
 
-        if word_clean in lemma_lex:
+        if word_clean in lemma_lex and format.upper() != "STANZA":
             title = lemma_lex[word_clean]
             title = conversion.get(title, f"morpheus: {title}")
-        elif format == "STANZA" and stanza_pipeline is not None:
+        else:
+            title = "morpheus: NONE"
+        if format.upper() == "STANZA" and stanza_pipeline is not None:
             doc = stanza_pipeline(word_clean)
             lemma = None
             for sent in doc.sentences:
@@ -138,8 +139,6 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
                 title = f"stanza: {lemma}"
             else:
                 title = "stanza: NONE"
-        else:
-            title = "morpheus: NONE"
 
         output_lines.append(f"{title},{location},{section},{running_count},{word_original}")
         running_count += 1
