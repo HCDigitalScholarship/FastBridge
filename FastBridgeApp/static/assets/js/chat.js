@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatId = generateUUID(); 
 
 
-    async function sendMessage(message) {
+    async function sendMessage(message, initial = false) {
         appendMessage("user", message);
         chatInput.value = "";
 
@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 message,
                 history: chatHistory,
                 chat_id: chatId, 
-                context: context
+                context: context,
+                initial: initial,
             }),
             });
 
@@ -44,8 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = data.response;
 
             appendMessage("bot", response);
-            chatHistory.push({ role: "user", content: message });
-            chatHistory.push({ role: "model", content: response });
+            chatHistory.push({ role: "user", parts: message });
+            chatHistory.push({ role: "model", parts: response });
         } catch (err) {
             console.error("Error:", err);
             appendMessage("bot", "Something went wrong.");
@@ -99,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Auto-send an initial message
-    sendMessage("What are the key insights from the statistical analysis of this text?");
+    sendMessage("What are the key insights from the statistical analysis of this text?", true);
 });
 
 document.addEventListener("DOMContentLoaded", function () {

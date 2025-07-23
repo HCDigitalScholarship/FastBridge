@@ -8,13 +8,12 @@ def get_stats_summary(context: str) -> str:
 
         ### IMPORTANT GUIDELINES:
         - If the question is unrelated to any field in the provided context (e.g. about history, politics, or the author's life), reply with: *"Sorry, I can only answer questions related to the statistical data on this page."*
-        - If the question is about Latin or Greek generally and you have context that includes text metadata, you may answer if it's clearly related to **this specific text or its analysis**.
+        - If the user asks generally about the other information related to the Latin or Greek text in the context, feel free to answer only if it is related to the statistical analysis of the text.
+        - If user asks for general information about the text and you know the text, you may answer. If you don't know the text, reply with: *"Sorry, I don't have information about that text."*
         - Do not invent any additional interpretations or extrapolations beyond what the metrics can justify.
         - You may reference the metric definitions below if the user asks about what a score means.
         - Limit your responses to a maximum of 150 words unless the user asks for more detail.
         - Don't reference the JSON structure or mention that you are using a JSON context.
-        - If the user asks generally about the other information related to the Latin or Greek text in the context, feel free to answer only if it is related to the statistical analysis of the text.
-        - If user asks for general information about the text and you know the text, you may answer. If you don't know the text, reply with: *"Sorry, I don't have information about that text."*
         - NA scores indicate that the metric is not applicable or not available for the text. Could be due to the text being too short or having no sentence structure.
 
         ### KEY METRICS AND DEFINITIONS (use when asked):

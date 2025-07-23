@@ -282,19 +282,21 @@ class ChatRequest(BaseModel):
     message: str
     chat_id: str | None = None
     context: dict | None = None
+    history: list[dict] = []
+    initial: bool = False
 
 api_key = os.getenv("API_KEY")
 genai.configure(api_key=api_key)
 
 @router.post("/chat")
 def chat(req: ChatRequest):
-    if req.chat_id in chat_sessions:
-        chat = chat_sessions[req.chat_id]
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    if not req.initial:
+        chat = model.start_chat(history=req.history)
         response = chat.send_message(req.message)
         print("using chat session:", req.chat_id)
     else:
         print("creating new chat session")
-        model = genai.GenerativeModel("gemini-2.5-flash")
         chat = model.start_chat()
         chat_sessions[req.chat_id] = chat
         response = chat.send_message(get_stats_summary(context=req.context))
