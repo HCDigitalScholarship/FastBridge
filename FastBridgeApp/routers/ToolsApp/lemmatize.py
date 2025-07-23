@@ -23,13 +23,32 @@ router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 
-stanza.download("la")
-stanza.download("grc")
-
 stanza_pipelines = {
-    "latin": stanza.Pipeline("la", processors="tokenize,mwt,pos,lemma", tokenize_no_ssplit=True),
-    "greek": stanza.Pipeline("grc", processors="tokenize,mwt,pos,lemma", tokenize_no_ssplit=True)
+    "latin": None,
+    "greek": None
 }
+
+def get_pipeline(language: str):
+    global stanza_pipelines
+
+    lang_code = {"latin": "la", "greek": "grc"}.get(language.lower())
+    if not lang_code:
+        raise ValueError(f"Unsupported language: {language}")
+
+    if stanza_pipelines[language] is None:
+        try:
+            stanza.download(lang_code, verbose=False)
+        except Exception as e:
+            print(f"Warning: Stanza model for {lang_code} may already be present. ({e})")
+
+        stanza_pipelines[language] = stanza.Pipeline(
+            lang_code,
+            processors="tokenize,mwt,pos,lemma",
+            tokenize_no_ssplit=True
+        )
+
+    return stanza_pipelines[language]
+
 
 @router.get("/")
 def lemma_index(request: Request):
@@ -101,7 +120,9 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
     text = text.replace(".", "_")
     words = text.split()
 
-    stanza_pipeline = stanza_pipelines.get(language.lower())
+    stanza_pipeline = None
+    if format.upper() == "STANZA":
+        stanza_pipeline = get_pipeline(language.lower())
 
     for word in words:
         word_original = word
