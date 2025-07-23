@@ -1,16 +1,14 @@
-from fastapi import APIRouter, WebSocket, Request, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import google.generativeai as genai
-from uuid import uuid4
 from stats_prompts import get_stats_summary
 from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime
 from pathlib import Path
-from MongoDefinitionTools import mg_render_titles, mg_get_locations, mg_get_sections, title_renaming_dict
+from MongoDefinitionTools import get_title_location_levels, mg_get_locations, mg_get_sections, render_titles
 from TextAnalyzer import TextAnalyzer
 
 load_dotenv()
@@ -142,13 +140,6 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     lin_lex_plot_path = analyzer.plot_lin_lex_load()
     freq_bins_plot_path = analyzer.plot_freq_bin()
     
-    # check if server works using above. if not, uncomment/figure something out
-    # base_path = '/FastBridge/FastBridgeApp/static/assets/plots/'
-    # freq_relative_plot_path = os.path.relpath(freq_plot_path, start=base_path)
-    # cum_lex_relative_plot_path = os.path.relpath(cum_lex_plot_path, start=base_path)
-    # lin_lex_relative_plot_path = os.path.relpath(lin_lex_plot_path, start=base_path)
-    # freq_bins_relative_plot_path = os.path.relpath(freq_bins_plot_path, start=base_path)
-
     context.update({
         "text_name": textname if not multiple_texts else textname.split(" + "),
         "start_section": starts if not multiple_texts else starts.split("+"),
@@ -183,16 +174,13 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
         "cum_lex_plot_path": cum_lex_plot_path,
         "lin_lex_plot_path": lin_lex_plot_path,
         "freq_bins_plot_path": freq_bins_plot_path,
-        # "freq_plot_path": freq_relative_plot_path,
-        # "cum_lex_plot_path": cum_lex_relative_plot_path,
-        # "lin_lex_plot_path": lin_lex_relative_plot_path,
-        # "freq_bins_plot_path": freq_bins_relative_plot_path
     })
 
     return templates.TemplateResponse("stats-single-text.html", context)
    
 @router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
 async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
+    global context
     context = {"request": request}
     
     analyzer = TextAnalyzer()
@@ -301,6 +289,7 @@ genai.configure(api_key=api_key)
 
 @router.post("/chat")
 def chat(req: ChatRequest):
+    global context
     if req.chat_id in chat_sessions:
         chat = chat_sessions[req.chat_id]
         response = chat.send_message(req.message)

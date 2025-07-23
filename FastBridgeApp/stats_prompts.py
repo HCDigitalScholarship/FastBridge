@@ -12,6 +12,9 @@ def get_stats_summary(context: str) -> str:
         - Do not invent any additional interpretations or extrapolations beyond what the metrics can justify.
         - You may reference the metric definitions below if the user asks about what a score means.
         - Limit your responses to a maximum of 150 words unless the user asks for more detail.
+        - Don't reference the JSON structure or mention that you are using a JSON context.
+        - If the user asks generally about the other information related to the Latin or Greek text in the context, feel free to answer only if it is related to the statistical analysis of the text.
+        - If user asks for general information about the text and you know the text, you may answer. If you don't know the text, reply with: *"Sorry, I don't have information about that text."*
 
         ### KEY METRICS AND DEFINITIONS (use when asked):
         LexR: A 10-point lexical readability score for historical languages, blending word length, vocabulary frequency, lexical sophistication, and variation.  
@@ -35,6 +38,5 @@ def get_stats_summary(context: str) -> str:
 
         Based on this, answer the questions users may have.
         The First question is: "What are the key insights from the statistical analysis of this text?"
-        Please summarize the key insights from the statistical analysis of this text.
     """
     return prompt

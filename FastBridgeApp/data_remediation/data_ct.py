@@ -70,6 +70,10 @@ def get_sections(language):
     sections[language] = new_sections
     
     # Save sections to JSON
+    if not os.path.exists('FastBridgeApp/data/Static'):
+        os.makedirs('FastBridgeApp/data/Static')
+        
+    print("Saving sections to FastBridgeApp/data/Static/sections.json")
     with open('FastBridgeApp/data/Static/sections.json', 'w', encoding='utf-8') as f:
         json.dump(sections, f, ensure_ascii=False, indent=4)
     print("Sections saved to FastBridgeApp/data/Static/sections.json")
