@@ -6,10 +6,12 @@ from pymongo import MongoClient
 import re
 from dotenv import load_dotenv
 
-load_dotenv("FastBridgeApp/.env")
+load_dotenv("../../FastBridgeApp/.env")
 
 new_titles = {}
-problematic_texts = []
+problematic_texts = {}
+dict_db = None
+checked_words = set()
 
 # For general data
 possible_headers = [
@@ -25,7 +27,6 @@ target_headers = {
     "headword": "head_word", 
     "text": "orthographic_form", 
     "orthographicform": "orthographic_form",
-    "subordination_code": "lasla_subordination_code", 
     "laslasubordinationcode": "lasla_subordination_code",
     "partofspeech": "part_of_speech",
     "localdef": "local_definition", 
@@ -36,6 +37,14 @@ target_headers = {
     "localprincipalparts": "local_principal_parts",
 }
 
+text_cols_to_check = [
+    "head_word", "location", "section", "orthographic_form", "counter"
+]
+
+dict_cols_to_check = [
+    "TITLE", "PRINCIPAL_PARTS", "PRINCIPAL_PARTS_NO_DIACRITICALS", "SHORT_DEFINITION",
+]
+
 # For dictionary-specific schema
 dictionary_expected_columns = [
     "TITLE", "PRINCIPAL_PARTS", "PRINCIPAL_PARTS_NO_DIACRITICALS", "SIMPLE_LEMMA",
@@ -44,21 +53,30 @@ dictionary_expected_columns = [
     "REGULAR", "STOPWORD", "CORPUSFREQ", "LASLA_Combined"
 ]
 
-def clean_dictionary_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_dictionary_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
     missing = [col for col in dictionary_expected_columns if col not in df.columns]
+    df["TITLE"] = df["TITLE"].str.upper()
+    
+    if df[dict_cols_to_check].isnull().any().any():
+        null_columns = df.columns[df.isnull().any()]
+        update_problematic_texts(file_name, [f"Null values found in dictionary columns: {[col for col in null_columns.tolist() if col in dict_cols_to_check]}."])
+        return None
+
     if missing:
-        print(f"Missing expected columns: {missing}")
+        update_problematic_texts(file_name, [f"Missing expected columns: {missing}"])
         for col in missing:
             df[col] = None
+    
     return df[dictionary_expected_columns]
 
-def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     df.columns = map(str.lower, df.columns)
     df = df.rename(columns=lambda x: "".join(x.split(" ")))
     df = df.rename(columns=target_headers)
 
     cleaned_df = pd.DataFrame(columns=possible_headers)
+    # cleaned_df = pd.DataFrame(index=df.index, columns=possible_headers)
     for header in possible_headers:
         if header in df.columns:
             cleaned_df[header] = df[header]
@@ -71,12 +89,56 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         if header not in cleaned_df.columns:
             print(f"Column '{header}' not in target schema. Skipped.")
 
+    if df[text_cols_to_check].isnull().any().any():
+        null_columns = df.columns[df.isnull().any()]
+        update_problematic_texts(file_name, [f"Null values found in text columns: {[col for col in null_columns.tolist() if col in text_cols_to_check]}."])
+        return None
+    
     cleaned_df["orthographic_form"] = cleaned_df["orthographic_form"].astype(str)
+    
     # Remove trailing .0 from location if it is a float representation
     cleaned_df["location"] = cleaned_df["location"].astype(str).str.replace(r"\.0$", "", regex=True)
+
+    if not good_location_format(file_name, cleaned_df["location"].to_list()):
+        pass # for now, just log the issue
+        return None
+    
+    if not all_words_in_dictionary(file_name, cleaned_df["head_word"].to_list()):
+        pass # for now, just log the issue
+        return None
+    
     return cleaned_df
 
+def all_words_in_dictionary(file_name: str, head_words: list) -> bool:
+    if dict_db is None:
+        update_problematic_texts(file_name, ["Dictionary database not initialized."])
+        return False
+
+    for i, word in enumerate(head_words):
+        if word in checked_words: continue
+        if not dict_db.find_one({"TITLE": word.upper()}):
+            update_problematic_texts(file_name, [f"Word '{word}' not found in dictionary. Index: {i}"])
+            # return False
+        checked_words.add(word.upper())
+    return True
+
+def good_location_format(file_name:str, locations: list) -> bool:
+    locations = [len(loc.split('_')) for loc in locations]
+
+    if len(set(locations)) == 1:return True
+    else:
+        update_problematic_texts(file_name, [f"Invalid location format detected, location levels: {set(locations)}"])
+        return False
+
+def update_problematic_texts(file_name: str, issues: list):
+    if file_name not in problematic_texts:
+        problematic_texts[file_name] = []
+    problematic_texts[file_name].extend(issues)
+
 def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name: str, chunk_size: int = 100000):
+    if collection_name in db.list_collection_names():
+        update_problematic_texts(collection_name, [f"Collection '{collection_name}' already exists. Skipping import."])
+        return
     collection = db[collection_name]
     total_rows = len(df)
     for i in range(0, total_rows, chunk_size):
@@ -100,13 +162,22 @@ def convert_and_import(folder_path: str, db: MongoClient):
                 df = pd.read_excel(file_path)
             else:
                 df = pd.read_csv(file_path)
+            try:
+                if database_name.lower() == 'dictionaries':
+                    cleaned_df = clean_dictionary_data(df, file_name)
+                else:
+                    cleaned_df = clean_data(df, file_name)
 
-            if database_name.lower() == 'dictionaries':
-                cleaned_df = clean_dictionary_data(df)
-            else:
-                cleaned_df = clean_data(df)
-
-            import_dataframe_to_mongo(db, cleaned_df, collection_name)
+                if cleaned_df is None or cleaned_df.empty:
+                    if file_name not in problematic_texts:
+                        problematic_texts[file_name] = ["Invalid data found."]
+                    continue
+                
+                import_dataframe_to_mongo(db, cleaned_df, collection_name)
+            except Exception as e:
+                print(f"Error processing {file_name}: {e}")
+                update_problematic_texts(file_name, [str(e)])
+                continue
 
 def string_to_slug(s: str) -> str:
     """
@@ -133,7 +204,7 @@ def string_to_slug(s: str) -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--folder", default="Texts_New_csv/Latin", help="Path to folder with Excel/CSV files")
+    parser.add_argument("-f", "--folder", required=True, help="Path to folder with Excel/CSV files")
     parser.add_argument("-c", "--collection", required=True, help="Name of the MongoDB collection")
     args = parser.parse_args()
 
@@ -141,16 +212,32 @@ if __name__ == "__main__":
         print(f"Folder '{args.folder}' does not exist.")
         exit(1)
 
-    if not args.collection.endswith('-Texts') and not args.collection.endswith('-dictionaries'):
-        print("Collection name must end with '-Texts' or '-dictionaries'.")
+    if args.collection not in ["Latin-Texts", "Greek-Texts", "dictionaries"]:
+        print("Collection name must be either 'Latin-Texts', 'Greek-Texts', or 'dictionaries'.")
         exit(1)
         
     
     mongo_uri = os.getenv('ATLAS_URI')
+    print(f"Connecting to MongoDB at {mongo_uri}...")
+    if not mongo_uri:
+        print("MongoDB URI not found. Ensure you're in the right dir and .env file is set up correctly.")
+        exit(1)
+        
     database_name = args.collection
     client = MongoClient(mongo_uri)
     db = client[database_name]
+    
+    if database_name != "dictionaries":
+        dict_name = f"bridge_{args.collection.split('-')[0].lower()}_dictionary"
+        dict_db = db[dict_name]
 
     convert_and_import(f"../data_remediation/{args.folder}", db)
+    print("New titles mapping:", new_titles) if args.collection.endswith('-Texts') else print("No new titles mapping for dictionaries.")
+    
+    if problematic_texts:
+        json_path = f"FastBridgeApp/data_remediation/problematic_texts_{database_name}.json"
+        with open(f"problematic_texts_{database_name}.json", 'w', encoding='utf-8') as f:
+            json.dump(problematic_texts, f, ensure_ascii=False, indent=4)
+        print(f"Problematic texts saved to {json_path}")
+        
     print("\nData import completed.")
-    print("New titles mapping:", new_titles)

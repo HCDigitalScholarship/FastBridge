@@ -35,16 +35,16 @@ def convert_to_csv(data_folder, data_type):
             if PurePosixPath(spreadsheet_name).suffix == ".csv":
                 data = pd.DataFrame(pd.read_csv(f"../data_remediation/{data_folder}/{spreadsheet_name}"))
                 cleaned_data_final = clean_data(data, spreadsheet_name, acceptable_headers, target_headers, necessary_headers, is_text_data)
-            cleaned_data_final.to_csv(f"Cleaned_Texts/{spreadsheet_name}",  
+                cleaned_data_final.to_csv(f"Cleaned_Texts/{spreadsheet_name}",  
                 index = None, 
                 header=True)
-        elif PurePosixPath(spreadsheet_name).suffix == ".xlsx":
-            data = pd.DataFrame(pd.read_excel(f"../data_remediation/{data_folder}/{spreadsheet_name}")) 
-            cleaned_data_final = clean_data(data, spreadsheet_name, acceptable_headers, target_headers, necessary_headers, is_text_data)
-            spreadsheet_csv_name = spreadsheet_name.strip(".xlsx")    
-            cleaned_data_final.to_csv(f"Texts_New_csv/{spreadsheet_csv_name}.csv",  
-                index = None, 
-                header=True)
+            elif PurePosixPath(spreadsheet_name).suffix == ".xlsx":
+                data = pd.DataFrame(pd.read_excel(f"../data_remediation/{data_folder}/{spreadsheet_name}")) 
+                cleaned_data_final = clean_data(data, spreadsheet_name, acceptable_headers, target_headers, necessary_headers, is_text_data)
+                spreadsheet_csv_name = spreadsheet_name.strip(".xlsx")    
+                cleaned_data_final.to_csv(f"Texts_New_csv/{spreadsheet_csv_name}.csv",  
+                    index = None, 
+                    header=True)
                 
 
 

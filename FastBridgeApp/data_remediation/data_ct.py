@@ -103,11 +103,11 @@ def update_render_cache(language):
 
     return titles, titles2
 
-# aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
-# aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
+aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
+aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
 
-# get_sections("Latin")
-# get_sections("Greek")
+get_sections("Latin")
+get_sections("Greek")
 
 update_render_cache("Latin")
 update_render_cache("Greek")
