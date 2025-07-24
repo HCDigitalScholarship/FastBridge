@@ -35,9 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({
                 message,
                 history: chatHistory,
-                chat_id: chatId, 
-                context: context,
-                initial: initial,
+                chat_id: chatId,
+                initial,
+                ...(initial ? { context } : {}), // send context only for initial message
             }),
             });
 

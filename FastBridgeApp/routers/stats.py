@@ -11,7 +11,7 @@ from pathlib import Path
 from MongoDefinitionTools import get_title_location_levels, mg_get_locations, mg_get_sections, render_titles
 from TextAnalyzer import TextAnalyzer
 
-load_dotenv()
+load_dotenv("FastBridgeApp/.env")
 
 chat_sessions = {}
 context = {}

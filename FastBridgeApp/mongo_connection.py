@@ -1,6 +1,9 @@
 from pymongo import MongoClient, errors
 from pymongo.errors import ConnectionFailure
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class AtlasClient ():
     
@@ -25,48 +28,47 @@ class AtlasClient ():
         selected_database = self.mongodb_client[dbname]
         return selected_database
 
-on_dev_server = False # change to True when working on dev server 
+# on_dev_server = False # change to True when working on dev server 
 
-if on_dev_server:
-    try:
-        uri = 'mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.10'
+# if on_dev_server:
+#     try:
+#         uri = 'mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.10'
 
-        # Create a MongoClient with the URI containing authentication details
-        atlas_client = MongoClient(uri)
+#         # Create a MongoClient with the URI containing authentication details
+#         atlas_client = MongoClient(uri)
 
-        # Check if the connection is successful
-        atlas_client.admin.command("ping")
-        print("Connected successfully to MongoDB")
+#         # Check if the connection is successful
+#         atlas_client.admin.command("ping")
+#         print("Connected successfully to MongoDB")
 
-        db = atlas_client.get_database("Latin")
-        dict_db = atlas_client.get_database("Latin-Dicts")
-        print("Connected to database:", db.name)
+#         db = atlas_client.get_database("Latin")
+#         dict_db = atlas_client.get_database("Latin-Dicts")
+#         print("Connected to database:", db.name)
 
-    except ConnectionFailure as e:
-        print(f"Failed to connect to MongoDB: {e}")
-        raise
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        raise
-else:
-    try: 
-        DB_NAME = 'Latin-Texts'
-        COLLECTION_NAME = 'Bridge_Latin_Text_Catullus_Catullus_Catul_LASLA_LOCAL'
-        ATLAS_URI = "mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set"
+#     except ConnectionFailure as e:
+#         print(f"Failed to connect to MongoDB: {e}")
+#         raise
+#     except Exception as e:
+#         print(f"An unexpected error occurred: {e}")
+#         raise
+# else:
+try: 
+    DB_NAME = 'Latin-Texts'
+    ATLAS_URI = os.getenv('ATLAS_URI')
 
-        atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
-        atlas_client.ping()
-        print('Connected to Atlas instance! We are good to go!!')
-        db = atlas_client.database
-        dict_db = atlas_client.get_database('dictionaries')
+    atlas_client = AtlasClient (ATLAS_URI, DB_NAME)
+    atlas_client.ping()
+    print('Connected to Atlas instance! We are good to go!!')
+    db = atlas_client.database
+    dict_db = atlas_client.get_database('dictionaries')
 
-    except ConnectionFailure as e:
-        print(f"Failed to connect to MongoDB: {e}")
-        raise
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        raise
-    
+except ConnectionFailure as e:
+    print(f"Failed to connect to MongoDB: {e}")
+    raise
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+    raise
+
 
 
 
