@@ -158,11 +158,12 @@ def convert_and_import(folder_path: str, db: MongoClient):
             file_path = os.path.join(root, file_name)
             collection_name = os.path.splitext(file_name)[0]
 
-            if file_name.endswith('.xlsx'):
-                df = pd.read_excel(file_path)
-            else:
-                df = pd.read_csv(file_path)
             try:
+                if file_name.endswith('.xlsx'):
+                    df = pd.read_excel(file_path)
+                else:
+                    df = pd.read_csv(file_path)
+                    
                 if database_name.lower() == 'dictionaries':
                     cleaned_df = clean_dictionary_data(df, file_name)
                 else:
