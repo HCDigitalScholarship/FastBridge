@@ -4,12 +4,12 @@ import json
 import argparse
 from pymongo import MongoClient
 import re
+from dotenv import load_dotenv
 
-mongo_uri = 'mongodb+srv://sarahruthkeim:DZBZ9E0uHh3j2FHN@test-set.zuf1otu.mongodb.net/?retryWrites=true&w=majority&appName=test-set'
-database_name = 'Latin-Texts'
-client = MongoClient(mongo_uri)
-db = client[database_name]
+load_dotenv("FastBridgeApp/.env")
+
 new_titles = {}
+problematic_texts = []
 
 # For general data
 possible_headers = [
@@ -44,7 +44,7 @@ dictionary_expected_columns = [
     "REGULAR", "STOPWORD", "CORPUSFREQ", "LASLA_Combined"
 ]
 
-def clean_dictionary_data(df):
+def clean_dictionary_data(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
     missing = [col for col in dictionary_expected_columns if col not in df.columns]
     if missing:
@@ -53,7 +53,7 @@ def clean_dictionary_data(df):
             df[col] = None
     return df[dictionary_expected_columns]
 
-def clean_data(df):
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = map(str.lower, df.columns)
     df = df.rename(columns=lambda x: "".join(x.split(" ")))
     df = df.rename(columns=target_headers)
@@ -76,7 +76,7 @@ def clean_data(df):
     cleaned_df["location"] = cleaned_df["location"].astype(str).str.replace(r"\.0$", "", regex=True)
     return cleaned_df
 
-def import_dataframe_to_mongo(df, collection_name, chunk_size=100000):
+def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name: str, chunk_size: int = 100000):
     collection = db[collection_name]
     total_rows = len(df)
     for i in range(0, total_rows, chunk_size):
@@ -86,7 +86,7 @@ def import_dataframe_to_mongo(df, collection_name, chunk_size=100000):
         print(f"Inserted rows {i + 1} to {min(i + chunk_size, total_rows)} into '{collection_name}'")
         new_titles[string_to_slug(collection_name.split('_')[0])] = collection_name
 
-def convert_and_import(folder_path):
+def convert_and_import(folder_path: str, db: MongoClient):
     for root, _, files in os.walk(folder_path):
         for file_name in files:
             if not file_name.lower().endswith(('.xlsx', '.csv')):
@@ -106,9 +106,9 @@ def convert_and_import(folder_path):
             else:
                 cleaned_df = clean_data(df)
 
-            import_dataframe_to_mongo(cleaned_df, collection_name)
+            import_dataframe_to_mongo(db, cleaned_df, collection_name)
 
-def string_to_slug(s):
+def string_to_slug(s: str) -> str:
     """
     
     Python version of this js code in select-stats-step-form and other js files
@@ -134,8 +134,23 @@ def string_to_slug(s):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--folder", default="Texts_New_csv/Latin", help="Path to folder with Excel/CSV files")
+    parser.add_argument("-c", "--collection", required=True, help="Name of the MongoDB collection")
     args = parser.parse_args()
 
-    convert_and_import(f"../data_remediation/{args.folder}")
+    if not os.path.exists(args.folder):
+        print(f"Folder '{args.folder}' does not exist.")
+        exit(1)
+
+    if not args.collection.endswith('-Texts') and not args.collection.endswith('-dictionaries'):
+        print("Collection name must end with '-Texts' or '-dictionaries'.")
+        exit(1)
+        
+    
+    mongo_uri = os.getenv('ATLAS_URI')
+    database_name = args.collection
+    client = MongoClient(mongo_uri)
+    db = client[database_name]
+
+    convert_and_import(f"../data_remediation/{args.folder}", db)
     print("\nData import completed.")
     print("New titles mapping:", new_titles)
