@@ -74,7 +74,8 @@ def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     df.columns = map(str.lower, df.columns)
     df = df.rename(columns=lambda x: "".join(x.split(" ")))
     df = df.rename(columns=target_headers)
-
+    df["head_word"] = df["head_word"].str.upper()
+    
     cleaned_df = pd.DataFrame(columns=possible_headers)
     # cleaned_df = pd.DataFrame(index=df.index, columns=possible_headers)
     for header in possible_headers:
@@ -116,10 +117,10 @@ def all_words_in_dictionary(file_name: str, head_words: list) -> bool:
 
     for i, word in enumerate(head_words):
         if word in checked_words: continue
-        if not dict_db.find_one({"TITLE": word.upper()}):
+        if not dict_db.find_one({"TITLE": word}):
             update_problematic_texts(file_name, [f"Word '{word}' not found in dictionary. Index: {i}"])
             # return False
-        checked_words.add(word.upper())
+        checked_words.add(word)
     return True
 
 def good_location_format(file_name:str, locations: list) -> bool:
@@ -230,7 +231,7 @@ if __name__ == "__main__":
     
     if database_name != "dictionaries":
         dict_name = f"bridge_{args.collection.split('-')[0].lower()}_dictionary"
-        dict_db = db[dict_name]
+        dict_db = client["dictionaries"][dict_name]
 
     convert_and_import(f"../data_remediation/{args.folder}", db)
     print("New titles mapping:", new_titles) if args.collection.endswith('-Texts') else print("No new titles mapping for dictionaries.")
