@@ -101,11 +101,9 @@ def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     cleaned_df["location"] = cleaned_df["location"].astype(str).str.replace(r"\.0$", "", regex=True)
 
     if not good_location_format(file_name, cleaned_df["location"].to_list()):
-        pass # for now, just log the issue
         return None
     
     if not all_words_in_dictionary(file_name, cleaned_df["head_word"].to_list()):
-        pass # for now, just log the issue
         return None
     
     return cleaned_df
@@ -220,7 +218,7 @@ if __name__ == "__main__":
         
     
     mongo_uri = os.getenv('ATLAS_URI')
-    print(f"Connecting to MongoDB at {mongo_uri}...")
+    print(f"Connecting to MongoDB...")
     if not mongo_uri:
         print("MongoDB URI not found. Ensure you're in the right dir and .env file is set up correctly.")
         exit(1)

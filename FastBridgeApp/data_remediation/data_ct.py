@@ -8,9 +8,18 @@ sys.path.append(parent)
 
 import json
 from collections import defaultdict
-from clean_upload import client
+from pymongo import MongoClient
 
 from MongoDefinitionTools import mg_get_locations
+
+mongo_uri = os.getenv('ATLAS_URI')
+print(f"Connecting to MongoDB...")
+
+if not mongo_uri:
+    print("MongoDB URI not found. Ensure you're in the right dir and .env file is set up correctly.")
+    exit(1)
+    
+client = MongoClient(mongo_uri)
 
 def aggregate_field_counts(client, db_name, field_name, output_file="output_counts.json"):
     """
