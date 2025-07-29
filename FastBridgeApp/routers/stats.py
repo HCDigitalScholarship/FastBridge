@@ -14,7 +14,6 @@ from TextAnalyzer import TextAnalyzer
 load_dotenv("FastBridgeApp/.env")
 
 chat_sessions = {}
-context = {}
 
 def stats_compare_result(request, context, sourcetexts, starts, ends, language):
     analyzer_texts = sourcetexts.split('+')
@@ -292,7 +291,7 @@ genai.configure(api_key=api_key)
 def chat(req: ChatRequest):
     model = genai.GenerativeModel("gemini-2.5-flash")
     if not req.initial:
-        chat = model.start_chat(history=req.history)
+        chat = model.start_chat(history=req.history) if req.chat_id not in chat_sessions else chat_sessions[req.chat_id]
         response = chat.send_message(req.message)
         print("using chat session:", req.chat_id)
     else:

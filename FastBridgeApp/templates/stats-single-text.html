@@ -181,7 +181,7 @@
                         Readability Statistics for ...</p>
                     {% if context.text_name is not string %}
                         {% for title in context.text_name %}
-                            <h1 class='title'>{{context.title}}</h1>
+                            <h1 class='title'>{{title}}</h1>
                             <h2 class='section_label'>
                                 Start: <span class='section_span'> {{ context.start_section[loop.index-1] }} </span>
                                 End: <span class='section_span'> {{ context.end_section[loop.index-1] }} </span>
