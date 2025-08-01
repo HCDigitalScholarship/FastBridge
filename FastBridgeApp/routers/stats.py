@@ -282,7 +282,7 @@ class ChatRequest(BaseModel):
     message: str
     chat_id: Optional[str] = None
     context: Optional[dict] = None
-    history: list[dict] = []
+    history: Optional[list] = None
     initial: bool = False
 
 api_key = os.getenv("API_KEY")
