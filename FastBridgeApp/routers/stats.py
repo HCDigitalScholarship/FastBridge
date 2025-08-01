@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from MongoDefinitionTools import get_title_location_levels, mg_get_locations, mg_get_sections, render_titles
 from TextAnalyzer import TextAnalyzer
+from typing import Optional
 
 load_dotenv("FastBridgeApp/.env")
 
@@ -279,8 +280,8 @@ async def stats_cumulative(request: Request, language: str):
 
 class ChatRequest(BaseModel):
     message: str
-    chat_id: str | None = None
-    context: dict | None = None
+    chat_id: Optional[str] = None
+    context: Optional[dict] = None
     history: list[dict] = []
     initial: bool = False
 
