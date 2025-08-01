@@ -59,8 +59,17 @@ def clean_dictionary_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     df["TITLE"] = df["TITLE"].str.upper()
     
     if df[dict_cols_to_check].isnull().any().any():
-        null_columns = df.columns[df.isnull().any()]
-        update_problematic_texts(file_name, [f"Null values found in dictionary columns: {[col for col in null_columns.tolist() if col in dict_cols_to_check]}."])
+        null_info = {}
+        for col in dict_cols_to_check:
+            print(f"Checking column: {col}")
+            if df[col].isnull().any():
+                null_rows = df[df[col].isnull()].index.tolist()
+                null_info[col] = null_rows
+
+        null_report_lines = [f"{col}: rows {rows}" for col, rows in null_info.items()]
+        message = "Null values found in dictionary columns:\n" + "\n".join(null_report_lines)
+    
+        update_problematic_texts(file_name, [message])
         return None
 
     if missing:
@@ -91,8 +100,16 @@ def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
             print(f"Column '{header}' not in target schema. Skipped.")
 
     if df[text_cols_to_check].isnull().any().any():
-        null_columns = df.columns[df.isnull().any()]
-        update_problematic_texts(file_name, [f"Null values found in text columns: {[col for col in null_columns.tolist() if col in text_cols_to_check]}."])
+        null_info = {}
+        for col in text_cols_to_check:
+            if df[col].isnull().any():
+                null_rows = df[df[col].isnull()].index.tolist()
+                null_info[col] = null_rows
+
+        null_report_lines = [f"{col}: rows {rows}" for col, rows in null_info.items()]
+        message = "Null values found in text columns:\n" + "\n".join(null_report_lines)
+        
+        update_problematic_texts(file_name, [message])
         return None
     
     cleaned_df["orthographic_form"] = cleaned_df["orthographic_form"].astype(str)
