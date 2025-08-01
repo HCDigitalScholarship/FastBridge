@@ -127,3 +127,4 @@ credentials.json
 token.json
 *.pickle
 gunilog
+compose-dev.yaml

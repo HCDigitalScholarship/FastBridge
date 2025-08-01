@@ -1,0 +1,653 @@
+import pymongo
+from pymongo import MongoClient, errors
+import text
+import importlib
+from collections import namedtuple, deque
+import re
+import time 
+from mongo_connection import db, dict_db, atlas_client
+from text_title_rename_dict import title_renaming_dict, string_to_slug
+import json
+
+# Decorators
+# times the method you give to it, apply using @timer_decorator above method
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        print(f"{func} start: ", start_time)
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func} end: ", end_time)
+        elapsed_time = end_time - start_time
+        print(f"{func} total time: ", elapsed_time)
+        return result, elapsed_time
+    return wrapper
+
+def connect_to_local_deployment():
+	try:
+		# start connection code heri
+
+		uri = "mongodb://localhost:27017/"
+		client = MongoClient(uri)
+
+		# end connection code here
+		client.admin.command("ping")
+		print("Connected successfully")
+		# other application code
+		client.close()
+	except Exception as e:
+		raise Exception(
+			"The following error occurred: ", e)
+
+def get_field_subset(fields, text_name):
+    '''
+    Retrieve a subset of fields from all documents in a collection and return as a dictionary.
+    '''
+
+    collection = db[text_name]
+    field_subset = {}
+
+    for field in fields:
+        field_list = []
+        field_present = False
+
+        cursor = collection.find({}, {field: 1}) 
+        for document in cursor:
+            if field in document:
+                field_list.append(document[field])
+                field_present = True
+            
+        if field_present:
+            field_subset[field] = field_list    
+
+    return field_subset
+
+def mg_get_slice(text_name, start_section, end_section):
+    '''
+    Retrieve documents within a specific section range and return a list of lists with the following format: [['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency']]
+    '''
+
+    collection = db[title_renaming_dict[text_name]]
+    cursor = collection.find({'section': {'$gte': start_section, '$lte': end_section}})
+    
+    if cursor is None:
+        return "Start or end section not found in the collection."
+    
+    cursor_list = list(cursor)
+    document_tuple_list = list()
+
+    for document in cursor_list:
+        document_tuple = []
+        for field in ['head_word', 'counter', 'orthographic_form', 'local_definition', 'principal_parts', 'location', 'frequency', 'section']:
+            if field in document:
+                document_tuple.append(document[field])
+            else:
+                document_tuple.append("")
+        document_tuple_list.append(document_tuple)
+
+    return document_tuple_list
+
+
+def mg_get_locations(language: str, collection_name: str, get_index: bool = False):
+    '''
+    Get all locations from a collection from MongoDB. A location is usually formatted:
+    X.Y.Z where X is the book number, Y is the chapter/paragraph number, and Z is the section number.
+
+    Parameters:
+    db = Mongo Atlas, local deployment
+    language (str): The language to query for. Ie. 'Latin' and the name of the collection.
+    collection_name (str): The edited name of the collection to query for. Ie. '50_Most_Important_Latin_Verbs'
+
+    Returns:
+        locations_linked_list: A dictionary which represent locations in a book, where each key
+        points to the preceding section. 
+            Keys: Represent the current section
+            Values: Represent the preceding section
+                Eg. {'1.1': 'start', '1.2': '1.1', '1.3': '1.2', '1.4': '1.3', '1.5': '1.4', '1.6': '1.5'}
+                
+    and (optionally)
+        text_word_count: A dictionary in which:
+            Keys: Represent a location in the text
+            Values: Represent the local continuous index for the last instance that location appeared.
+                Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
+
+    Raises:
+    errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
+    '''
+    
+    global db
+    if language == 'Greek': db = atlas_client.get_database("Greek-Texts")
+    else: db = atlas_client.get_database("Latin-Texts")
+
+    collection_name = title_renaming_dict[collection_name] # get actual name of text
+    print(f"mg_get_locations() received a collection_name of: {collection_name}")
+    collection = db[collection_name]  
+    documents = collection.find().sort({"counter":1}) # Query for all documents in the collection, sorted by the 'counter' field
+    locations_list = ["start"] # locations is a list to store the location data from each document
+    
+    if get_index:
+        text_word_count = {"start": 0, "end": -2}
+        local_index = 0
+
+    # Iterate over each document in the collection and extract the location data
+    for doc in documents:
+        location_data = doc.get("location")
+        if isinstance(location_data, str):
+            if location_data != locations_list[-1]:
+                locations_list.append(location_data)
+            if get_index: key = location_data.replace('_', '.')
+        elif location_data is None:
+            print(f"No location data found in document {doc.get('_id')}, {collection_name}")
+        else:
+            if str(location_data) != locations_list[-1]:
+                locations_list.append(str(location_data))
+            if get_index:  key = str(location_data).replace(".0", "")
+
+        if get_index: 
+            text_word_count[key] = local_index
+            local_index += 1
+    
+    locations_list.append("end")
+    locations_list = mg_format_sections(locations_list) # Replaces the "_" in the location string with "."
+
+    # Add to locations_linked_list if locations_list is not empty
+    locations_linked_list = {}
+    if locations_list:
+        for i in range(len(locations_list) - 1):
+            locations_linked_list[locations_list[i + 1]] = locations_list[i]
+        locations_linked_list["start"] = "start"
+    else:
+        print(f"No locations found for {collection_name}")
+        exit(1)
+
+    return (locations_linked_list, text_word_count) if get_index else locations_linked_list
+
+def mg_get_sections(language, textname: str = ""):
+    with open('data/Static/sections.json', 'r', encoding='utf-8') as f:
+        sections = json.load(f)
+
+    if textname:
+        possible_textname = title_renaming_dict.get(textname, textname)
+        if "_" in possible_textname:
+            textname = possible_textname.split("_")[0]
+        try:
+            if textname in sections[language]:
+                return sections[language][textname]
+        except KeyError:
+            return {"start": "start", "end": "start"}
+
+    return sections[language]
+
+
+def mg_get_location_words(language: str, collection_name: str):
+    '''
+    A text of a given language and collection name, this method gets the headword count by section 
+    from MongoDB, using a local continuous counter.
+
+    Parameters:
+    db = Mongo Atlas, local deployment
+    language (str): The language to query for. Ie. 'Latin'
+    collection_name (str): The name of the collection to query for. Ie. '50 Most Important Latin Verbs'
+
+    Returns:
+        text_word_count: A dictionary in which:
+            Keys: Represent a location in the text
+            Values: Represent the local continuous index for the last instance that location appeared.
+                Eg. {'start': -1, '1': 0, '10': 1, '11': 2, ..., '9': 49, 'end': -2}
+
+    Raises:
+    errors.ServerSelectionTimeoutError: If the connection to the MongoDB server times out.
+    '''
+
+    collection_name = title_renaming_dict[collection_name]  # get actual name of text
+    collection = db[collection_name]
+
+    documents = collection.find().sort("counter", 1)  # Sort by 'counter' field ascending
+
+    text_word_count = {"start": 0, "end": -2}
+    local_index = 0
+
+    for doc in documents:
+        location_data = doc.get("location")
+
+        if location_data is None:
+            print(f"No location data found in document {doc.get('_id')}")
+            continue
+
+        # Normalize location to string and use as key
+        if isinstance(location_data, str):
+            key = location_data.replace('_', '.')
+        elif isinstance(location_data, (int, float)):
+            key = str(location_data).replace(".0", "")
+        else:
+            print(f"Unexpected data type for 'location' in document {doc.get('_id')}: {type(location_data)}")
+            exit(1)
+
+        text_word_count[key] = local_index
+        local_index += 1
+
+    return text_word_count
+
+
+def mg_render_titles(language: str, dropdown : str = "", other: bool = False, depth: bool = False):
+    """
+    For every text of a given language, this method writes a string of HTML code to display the text titles
+    from MongoDB. 
+
+    Parameters:
+    language (str): The language to query for. Ie. 'Latin'
+
+    Returns:
+    titles: A list of HTML code to display the text titles.
+    """
+   
+    global db
+    if language == 'Greek': db = atlas_client.get_database("Greek-Texts")
+    else: db = atlas_client.get_database("Latin-Texts")
+        
+
+    title_location_levels = mg_get_location_levels(language, depth=depth) # a dict of {"Title": "location_level"}
+
+    if other: return list(title_location_levels.keys())
+    
+    titles = [f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>" for key in sorted(title_location_levels.keys())]
+    
+    return "".join(titles)
+
+def get_title_location_levels(language: str, depth: bool = False):
+    """
+    Get the title location levels from MongoDB for a given language.
+    """
+    global db
+    if language == 'Greek':
+        db = atlas_client.get_database("Greek-Texts")
+    else:
+        db = atlas_client.get_database("Latin-Texts")
+
+    return mg_get_location_levels(language, depth=depth)
+
+
+def render_titles(title_location_levels: dict, dropdown: str = "") -> str:
+    """
+    Generate HTML links from a title_location_levels dictionary.
+    """
+    return "".join(
+        f"<a onclick=\"add_text('{key}', 'myDropdown{dropdown}', {title_location_levels[key]})\"> {key} </a>"
+        for key in sorted(title_location_levels.keys())
+    )
+
+
+
+def mg_get_location_levels(language: str, depth: bool = False):
+    """
+    For every text of a given language, this method gets the location levels
+    from MongoDB. 
+
+    Parameters:
+    language (str): The language to query for. Ie. 'Latin'
+
+    Returns:
+    title_location_levels: A dictionary in which:
+        Keys: The title of the text. Eg. '50 Most Important Latin Verbs'
+        Values: The location levels of the text from 1 - 3. (Eg. 1 = 1, 1.1. = 2, 1.1.1 = 3)
+    """
+    title_location_levels = {} # A dictionary of {"Title" : location_level} to store the return value
+
+    collection_names = db.list_collection_names() # Get all collection names (text names)
+
+    # Iterate over each collection (text) in the database
+    for collection_name in collection_names:
+        if depth:
+            # uncoment this out when/if you figure out what the location is doing 
+            collection = db[collection_name]
+            
+            location = str(collection.find_one().get("location")) # Get one document in the collection and extract the location data
+            
+            underscore_count = location.count("_") + 1 # Count the number of _ in the location string
+
+            title_location_levels[collection_name.split("_")[0]] = underscore_count # Add the location level to the dictionary
+        
+        renamed_collection = collection_name.split("_")[0]
+        
+        if not depth: title_location_levels[renamed_collection] = -1 # Add the location level to the dictionary
+        
+        fixed_name = string_to_slug(renamed_collection)
+        if fixed_name not in title_renaming_dict: title_renaming_dict[fixed_name] = collection_name
+
+    return title_location_levels
+
+def mg_format_sections(locations):
+    """
+    Formats a list of location strings by replacing '_' with '.'. 
+    For example, '1_1_1' is converted to 1.1.1 and 58B_2 is converted to 58B.2
+    
+    Parameters:
+    locations a list of type str: The location strings to convert.
+    
+    Returns: 
+    locations: A list of the formatted location strings.
+    
+    """
+    for(i, location) in enumerate(locations):
+        locations[i] = locations[i].replace('_', '.') #replace underscores with periods
+    
+    return locations
+
+def mg_get_text(title: str):
+    """
+    Function meant to retrieve the name of the collection that contains the requested text by title
+    """
+
+    # the list of collections to search through
+    collections = db.list_collection_names()
+
+    # Iterate through collections and search for the document
+    if title_renaming_dict[title] in collections:
+        return title_renaming_dict[title]
+    # if the document isn't found in any collection, return None
+    else: 
+        return None
+    
+def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bool = False, has_local_lems : bool = False):
+    '''
+    Gets the definitions,  and other information, about the head_words in words from the selected text, from the appropriate dictionary. 
+    Also gets the Parts of Speech (POS) and column headers to display for this language.
+    This should only be called on the FINAL word list that we are returning at the end, after all the set operations have been performed.
+    '''
+
+    # gather data from dictionary data in Mongo dictionary database and assign to correct variables 
+    dict_data = dict_db[dict_name] 
+    parts_of_speech = {'Adjective', 'Pronoun', 'Conjunction', 'Interjection', 'Noun', 'Preposition', 'Number', 'Adverb', 'Verb', 'Idiom'}
+    dict_fields = ['TITLE', 'PRINCIPAL_PARTS', 'PRINCIPAL_PARTS_NO_DIACRITICALS', 'SIMPLE_LEMMA', 'SHORT_DEFINITION', 'LONG_DEFINITION', 'PART_OF_SPEECH', 'LOGEION_LINK', 'FORCELLINI_LINK']
+    row_filters = ['CONJUGATION', 'DECLENSION', 'PROPER', 'REGULAR', 'STOPWORD']
+    Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text"])
+    locations_list = [str(word[5]).replace('_', ".") for word in words_from_text]
+    final_row_filters = set()
+    word_list = deque()
+    computed_row_filters = deque()
+    dict_data = build_dict_structure(dict_name)
+
+    # add extra fields if given text has local definitions and/or local lemmas
+    if has_local_defs and has_local_lems:
+        local_defs_list, local_lems_list = zip(*[(w[3], w[4]) for w in words_from_text])
+        Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_DEFINITION", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
+    elif has_local_defs:
+        local_defs_list =[word[3] for word in words_from_text]
+        Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_DEFINITION"])
+    elif has_local_lems:
+        local_lems_list =[word[4] for word in words_from_text]
+        Word = namedtuple("Word", dict_fields + row_filters + ["Appearance", "Total_Count_in_Text", "Source_Text", "TEXT_SPECIFIC_PRINCIPAL_PARTS"])
+
+    # go through every word in the given text and check for data in the row_filters fields, if more than one piece of data, split it and add both as filters in final_row_filters, if it's "T", change to "0"
+    for i in range(len(words_from_text)):
+        to_add = f""
+        try: 
+            datum = (words_from_text[i][0],) + dict_data[words_from_text[i][0]] + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
+        except KeyError:
+            empty_dict_data = ('','','','','','','','','','','','','')
+            datum = (words_from_text[i][0],) + (empty_dict_data) + (locations_list[i], words_from_text[i][-2], words_from_text[i][-1])
+            continue
+        if has_local_defs and has_local_lems:
+            datum = datum + (local_defs_list[i], local_lems_list[i])
+        elif has_local_defs:
+            datum = datum + (local_defs_list[i],)
+        elif has_local_lems:
+            datum = datum + ('', local_lems_list[i])
+        datum = Word(*datum)
+        word_list.append(datum)
+        to_add+= datum.PART_OF_SPEECH + " "
+
+        for j in range(len(row_filters)):
+            in_case_multiple = datum[len(dict_fields) + j]
+            if(in_case_multiple):
+                if in_case_multiple == "T":
+                    in_case_multiple = "0"
+                in_case_multiple = str(in_case_multiple).split(",")
+
+                for case in in_case_multiple:
+                    new = f"{row_filters[j]}_{datum.PART_OF_SPEECH}_{case}"
+                    to_add += f"{new} "
+                    final_row_filters.add((new, datum.PART_OF_SPEECH+ " "))
+
+        computed_row_filters.append(to_add)
+
+    del dict_data #this is a huge dictionary, and python's garbage collector does not delete these well. It should be destroyed when the function returns.
+
+    nums = re.compile('[0-9]')
+    dups = set()
+    new_filters = {}
+    final_row_filters = [filter for filter in final_row_filters if nums.match(filter[0][-1])]
+
+    # clean the created filters, removing duplicate filters
+    for filter in final_row_filters:
+        if (filter[0]) not in dups:
+            dups.add(filter[0])
+            new_filters[filter[0]] = filter[1]
+        else:
+            new_filters[filter[0]] += filter[1]
+
+    final_row_filters = [(k,v) for k,v in new_filters.items()]
+    final_row_filters.sort(key=lambda x: ((x[0][0]), int(x[0][-1])))
+
+    parts_of_speech = list(parts_of_speech)
+    parts_of_speech.sort()
+
+    dict_fields = dict_fields[1:] #we don't want a filter for title, that is just to make accessing dicts easier
+    links = dict_fields[-2:]
+    reorder = [head.lower() if head.split("_")[1]!="PARTS" else head for head in dict_fields[:-2]]
+
+    if has_local_defs:
+        reorder.append("text_specific_definition")
+    if has_local_lems:
+        reorder.append("TEXT_SPECIFIC_PRINCIPAL_PARTS")
+    
+    reorder.sort(key=lambda x: x.split("_")[-1])
+    dict_fields = [head.upper() for head in reorder]
+    [dict_fields.append(link) for link in links]
+    dict_fields.append("Total_Count_in_Text")
+
+    filtered_global_filters = []
+    for filterl in row_filters:
+        if filterl == "CONJUGATION" or filterl == "DECLENSION":
+            pass
+        else:
+            filtered_global_filters.append(f"{filterl}")
+    
+    updated_word_list = []
+    for word in word_list:
+        updated_word_list.append(replace_none_with_empty(Word, word))
+
+    return list(zip(updated_word_list, computed_row_filters)), parts_of_speech, dict_fields, final_row_filters, row_filters
+
+def replace_none_with_empty(Tuple_def, named_tuple):
+    '''
+    Replace None values in a named tuple with empty strings ('') which is what the original code expects for the named Word tuples.
+    '''
+    new_values = [val if val is not None else '' for val in named_tuple]
+    return Tuple_def._make(new_values)
+
+
+def build_dict_structure(dict_name):
+    '''
+    Builds a list of tuples from the MongoDB dictionary data in the same format as get_lang_data() in DefinitionTools.py does from Latin.py.
+    '''
+    structured_word_dict = {}
+    dict_collection = dict_db[dict_name]
+    exclude_fields = ["_id", "TITLE", "ROW_FILTERS", "CORPUSFREQ", "LASLA_Combined"]
+    documents = dict_collection.find({})
+    for doc in documents:
+        head_word = doc["TITLE"]
+        filtered_fields = {key: (value if value != None else '') for key, value in doc.items() if key not in exclude_fields}
+        filtered_fields_tuple = tuple(filtered_fields.values())
+        structured_word_dict[head_word] = filtered_fields_tuple
+    return structured_word_dict
+
+
+def compare_dicts(mg_built_dict):
+    '''
+    Compares the dictionary built using MongoDB, mg_built_dict, and the old dictionary from Latin.py by finding key discrepancies.  
+    '''
+    lang = importlib.import_module("Latin") #importing dictionary data from Latin.py
+    lang = lang.correct_dict
+
+    if mg_built_dict == lang:
+        print("Dictionaries are the same!")
+    else:
+        differing_keys = set(mg_built_dict.keys()).symmetric_difference(lang.keys())
+
+        if differing_keys:
+            print("Keys in mg_built_dict or lang but not both:")
+            print(f"  {differing_keys}")
+            
+
+def mg_get_text_as_Text(language, text_title, location_list, location_words):
+    '''
+    Returns the specified collection as a Text object
+
+    Parameters:
+    db = Mongo Instance, local devlopment or Atlas
+    language = "Latin", or "Greek"
+    text_title = The title of the text as it appears in Mongo, must match the same name as a collection in DB, but will tell you if not found
+    location_list = result of mg_get_locations() with the same text_title
+    location_words = result of mg_get_location_words() or second return value in location_list (with get_index=True) with the same text_title
+
+    Returns:
+    A Text object(see text.py) containing all normal Text fields from that class, but adding some more fields to the_text tuples for each head_word:
+
+    Within each Tuple:
+     * = optional fields, they may not be present in every text
+     ! = new field, compared to old .py file method
+    [0] = head_word
+    [1] = counter
+    [2] = orthographic_form!
+    [3] = local_definition*
+    [4] = local_principal_parts*
+    [5] = location 
+    [6] = frequency
+    [7] = section
+    [8] = case*! 
+    [9] = lasla_subordination_code*!
+    [10]= grammatical_subcategory*!
+    '''    
+
+    #Get the Text from either Atlas or Local Deployment
+    print("Loading Text from MongoDB. . .")
+    collection_name = mg_get_text(text_title)
+    if(collection_name == None):
+        print("Text not found")
+        return
+
+    print(f"{collection_name} successfully loaded")
+
+    #Get all of the fields possible from the text
+    all_possible_fields =  ["head_word", "location", "section", "counter", "orthographic_form", "case", "grammatical_subcategory", "lasla_subordination_code", "local_definition", "local_principal_parts"]
+    #These are all that could appear within the headers, get_field_subset only gets the ones present in the collection
+    field_data = get_field_subset(all_possible_fields, collection_name) #this now contains all fields present in the text file, some may not be present
+
+    #Create boolean flags for local_def, local_lem
+    local_def_flag = False
+    local_lem_flag = False
+
+
+    if("local_definition" in field_data.keys()) and any(value is not None for value in field_data["local_definition"]):
+        local_def_flag = True
+    #if("local_principal_parts" in field_data.keys()):
+    #local_lem_flag = True
+
+    #Create the tuple by looping through field_data
+    #the_text = (head_word, counter, orthographic_form, local definition,  local principal parts ,location, frequency count?, section, case, lasla_subordination_code)
+    #Guaranteed Fields: ["head_word", "location", "section", "counter", "orthographic_form"]
+    tuples = []
+    frequencies = {}
+    
+    #Calculate word frequency within text, independent of selected range to put into tuple
+    for head_word in field_data["head_word"]:
+        head_word = head_word.upper()  # Ensure head_word is uppercase for consistency
+        frequencies[head_word] = frequencies.get(head_word, 0) + 1
+    
+    #get the section_level
+    section_level = 0
+    
+    for i in range(len(field_data["head_word"])):
+        # Create a list instead of a tuple for mutability
+        temp_list = [field_data["head_word"][i].upper(), field_data["counter"][i], str(field_data["orthographic_form"][i]), "", "", field_data["location"][i], frequencies[field_data["head_word"][i].upper()], "", "", "", ""]
+        
+        section_level = max(section_level, str(field_data["location"][i]).count("_") + 1)
+        if local_def_flag:
+            temp_list[3] = field_data["local_definition"][i]
+        if local_lem_flag:
+            temp_list[4] = field_data["local_principal_parts"][i]
+        if "section" in field_data.keys():
+            temp_list[7] = field_data["section"][i]
+        if "case" in field_data.keys():
+            temp_list[8] = field_data["case"][i]
+        if "lasla_subordination_code" in field_data.keys():
+            temp_list[9] = field_data["lasla_subordination_code"][i]
+        if "grammatical_subcategory" in field_data.keys():
+            temp_list[10] = field_data["grammatical_subcategory"][i]
+
+        # Convert the list back to a tuple
+        temp_tuple = tuple(temp_list)
+        tuples.append(temp_tuple)
+
+    #sort the tuples by counter in case it is not sorted in DB
+    tuples = sorted(tuples, key=lambda word: word[1])
+    
+    return text.Text(collection_name.split('_')[0], location_words, tuples, location_list, section_level, language, local_def_flag, local_lem_flag)#99 is subsections, what do?
+
+
+def mg_format_title(unformatted_title: str):
+    '''
+    Formats a title string to be more readable.s By replacing underscores with spaces. 
+    For example,'200_essential_latin_words_list_mahoney'is converted to
+    '200 Essential Latin Words List (Mahoney)'
+    
+    Parameters:
+    unformatted_title (str): The title string to format.
+    
+    Returns: 
+    formatted_title (str): The formatted title string.
+    
+    '''
+    return title_renaming_dict[unformatted_title]
+
+def mg_format_lowercase(unformatted_title: str):
+    '''
+    Formats a title string to be the same as the lowercase title used in URL request 
+    '''
+    
+    formatted_title = unformatted_title.lower()
+    return formatted_title
+
+def get_mongo_dictionary(title: str):
+    """
+    queries a MongoDB database for a dictionary with the specified title.
+    """
+    # Get the collection name that contains the text with the specified title by using mg_get_text
+    collection_name = mg_get_text(title)
+    
+    # If collection is found
+    if collection_name:
+        # Connect to the MongoDB server
+        db = atlas_client.database
+        collection = db[collection_name]
+
+        # Build the query filter (Unneccesary probably?)
+        query_filter = {'title': title}
+        
+        # Perform the query that we want
+        search = collection.find(query_filter)
+        
+        # Convert cursor to a list of dictionaries
+        result_list = list(search)
+        
+        return result_list
+    else:
+        return None
+
+def make_quads_or_trips(texts, starts, ends):
+    """Takes the texts and starts and ends as they come in from a URL and gets them into a list of triples that are easier to deal with"""
+    texts =  texts.split("+")
+    starts = starts.split("+")
+    ends = ends.split("+")
+    return list(zip(texts, starts, ends))

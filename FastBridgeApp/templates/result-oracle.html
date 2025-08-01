@@ -2,55 +2,85 @@
 {% block content %}
 
 <body>
-    <section id="result" class="download-section content-section text-center" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
-        <div class="container" style="border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
-            <h2> Now showing sections of {{ etexts }} by lexical readablity </h2>
-            
- <div class="container rounded p-3 mb-2 bg-secondary text-white">
-  <div class="row">
-    <div class="col-sm">
-     In the table below, <strong>tokens</strong> refers to the count of <em>unique</em> words; i.e., if the same word were to appear twice (e.g., two forms of "amor", its word count would be 2 but its token count 1.
+  <section id="result" class="download-section content-section text-center" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
+    <div class="container" style="border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
+      <h2> Now showing location(s) of {{ etexts }} by lexical readability </h2>
+
+      <div class="container rounded p-3 mb-2 bg-secondary text-white">
+        <div class="row">
+          <div class="col-sm">
+            In the table below, <strong>tokens</strong> refers to the count of <em>unique</em> words; i.e., if the same word were to appear twice (e.g., two forms of "amor"), its word count would be 2 but its token count 1.
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive mx-auto">
+        <table class="table table-striped" id="sortable-table">
+          <thead>
+            <tr>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(0)">Location(s)</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(5)">% Words Known</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(6)">% Token Known</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(1)">Total Words</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(2)">Total Tokens</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(3)">Words Known</th>
+              <th style="color: rgb(255,255,255);" onclick="sortTable(4)">Tokens Known</th>
+              <th style="color: rgb(255,255,255);">Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for section, total_words, total_tokens, known_words, known_tokes, percent_1, percent_2, link in table_data %}
+              <tr>
+                <td style="color:white;">{{ section }}</td>
+                <td style="color: white;">{{ percent_1 }}</td>
+                <td style="color: white;">{{ percent_2 }}</td>
+                <td style="color: white;">{{ total_words }}</td>
+                <td style="color: white;">{{ total_tokens }}</td>
+                <td style="color: white;">{{ known_words }}</td>
+                <td style="color: white;">{{ known_tokes }}</td>
+                <td style="color: #d8d9da;">
+                  <a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{{ link }}"></a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <a class="btn btn-primary btn-lg btn-default" role="button" href="/oracle" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a>
     </div>
-  </div>
-</div>
-                        <div class="table-responsive mx-auto">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th style="color: rgb(255,255,255);width: 15%;">Sections</th>
-                            <th style="color: rgb(255,255,255);">Total Words</th>
-                            <th style="color: rgb(255,255,255);">Total Tokens</th>
-                            <th style="color: rgb(255,255,255);">Words Known</th>
-                            <th style="color: rgb(255,255,255);">Tokens Known</th>
-                            <th style="color: rgb(255,255,255);">% Words Known</th>
-                            <th style="color: rgb(255,255,255);">% Token Known</th>
-                            <th style="color: rgb(255,255,255);">Link</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+  </section>
 
+  <!-- Sorting Script -->
+  <script>
+    let sortDirection = {};
 
-                      {% for section, total_words, total_tokens, known_words, known_tokes, percent_1, percent_2, link in table_data %}
-                              <tr>
-                                <td style="color:white;">{{section}}</td>
-                                <td style="color: white;">{{total_words}}</td>
-                                <td style="color: white;">{{total_tokens}}</td>
-                                <td style="color: white;">{{known_words}}</td>
-                                <td style="color: white;">{{known_tokes}}</td>
-                                <td style="color: white;">{{percent_1}}</td>
-                                <td style="color: white;">{{percent_2}}</td>
+    function sortTable(columnIndex) {
+      const table = document.getElementById("sortable-table");
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
 
-                                <td style="color: #d8d9da;"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href = "{{ link }} "></a>  </td>
-                              </tr>
-                          {% endfor %}
+      const isNumericColumn = columnIndex !== 0 && columnIndex !== 7;
 
+      sortDirection[columnIndex] = !sortDirection[columnIndex];
+      const direction = sortDirection[columnIndex] ? 1 : -1;
 
-                        <tr>
+      rows.sort((a, b) => {
+        let aText = a.children[columnIndex].innerText.trim();
+        let bText = b.children[columnIndex].innerText.trim();
 
-                        </tr>
-                    </tbody>
-                </table>
-            </div><a class="btn btn-primary btn-lg btn-default" role="button" href="/oracle" style="border-radius: 35px;font-family: Actor, sans-serif;font-size: 16px;">Search again</a></div>
-    </section>
+        if (isNumericColumn) {
+          aText = parseFloat(aText.replace('%', '')) || 0;
+          bText = parseFloat(bText.replace('%', '')) || 0;
+          return (aText - bText) * direction;
+        } else {
+          return aText.localeCompare(bText) * direction;
+        }
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    }
+  </script>
 </body>
+
 {% endblock %}
