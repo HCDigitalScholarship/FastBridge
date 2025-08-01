@@ -318,5 +318,13 @@ title_renaming_dict = {
     'ennodius_carmina_routledge_later_latin_poets': 'Ennodius, Carmina (Routledge Later Latin Poets)_TEXT',
     'ennodius_carmina_vogel': 'Ennodius, Carmina (Vogel)_TEXT',
     'plautus_amphitruo': 'Plautus, Amphitruo_TEXT',
-    'plautus_bacchides': 'Plautus, Bacchides_TEXT'
+    'plautus_bacchides': 'Plautus, Bacchides_TEXT',
+    'apuleius_asclepius': 'Apuleius, Asclepius_TEXT',
+    'cicero_pro_flacco': 'Cicero, Pro Flacco_TEXT',
+    'elizabeth_jane_weston_parthenica': 'Elizabeth Jane Weston, Parthenica_TEXT',
+    'eutropius_breviarium_all': 'Eutropius, Breviarium (all)_LOCAL_TEXT',
+    'martial_epigrams': 'Martial, Epigrams_TEXT',
+    'owen_epigrams': 'Owen, Epigrams_TEXT',
+    'seneca_apocolocyntosis': 'Seneca, Apocolocyntosis_TEXT',
+    'seneca_hercules_furens_dcc': 'Seneca, Hercules Furens (DCC)_LOCAL_TEXT'
 }
