@@ -50,7 +50,7 @@ dictionary_expected_columns = [
     "TITLE", "PRINCIPAL_PARTS", "PRINCIPAL_PARTS_NO_DIACRITICALS", "SIMPLE_LEMMA",
     "SHORT_DEFINITION", "LONG_DEFINITION", "PART_OF_SPEECH", "LOGEION_LINK",
     "FORCELLINI_LINK", "ROW_FILTERS", "CONJUGATION", "DECLENSION", "PROPER",
-    "REGULAR", "STOPWORD", "CORPUSFREQ", "LASLA_Combined"
+    "REGULAR", "STOPWORD", "CORPUSFREQ", "LASLA_COMBINED"
 ]
 
 def clean_dictionary_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
@@ -61,7 +61,6 @@ def clean_dictionary_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     if df[dict_cols_to_check].isnull().any().any():
         null_info = {}
         for col in dict_cols_to_check:
-            print(f"Checking column: {col}")
             if df[col].isnull().any():
                 null_rows = df[df[col].isnull()].index.tolist()
                 null_info[col] = null_rows
