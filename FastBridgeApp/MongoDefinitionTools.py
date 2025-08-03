@@ -473,7 +473,7 @@ def build_dict_structure(dict_name):
     '''
     structured_word_dict = {}
     dict_collection = dict_db[dict_name]
-    exclude_fields = ["_id", "TITLE", "ROW_FILTERS", "CORPUSFREQ", "LASLA_Combined"]
+    exclude_fields = ["_id", "TITLE", "ROW_FILTERS", "CORPUSFREQ", "LASLA_COMBINED"]
     documents = dict_collection.find({})
     for doc in documents:
         head_word = doc["TITLE"]
