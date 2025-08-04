@@ -41,9 +41,7 @@ function current_selections() {
   for (i = 0; i < filters.length - 1; i++) {
     let filter = "#" + filters[i];
     let value = $(filter).val();
-    console.log(filter, value);
     result += '"' + filters[i] + '":"' + value + '",';
-    console.log(result);
   }
   let filter = "#" + filters[filters.length - 1];
   let value = $(filter).val();
@@ -61,24 +59,23 @@ function exportVisibleDataToCSV() {
   const ths = Array.from(document.querySelector("thead tr").children);
 
   const visibleColumns = ths
-    .map((th, idx) => {
-      const style = getComputedStyle(th);
-      if (style.display === "none" || style.visibility === "hidden") return null;
+  .map((th, idx) => {
+    const style = getComputedStyle(th);
+    if (style.display === "none" || style.visibility === "hidden") return null;
 
-      const classList = th.classList;
-      const matchingCol = Object.entries(colMap).find(
-        ([name, [index]]) => classList.contains(name)
-      );
+    const classList = th.classList;
+    const matchingCol = Object.entries(colMap).find(
+      ([name]) => classList.contains(name)
+    );
 
-      if (matchingCol) {
-        const [name, [index]] = matchingCol;
-        return { name, index };
-      }
+    if (matchingCol) {
+      const [name] = matchingCol;
+      return { name, index: idx }; 
+    }
 
-      return null;
-    })
-    .filter(col => col !== null)
-    .sort((a, b) => a.index - b.index);
+    return null;
+  })
+  .filter(col => col !== null)
 
   const headerCSV = visibleColumns.map(col => `"${col.name}"`).join(",");
 
