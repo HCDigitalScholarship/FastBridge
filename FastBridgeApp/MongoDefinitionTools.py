@@ -168,8 +168,8 @@ def mg_get_sections(language, textname: str = ""):
 
     if textname:
         possible_textname = title_renaming_dict.get(textname, textname)
-        if "_" in possible_textname:
-            textname = possible_textname.split("_")[0]
+        if "_" in possible_textname: textname = possible_textname.split("_")[0]
+        else: textname = possible_textname
         try:
             if textname in sections[language]:
                 return sections[language][textname]
