@@ -72,13 +72,11 @@ function show_full_list(id) {
 
 //from old bridge. Somethings weren't broken
 function printData() {
-  console.log("calling printData()");
   var divToPrint = document.getElementById("export_wrapper");
   newWin = window.open("");
   newWin.document.write(divToPrint.outerHTML);
   newWin.document.close();
   newWin.focus();
-  console.log(newWin);
   newWin.print();
   newWin.close();
 }
@@ -148,7 +146,6 @@ function line_up_header_columns() {
 //sorting – not sure how compatible this is with clusterize
 
 function sortTable(col, n) {
-  //console.log(col)
   asc = columns[col][1];
   //checks if this is an int or a string. Thank you implicit typing
   if (typeof rows[0].values[n] == "number") {
@@ -176,7 +173,6 @@ function sortTable(col, n) {
       });
     }
   }
-  console.log(rows);
   columns[col][1] = !asc;
   clusterize.update(filterRows(rows));
   setTimeout(line_up_header_columns, 0);
@@ -185,7 +181,6 @@ function sortTable(col, n) {
 //row and column filter functions
 function toggle_all_filters(id) {
   var ths = document.getElementById(id);
-  //console.log(ths.value)
   if (ths.value == "hide") {
     rows = [];
     ths.value = "show";
@@ -204,7 +199,6 @@ function toggle_all_filters(id) {
 
 function global_filter(filter_id) {
   var to_toggle = document.getElementsByClassName(filter_id);
-  console.log(filter_id);
   for (var i = 0; i < to_toggle.length; i++) {
     to_toggle[i].value = document.getElementById(filter_id).value;
     to_toggle[i].checked = document.getElementById(filter_id).checked;
@@ -219,35 +213,26 @@ function global_filter(filter_id) {
 
 //try using the element
 function hide_show_column(col_name) {
-  console.log(col_name);
   var stylesheet = document.styleSheets[8];
   var end = stylesheet.cssRules.length;
   var checkbox_val = document.getElementById(col_name).value;
-  console.log(checkbox_val); //if the value is hide means the column is showing.
   if (checkbox_val == "hide") {
     var rule = `.${col_name} { display : none !important} `;
     stylesheet.insertRule(rule, end);
     columns[col_name][0] = end;
-    console.log("indise if hide");
     document.getElementById(col_name + "_head").style.display = "none";
     document.getElementById(col_name).value = "show";
-    console.log(document.getElementById(col_name).value); //correct value here
   } else {
-    console.log(columns[col_name]);
     if (columns[col_name][0] != end - 1) {
       for (const [key, value] of Object.entries(columns)) {
-        console.log(value[0]);
         if (value[0] > columns[col_name][0]) {
           columns[key] = [columns[key][0] - 1, true]; //bool is for sorting, this makes is smallest to largest
         }
       }
     }
     stylesheet.deleteRule(columns[col_name][0]);
-    console.log(document.getElementById(col_name + "_head"));
     document.getElementById(col_name + "_head").style.display = "table-cell";
     document.getElementById(col_name).value = "hide";
-    console.log(col_name);
-    console.log(document.getElementById(col_name).value);
   }
   setTimeout(line_up_header_columns, 0);
 }
@@ -257,9 +242,7 @@ function hide_show_row(row_value) {
   var children = false;
   var parent = document.getElementById(row_value + "extra");
   if (parent) {
-    ////console.log(row_value+"extra", "success")
     children = document.getElementById(row_value + "extra").childNodes;
-    ////console.log(children)
   }
 
   if (checkbox_val == "hide") {
@@ -285,7 +268,6 @@ function hide_show_row(row_value) {
     var checkBoxes = document.querySelectorAll(
       "input[name=filterChecks]:not(:checked)"
     );
-    //console.log(checkBoxes)
     for (var i = 0; i < checkBoxes.length; i++) {
       checkBoxes[i].value = "hide";
       hide_show_row(checkBoxes[i].id);

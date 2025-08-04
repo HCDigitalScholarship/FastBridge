@@ -65,7 +65,6 @@ function dropdownSectionEnd2() {
 
 function add_text(text_name, dropdown_id, depth) {
   text_to_add = text_name;
-  console.log(text_name);
   if (text_to_add == "") {
     alert("please enter a valid text");
     return false;
@@ -79,11 +78,9 @@ function add_text(text_name, dropdown_id, depth) {
 
   $("#" + dropdown_id).hide();
   id = document.getElementById(dropdown_id).previousElementSibling.id;
-  // console.log(id);
   display = document.getElementById(id);
   $(display).change(createDropdown(text_name, dropdown_id, depth));
   display.innerText = text_name;
-  console.log(document.getElementById("myInput"));
 }
 
 function createDropdown(text, dropdown_id, sections) {
@@ -118,7 +115,6 @@ function createDropdown(text, dropdown_id, sections) {
         }
         keyholder.push("end");
         keyholder.unshift("start");
-        console.log(keyholder);
 
         for (var i = 0; i < keyholder.length; i++) {
           let a = document.createElement("a");
@@ -146,12 +142,10 @@ function createDropdown(text, dropdown_id, sections) {
 
           elementS.appendChild(a);
           elementE.appendChild(b);
-          // console.log(key);
 
           //end section button onclick function
           b.addEventListener("click", function () {
             sectionto2 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             $("#sectionenddropdown2").hide();
             display = document.getElementById(
               "bridge-modal-form2-select2-hidden-field2"
@@ -161,7 +155,6 @@ function createDropdown(text, dropdown_id, sections) {
           //start section button onclick function
           a.addEventListener("click", function () {
             sectionfrom2 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             $("#sectionstartdropdown2").hide();
             display = document.getElementById(
               "bridge-modal-form2-select2-hidden-field1"
@@ -201,7 +194,6 @@ function createDropdown(text, dropdown_id, sections) {
         }
         keyholder.push("end");
         keyholder.unshift("start");
-        console.log(keyholder);
 
         for (var i = 0; i < keyholder.length; i++) {
           let a = document.createElement("a");
@@ -228,12 +220,10 @@ function createDropdown(text, dropdown_id, sections) {
 
           elementS.appendChild(a);
           elementE.appendChild(b);
-          // console.log(key);
 
           //end section button onclick function
           b.addEventListener("click", function () {
             sectionto1 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             $("#sectionenddropdown").hide();
             display = document.getElementById(
               "bridge-modal-form1-select2-hidden-field2"
@@ -243,7 +233,6 @@ function createDropdown(text, dropdown_id, sections) {
           //start section button onclick function
           a.addEventListener("click", function () {
             sectionfrom1 = this.innerHTML;
-            // console.log("id of the dropdown" + this.id);
             $("#sectionstartdropdown").hide();
             display = document.getElementById(
               "bridge-modal-form1-select2-hidden-field1"
@@ -256,55 +245,6 @@ function createDropdown(text, dropdown_id, sections) {
   }
 }
 
-//https://coderwall.com/p/5fu9xw/how-to-sort-multidimensional-array-using-javascript
-
-// https://stackoverflow.com/questions/4340227/sort-mixed-alpha-numeric-array  <- source for the belowe used method
-// this sorting is abandoned, now using sectionlist order as keyholder order
-/*
-var reA = /[^a-zA-Z]/g;
-var reN = /[^0-9]/g;
-function sortAlphaNum(a, b) {
-  var AInt = parseInt(a, 10);
-  var BInt = parseInt(b, 10);
-
-  if (isNaN(AInt) && isNaN(BInt)) {
-    var aA = a.replace(reA, "");
-    var bA = b.replace(reA, "");
-    if (aA === bA) {
-      var aN = parseInt(a.replace(reN, ""), 10);
-      var bN = parseInt(b.replace(reN, ""), 10);
-      return aN === bN ? 0 : aN > bN ? 1 : -1;
-    } else {
-      return aA > bA ? 1 : -1;
-    }
-  } else if (isNaN(AInt)) {
-    //A is not an Int
-    return 1; //to make alphanumeric sort first return -1 here
-  } else if (isNaN(BInt)) {
-    //B is not an Int
-    return -1; //to make alphanumeric sort first return 1 here
-  } else {
-    return AInt > BInt ? 1 : -1;
-  }
-}
-*/
-
-// //https://stackoverflow.com/questions/25500316/sort-a-dictionary-by-value-in-javascript belowe function sorts in descending order
-// function sort_object(obj) {
-//   items = Object.keys(obj).map(function(key) {
-//       return [key, obj[key]];
-//   });
-//   items.sort(function(first, second) {
-//       return second[1] - first[1];
-//   });
-//   sorted_obj={}
-//   $.each(items, function(k, v) {
-//       use_key = v[0]
-//       use_value = v[1]
-//       sorted_obj[use_key] = use_value
-//   })
-//   return(sorted_obj)
-// }
 
 function filterFunction(input_id, dropdown_id) {
   var input, filter, ul, li, a, i;
@@ -475,21 +415,18 @@ $("#formCheck-1").click(function () {
   document.getElementById("myNext").disabled = true;
   document.getElementById("openModal2").disabled = false;
   in_exclude = "exclude";
-  console.log(in_exclude);
 });
 
 $("#formCheck-2").click(function () {
   document.getElementById("myNext").disabled = true;
   document.getElementById("openModal2").disabled = false;
   in_exclude = "include";
-  console.log(in_exclude);
 });
 
 $("#formCheck-3").click(function () {
   document.getElementById("myNext").disabled = false;
   document.getElementById("openModal2").disabled = true;
   in_exclude = "";
-  console.log(in_exclude);
 });
 
 /*
@@ -550,8 +487,6 @@ $("#bridge-modal-form1-save").click(function () {
 
   selectionvalue = $("#bridge-modal-form1-select2").val();
   if (selectionvalue == "yes") {
-    console.log("start: " + sectionfrom1);
-    console.log("end: " + sectionto1);
     if (indexholder1[sectionfrom1] > indexholder1[sectionto1]) {
       alert("please select a valid range");
       return false;
@@ -569,7 +504,6 @@ $("#bridge-modal-form1-save").click(function () {
   var cell3 = row.insertCell(2);
   cell1.innerHTML = '<span style="color:white">' + book + "</span>";
   sourcetexts.push(string_to_slug(book));
-  console.log(sourcetexts);
   cell2.innerHTML = '<span style="color:white">' + sections + "</span>";
   source_starts.push(sectionfrom1);
   source_ends.push(sectionto1);
@@ -589,7 +523,6 @@ $("#bridge-modal-form1-save").click(function () {
   $("#sectionenddropdown").empty();
   document.getElementById("chosen_text").innerText = "Select Text";
   $("input[name=textselection]").val("");
-  // console.log($('input[name=textselection]').val(''));
   filterFunction("myInput", "myDropdown");
   sectionfrom1 = "start";
   sectionto1 = "end";
@@ -623,8 +556,6 @@ $("#bridge-modal-form2-save").click(function () {
 
   selectionvalue = $("#bridge-modal-form2-select2").val();
   if (selectionvalue == "yes") {
-    console.log("start: " + sectionfrom2);
-    console.log("end: " + sectionto2);
     if (indexholder2[sectionfrom2] > indexholder2[sectionto2]) {
       alert("please select a valid range");
       return false;
@@ -634,24 +565,7 @@ $("#bridge-modal-form2-save").click(function () {
   } else {
     var sections = `${sectionfrom2}-${sectionto2}`;
   }
-  // var book = $('#bridge-change-list #bridge-modal-form2-select1').val();
-  // var sectionFrom = $('#bridge-change-list #bridge-modal-form2-select2-hidden-field1').val();
-  // var sectionTo =$('#bridge-change-list #bridge-modal-form2-select2-hidden-field2').val();
-  // if (sectionFrom &&sectionTo){ // if user specifies a section
-  //     var sections = `${sectionFrom}-${sectionTo}`;
-  // }else if (!sectionFrom &&sectionTo) {
-  //   var sections = `start-${sectionTo}`;
-  //   sectionFrom = 'start'
-  // }
-  // else if (!sectionTo &&sectionFrom) {
-  //   var sections = `${sectionFrom}-end`;
-  //   sectionTo = 'end'
-  // }
-  //  else {
-  //     sectionFrom = 'start'
-  //     sectionTo = 'end'
-  //     var sections = 'start-end';
-  // }
+
 
   // show the selection in a table
   var table = document.getElementById("bridge-result-table2");
@@ -682,7 +596,6 @@ $("#bridge-modal-form2-save").click(function () {
   $("#sectionenddropdown2").empty();
   document.getElementById("chosen_text2").innerText = "Select Text";
   $("input[name=textselection2]").val("");
-  // console.log($('input[name=textselection]').val(''));
   filterFunction("myInput2", "myDropdown2");
   sectionfrom2 = "start";
   sectionto2 = "end";
