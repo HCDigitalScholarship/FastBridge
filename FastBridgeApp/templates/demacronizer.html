@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+textarea::selection { background: #888; color: #fff; }
+textarea::-moz-selection {
+    background: #444;
+    color: #fff;         
+}
+</style>
+
+<body id="page-top" class="d-flex flex-column min-vh-100">
+    <header class="masthead flex-grow-1 d-flex align-items-center justify-content-center"
+            style="background: url('/assets/img/The_School_of_Athens.jpg') no-repeat center center fixed;
+                   background-size: cover;
+                   filter: grayscale(0%);
+                   margin-top: 7rem;">
+                 
+        <div class="container d-flex flex-column justify-content-center align-items-center text-center py-5">
+            
+            <div class="container rounded p-4" style="width: 80%; background-color: rgba(28,28,28,0.7);">
+              <h2 class="mb-3">Macron Remover for Latin Text</h2>
+              
+              <form id="macronForm">
+                <div class="mb-3">
+                  <label for="textInput" class="form-label">Paste Latin Text:</label>
+                  <textarea id="textInput" class="form-control" rows="6" placeholder="Paste your Latin text here..."></textarea>
+                </div>
+            
+                <div class="mb-3">
+                  <label for="fileInput" class="form-label">Or upload a .txt file:</label>
+                  <input type="file" id="fileInput" class="form-control" accept=".txt">
+                </div>
+            
+                <button type="submit" class="btn btn-primary">Remove Macrons</button>
+              </form>
+            
+              <div class="mt-4">
+                <label for="outputText" class="form-label">Cleaned Text:</label>
+                <textarea id="outputText" class="form-control" rows="6" readonly></textarea>
+                <button class="btn btn-secondary mt-2" onclick="copyToClipboard()">Copy to Clipboard</button>
+              </div>
+            </div>
+        </div>
+    </header>
+    
+</body>
+
+<script>
+const macronMap = {
+  'ā': 'a', 'ē': 'e', 'ī': 'i', 'ō': 'o', 'ū': 'u', 'ȳ': 'y',
+  'Ā': 'A', 'Ē': 'E', 'Ī': 'I', 'Ō': 'O', 'Ū': 'U', 'Ȳ': 'Y'
+};
+
+function removeMacrons(text) {
+  return text.replace(/[āēīōūȳĀĒĪŌŪȲ]/g, char => macronMap[char] || char);
+}
+
+document.getElementById('macronForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  let inputText = document.getElementById('textInput').value;
+  let resultText = removeMacrons(inputText);
+  document.getElementById('outputText').value = resultText;
+});
+
+document.getElementById('fileInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (file && file.type === "text/plain") {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      document.getElementById('textInput').value = event.target.result;
+    };
+    reader.readAsText(file);
+  }
+});
+
+function copyToClipboard() {
+  const output = document.getElementById('outputText');
+  output.select();
+  output.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+}
+</script>
+
+{% endblock %}
