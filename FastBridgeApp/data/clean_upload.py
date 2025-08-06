@@ -121,8 +121,27 @@ def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     
     if not all_words_in_dictionary(file_name, cleaned_df["head_word"].to_list()):
         return None
-    
+    if not correct_counter_format(file_name, cleaned_df["counter"].to_list()):
+        return None
     return cleaned_df
+
+def correct_counter_format(file_name: str, counters: list) -> bool:
+    if not counters:
+        update_problematic_texts(file_name, ["Counter list is empty."])
+        return False
+
+    issues = []
+
+    for i in range(1, len(counters)):
+        if counters[i] <= counters[i - 1]:
+            issues.append(f"Counter not strictly increasing at index {i}: {counters[i]} <= {counters[i - 1]}")
+
+    if issues:
+        update_problematic_texts(file_name, issues)
+        return False
+
+    return True
+
 
 def all_words_in_dictionary(file_name: str, head_words: list) -> bool:
     if dict_db is None:
@@ -133,7 +152,6 @@ def all_words_in_dictionary(file_name: str, head_words: list) -> bool:
         if word in checked_words: continue
         if not dict_db.find_one({"TITLE": word}):
             update_problematic_texts(file_name, [f"Word '{word}' not found in dictionary. Index: {i}"])
-            # return False
         checked_words.add(word)
     return True
 

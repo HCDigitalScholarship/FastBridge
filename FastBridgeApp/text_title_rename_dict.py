@@ -326,5 +326,14 @@ title_renaming_dict = {
     'martial_epigrams': 'Martial, Epigrams_TEXT',
     'owen_epigrams': 'Owen, Epigrams_TEXT',
     'seneca_apocolocyntosis': 'Seneca, Apocolocyntosis_TEXT',
-    'seneca_hercules_furens_dcc': 'Seneca, Hercules Furens (DCC)_LOCAL_TEXT'
+    'seneca_hercules_furens_dcc': 'Seneca, Hercules Furens (DCC)_LOCAL_TEXT',
+    'laudatio_turiae': 'Laudatio Turiae_TEXT',
+    'pliny_the_younger_epistulae_ap_selections': 'Pliny the Younger, Epistulae (AP Selections)_TEXT',
+    'ruodlieb_ap_project_selection': 'Ruodlieb (AP Project Selection)_TEXT',
+    'vergil_aeneid_2025_ap_selections': 'Vergil, Aeneid (2025 AP Selections)_LOCAL_TEXT',
+    'book_of_thobit': 'Book of Thobit_TEXT',
+    'codex_justinianus_on_slavery': 'Codex Justinianus (On Slavery)_TEXT',
+    'makin_descriptio_pennsylvaniae': 'Makin, Descriptio Pennsylvaniae_TEXT',
+    'vitruvius_book_1': 'Vitruvius, Book 1_TEXT',
+    'universal_declaration_of_human_rights': 'Universal Declaration of Human Rights_TEXT',
 }
