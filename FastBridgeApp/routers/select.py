@@ -124,7 +124,7 @@ async def simple_result(request : Request, starts : str, ends : str, sourcetexts
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
-    columnheaders.append("Corpus_Frequency")
+    columnheaders.append("Corpus_Frequency_Rank")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
@@ -213,7 +213,7 @@ async def result(request : Request, starts : str, ends : str, sourcetexts : str,
     columnheaders.append("Count_in_Selection")
     columnheaders.append("Location")
     columnheaders.append("Source_Text")
-    columnheaders.append("Corpus_Frequency")
+    columnheaders.append("Corpus_Frequency_Rank")
     context["section"] = section
     context["len"] = len(words)
     length=len(columnheaders)+2 #just for some extra room
@@ -314,7 +314,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
                 count = count_in_text[words[j][0].Source_Text][words[j][0].TITLE]
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{count}</td>'
                 lst.append(count)
-            elif(columnheaders[i] == "Corpus_Frequency"):
+            elif(columnheaders[i] == "Corpus_Frequency_Rank"):
                 freq = corpus_freq.get(words[j][0].TITLE, "NA")
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{freq}</td>'
                 lst.append(freq)

@@ -21,16 +21,16 @@ if not mongo_uri:
     
 client = MongoClient(mongo_uri)
 
-def aggregate_field_counts(client, db_name, field_name, output_file="output_counts.json"):
+def aggregate_field_ranks(client, db_name, field_name, output_file="output_ranks.json"):
     """
-    Aggregate counts of a specified field across all collections in a MongoDB database.
-    Counts how many times each value appears, counting duplicates in collections.
+    Aggregate counts of a specified field across all collections in a MongoDB database,
+    and assign dense ranks based on frequency.
 
     Args:
         client: MongoClient instance.
         db_name (str): Name of the MongoDB database.
         field_name (str): The field name to aggregate counts for.
-        output_file (str, optional): JSON file path to save the results. Defaults to "output_counts.json".
+        output_file (str, optional): JSON file path to save the results. Defaults to "output_ranks.json".
     """
     db = client[db_name]
     counts = defaultdict(int)
@@ -42,12 +42,31 @@ def aggregate_field_counts(client, db_name, field_name, output_file="output_coun
             if key:
                 counts[key] += 1
 
-    counts = dict(sorted(counts.items(), key=lambda x: x[1], reverse=True))
+    # Sort by count descending
+    sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
 
+    # Assign dense ranks
+    ranks = {}
+    current_rank = 1
+    previous_count = None
+    count_at_this_rank = 0
+
+    for key, count in sorted_items:
+        if count != previous_count:
+            current_rank += count_at_this_rank  # advance by how many shared last rank
+            count_at_this_rank = 1
+        else:
+            count_at_this_rank += 1
+
+        ranks[key] = current_rank
+        previous_count = count
+
+    # Save to file
     with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(counts, f, ensure_ascii=False, indent=2)
+        json.dump(ranks, f, ensure_ascii=False, indent=2)
 
-    print(f"Saved aggregated counts to {output_file}")
+    print(f"Saved aggregated ranks to {output_file}")
+
 
 def get_sections(language):
     """
@@ -112,8 +131,8 @@ def update_render_cache(language):
 
     return titles, titles2
 
-aggregate_field_counts(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
-aggregate_field_counts(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
+aggregate_field_ranks(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
+aggregate_field_ranks(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
 
 get_sections("Latin")
 get_sections("Greek")
