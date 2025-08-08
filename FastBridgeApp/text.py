@@ -25,7 +25,9 @@ class Text(object):
 
         # Get corresponding keys in self.sections
         # start is defined as index of end of previous section + 1 (index of previous section is the location last word of the previous section 0-indexed)
-        start_idx = self.sections[self.section_linkedlist[range_start]] + 1 
+        start_idx = self.sections[self.section_linkedlist[range_start]] 
+        if start_idx != 0: start_idx += 1 # don't add 1 if start_idx is 0
+
         if range_end == "end":
             end_idx = self.sections["end"] + 1
         else:
