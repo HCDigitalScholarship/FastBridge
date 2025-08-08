@@ -20,6 +20,7 @@ if not mongo_uri:
     exit(1)
     
 client = MongoClient(mongo_uri)
+# titles = {}
 
 def aggregate_field_ranks(client, db_name, field_name, output_file="output_ranks.json"):
     """
@@ -36,6 +37,7 @@ def aggregate_field_ranks(client, db_name, field_name, output_file="output_ranks
     counts = defaultdict(int)
 
     for collection_name in db.list_collection_names():
+        # titles[string_to_slug(collection_name.split('_')[0])] = collection_name
         collection = db[collection_name]
         for doc in collection.find({}, {field_name: 1}):
             key = doc.get(field_name)
@@ -133,6 +135,9 @@ def update_render_cache(language):
 
 aggregate_field_ranks(client, "Latin-Texts", "head_word", output_file="FastBridgeApp/data/Static/latin_headword_counts.json")
 aggregate_field_ranks(client, "Greek-Texts", "head_word", output_file="FastBridgeApp/data/Static/greek_headword_counts.json")
+
+# with open('mapping.json', 'w', encoding='utf-8') as f:
+#     json.dump(titles, f, ensure_ascii=False, indent=2)
 
 get_sections("Latin")
 get_sections("Greek")
