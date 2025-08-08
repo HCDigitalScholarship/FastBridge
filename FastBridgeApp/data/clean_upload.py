@@ -170,16 +170,23 @@ def update_problematic_texts(file_name: str, issues: list):
 
 def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name: str, chunk_size: int = 100000):
     if collection_name in db.list_collection_names():
-        update_problematic_texts(collection_name, [f"Collection '{collection_name}' already exists. Skipping import."])
-        return
+        user_input = input(f"{collection_name} already exists. Do you want to overwrite it? (y/n): ").strip().lower()
+        if user_input != 'y': 
+            update_problematic_texts(collection_name, [f"Collection '{collection_name}' already exists. Skipping import."])
+            return
+        
     collection = db[collection_name]
+    collection.drop()  # Ensure the collection is empty before inserting new data
     total_rows = len(df)
+    
     for i in range(0, total_rows, chunk_size):
         chunk = df.iloc[i:i + chunk_size]
         records = json.loads(chunk.to_json(orient='records'))
         collection.insert_many(records)
         print(f"Inserted rows {i + 1} to {min(i + chunk_size, total_rows)} into '{collection_name}'")
         new_titles[string_to_slug(collection_name.split('_')[0])] = collection_name
+    
+    return True
 
 def convert_and_import(folder_path: str, db: MongoClient):
     for root, _, files in os.walk(folder_path):
@@ -207,7 +214,7 @@ def convert_and_import(folder_path: str, db: MongoClient):
                         problematic_texts[file_name] = ["Invalid data found."]
                     continue
                 
-                import_dataframe_to_mongo(db, cleaned_df, collection_name)
+                if import_dataframe_to_mongo(db, cleaned_df, collection_name): os.remove(f"{root}/{file_name}")
             except Exception as e:
                 print(f"Error processing {file_name}: {e}")
                 update_problematic_texts(file_name, [str(e)])
