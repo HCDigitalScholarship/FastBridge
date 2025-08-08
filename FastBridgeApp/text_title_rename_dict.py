@@ -296,7 +296,7 @@ title_renaming_dict = {
     "apollonius_argonautica_book_4": "Apollonius, Argonautica Book 4_TEXT",
     "mastronarde_introduction_to_attic_greek": "Mastronarde, Introduction to Attic Greek_LIST",
     'anthologia_latina_507-518_epitaphs_of_vergil': 'Anthologia Latina 507-518 (Epitaphs of Vergil)_TEXT', 
-    'ap_latin_core_list_2025': 'AP Latin Core List 2025_LIST', 
+    'ap_latin_core_list_2025': 'AP Latin Core List 2025_LOCAL_LIST', 
     'apuleius_de_platone': 'Apuleius, De Platone_TEXT', 
     'elizabeth_jane_weston_ad_michaelem_pecka': 'Elizabeth Jane Weston, Ad Michaelem Pecka_TEXT', 
     'elizabeth_jane_weston_ad_schosserum': 'Elizabeth Jane Weston, Ad Schosserum_TEXT', 
