@@ -212,6 +212,7 @@ title_renaming_dict = {
     "keep_going_with_latin_linney": "Keep Going with Latin (Linney)_LIST",
     "pliny_the_younger_epistulae": "Pliny the Younger, Epistulae",
     "prudentius_psychomachia_preface": "Prudentius, Psychomachia (Preface)_TEXT",
+    'prudentius_psychomachia': 'Prudentius, Psychomachia_TEXT',
     "cicero_pro_plancio": "Cicero, Pro Plancio_TEXT",
     "seneca_pseudo_proverbia_or_de_moribus": "Seneca, (Pseudo) Proverbia or De Moribus",
     "seneca_de_clementia": "Seneca, De Clementia_all_TEXT",
