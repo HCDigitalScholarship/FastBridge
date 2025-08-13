@@ -6,6 +6,47 @@ let allTextContexts = {};
 let expectedTextCount = 0; 
 let hasAcknowledgedAllTexts = false; 
 
+// Chat initialization queue to handle sequential processing
+let chatInitQueue = [];
+let isProcessingChatQueue = false;
+
+async function processChatQueue() {
+    if (isProcessingChatQueue || chatInitQueue.length === 0) {
+        return;
+    }
+    
+    isProcessingChatQueue = true;
+    
+    while (chatInitQueue.length > 0) {
+        const { action, context } = chatInitQueue.shift();
+        
+        try {
+            if (action === 'init') {
+                await initializeChatInternal(context);
+            } else if (action === 'add') {
+                await addTextToChatInternal(context);
+            }
+            
+            // Small delay to ensure operations complete
+            await new Promise(resolve => setTimeout(resolve, 50));
+        } catch (error) {
+            console.error("Error processing chat queue item:", error);
+        }
+    }
+    
+    isProcessingChatQueue = false;
+}
+
+function queueChatInit(context) {
+    chatInitQueue.push({ action: 'init', context });
+    processChatQueue();
+}
+
+function queueChatAdd(context) {
+    chatInitQueue.push({ action: 'add', context });
+    processChatQueue();
+} 
+
 function generateUUID() {
     if (window.crypto && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -19,7 +60,13 @@ function generateUUID() {
 }
 
 async function initializeChat(firstTextContext) {
-    if (chatInitialized) return;
+    queueChatInit(firstTextContext);
+}
+
+async function initializeChatInternal(firstTextContext) {
+    if (chatInitialized) {
+        return;
+    }
     
     chatId = generateUUID();
     chatInitialized = true;
@@ -71,8 +118,12 @@ async function initializeChat(firstTextContext) {
 }
 
 async function addTextToChat(textContext) {
+    queueChatAdd(textContext);
+}
+
+async function addTextToChatInternal(textContext) {
     if (!chatInitialized || !chatId) {
-        console.error("Chat not initialized");
+        console.error("Chat not initialized, cannot add text:", textContext);
         return;
     }
 

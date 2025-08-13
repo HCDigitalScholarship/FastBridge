@@ -17,36 +17,8 @@
     }
 
     @keyframes spin {
-                               // Fetch with JSON header to get both HTML and context in one request
-                fetch(url, {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (dropdownId === "dropdown1") {
-                        document.getElementById("column1").innerHTML = data.html;
-                    } else if (dropdownId === "dropdown2") {
-                        document.getElementById("column2").innerHTML = data.html;
-                    }
-                    setupPlotModal()
-                    loaderElement.style.display = "none";
-                    
-                    // Use the context data directly from the same response
-                    if (window.chatCompare && data.context) {
-                        if (dropdownId === "dropdown1") {
-                            // Initialize chat with the first text
-                            window.chatCompare.initializeChat(data.context);
-                        } else {
-                            // Add subsequent texts to the existing chat
-                            window.chatCompare.addTextToChat(data.context);
-                        }
-                    }
-                }).catch(error => {
-                    console.error('Error loading data:', error);
-                    loaderElement.style.display = "none";
-                });     transform: rotate(0deg);
+        0% {
+            transform: rotate(0deg);
         }
 
         100% {
@@ -439,16 +411,18 @@
                     try {
                         const contextData = JSON.parse(scriptMatches[1]);
                         if (dropdownId === "dropdown1") {
-                            // Initialize chat with the first text
                             window.chatCompare.initializeChat(contextData);
                         } else {
-                            // Add subsequent texts to the existing chat
                             window.chatCompare.addTextToChat(contextData);
                         }
                     } catch (error) {
                         console.error('Error parsing embedded context:', error);
                     }
                 }
+            })
+            .catch(error => {
+                console.error('Error loading data for', dropdownId, ':', error);
+                loaderElement.style.display = "none";
             });
     }
 </script>
@@ -727,9 +701,21 @@
 <!-- Default Selections on Page Load -->
 <script>
     function handlePageLoad() {
-        updateDataDefault('dropdown1');
-        updateDataDefault('dropdown2');
-        updateDropdowns()
+        // Check if we're running on a server (not localhost)
+        const isServer = !window.location.hostname.includes('localhost') && 
+                        !window.location.hostname.includes('127.0.0.1');
+        
+        if (isServer) {
+            updateDataDefault('dropdown1');
+            setTimeout(() => {
+                updateDataDefault('dropdown2');
+            }, 500); // Longer delay for server... sometimes server doesn't load both at once
+        } else {
+            updateDataDefault('dropdown1');
+            updateDataDefault('dropdown2');
+        }
+        
+        updateDropdowns();
     }
 </script>
 
