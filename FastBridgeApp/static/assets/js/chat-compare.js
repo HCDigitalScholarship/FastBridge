@@ -6,47 +6,6 @@ let allTextContexts = {};
 let expectedTextCount = 0; 
 let hasAcknowledgedAllTexts = false; 
 
-// Chat initialization queue to handle sequential processing
-let chatInitQueue = [];
-let isProcessingChatQueue = false;
-
-async function processChatQueue() {
-    if (isProcessingChatQueue || chatInitQueue.length === 0) {
-        return;
-    }
-    
-    isProcessingChatQueue = true;
-    
-    while (chatInitQueue.length > 0) {
-        const { action, context } = chatInitQueue.shift();
-        
-        try {
-            if (action === 'init') {
-                await initializeChatInternal(context);
-            } else if (action === 'add') {
-                await addTextToChatInternal(context);
-            }
-            
-            // Small delay to ensure operations complete
-            await new Promise(resolve => setTimeout(resolve, 50));
-        } catch (error) {
-            console.error("Error processing chat queue item:", error);
-        }
-    }
-    
-    isProcessingChatQueue = false;
-}
-
-function queueChatInit(context) {
-    chatInitQueue.push({ action: 'init', context });
-    processChatQueue();
-}
-
-function queueChatAdd(context) {
-    chatInitQueue.push({ action: 'add', context });
-    processChatQueue();
-} 
-
 function generateUUID() {
     if (window.crypto && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -60,7 +19,7 @@ function generateUUID() {
 }
 
 async function initializeChat(firstTextContext) {
-    queueChatInit(firstTextContext);
+    await initializeChatInternal(firstTextContext);
 }
 
 async function initializeChatInternal(firstTextContext) {
@@ -118,7 +77,30 @@ async function initializeChatInternal(firstTextContext) {
 }
 
 async function addTextToChat(textContext) {
-    queueChatAdd(textContext);
+    
+    if (!chatInitialized || !chatId) {
+        await initializeChat(textContext);
+        return;
+    }
+
+    const textKey = `${textContext.text_name}_${textContext.start_section}_${textContext.end_section}`;
+    
+    if (loadedTexts.has(textKey)) {
+        return;
+    }
+    
+    loadedTexts.add(textKey);
+    allTextContexts[textKey] = textContext;
+
+    appendMessage("system", `➕ Loading text: **${textContext.text_name}** (${textContext.start_section}-${textContext.end_section})...`);
+
+    if (loadedTexts.size >= expectedTextCount && !hasAcknowledgedAllTexts) {
+        hasAcknowledgedAllTexts = true;
+        await sendAllTextsAcknowledgment();
+    } 
+    else if (hasAcknowledgedAllTexts && loadedTexts.size > expectedTextCount) {
+        await sendNewTextAcknowledgment(textContext);
+    }
 }
 
 async function addTextToChatInternal(textContext) {

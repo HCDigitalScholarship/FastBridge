@@ -279,6 +279,7 @@
             if (scriptMatches && window.chatCompare) {
                 try {
                     const contextData = JSON.parse(scriptMatches[1]);
+                    // Let addTextToChat handle initialization if needed
                     window.chatCompare.addTextToChat(contextData);
                 } catch (error) {
                     console.error('Error parsing embedded context:', error);
@@ -410,11 +411,8 @@
                 if (scriptMatches && window.chatCompare) {
                     try {
                         const contextData = JSON.parse(scriptMatches[1]);
-                        if (dropdownId === "dropdown1") {
-                            window.chatCompare.initializeChat(contextData);
-                        } else {
-                            window.chatCompare.addTextToChat(contextData);
-                        }
+                        // Let addTextToChat handle initialization if needed
+                        window.chatCompare.addTextToChat(contextData);
                     } catch (error) {
                         console.error('Error parsing embedded context:', error);
                     }
@@ -701,19 +699,9 @@
 <!-- Default Selections on Page Load -->
 <script>
     function handlePageLoad() {
-        // Check if we're running on a server (not localhost)
-        const isServer = !window.location.hostname.includes('localhost') && 
-                        !window.location.hostname.includes('127.0.0.1');
         
-        if (isServer) {
-            updateDataDefault('dropdown1');
-            setTimeout(() => {
-                updateDataDefault('dropdown2');
-            }, 500); // Longer delay for server... sometimes server doesn't load both at once
-        } else {
-            updateDataDefault('dropdown1');
-            updateDataDefault('dropdown2');
-        }
+        updateDataDefault('dropdown1');
+        updateDataDefault('dropdown2');
         
         updateDropdowns();
     }
