@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 history: chatHistory,
                 chat_id: chatId,
                 initial,
+                mode: "single", // Add mode for single text
                 ...(initial ? { context } : {}), // send context only for initial message
             }),
             });

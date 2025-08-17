@@ -27,14 +27,92 @@
     }
 
     .col-md-6 {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.7);
     }
 
     .masthead {
         padding-top: 80px;  /* Adjust this value according to the height of your navbar */
     }
 
+    /* Chat styles */
+    #chatSlideOut {
+        position: fixed;
+        width: 18.75rem;
+        top: 10rem;
+        right: -18.75rem;
+        background-color: rgba(81, 81, 81, 0.9);
+        z-index: 100000000;
+        transition: all 0.5s cubic-bezier(0, 1, 0.5, 1);
+    }
+
+    .showChatSlideOut {
+        right: 0px !important;
+    }
+
+    #chatSlideOutTab {
+        position: absolute;
+        left: -40px;
+        height: 200px;
+        width: 40px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        background-color: #227373;
+        box-shadow: 2px 2px 2px 2px #409696ff;
+        color: #fff;
+        border-radius: 5px 0 0 5px;
+        z-index: 100000000;
+    }
+
+    #chatSlideOutTab div {
+        text-align: center;
+        position: relative;
+        right: 70px;
+        top: 90px;
+        background-color: inherit;
+        color: #fff;
+        width: 180px;
+        transform: rotate(270deg);
+        writing-mode: lr-tb;
+    }
+
+    .modal-content {
+        background-color: rgba(110, 110, 110, 0.97);
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .modal-title {
+        margin: 0;
+        color: white;
+    }
+
+    .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .scrollable {
+        max-height: 100%;
+        overflow-y: auto;
+    }
+
+    #chat-form {
+        display: flex;
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
 </style>
+
+<link rel="stylesheet" href="/assets/css/chat.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/assets/js/chat-compare.js"></script>
 
 
 
@@ -44,6 +122,30 @@
 <body id="page-top" onload="handlePageLoad()">
     <header class="masthead"
         style="background-image: url('/assets/img/stats_background_2.jpg') ;background-size: cover;">
+        
+        <!-- Chat Slide Out -->
+        <div id="chatSlideOut">
+            <div id="chatSlideOutTab" class="slideOutTab" style="top: 220px;">
+                <div>
+                    <p style="font-family: sans-serif; font-size:1.5rem;">AI Help</p>
+                </div>
+            </div>
+
+            <div class="modal-content" style="background-color:rgba(110,110,110,0.97); height: 70vh; display: flex; flex-direction: column;">
+                <div class="modal-header">
+                    <h4 class="modal-title">Bridge AI (Stats)</h4>
+                </div>
+                <div class="modal-body scrollable" style="overflow-y:auto; flex: 1;" id="chat-box">
+                    <div id="loading" style="display: none;">🤖 Thinking...</div>
+                </div>
+
+                <form id="chat-form" style="display: flex; padding: 0.5rem; gap: 0.5rem;">
+                    <input type="text" id="user-input" class="form-control" placeholder="Type your message..." required />
+                    <button type="submit" class="btn btn-primary" id="send-button">Send</button>
+                </form>
+            </div>
+        </div>
+        
         <!--  -->
         <div class="container mt-5">
             <!-- Title Section Start -->
@@ -163,15 +265,29 @@
 
         loaderElement.style.display = "block";
 
-        // Fetch and update
+        // Fetch HTML normally - context will be embedded in the response
         fetch(url)
-            .then(response => response.text())
-            .then(data => {
-                const columnId = dropdownId === "dropdown1" ? "column1" : "column2";
-                document.getElementById(columnId).innerHTML = data;
-                setupPlotModal();
-                loaderElement.style.display = "none";
-            });
+        .then(response => response.text())
+        .then(data => {
+            const columnId = dropdownId === "dropdown1" ? "column1" : "column2";
+            document.getElementById(columnId).innerHTML = data;
+            setupPlotModal();
+            loaderElement.style.display = "none";
+            
+            // Extract the embedded context from the loaded HTML
+            const scriptMatches = data.match(/<script>\s*const context = (.+?);\s*<\/script>/);
+            if (scriptMatches && window.chatCompare) {
+                try {
+                    const contextData = JSON.parse(scriptMatches[1]);
+                    // Let addTextToChat handle initialization if needed
+                    window.chatCompare.addTextToChat(contextData);
+                } catch (error) {
+                    console.error('Error parsing embedded context:', error);
+                }
+            }
+        }).catch(error => {
+            loaderElement.style.display = "none";
+        });
     }
 
 </script>
@@ -288,6 +404,22 @@
                 }
                 setupPlotModal()
                 // Hide the loader after the request is complete
+                loaderElement.style.display = "none";
+                
+                // Extract the embedded context from the loaded HTML
+                const scriptMatches = data.match(/<script>\s*const context = (.+?);\s*<\/script>/);
+                if (scriptMatches && window.chatCompare) {
+                    try {
+                        const contextData = JSON.parse(scriptMatches[1]);
+                        // Let addTextToChat handle initialization if needed
+                        window.chatCompare.addTextToChat(contextData);
+                    } catch (error) {
+                        console.error('Error parsing embedded context:', error);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading data for', dropdownId, ':', error);
                 loaderElement.style.display = "none";
             });
     }
@@ -441,7 +573,6 @@
         var section_start = document.getElementById("new-dropdown2").value;
         var section_end = document.getElementById("new-dropdown3").value;
 
-
         var value = `${textname}+${section_start}+${section_end}`;
         var displayText = `${textname} (${section_start}-${section_end})`;
 
@@ -463,7 +594,6 @@
             button.click();
             updateData(dropdownToUpdate.id);
         }
-
     });
 
 </script>
@@ -483,12 +613,10 @@
 
         // Extract the sections from the current URL
         var urlParts = currentUrl.split("/");
-        console.log(urlParts)
 
         //extract starts and ends
         var sections = urlParts[urlParts.length - 3];//for some reason 3 is the right number
         var starts_and_ends = sections.split("-")
-        console.log(starts_and_ends)
         var starts = starts_and_ends[0].split("+")
         var ends = starts_and_ends[1].split("+")
 
@@ -571,12 +699,26 @@
 <!-- Default Selections on Page Load -->
 <script>
     function handlePageLoad() {
+        
         updateDataDefault('dropdown1');
         updateDataDefault('dropdown2');
-        updateDropdowns()
+        
+        updateDropdowns();
     }
+</script>
 
+<!-- Chat Slide Out Toggle -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const chatTab = document.getElementById("chatSlideOutTab");
+        const chatSlideOut = document.getElementById("chatSlideOut");
 
+        if (chatTab && chatSlideOut) {
+            chatTab.addEventListener("click", () => {
+                chatSlideOut.classList.toggle("showChatSlideOut");
+            });
+        }
+    });
 </script>
 
 
