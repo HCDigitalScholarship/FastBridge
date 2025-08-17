@@ -12,8 +12,8 @@ new_titles = {}
 problematic_texts = {}
 dict_db = None
 checked_words = set()
-remap = pd.read_table('table.tsv')
-remap_dict = dict(zip(remap['Remap'], remap['Preserve']))
+remap = None
+remap_dict = None
 
 # For general data
 possible_headers = [
@@ -280,6 +280,8 @@ if __name__ == "__main__":
     database_name = args.collection
     client = MongoClient(mongo_uri)
     db = client[database_name]
+    remap = pd.read_table('table.tsv')
+    remap_dict = dict(zip(remap['Remap'], remap['Preserve']))
     
     if database_name != "dictionaries":
         dict_name = f"bridge_{args.collection.split('-')[0].lower()}_dictionary"
