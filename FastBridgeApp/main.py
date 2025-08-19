@@ -19,9 +19,15 @@ async def server_error(request, exc):
     context["statuscode"] = 500
     return templates.TemplateResponse("notfound.html", context)
 
+async def invalid_accesss(request, exc):
+    context = {"request": request, "detail": exc.detail}
+    context["statuscode"] = 401
+    return templates.TemplateResponse("notfound.html", context)
+
 exception_handlers = {
     404: not_found,
-    500: server_error
+    500: server_error,
+    401: invalid_accesss
 }
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, exception_handlers=exception_handlers)

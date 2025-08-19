@@ -153,7 +153,7 @@ async def logout(request: Request):
 
 def get_current_user_cookie(user_token: str = Cookie(None)):
     if not user_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Not authorized")
     try:
         decoded_token = auth.verify_id_token(user_token)
         return decoded_token

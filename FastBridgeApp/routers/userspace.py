@@ -1,12 +1,18 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import status as HTTP_403_FORBIDDEN
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from .firebase_auth import get_current_user_cookie
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
-def userspace(request: Request):
+def userspace(request: Request, user=Depends(get_current_user_cookie)):
+    if not request.cookies.get("user_token"):
+        raise HTTPException(
+                    status_code=404, detail="Not authorized"
+                )
     context = {"request": request}
     return templates.TemplateResponse("userspace.html", context)
 
