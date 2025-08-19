@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Request, HTTPException, status, Depends
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import firebase_admin
 from firebase_admin import auth, credentials
-import os
+import os, re, json
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from fastapi.responses import RedirectResponse
 import requests
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
-import json
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from fastapi import Cookie
 
 
@@ -78,7 +77,6 @@ async def google_callback(code: str):
 
     custom_token = auth.create_custom_token(user.uid).decode("utf-8")
 
-    # Redirect to frontend with token (you can set cookie here instead)
     redirect_url = f"/?firebase_token={custom_token}"
     return RedirectResponse(redirect_url)
 
@@ -95,17 +93,28 @@ def login_handler(request: Request):
 class AuthRequest(BaseModel):
     email: str
     password: str
+    username: str = None
 
 @router.post("/signup")
 async def firebase_signup(payload: AuthRequest):
     try:
-        user = auth.create_user(email=payload.email, password=payload.password)
-        custom_token = auth.create_custom_token(user.uid).decode("utf-8")
-        response = RedirectResponse(url="/account/userspace")
-        response.set_cookie(key="user_token", value=custom_token, httponly=True, max_age=36000)
-        return response
+        email_regex = re.compile(r"[^@]+@[^@]+\.[^@]+")
+        if not email_regex.match(payload.email):
+            raise ValueError("Invalid email format")
+        
+        if len(payload.password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        
+        auth.create_user(email=payload.email, password=payload.password, display_name=payload.username)
+        login_result = await firebase_login(payload)
+        
+        return login_result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        if "EMAIL_EXISTS" in str(e):
+            raise HTTPException(status_code=401, detail="Email already exists")
+        elif "INVALID_EMAIL" in str(e):
+            raise HTTPException(status_code=401, detail="Invalid email format")
+        raise HTTPException(status_code=401, detail=str(e))
 
 @router.post("/login")
 async def firebase_login(payload: AuthRequest):

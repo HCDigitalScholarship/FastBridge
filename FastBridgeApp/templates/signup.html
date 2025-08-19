@@ -2,7 +2,7 @@
 
 {% block content %}
   <body>
-    <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover;background-position: top; max-height: 85vh;">
+    <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover;background-position: top; max-height: 90vh;">
       <div class="container"></div>
 
       <style>
@@ -29,6 +29,7 @@
           font-size: 1.6em;
         }
         .auth-form-container input[type='email'],
+        .auth-form-container input[type='text'],
         .auth-form-container input[type='password'] {
           width: 90%;
           padding: 10px;
@@ -75,8 +76,9 @@
 
         <!-- Email/password signup can still hit your FastAPI route if you want -->
         <form id="signup-form">
-          <input type="email" name="email" placeholder="Email" required />
-          <input type="password" name="password" placeholder="Password" required />
+          <input type="email" name="email" placeholder="Email" autocomplete="username" required />
+          <input type="text" name="username" placeholder="username" autocomplete="username" required />
+          <input type="password" name="password" placeholder="Password" autocomplete="new-password" required />
           <input type="submit" value="Sign Up" />
         </form>
 
@@ -99,21 +101,19 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
           })
-        
-          if (res.ok) {
-            window.location.href = '/'
+          if (res.redirected) {
+            window.location.href = res.url;  
           } else {
-            console.error(await res.json())
+            res.json().then(data => alert("Error: " + data.detail));
           }
         })
       </script>
 
-      <!-- Firebase SDK -->
       <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'
         import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
         
-        // 🔑 Your Firebase client config (from Firebase console)
+        // update this
         const firebaseConfig = {
           apiKey: 'YOUR_API_KEY',
           authDomain: 'YOUR_PROJECT.firebaseapp.com',
@@ -132,7 +132,6 @@
             const result = await signInWithPopup(auth, provider)
             const idToken = await result.user.getIdToken()
         
-            // Exchange ID token for secure HTTP-only session cookie
             const res = await fetch('/api/auth/sessionLogin', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -142,7 +141,6 @@
         
             if (!res.ok) throw new Error('Failed to create session')
         
-            // redirect after login
             window.location.href = '/'
           } catch (err) {
             console.error(err)
