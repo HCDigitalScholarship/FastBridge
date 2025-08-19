@@ -1,37 +1,12 @@
-<nav
-  class="navbar navbar-light navbar-expand-md fixed-top navigation-clean-button"
-  id="main-nav"
-  style="padding: 5px; background-color: #fff"
->
+<nav class="navbar navbar-light navbar-expand-md fixed-top navigation-clean-button" id="main-nav" style="padding: 5px; background-color: #fff">
   <div class="container">
-    <a class="navbar-brand" href="/" style="width: 250px; padding-top: 0"
-      ><img
-        src="/assets/img/bridge-text-white.png"
-        style="filter: grayscale(0%); opacity: 1; width: 100%" /></a
-    ><button
-      data-toggle="collapse"
-      class="navbar-toggler"
-      data-target="#navcol-1"
-    >
-      <span class="sr-only">Toggle navigation</span
-      ><span class="navbar-toggler-icon"></span>
-    </button>
-    <div
-      class="collapse navbar-collapse"
-      style="background: white"
-      id="navcol-1"
-    >
+    <a class="navbar-brand" href="/" style="width: 250px; padding-top: 0"><img src="/assets/img/bridge-text-white.png" style="filter: grayscale(0%); opacity: 1; width: 100%" /></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" style="background: white" id="navcol-1">
       <ul class="nav navbar-nav mr-auto">
         <li class="nav-item dropdown">
-          <a
-            class="dropdown-toggle nav-link"
-            data-toggle="dropdown"
-            aria-expanded="false"
-          >
-            APPS
-          </a>
+          <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false">APPS</a>
           <div class="dropdown-menu" role="menu">
-            <a class="dropdown-item" role="presentation" href="/select">Lists</a >
+            <a class="dropdown-item" role="presentation" href="/select">Lists</a>
             <a class="dropdown-item" role="presentation" href="/lemmatizer/">Lemmatizer</a>
             <a class="dropdown-item" role="presentation" href="/stats">Stats</a>
             <a class="dropdown-item" role="presentation" href="/oracle">Oracle</a>
@@ -39,77 +14,58 @@
           </div>
         </li>
         <li class="nav-item dropdown">
-          <a
-            class="dropdown-toggle nav-link"
-            data-toggle="dropdown"
-            aria-expanded="false"
-          >
-            ABOUT
-          </a>
+          <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false">ABOUT</a>
           <div class="dropdown-menu" role="menu">
-            <a class="dropdown-item" role="presentation" href="/about"
-              >Apps & Project</a
-            >
-            <a
-              class="dropdown-item"
-              role="presentation"
-              href="http://iris.sites.haverford.edu/?cat=2"
-              >Blog</a
-            >
-            <a class="dropdown-item" role="presentation" href="/about/people"
-              >People</a
-            >
-            <a class="dropdown-item" role="presentation" href="/about/texts"
-              >Texts</a
-            >
+            <a class="dropdown-item" role="presentation" href="/about">Apps & Project</a>
+            <a class="dropdown-item" role="presentation" href="http://iris.sites.haverford.edu/?cat=2">Blog</a>
+            <a class="dropdown-item" role="presentation" href="/about/people">People</a>
+            <a class="dropdown-item" role="presentation" href="/about/texts">Texts</a>
           </div>
         </li>
 
         <li class="nav-item" role="presentation">
-          <a class="nav-link" href="https://www.haverford.edu/classics"
-            >HAVERFORD CLASSICS</a
-          >
+          <a class="nav-link" href="https://www.haverford.edu/classics">HAVERFORD CLASSICS</a>
         </li>
 
         <li class="nav-item dropdown">
-          <a
-            class="dropdown-toggle nav-link"
-            data-toggle="dropdown"
-            aria-expanded="false"
-          >
-            HELP
-          </a>
+          <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false">HELP</a>
           <div class="dropdown-menu" role="menu">
-            <a
-              class="dropdown-item"
-              role="presentation"
-              href="/help/user_guide/"
-              >User Guide</a
-            ><a
-              class="dropdown-item"
-              role="presentation"
-              href="http://iris.sites.haverford.edu/?cat=3"
-              >Updates</a
-            ><a
-              class="dropdown-item"
-              role="presentation"
-              href="/help/collaborate"
-              >Collaborate</a
-            ><a class="dropdown-item" role="presentation" href="/help/lemmatize"
-              >Lemmatization</a
-            >
+            <a class="dropdown-item" role="presentation" href="/help/user_guide/">User Guide</a><a class="dropdown-item" role="presentation" href="http://iris.sites.haverford.edu/?cat=3">Updates</a><a class="dropdown-item" role="presentation" href="/help/collaborate">Collaborate</a><a class="dropdown-item" role="presentation" href="/help/lemmatize">Lemmatization</a>
           </div>
         </li>
 
         <li class="nav-item" role="presentation">
-          <a
-            class="nav-link"
-            href="https://docs.google.com/forms/d/e/1FAIpQLSfqSe8ynZjkNF2yitncOJ2vd82kFK5kABYMUR-pWywfdyEtgA/viewform?embedded=true#start=embed"
-            >CONTACT</a
-          >
+          <a class="nav-link" href="https://docs.google.com/forms/d/e/1FAIpQLSfqSe8ynZjkNF2yitncOJ2vd82kFK5kABYMUR-pWywfdyEtgA/viewform?embedded=true#start=embed">CONTACT</a>
         </li>
       </ul>
-      <!-- <span class="navbar-text actions"> <a class="text-uppercase login btn-nonbs" href="/account/login">Log In</a><a class="btn btn-nonbs" role="button" href="/account/signup" style="background-color:#228383;color:#fff; font-family: inherit">Sign Up</a></span> -->
+
+      <span class="navbar-text actions" id="navbar-auth">
+        <span id="navbar-logged-in" style="display:none;">
+          <a class="btn btn-nonbs" role="button" href="/userspace" style="background-color:#228383;color:#fff; font-family: inherit">MySpace</a>
+          <a class="text-uppercase login btn-nonbs" href="/account/logout">Logout</a>
+        </span>
+        <span id="navbar-logged-out" style="display:none;">
+          <a class="text-uppercase login btn-nonbs" href="/account/login">Log In</a>
+          <a class="btn btn-nonbs" role="button" href="/account/signup" style="background-color:#228383;color:#fff; font-family: inherit">Sign Up</a>
+        </span>
+      </span>
+      <script>
+        fetch('/account/protected', { credentials: 'include' })
+          .then((resp) => {
+            if (!resp.ok) throw new Error('Not authenticated')
+            return resp.json()
+          })
+          .then((data) => {
+            console.log('User data:', data)
+            document.getElementById('navbar-logged-in').style.display = ''
+            document.getElementById('navbar-logged-out').style.display = 'none'
+          })
+          .catch((err) => {
+            console.log('User is not authenticated or got HTML:', err.message)
+            document.getElementById('navbar-logged-in').style.display = 'none'
+            document.getElementById('navbar-logged-out').style.display = ''
+          })
+      </script>
     </div>
   </div>
 </nav>

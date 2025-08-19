@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+  <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover; background-position: top; min-height: 100vh;">
+    <div class="container" style="max-width: 90vw; margin: 40px auto;">
+
+      <div class="auth-form-container" style="background:rgba(0,0,0,0.76); border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,0.1); padding:32px 24px; text-align:center;">
+        <h2 style="color:#fff; margin-bottom:16px;">Welcome to MySpace</h2>
+        <p style="color:#ccc; margin-bottom:24px;">This is your user dashboard. Here you can manage your account, saved texts, and preferences.</p>
+
+        <div class="dashboard-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
+          <a href="/userspace/notes" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Notes</a>
+          <a href="/userspace/vocab" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Vocabulary</a>
+          <a href="/userspace/media" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Media</a>
+        </div>
+
+        <div class="tab-content">
+          <div id="notes">
+            <p style="color:#fff;">Your notes will appear here.</p>
+          </div>
+          <div id="vocabulary" style="display:none;">
+            <p style="color:#fff;">Your vocabulary will appear here.</p>
+          </div>
+          <div id="media" style="display:none;">
+            <p style="color:#fff;">Your media will appear here.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+
+<script>
+  const tabs = document.querySelectorAll('.user-tab');
+  const contents = document.querySelectorAll('.tab-content > div');
+
+
+  // Tab data cache
+  const tabDataCache = {};
+
+  // Helper to fetch and display data (with cache)
+  async function fetchTabData(route, contentDiv) {
+    if (tabDataCache[route]) {
+      contentDiv.innerHTML = tabDataCache[route];
+      return;
+    }
+    contentDiv.innerHTML = '<p style="color:#fff;">Loading...</p>';
+    try {
+      const resp = await fetch(route);
+      const data = await resp.json();
+      let html = '';
+      if (data.notes) {
+        html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.notes, null, 2)}</pre>`;
+      } else if (data.vocab) {
+        html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.vocab, null, 2)}</pre>`;
+      } else if (data.media) {
+        html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.media, null, 2)}</pre>`;
+      } else {
+        html = '<p style="color:#fff;">No data found.</p>';
+      }
+      contentDiv.innerHTML = html;
+      tabDataCache[route] = html;
+    } catch {
+      contentDiv.innerHTML = '<p style="color:#fff;">Error loading data.</p>';
+    }
+  }
+
+  tabs.forEach((tab, idx) => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.borderBottom = 'none';
+        t.style.color = '#ccc';
+      });
+      contents.forEach(c => c.style.display = 'none');
+
+      tab.classList.add('active');
+      tab.style.borderBottom = '3px solid #228383';
+      tab.style.color = '#fff';
+      contents[idx].style.display = 'block';
+
+      fetchTabData(tab.getAttribute('href'), contents[idx]);
+    });
+  });
+
+  fetchTabData(tabs[0].getAttribute('href'), contents[0]);
+</script>
+
+{% endblock %}
