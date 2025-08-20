@@ -6,13 +6,14 @@
     <div class="container" style="max-width: 90vw; margin: 40px auto;">
 
       <div class="auth-form-container" style="background:rgba(0,0,0,0.76); border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,0.1); padding:32px 24px; text-align:center;">
-        <h2 style="color:#fff; margin-bottom:16px;">Welcome to MySpace</h2>
-        <p style="color:#ccc; margin-bottom:24px;">This is your user dashboard. Here you can manage your account, saved texts, and preferences.</p>
+        <h2 style="color:#fff; margin-bottom:16px;">{{ username }}'s Space</h2>
+        <p style="color:#ccc; margin-bottom:24px;"><em>This is your user dashboard. Here you can manage your account, saved texts, and preferences.</em></p>
 
         <div class="dashboard-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
           <a href="/userspace/notes" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Notes</a>
           <a href="/userspace/vocab" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Vocabulary</a>
           <a href="/userspace/media" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Media</a>
+          <a href="#" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
         </div>
 
         <div class="tab-content">
@@ -24,6 +25,9 @@
           </div>
           <div id="media" style="display:none;">
             <p style="color:#fff;">Your media will appear here.</p>
+          </div>
+          <div id="create" style="display:none;">
+            <p style="color:#fff;">Your list will appear here.</p>
           </div>
         </div>
       </div>
@@ -83,7 +87,9 @@
       tab.style.color = '#fff';
       contents[idx].style.display = 'block';
 
-      fetchTabData(tab.getAttribute('href'), contents[idx]);
+      if (tabs[0].getAttribute('href') !== "#") {
+        fetchTabData(tabs[0].getAttribute('href'), contents[0]);
+      }
     });
   });
 

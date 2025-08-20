@@ -14,6 +14,9 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
                     status_code=404, detail="Not authorized"
                 )
     context = {"request": request}
+    context["username"] = user.get('name', 'Guest')  
+    context["email"] = user.get('email', 'No email provided')
+    context["user_id"] = user.get('uid', None)  
     return templates.TemplateResponse("userspace.html", context)
 
 @router.get("/notes")
