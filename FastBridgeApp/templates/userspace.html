@@ -135,15 +135,23 @@
                   const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
                   const data = await resp.json();
                   box.textContent = `${list}`;
-                  // Display details in the details div below the box
+                  // Display details in the details div below the box as flash cards
                   detailsDiv.style.display = 'block';
-                  detailsDiv.style.background = 'rgba(255, 255, 255, 0.7)';
-                  detailsDiv.style.color = '#000';
-                  detailsDiv.style.width = 'fit-content';
+                  detailsDiv.style.color = '#fff';
                   detailsDiv.style.marginTop = '6px';
                   detailsDiv.style.padding = '8px 12px';
                   detailsDiv.style.borderRadius = '6px';
-                  detailsDiv.innerHTML = `<pre style='margin:0; color:#000;'>${JSON.stringify(data, null, 2)}</pre>`;
+                  let cardsHtml = '<div style="display:flex; flex-wrap:wrap; gap:16px;">';
+                  Object.entries(data).forEach(([word, info]) => {
+                    cardsHtml += `<div style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start;'>`;
+                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
+                    Object.entries(info).forEach(([key, val]) => {
+                      cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
+                    });
+                    cardsHtml += `</div>`;
+                  });
+                  cardsHtml += '</div>';
+                  detailsDiv.innerHTML = cardsHtml;
                 } catch {
                   box.textContent = `${list}`;
                   alert('Error loading list details');

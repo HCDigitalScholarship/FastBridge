@@ -139,8 +139,8 @@ async def get_list_details(request: Request, language: str, list_name: str, user
     cursor = collection.find({"TITLE": {"$in": list(words)}})
     
     words_info_dict = {
-    word_doc["TITLE"]: {k: v for k, v in word_doc.items() if k != "_id" and k != "TITLE" and v is not None}
+    word_doc["TITLE"]: {k.replace("_", " "): v for k, v in word_doc.items() if k != "_id" and k != "TITLE" and v is not None}
         for word_doc in cursor
     }
 
-    return JSONResponse({"words_info": words_info_dict})
+    return JSONResponse(words_info_dict)
