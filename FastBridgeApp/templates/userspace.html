@@ -137,11 +137,13 @@
                   box.textContent = `${list}`;
                   // Display details in the details div below the box
                   detailsDiv.style.display = 'block';
-                  detailsDiv.style.color = '#fff';
+                  detailsDiv.style.background = 'rgba(255, 255, 255, 0.7)';
+                  detailsDiv.style.color = '#000';
+                  detailsDiv.style.width = 'fit-content';
                   detailsDiv.style.marginTop = '6px';
                   detailsDiv.style.padding = '8px 12px';
                   detailsDiv.style.borderRadius = '6px';
-                  detailsDiv.innerHTML = `<pre style='margin:0; color:#fff;'>${JSON.stringify(data, null, 2)}</pre>`;
+                  detailsDiv.innerHTML = `<pre style='margin:0; color:#000;'>${JSON.stringify(data, null, 2)}</pre>`;
                 } catch {
                   box.textContent = `${list}`;
                   alert('Error loading list details');
