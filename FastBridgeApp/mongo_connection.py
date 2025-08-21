@@ -1,4 +1,4 @@
-from pymongo import MongoClient, errors
+from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import os
 from dotenv import load_dotenv
@@ -28,30 +28,6 @@ class AtlasClient ():
         selected_database = self.mongodb_client[dbname]
         return selected_database
 
-# on_dev_server = False # change to True when working on dev server 
-
-# if on_dev_server:
-#     try:
-#         uri = 'mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.10'
-
-#         # Create a MongoClient with the URI containing authentication details
-#         atlas_client = MongoClient(uri)
-
-#         # Check if the connection is successful
-#         atlas_client.admin.command("ping")
-#         print("Connected successfully to MongoDB")
-
-#         db = atlas_client.get_database("Latin")
-#         dict_db = atlas_client.get_database("Latin-Dicts")
-#         print("Connected to database:", db.name)
-
-#     except ConnectionFailure as e:
-#         print(f"Failed to connect to MongoDB: {e}")
-#         raise
-#     except Exception as e:
-#         print(f"An unexpected error occurred: {e}")
-#         raise
-# else:
 try: 
     DB_NAME = 'Latin-Texts'
     ATLAS_URI = os.getenv('ATLAS_URI')
