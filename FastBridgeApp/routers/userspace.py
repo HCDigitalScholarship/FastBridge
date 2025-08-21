@@ -21,13 +21,6 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
     context["user_id"] = user.get('uid', None)  
     return templates.TemplateResponse("userspace.html", context)
 
-@router.get("/notes")
-def get_notes(request: Request):
-    return {"notes": {
-        "note1": "This is note 1.",
-        "note2": "This is note 2.",
-        "note3": "This is note 3."
-    }}
 
 @router.get("/vocab")
 def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
@@ -42,22 +35,16 @@ def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
     )
 
     if not doc or "languages" not in doc:
-        return {"vocab": {"Latin": [], "Greek": []}}
+        return {"vocab": {"No lists Found. <br> Create new list in the 'Create List' tab": []}}
 
     vocab_summary = {}
     for language, lists in doc["languages"].items():
+        print(language, lists)
+        if not lists: continue
         vocab_summary[language] = [lst["name"] for lst in lists]
-        
+    if not vocab_summary:
+        vocab_summary = {"No Lists Found. <br> Create new list in the 'Create List' tab": []}
     return {"vocab": vocab_summary}
-
-
-@router.get("/media")
-def get_media(request: Request):
-    return {"media": {
-        "image1": "Image 1 URL or description.",
-        "video1": "Video 1 URL or description.",
-        "audio1": "Audio 1 URL or description."
-    }}
 
 
 @router.get("/headwords")
@@ -74,7 +61,6 @@ async def get_headwords(request: Request, language: str = "Latin", query: str = 
     headwords = [doc["TITLE"] for doc in cursor if "TITLE" in doc]
     
     return {"headwords": headwords}
-
 
 class ListCreate(BaseModel):
     list_name: str
@@ -130,7 +116,6 @@ async def get_list_details(request: Request, language: str, list_name: str, user
 
     if doc:
         words = doc["languages"][language][0]["words"]
-        print(words)
     
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
@@ -144,3 +129,75 @@ async def get_list_details(request: Request, language: str, list_name: str, user
     }
 
     return JSONResponse(words_info_dict)
+
+@router.post("/update_list")
+async def update_user_list(payload: ListCreate, user=Depends(get_current_user_cookie)):
+    user_id = user.get("uid", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    storage = atlas_client.get_database("App-Storage")
+
+    # Try to replace the list with a matching name
+    result = storage.lists.update_one(
+        {
+            "user_id": user_id,
+            f"languages.{payload.language}.name": payload.list_name
+        },
+        {
+            "$set": {
+                f"languages.{payload.language}.$": {
+                    "name": payload.list_name,
+                    "words": payload.words,
+                    "last_update": datetime.now().isoformat()
+                }
+            }
+        }
+    )
+
+    if result.matched_count == 0:
+        return JSONResponse(
+            {"success": False, "message": f"List '{payload.list_name}' in {payload.language} not found for user {user_id}."},
+            status_code=404
+        )
+
+    return {
+        "success": True,
+        "message": f"List '{payload.list_name}' updated in {payload.language} for user {user_id}.",
+    }
+
+
+@router.post("/delete_list")
+async def delete_user_list(request: Request, user=Depends(get_current_user_cookie)):
+    """
+    Deletes the user's vocabulary list.
+    Expects JSON: { 'list_name': str, 'language': str }
+    """
+    user_id = user.get("uid", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    data = await request.json()
+    list_name = data.get("list_name")
+    language = data.get("language")
+
+    if not list_name or not language:
+        raise HTTPException(status_code=400, detail="Missing list_name or language")
+
+    storage = atlas_client.get_database("App-Storage")
+
+    result = storage.lists.update_one(
+        {"user_id": user_id},
+        {"$pull": {f"languages.{language}": {"name": list_name}}}
+    )
+
+    if result.modified_count == 0:
+        return JSONResponse(
+            {"success": False, "message": f"List '{list_name}' in {language} not found for user {user.get('username', '')}."},
+            status_code=404
+        )
+
+    return {
+        "success": True,
+        "message": f"List '{list_name}' deleted from {user.get('username', '')} {language} List."
+    }
