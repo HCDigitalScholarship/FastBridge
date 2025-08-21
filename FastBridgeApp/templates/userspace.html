@@ -11,7 +11,7 @@
 
         <div class="dashboard-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
           <a href="/userspace/notes" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Notes</a>
-          <a href="/userspace/vocab" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Vocabulary</a>
+            <a href="/userspace/vocab" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Vocabulary</a>
           <a href="/userspace/media" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Media</a>
           <a href="#" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
         </div>
@@ -20,14 +20,45 @@
           <div id="notes">
             <p style="color:#fff;">Your notes will appear here.</p>
           </div>
-          <div id="vocabulary" style="display:none;">
+            <div id="vocabulary">
             <p style="color:#fff;">Your vocabulary will appear here.</p>
           </div>
           <div id="media" style="display:none;">
             <p style="color:#fff;">Your media will appear here.</p>
           </div>
           <div id="create" style="display:none;">
-            <p style="color:#fff;">Your list will appear here.</p>
+            <div id="create-list-container" style="color:#fff; text-align:left;">
+              <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <h3 style="margin-bottom:18px; font-size:1.5rem; font-weight:600; color:#22b3b3; text-align:center;">Create a New List</h3>
+                <div style="margin-bottom:16px; width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <label for="list-name" style="font-weight:500; color:#fff; text-align:center;">List Name:</label>
+                  <input type="text" id="list-name" style="margin-top:6px; margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                </div>
+                <div style="margin-bottom:16px; width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <label for="language-select" style="font-weight:500; color:#fff; text-align:center;">Select Language:</label>
+                  <select id="language-select" style="margin-top:6px; margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                    <option value="">--Choose--</option>
+                    <option value="Greek">Greek</option>
+                    <option value="Latin">Latin</option>
+                  </select>
+                </div>
+                <button id="fetch-headwords-btn" style="margin-bottom:18px; background:#22b3b3; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; text-align:center;">Fetch Headwords</button>
+                <div id="headwords-search-container" style="display:none; margin-bottom:18px; width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <div id="search-headword-group" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                    <label for="headword-search" style="font-weight:500; color:#fff; text-align:center;">Search Headwords:</label>
+                    <input type="text" id="headword-search" style="width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; margin-top:6px; display:block; text-align:center;" placeholder="Type to search...">
+                    <small style="color:#aaa; margin-top:6px;">Type a prefix to search, or fetch all (slower).</small>
+                    <button id="fetch-all-headwords-btn" style="margin-top:2rem; background:#666; color:#fff; padding:6px 12px; border:none; border-radius:6px; font-size:0.9rem; cursor:pointer;">Fetch All Headwords ⚠️</button>
+                    <select id="headwords-dropdown" size="5" style="width:14rem; margin-top:1rem; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; display:block; text-align:center;">
+                    </select>
+                  </div>
+                </div>
+
+                <div id="selected-headwords-container" style="margin-bottom:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+                <button id="save-list-btn" style="background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; text-align:center;">Save List</button>
+                <div id="create-list-message" style="margin-top:16px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -40,7 +71,6 @@
 <script>
   const tabs = document.querySelectorAll('.user-tab');
   const contents = document.querySelectorAll('.tab-content > div');
-
 
   // Tab data cache
   const tabDataCache = {};
@@ -59,7 +89,66 @@
       if (data.notes) {
         html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.notes, null, 2)}</pre>`;
       } else if (data.vocab) {
-        html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.vocab, null, 2)}</pre>`;
+        // Expecting {language: [list names]}
+        html = '';
+        Object.entries(data.vocab).forEach(([lang, lists]) => {
+          html += `<div style='margin-bottom:18px; text-align:left;'>`;
+          html += `<h4 style='color:#22b3b3; margin-bottom:8px; text-align:left;'>${lang}</h4>`;
+          html += `<div class='vocab-list-col' style='display:flex; flex-direction:column; gap:12px; justify-content:flex-start;'>`;
+          lists.forEach(listName => {
+            html += `
+              <div style='display:flex; flex-direction:column; align-items:flex-start;'>
+                <div class='vocab-list-box' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; margin-bottom:4px;'>${listName}</div>
+                <div class='vocab-list-details' style='display:none; width:100%;'></div>
+              </div>
+            `;
+          });
+          html += `</div></div>`;
+        });
+        // Add hover effect via JS
+        setTimeout(() => {
+          document.querySelectorAll('.vocab-list-box').forEach(box => {
+            box.addEventListener('mouseenter', () => {
+              box.style.background = '#228383';
+              box.style.color = '#fff';
+            });
+            box.addEventListener('mouseleave', () => {
+              box.style.background = '#222';
+              box.style.color = '#fff';
+            });
+          });
+        }, 50);
+        // Add click listeners after rendering
+        setTimeout(() => {
+          document.querySelectorAll('.vocab-list-box').forEach(box => {
+              box.addEventListener('click', async () => {
+                const lang = box.getAttribute('data-lang');
+                const list = box.getAttribute('data-list');
+                const detailsDiv = box.parentNode.querySelector('.vocab-list-details');
+                // Toggle: if details are visible and loaded, hide them and return
+                if (detailsDiv.style.display === 'block' && detailsDiv.innerHTML.trim() !== '') {
+                  detailsDiv.style.display = 'none';
+                  return;
+                }
+                box.textContent = 'Loading...';
+                try {
+                  const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
+                  const data = await resp.json();
+                  box.textContent = `${list}`;
+                  // Display details in the details div below the box
+                  detailsDiv.style.display = 'block';
+                  detailsDiv.style.color = '#fff';
+                  detailsDiv.style.marginTop = '6px';
+                  detailsDiv.style.padding = '8px 12px';
+                  detailsDiv.style.borderRadius = '6px';
+                  detailsDiv.innerHTML = `<pre style='margin:0; color:#fff;'>${JSON.stringify(data, null, 2)}</pre>`;
+                } catch {
+                  box.textContent = `${list}`;
+                  alert('Error loading list details');
+                }
+              });
+          });
+        }, 100);
       } else if (data.media) {
         html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.media, null, 2)}</pre>`;
       } else {
@@ -87,13 +176,226 @@
       tab.style.color = '#fff';
       contents[idx].style.display = 'block';
 
-      if (tabs[0].getAttribute('href') !== "#") {
-        fetchTabData(tabs[0].getAttribute('href'), contents[0]);
+      // Only fetch data for tabs except Create List
+      if (tab.getAttribute('href') !== "#") {
+        fetchTabData(tab.getAttribute('href'), contents[idx]);
       }
     });
   });
 
-  fetchTabData(tabs[0].getAttribute('href'), contents[0]);
+    // Initial load for Vocabulary tab
+    tabs.forEach((t, i) => {
+      if (t.getAttribute('href') === '/userspace/vocab') {
+        t.classList.add('active');
+        t.style.borderBottom = '3px solid #228383';
+        t.style.color = '#fff';
+        contents[i].style.display = 'block';
+        fetchTabData(t.getAttribute('href'), contents[i]);
+      } else {
+        t.classList.remove('active');
+        t.style.borderBottom = 'none';
+        t.style.color = '#ccc';
+        contents[i].style.display = 'none';
+      }
+    });
+
+  const fetchHeadwordsBtn = document.getElementById('fetch-headwords-btn');
+  const fetchAllHeadwordsBtn = document.getElementById('fetch-all-headwords-btn');
+  const languageSelect = document.getElementById('language-select');
+  const headwordsSearchContainer = document.getElementById('headwords-search-container');
+  const headwordSearch = document.getElementById('headword-search');
+  const headwordsDropdown = document.getElementById('headwords-dropdown');
+  const selectedHeadwordsContainer = document.getElementById('selected-headwords-container');
+  const saveListBtn = document.getElementById('save-list-btn');
+  const listNameInput = document.getElementById('list-name');
+  const createListMessage = document.getElementById('create-list-message');
+  const searchHeadwordGroup = document.getElementById('search-headword-group');
+
+  let allHeadwords = [];
+  let filteredHeadwords = [];
+  let selectedHeadwords = [];
+
+  // Reset state when language changes
+  languageSelect.addEventListener('change', () => {
+    selectedHeadwords = [];
+    renderSelectedHeadwords();
+    headwordsSearchContainer.style.display = 'none';
+    searchHeadwordGroup.style.display = 'none';
+    headwordsDropdown.innerHTML = '';
+    headwordSearch.value = '';
+    allHeadwords = [];
+    filteredHeadwords = [];
+    createListMessage.textContent = '';
+  });
+
+  // Fetch headwords by prefix (search mode starts here)
+  fetchHeadwordsBtn.addEventListener('click', () => {
+    const lang = languageSelect.value;
+    if (!lang) {
+      createListMessage.textContent = 'Please select a language.';
+      return;
+    }
+    headwordsSearchContainer.style.display = 'block';
+    searchHeadwordGroup.style.display = 'flex';
+    createListMessage.textContent = 'Type in the search bar to load headwords.';
+  });
+
+  // Live search (prefix query to backend)
+  function debounce(fn, delay) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  headwordSearch.addEventListener('input', debounce(async () => {
+    const query = headwordSearch.value.trim();
+    if (!query) {
+      headwordsDropdown.innerHTML = '';
+      return;
+    }
+    createListMessage.textContent = 'Searching...';
+    try {
+      const resp = await fetch(`/userspace/headwords?language=${languageSelect.value}&query=${encodeURIComponent(query)}`);
+      const data = await resp.json();
+      filteredHeadwords = data.headwords || [];
+      headwordsDropdown.innerHTML = '';
+      filteredHeadwords.forEach(hw => {
+        const opt = document.createElement('option');
+        opt.value = hw;
+        opt.textContent = hw;
+        headwordsDropdown.appendChild(opt);
+      });
+      createListMessage.textContent = '';
+    } catch {
+      createListMessage.textContent = 'Error searching headwords.';
+    }
+  }, 500));
+
+
+  // Fetch ALL headwords (slow)
+  fetchAllHeadwordsBtn.addEventListener('click', async () => {
+    const lang = languageSelect.value;
+    if (!lang) {
+      createListMessage.textContent = 'Please select a language first.';
+      return;
+    }
+    createListMessage.textContent = 'Fetching ALL headwords (may be slow)...';
+    try {
+      const resp = await fetch(`/userspace/headwords?language=${lang}`);
+      const data = await resp.json();
+      allHeadwords = data.headwords || [];
+      filteredHeadwords = allHeadwords;
+      headwordsDropdown.innerHTML = '';
+      filteredHeadwords.forEach(hw => {
+        const opt = document.createElement('option');
+        opt.value = hw;
+        opt.textContent = hw;
+        headwordsDropdown.appendChild(opt);
+      });
+      createListMessage.textContent = '';
+    } catch {
+      createListMessage.textContent = 'Error fetching headwords.';
+    }
+  });
+
+  // Handle selection from dropdown
+  headwordsDropdown.addEventListener('change', () => {
+    const selected = Array.from(headwordsDropdown.selectedOptions).map(opt => opt.value);
+    selected.forEach(hw => {
+      if (!selectedHeadwords.includes(hw)) {
+        selectedHeadwords.push(hw);
+      }
+    });
+    renderSelectedHeadwords();
+  });
+
+  // Render selected headwords as tags
+  function renderSelectedHeadwords() {
+    selectedHeadwordsContainer.innerHTML = '';
+    selectedHeadwords.forEach(hw => {
+      const box = document.createElement('span');
+      box.textContent = hw;
+      box.style.display = 'inline-flex';
+      box.style.alignItems = 'center';
+      box.style.background = 'linear-gradient(90deg,#22b3b3 60%,#228383 100%)';
+      box.style.color = '#fff';
+      box.style.padding = '6px 14px 6px 10px';
+      box.style.margin = '2px';
+      box.style.borderRadius = '18px';
+      box.style.fontWeight = '500';
+      box.style.fontSize = '1rem';
+      box.style.boxShadow = '0 1px 4px rgba(34,179,179,0.12)';
+      const x = document.createElement('span');
+      x.textContent = ' ×';
+      x.style.cursor = 'pointer';
+      x.style.color = '#fff';
+      x.style.background = '#ff6666';
+      x.style.borderRadius = '50%';
+      x.style.marginLeft = '8px';
+      x.style.padding = '2px 8px';
+      x.style.fontWeight = 'bold';
+      x.onmouseover = () => { x.style.background = '#ff3333'; };
+      x.onmouseout = () => { x.style.background = '#ff6666'; };
+      x.onclick = () => {
+        selectedHeadwords = selectedHeadwords.filter(w => w !== hw);
+        renderSelectedHeadwords();
+      };
+      box.appendChild(x);
+      selectedHeadwordsContainer.appendChild(box);
+    });
+  }
+
+  // Save list to backend
+  saveListBtn.addEventListener('click', async () => {
+    const listName = listNameInput.value.trim();
+    const lang = languageSelect.value;
+    if (!listName) {
+      createListMessage.textContent = 'Please enter a list name.';
+      return;
+    }
+    if (!lang) {
+      createListMessage.textContent = 'Please select a language.';
+      return;
+    }
+    if (selectedHeadwords.length === 0) {
+      createListMessage.textContent = 'Please select at least one headword.';
+      return;
+    }
+    createListMessage.textContent = 'Saving list...';
+    try {
+      const resp = await fetch('/userspace/create_list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          list_name: listName,
+          language: lang,
+          words: selectedHeadwords
+        })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        createListMessage.textContent = 'List created successfully! Refreshing page in 3 seconds...';
+        listNameInput.value = '';
+        languageSelect.value = '';
+        headwordsSearchContainer.style.display = 'none';
+        selectedHeadwords = [];
+        renderSelectedHeadwords();
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      } else {
+        createListMessage.textContent = 'Error creating list.';
+      }
+    } catch {
+      createListMessage.textContent = 'Error creating list.';
+    }
+  });
+
+  // Hide search group by default
+  searchHeadwordGroup.style.display = 'none';
 </script>
+
 
 {% endblock %}
