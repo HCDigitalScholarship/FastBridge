@@ -95,11 +95,12 @@
           e.preventDefault()
           const email = e.target.email.value
           const password = e.target.password.value
+          const username = e.target.username.value
         
           const res = await fetch('/account/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, username })
           })
           if (res.redirected) {
             window.location.href = res.url;  

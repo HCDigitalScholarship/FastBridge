@@ -110,11 +110,15 @@ async def firebase_signup(payload: AuthRequest):
         
         return login_result
     except Exception as e:
+        error_detail = str(e)
         if "EMAIL_EXISTS" in str(e):
-            raise HTTPException(status_code=401, detail="Email already exists")
+            error_detail = "Email already exists"
         elif "INVALID_EMAIL" in str(e):
-            raise HTTPException(status_code=401, detail="Invalid email format")
-        raise HTTPException(status_code=401, detail=str(e))
+            error_detail = "Invalid email format"
+        return JSONResponse(
+                status_code=401, 
+                content={"detail": error_detail}
+            )
 
 @router.post("/login")
 async def firebase_login(payload: AuthRequest):
@@ -127,7 +131,20 @@ async def firebase_login(payload: AuthRequest):
 
     res = requests.post(url, json=body)
     if res.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        try:
+            error_data = res.json()
+            message = (
+                error_data.get("error", {})
+                .get("message", "Invalid email or password")
+                .replace("_", " ")
+            )
+        except ValueError:
+            message = "Invalid email or password"
+
+        return JSONResponse(
+            status_code=401,  # force 401 for auth errors
+            content={"detail": message}
+        )
 
     data = res.json()
     id_token = data["idToken"]  
