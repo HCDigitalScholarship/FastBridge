@@ -144,7 +144,7 @@ async def update_user_list(payload: ListCreate, user=Depends(get_current_user_co
 
     storage = atlas_client.get_database("App-Storage")
 
-    # Try to replace the list with a matching name
+    # Update only the 'words' and 'last_update' fields, keeping other metadata
     result = storage.lists.update_one(
         {
             "user_id": user_id,
@@ -152,24 +152,24 @@ async def update_user_list(payload: ListCreate, user=Depends(get_current_user_co
         },
         {
             "$set": {
-                f"languages.{payload.language}.$": {
-                    "name": payload.list_name,
-                    "words": payload.words,
-                    "last_update": datetime.now().isoformat()
-                }
+                f"languages.{payload.language}.$.words": payload.words,
+                f"languages.{payload.language}.$.last_update": datetime.now().isoformat()
             }
         }
     )
 
     if result.matched_count == 0:
         return JSONResponse(
-            {"success": False, "message": f"List '{payload.list_name}' in {payload.language} not found for user {user_id}."},
+            {
+                "success": False,
+                "message": f"List '{payload.list_name}' in {payload.language} not found for user {user_id}."
+            },
             status_code=404
         )
 
     return {
         "success": True,
-        "message": f"List '{payload.list_name}' updated in {payload.language} for user {user_id}.",
+        "message": f"List '{payload.list_name}' updated in {payload.language} for user {user_id}."
     }
 
 
@@ -186,6 +186,7 @@ async def delete_user_list(request: Request, user=Depends(get_current_user_cooki
     data = await request.json()
     list_name = data.get("list_name")
     language = data.get("language")
+    print("here to delete list", list_name, language)
 
     if not list_name or not language:
         raise HTTPException(status_code=400, detail="Missing list_name or language")
