@@ -258,6 +258,85 @@ function attachVocabListEvents() {
                 cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
                 cardsHtml += `</div>`;
                 detailsArea.innerHTML = cardsHtml;
+                // Add Share List button
+                const shareBtnHtml = `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
+                detailsArea.querySelector('div[style*="display:flex;"]').insertAdjacentHTML('beforeend', shareBtnHtml);
+                // Share List button logic
+                const shareListBtn = detailsArea.querySelector('#share-list-btn');
+                shareListBtn.addEventListener('click', () => {
+                    // Show modal for share options
+                    let modal = document.createElement('div');
+                    modal.className = 'share-list-modal';
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100vw';
+                    modal.style.height = '100vh';
+                    modal.style.background = 'rgba(0,0,0,0.6)';
+                    modal.style.zIndex = '9999';
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                    modal.innerHTML = `
+                        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:420px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+                            <h3 style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>${list}</span> (${lang})</h3>
+                            <div style='margin-bottom:18px;'>
+                                <label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>
+                                <input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>
+                                <input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Editable Share (allows others to edit)</label>
+                            </div>
+                            <div id='share-list-message' style='color:#ffb366; margin-bottom:10px;'></div>
+                            <div style='display:flex; gap:12px; justify-content:flex-end;'>
+                                <button id='share-list-confirm-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Get Share Link</button>
+                                <button id='share-list-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Cancel</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    const confirmBtn = modal.querySelector('#share-list-confirm-btn');
+                    const cancelBtn = modal.querySelector('#share-list-cancel-btn');
+                    const messageDiv = modal.querySelector('#share-list-message');
+                    confirmBtn.addEventListener('click', async () => {
+                        const mode = modal.querySelector('input[name="share-mode"]:checked').value;
+                        confirmBtn.textContent = 'Generating...';
+                        confirmBtn.disabled = true;
+                        try {
+                            const resp = await fetch('/userspace/get_share_id', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    list_name: list,
+                                    sharing_mode: mode,
+                                    language: lang
+                                })
+                            });
+                            const data = await resp.json();
+                            if (data.success && data.share_id) {
+                                messageDiv.innerHTML = `<span style='color:#22b3b3;'>Share ID:</span> <input type='text' value='${data.share_id}' style='width:70%; padding:6px; border-radius:6px; border:none; background:#333; color:#fff; font-size:1rem;' readonly> <button id='copy-share-link-btn' style='background:#228383; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Copy</button>`;
+                                const copyBtn = messageDiv.querySelector('#copy-share-link-btn');
+                                copyBtn.addEventListener('click', () => {
+                                    const input = messageDiv.querySelector('input');
+                                    input.select();
+                                    document.execCommand('copy');
+                                    copyBtn.textContent = 'Copied!';
+                                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+                                });
+                                confirmBtn.style.display = 'none';
+                            } else {
+                                messageDiv.textContent = 'Error generating share link.';
+                                confirmBtn.disabled = false;
+                                confirmBtn.textContent = 'Get Share Link';
+                            }
+                        } catch {
+                            messageDiv.textContent = 'Error generating share link.';
+                            confirmBtn.disabled = false;
+                            confirmBtn.textContent = 'Get Share Link';
+                        }
+                    });
+                    cancelBtn.addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+                });
                 // Delete button logic for flashcards
                 const flashcardList = detailsArea.querySelector('#flashcard-list');
                 flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {

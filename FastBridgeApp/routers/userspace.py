@@ -341,3 +341,45 @@ async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
         "message": f"Added {len(words_to_add)} words to list '{list_name}' in {language}.",
         "added_words": words_to_add
     }
+
+class ShareListPayload(BaseModel):
+    list_name: str
+    language: str
+    sharing_mode: str   # "copy" or "editable"
+
+@router.post("/get_share_id", response_class=JSONResponse)
+async def get_share_id(
+    payload: ShareListPayload,
+    request: Request,
+    user=Depends(get_current_user_cookie)
+):
+    print("Payload received:", payload)
+    user_id = user.get('uid', None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    storage = atlas_client.get_database("App-Storage")
+
+    # Directly query for the list inside the user's language sub-array
+    doc = storage.lists.find_one(
+        {"user_id": user_id, f"languages.{payload.language}.name": payload.list_name},
+        {f"languages.{payload.language}.$": 1, "_id": 0}
+    )
+
+    if not doc:
+        return {"success": False, "message": "List not found."}
+
+    lst = doc["languages"][payload.language][0]
+    share_links = lst.get("share_links", {})
+    
+    if payload.sharing_mode == "copy":
+        share_id = share_links.get("copy")
+    elif payload.sharing_mode == "editable":
+        share_id = share_links.get("linked")
+    else:
+        return {"success": False, "message": "Invalid sharing mode."}
+
+    if not share_id:
+        return {"success": False, "message": "Share link not found."}
+    
+    return {"success": True, "share_id": share_id}
