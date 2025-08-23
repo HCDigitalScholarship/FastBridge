@@ -92,16 +92,11 @@ function showWordSelectModal({lang, list, onSave, saveLabel = 'Save', cancelLabe
 const tabs = document.querySelectorAll('.user-tab');
 const contents = document.querySelectorAll('.tab-content > div');
 const fetchWordsBtn = document.getElementById('fetch-words-btn');
-const fetchAllWordsBtn = document.getElementById('fetch-all-words-btn');
 const languageSelect = document.getElementById('language-select');
-const wordsSearchContainer = document.getElementById('words-search-container');
-const wordSearch = document.getElementById('word-search');
-const wordsTable = document.getElementById('words-table');
 const selectedWordsContainer = document.getElementById('selected-words-container');
 const saveListBtn = document.getElementById('save-list-btn');
 const listNameInput = document.getElementById('list-name');
 const createListMessage = document.getElementById('create-list-message');
-const searchWordGroup = document.getElementById('search-word-group');
 
 let allWords = [];
 let filteredWords = [];
@@ -459,11 +454,7 @@ tabs.forEach((t, i) => {
 languageSelect.addEventListener('change', () => {
 selectedWords = [];
 renderSelectedWords();
-wordsSearchContainer.style.display = 'none';
-searchWordGroup.style.display = 'none';
-const tbody = wordsTable.querySelector('tbody');
 tbody.innerHTML = '';
-wordSearch.value = '';
 allWords = [];
 filteredWords = [];
 createListMessage.textContent = '';
@@ -501,75 +492,7 @@ return (...args) => {
     timeout = setTimeout(() => fn(...args), delay);
 };
 }
-// Render words table
-function renderWordsTable(wordsArr) {
-const tbody = wordsTable.querySelector('tbody');
-tbody.innerHTML = '';
-wordsArr.forEach((wordArr, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-    <td style="padding:8px;">${wordArr[0]}</td>
-    <td style="padding:8px;">${wordArr[1]}</td>
-    <td style="padding:8px;"><input type="checkbox" class="word-select-checkbox" data-idx="${idx}" ${selectedWords.some(w => w[0] === wordArr[0] && w[1] === wordArr[1]) ? 'checked' : ''}></td>
-    `;
-    tbody.appendChild(tr);
-});
-}
 
-wordSearch.addEventListener('input', debounce(async () => {
-const query = wordSearch.value.trim();
-if (!query) {
-    const tbody = wordsTable.querySelector('tbody');
-    tbody.innerHTML = '';
-    return;
-}
-createListMessage.textContent = 'Searching...';
-try {
-    const resp = await fetch(`/userspace/words?language=${languageSelect.value}&query=${encodeURIComponent(query)}`);
-    const data = await resp.json();
-    filteredWords = data.words || [];
-    renderWordsTable(filteredWords);
-    createListMessage.textContent = '';
-} catch (error) {
-    createListMessage.textContent = 'Error searching words.';
-}
-}, 500));
-
-
-// Fetch ALL words (slow)
-fetchAllWordsBtn.addEventListener('click', async () => {
-const lang = languageSelect.value;
-if (!lang) {
-    createListMessage.textContent = 'Please select a language first.';
-    return;
-}
-createListMessage.textContent = 'Fetching ALL words (may be slow)...';
-try {
-    const resp = await fetch(`/userspace/words?language=${lang}`);
-    const data = await resp.json();
-    allWords = data.words || [];
-    filteredWords = allWords;
-    renderWordsTable(filteredWords);
-    createListMessage.textContent = '';
-} catch {
-    createListMessage.textContent = 'Error fetching words.';
-}
-});
-
-wordsTable.addEventListener('change', (e) => {
-if (e.target.classList.contains('word-select-checkbox')) {
-    const idx = e.target.getAttribute('data-idx');
-    const wordArr = filteredWords[idx];
-    if (e.target.checked) {
-    if (!selectedWords.some(w => w[0] === wordArr[0] && w[1] === wordArr[1])) {
-        selectedWords.push(wordArr);
-    }
-    } else {
-    selectedWords = selectedWords.filter(w => !(w[0] === wordArr[0] && w[1] === wordArr[1]));
-    }
-    renderSelectedWords();
-}
-});
 // Render selected words as tags
 function renderSelectedWords() {
 selectedWordsContainer.innerHTML = '';
@@ -638,7 +561,6 @@ try {
     createListMessage.textContent = 'List created successfully! Refreshing page in 3 seconds...';
     listNameInput.value = '';
     languageSelect.value = '';
-    wordsSearchContainer.style.display = 'none';
     selectedWords = [];
     renderSelectedWords();
     setTimeout(() => {
@@ -651,6 +573,3 @@ try {
     createListMessage.textContent = 'Error creating list.';
 }
 });
-
-// Hide search group by default
-searchWordGroup.style.display = 'none';
