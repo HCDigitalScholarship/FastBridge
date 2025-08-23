@@ -12,12 +12,7 @@
   <p style="font-family: sans-serif; font-size:1.5rem;"> Options </p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)">
   <div class="btn-group">
     <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
-    <!--
-    deprecated export button
-    <button type="button" class="btn btn-default" style="width:50%" onclick="get_csv();">Export as CSV</button> 
-    -->
     <button type="button" class="btn btn-default" style="width:50%" onclick="exportVisibleDataToCSV();">Export as CSV</button>
-
   </div>
 
   <div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
@@ -78,64 +73,4 @@
 <script src="/assets/js/select-result.js"></script>
 <script src="/assets/js/export.js"></script>
 
-<script>
-  function saveBlob(blob, fileName) {
-    var a = document.createElement('a');
-    a.href = window.URL.createObjectURL(blob);
-    a.download = fileName;
-    a.dispatchEvent(new MouseEvent('click'));
-  };
-
-  function get_csv() {
-    let url = window.location.href.replace("select", "export");
-
-    // Read current filter settings in the page
-    let data = current_selections();
-    //print("at line 88 in result.html")
-    //print(data)
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.responseType = 'blob';
-    xhr.onload = function(e) {
-    if (this.status == 200) {
-
-    // Get the filename from the response
-    var disposition = xhr.getResponseHeader('Content-Disposition');
-    if (disposition && disposition.indexOf('attachment') !== -1) {
-        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        var matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
-        }
-    }
-
-
-      // Create a new Blob object using the
-      //response data of the onload object
-      var blob = new Blob([this.response], {type: 'text/csv'});
-      //Create a link element, hide it, direct
-      //it towards the blob, and then 'click' it programatically
-      let a = document.createElement("a");
-      a.style = "display: none";
-      document.body.appendChild(a);
-      //Create a DOMString representing the blob
-      //and point the link element towards it
-      let url = window.URL.createObjectURL(blob);
-      a.href = url;
-      a.download = filename;
-      //programatically click the link to trigger the download
-      a.click();
-      //release the reference to the file by revoking the Object URL
-      window.URL.revokeObjectURL(url);
-  }else{
-      //deal with your error state here
-  }
-};
-    xhr.send(JSON.stringify({
-          "data": data,
-    }));
-    // window.open(current, '_blank');
-  };
-</script>
 {% include "footer.html" %}
