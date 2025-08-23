@@ -1,3 +1,94 @@
+// Reusable modal for word selection
+function showWordSelectModal({lang, list, onSave, saveLabel = 'Save', cancelLabel = 'Cancel', title = 'Add Words'}) {
+    let modal = document.createElement('div');
+    modal.className = 'word-select-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.6)';
+    modal.style.zIndex = '9999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.innerHTML = `
+        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:520px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+            <h3 style='color:#22b3b3; margin-bottom:18px;'>${title}${list ? ` <span style='color:#ffb366;'>${list}</span>` : ''} (${lang})</h3>
+            <input id='word-select-search' type='text' placeholder='Search for a word...' style='width:100%; padding:8px 12px; border-radius:6px; border:none; margin-bottom:12px; font-size:1rem;'>
+            <div id='word-select-table-container' style='max-height:220px; overflow-y:auto; margin-bottom:12px;'></div>
+            <div id='word-select-message' style='color:#ffb366; margin-bottom:10px;'></div>
+            <div style='display:flex; gap:12px; justify-content:flex-end;'>
+                <button id='word-select-save-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${saveLabel}</button>
+                <button id='word-select-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${cancelLabel}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    let selected = [];
+    const searchInput = modal.querySelector('#word-select-search');
+    const tableContainer = modal.querySelector('#word-select-table-container');
+    const messageDiv = modal.querySelector('#word-select-message');
+    const saveBtn = modal.querySelector('#word-select-save-btn');
+    const cancelBtn = modal.querySelector('#word-select-cancel-btn');
+
+    function renderTable(wordsArr) {
+        let html = `<table style='width:100%; border-collapse:collapse;'>`;
+        html += `<thead><tr><th style='color:#22b3b3; padding:6px;'>Word</th><th style='color:#22b3b3; padding:6px;'>Definition</th><th></th></tr></thead><tbody>`;
+        wordsArr.forEach((wordArr, idx) => {
+            html += `<tr><td style='padding:6px;'>${wordArr[0]}</td><td style='padding:6px;'>${wordArr[1]}</td><td style='padding:6px;'><input type='checkbox' class='word-select-checkbox' data-idx='${idx}' ${selected.some(w => w[0] === wordArr[0] && w[1] === wordArr[1]) ? 'checked' : ''}></td></tr>`;
+        });
+        html += `</tbody></table>`;
+        tableContainer.innerHTML = html;
+    }
+
+    searchInput.addEventListener('input', debounce(async () => {
+        const query = searchInput.value.trim();
+        if (!query) {
+            tableContainer.innerHTML = '';
+            return;
+        }
+        messageDiv.textContent = 'Searching...';
+        try {
+            const resp = await fetch(`/userspace/words?language=${lang}&query=${encodeURIComponent(query)}`);
+            const data = await resp.json();
+            const words = data.words || [];
+            renderTable(words);
+            messageDiv.textContent = '';
+        } catch {
+            messageDiv.textContent = 'Error searching words.';
+        }
+    }, 500));
+
+    tableContainer.addEventListener('change', (e) => {
+        if (e.target.classList.contains('word-select-checkbox')) {
+            const idx = e.target.getAttribute('data-idx');
+            const wordArr = (tableContainer.querySelectorAll('tbody tr'))[idx];
+            const word = wordArr.children[0].textContent;
+            const def = wordArr.children[1].textContent;
+            if (e.target.checked) {
+                if (!selected.some(w => w[0] === word && w[1] === def)) {
+                    selected.push([word, def]);
+                }
+            } else {
+                selected = selected.filter(w => !(w[0] === word && w[1] === def));
+            }
+        }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        if (selected.length === 0) {
+            messageDiv.textContent = 'Please select at least one word.';
+            return;
+        }
+        await onSave(selected, {modal, messageDiv, saveBtn});
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+}
 const tabs = document.querySelectorAll('.user-tab');
 const contents = document.querySelectorAll('.tab-content > div');
 const fetchWordsBtn = document.getElementById('fetch-words-btn');
@@ -44,9 +135,10 @@ try {
         // Flex row for list buttons
         html += `<div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
         lists.forEach(listName => {
-        html += `
-            <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
-        `;
+            html += `
+                <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
+            `;
         });
         html += `</div>`;
         // Dedicated details area below all buttons
@@ -70,6 +162,48 @@ try {
 
 // Attach hover and click events for vocab list boxes
 function attachVocabListEvents() {
+    // Add New Word modal logic (refactored)
+    document.querySelectorAll('.add-word-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-lang');
+            const list = btn.getAttribute('data-list');
+            showWordSelectModal({
+                lang,
+                list,
+                title: 'Add New Word to',
+                saveLabel: 'Save',
+                cancelLabel: 'Cancel',
+                onSave: async (selected, {modal, messageDiv, saveBtn}) => {
+                    saveBtn.textContent = 'Saving...';
+                    saveBtn.disabled = true;
+                    try {
+                        const resp = await fetch('/userspace/add_words', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                list_name: list,
+                                language: lang,
+                                words: selected
+                            })
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            messageDiv.textContent = 'Words added!';
+                            setTimeout(() => { window.location.reload(); }, 1200);
+                        } else {
+                            messageDiv.textContent = 'Error adding words.';
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = 'Save';
+                        }
+                    } catch {
+                        messageDiv.textContent = 'Error adding words.';
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save';
+                    }
+                }
+            });
+        });
+    });
     // No caching for list details
     let activeBtn = null;
     document.querySelectorAll('.vocab-list-btn').forEach(btn => {
@@ -335,16 +469,28 @@ filteredWords = [];
 createListMessage.textContent = '';
 });
 
-// Fetch words by language
-fetchWordsBtn.addEventListener('click', async () => {
-const lang = languageSelect.value;
-if (!lang) {
-    createListMessage.textContent = 'Please select a language.';
-    return;
-}
-wordsSearchContainer.style.display = 'block';
-searchWordGroup.style.display = 'flex';
-createListMessage.textContent = 'Type in the search bar to load words.';
+// Modal-based Add Words for Create List
+fetchWordsBtn.addEventListener('click', () => {
+    const lang = languageSelect.value;
+    if (!lang) {
+        createListMessage.textContent = 'Please select a language.';
+        return;
+    }
+    showWordSelectModal({
+        lang,
+        title: 'Add Words',
+        saveLabel: 'Add Selected',
+        cancelLabel: 'Cancel',
+        onSave: (selected, {modal}) => {
+            selected.forEach(wordArr => {
+                if (!selectedWords.some(w => w[0] === wordArr[0] && w[1] === wordArr[1])) {
+                    selectedWords.push(wordArr);
+                }
+            });
+            renderSelectedWords();
+            document.body.removeChild(modal);
+        }
+    });
 });
 
 // Live search (prefix query to backend)

@@ -122,6 +122,9 @@ async def get_list_details(request: Request, language: str, list_name: str, user
     if doc:
         words = doc["languages"][language][0]["words"]
     
+    if not words:
+        return JSONResponse({})
+    
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
     collection = dict_db.get_collection(dict_name)
@@ -150,7 +153,8 @@ async def update_user_list(payload: ListCreate, user=Depends(get_current_user_co
 
     storage = atlas_client.get_database("App-Storage")
 
-    # Update only the 'words' and 'last_update' fields, keeping other metadata
+    unique_words = [list(t) for t in {tuple(w) for w in payload.words}] # remove duplicates
+
     result = storage.lists.update_one(
         {
             "user_id": user_id,
@@ -158,7 +162,7 @@ async def update_user_list(payload: ListCreate, user=Depends(get_current_user_co
         },
         {
             "$set": {
-                f"languages.{payload.language}.$.words": payload.words,
+                f"languages.{payload.language}.$.words": unique_words,
                 f"languages.{payload.language}.$.last_update": datetime.now().isoformat()
             }
         }
@@ -303,4 +307,37 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
         "success": True,
         "message": f"Shared list '{new_name}' added to {language} for user {user.get('username', '')}.",
         "list": new_list
+    }
+
+@router.post("/add_words")
+async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    list_name = payload.list_name
+    language = payload.language
+    words_to_add = payload.words
+    
+    if not list_name or not language or not words_to_add:
+        raise HTTPException(status_code=400, detail="Missing list_name, language, or words")
+
+    storage = atlas_client.get_database("App-Storage")
+
+    # Append words to the existing list
+    result = storage.lists.update_one(
+        {"user_id": user_id, f"languages.{language}.name": list_name},
+        {"$addToSet": {f"languages.{language}.$.words": {"$each": words_to_add}}}, upsert=False
+    )
+
+    if result.matched_count == 0:
+        return JSONResponse(
+            {"success": False, "message": f"List '{list_name}' in {language} not found for user {user_id}."},
+            status_code=404
+        )
+
+    return {
+        "success": True,
+        "message": f"Added {len(words_to_add)} words to list '{list_name}' in {language}.",
+        "added_words": words_to_add
     }
