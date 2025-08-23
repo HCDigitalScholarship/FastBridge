@@ -1,3 +1,38 @@
+// Import Shared List logic
+const importSharedBtn = document.getElementById('import-shared-btn');
+if (importSharedBtn) {
+    importSharedBtn.addEventListener('click', async () => {
+        const link = document.getElementById('import-shared-link').value.trim();
+        const language = document.getElementById('import-shared-language').value;
+        const mode = document.getElementById('import-shared-mode').value;
+        const messageDiv = document.getElementById('import-shared-message');
+        if (!link || !language || !mode) {
+            messageDiv.textContent = 'Please enter the shared link/code, select language, and mode.';
+            return;
+        }
+        messageDiv.textContent = 'Importing shared list...';
+        try {
+            const resp = await fetch('/userspace/add_shared_list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    share_link: link,
+                    language: language,
+                    mode: mode
+                })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                messageDiv.textContent = 'Shared list imported successfully! Refreshing page...';
+                setTimeout(() => { window.location.reload(); }, 2000);
+            } else {
+                messageDiv.textContent = data.message || 'Error importing shared list.';
+            }
+        } catch {
+            messageDiv.textContent = 'Error importing shared list.';
+        }
+    });
+}
 // Reusable modal for word selection
 function showWordSelectModal({lang, list, onSave, saveLabel = 'Save', cancelLabel = 'Cancel', title = 'Add Words'}) {
     let modal = document.createElement('div');

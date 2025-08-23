@@ -196,7 +196,6 @@ async def delete_user_list(request: Request, user=Depends(get_current_user_cooki
     data = await request.json()
     list_name = data.get("list_name")
     language = data.get("language")
-    print("here to delete list", list_name, language)
 
     if not list_name or not language:
         raise HTTPException(status_code=400, detail="Missing list_name or language")
@@ -246,6 +245,8 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
     if not doc:
         raise HTTPException(status_code=404, detail="Shared list not found")
 
+    owner_id = doc["user_id"]
+
     # Locate the exact list within the language
     shared_list = None
     for lst in doc.get("languages", {}).get(language, []):
@@ -256,58 +257,62 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
     if not shared_list:
         raise HTTPException(status_code=404, detail="Shared list not found in specified language")
 
-    # Handle name collisions for the new user
-    user_doc = storage.lists.find_one({"user_id": user_id})
-    existing_names = []
-    if user_doc:
-        existing_names = [lst["name"] for lst in user_doc.get("languages", {}).get(language, [])]
-
-    base_name = shared_list["name"]
-    new_name = base_name
-    counter = 1
-    while new_name in existing_names:
-        suffix = "copy" if mode == "copy" else "linked"
-        new_name = f"{base_name} ({suffix} {counter})"
-        counter += 1
-
     if mode == "copy":
-        # New independent copy for the user
+        user_doc = storage.lists.find_one({"user_id": user_id})
+        existing_names = []
+        if user_doc:
+            existing_names = [lst["name"] for lst in user_doc.get("languages", {}).get(language, [])]
+
+        base_name = shared_list["name"]
+        new_name = base_name
+        counter = 1
+        while new_name in existing_names:
+            new_name = f"{base_name} (copy {counter})"
+            counter += 1
+
         new_list = {
             "name": new_name,
             "words": shared_list["words"],
             "owner_id": user_id,
-            "original_owner_id": shared_list.get("owner_id"),
+            "original_owner_id": shared_list.get("owner_id", owner_id),
             "created_at": datetime.now().isoformat(),
             "share_links": {
                 "copy": str(uuid.uuid4()),
                 "linked": str(uuid.uuid4())
             }
         }
-    elif mode == "linked":
-        # Linked list, keep owner the same, add user to access list
-        new_list = {
-            "name": new_name,
-            "words": shared_list["words"],
-            "owner_id": shared_list["owner_id"],  # original owner
-            "created_at": datetime.now().isoformat(),
-            "share_links": shared_list["share_links"],
-            "user_ids_with_access": list(set(shared_list.get("user_ids_with_access", []) + [user_id]))
+
+        storage.lists.update_one(
+            {"user_id": user_id},
+            {"$push": {f"languages.{language}": new_list}},
+            upsert=True
+        )
+        return {
+            "success": True,
+            "message": f"Copied list '{new_name}' added to {language}.",
         }
+
+    elif mode == "linked":
+        # Just store a pointer in `shared_with_me`
+        list_name = shared_list.get("name")
+        if not list_name:
+            raise HTTPException(status_code=500, detail="Shared list is missing an ID")
+
+        storage.lists.update_one(
+            {"user_id": user_id},
+            {
+                "$addToSet": {f"shared_with_me.{owner_id}.{language}": list_name}
+            },
+            upsert=True
+        )
+
+        return {
+            "success": True,
+            "message": f"Linked list '{shared_list['name']}' added from {owner_id} under {language}.",
+        }
+
     else:
         raise HTTPException(status_code=400, detail="Invalid mode")
-
-    # Insert the new list for this user
-    storage.lists.update_one(
-        {"user_id": user_id},
-        {"$push": {f"languages.{language}": new_list}},
-        upsert=True
-    )
-
-    return {
-        "success": True,
-        "message": f"Shared list '{new_name}' added to {language} for user {user.get('username', '')}.",
-        "list": new_list
-    }
 
 @router.post("/add_words")
 async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
@@ -353,7 +358,6 @@ async def get_share_id(
     request: Request,
     user=Depends(get_current_user_cookie)
 ):
-    print("Payload received:", payload)
     user_id = user.get('uid', None)
     if not user_id:
         raise HTTPException(status_code=401, detail="User not authenticated")

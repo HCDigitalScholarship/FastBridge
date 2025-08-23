@@ -3,7 +3,7 @@
 {% block content %}
 <body>
   <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover; background-position: top; min-height: 100vh;">
-    <div class="container" style="max-width: 90vw; margin: 40px auto;">
+    <div class="container" style="max-width: 95vw; margin: 40px auto;">
 
       <div class="auth-form-container" style="background:rgba(0,0,0,0.76); border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,0.1); padding:32px 24px; text-align:center;">
         <h2 style="color:#fff; margin-bottom:16px;">{{ username }}'s Space</h2>
@@ -39,6 +39,23 @@
                 <div id="selected-words-container" style="margin-bottom:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
                 <button id="save-list-btn" style="background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; text-align:center;">Save List</button>
                 <div id="create-list-message" style="margin-top:16px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
+                <br>
+                <h3 style="margin-bottom:18px; font-size:1.2rem; font-weight:600; color:#22b3b3; text-align:center;">Import Shared List</h3>
+                <div style="margin-bottom:16px; width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <label for="import-shared-link" style="font-weight:500; color:#fff; text-align:center;">Paste Shared Link or Code:</label>
+                  <input type="text" id="import-shared-link" style="margin-top:6px; margin-bottom:12px; width:18rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                  <select id="import-shared-language" style="margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                    <option value="">--Select Language--</option>
+                    <option value="Greek">Greek</option>
+                    <option value="Latin">Latin</option>
+                  </select>
+                  <select id="import-shared-mode" style="margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                    <option value="copy">Copy (independent)</option>
+                    <option value="linked">Editable (linked)</option>
+                  </select>
+                  <button id="import-shared-btn" style="background:#22b3b3; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; text-align:center;">Import Shared List</button>
+                  <div id="import-shared-message" style="margin-top:10px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
+                </div>
               </div>
               </div>
           </div>
