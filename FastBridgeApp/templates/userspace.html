@@ -34,23 +34,31 @@
                     <option value="Latin">Latin</option>
                   </select>
                 </div>
-                <button id="fetch-headwords-btn" style="margin-bottom:18px; background:#22b3b3; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; text-align:center;">Fetch Headwords</button>
-                <div id="headwords-search-container" style="display:none; margin-bottom:18px; width:100%; display:flex; flex-direction:column; align-items:center;">
-                  <div id="search-headword-group" style="width:100%; display:flex; flex-direction:column; align-items:center;">
-                    <label for="headword-search" style="font-weight:500; color:#fff; text-align:center;">Search Headwords:</label>
-                    <input type="text" id="headword-search" style="width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; margin-top:6px; display:block; text-align:center;" placeholder="Type to search...">
+                <button id="fetch-words-btn" style="margin-bottom:18px; background:#22b3b3; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; text-align:center;">Fetch Words</button>
+                <div id="words-search-container" style="display:none; margin-bottom:18px; width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <div id="search-word-group" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                    <label for="word-search" style="font-weight:500; color:#fff; text-align:center;">Search Words:</label>
+                    <input type="text" id="word-search" style="width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; margin-top:6px; display:block; text-align:center;" placeholder="Type to search...">
                     <small style="color:#aaa; margin-top:6px;">Type a prefix to search, or fetch all (slower).</small>
-                    <button id="fetch-all-headwords-btn" style="margin-top:2rem; background:#666; color:#fff; padding:6px 12px; border:none; border-radius:6px; font-size:0.9rem; cursor:pointer;">Fetch All Headwords ⚠️</button>
-                    <select id="headwords-dropdown" size="5" style="width:14rem; margin-top:1rem; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; display:block; text-align:center;">
-                    </select>
+                    <button id="fetch-all-words-btn" style="margin-top:2rem; background:#666; color:#fff; padding:6px 12px; border:none; border-radius:6px; font-size:0.9rem; cursor:pointer;">Fetch All Words ⚠️</button>
+                    <table id="words-table" style="width:100%; margin-top:1rem; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
+                      <thead>
+                        <tr style="background:#228383; color:#fff;">
+                          <th style="padding:8px;">Word</th>
+                          <th style="padding:8px;">Gloss</th>
+                          <th style="padding:8px;">Select</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
                   </div>
                 </div>
 
-                <div id="selected-headwords-container" style="margin-bottom:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+                <div id="selected-words-container" style="margin-bottom:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
                 <button id="save-list-btn" style="background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; text-align:center;">Save List</button>
                 <div id="create-list-message" style="margin-top:16px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
               </div>
-            </div>
+              </div>
           </div>
         </div>
       </div>
@@ -65,6 +73,21 @@
   const contents = document.querySelectorAll('.tab-content > div');
 
 
+  const fetchWordsBtn = document.getElementById('fetch-words-btn');
+  const fetchAllWordsBtn = document.getElementById('fetch-all-words-btn');
+  const languageSelect = document.getElementById('language-select');
+  const wordsSearchContainer = document.getElementById('words-search-container');
+  const wordSearch = document.getElementById('word-search');
+  const wordsTable = document.getElementById('words-table');
+  const selectedWordsContainer = document.getElementById('selected-words-container');
+  const saveListBtn = document.getElementById('save-list-btn');
+  const listNameInput = document.getElementById('list-name');
+  const createListMessage = document.getElementById('create-list-message');
+  const searchWordGroup = document.getElementById('search-word-group');
+
+  let allWords = [];
+  let filteredWords = [];
+  let selectedWords = [];
   // Tab data cache
   const tabDataCache = {};
 
@@ -150,17 +173,18 @@
           detailsDiv.style.padding = '8px 12px';
           detailsDiv.style.borderRadius = '6px';
           // Track retained and deleted words
-          let retainedWords = Object.keys(data);
+          let retainedWords = Object.values(data).map(info => [info['SIMPLE LEMMA'], info['SHORT DEFINITION']]);
           let deletedWords = [];
           // Display flash cards
           let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
           Object.entries(data).forEach(([word, info]) => {
-            cardsHtml += `<div class='flashcard' data-word='${word}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>`;
+            const simpleLemma = info['SIMPLE LEMMA'];
+            cardsHtml += `<div class='flashcard' data-word='${simpleLemma}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>`;
             cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
             Object.entries(info).forEach(([key, val]) => {
               cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
             });
-            cardsHtml += `<button class='delete-flashcard-btn' data-word='${word}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
+            cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
             cardsHtml += `</div>`;
           });
           cardsHtml += '</div>';
@@ -181,8 +205,13 @@
               const card = btn.closest('.flashcard');
               if (card) card.remove();
               // Remove from retainedWords, add to deletedWords
-              retainedWords = retainedWords.filter(w => w !== word);
-              if (!deletedWords.includes(word)) deletedWords.push(word);
+              const idx = retainedWords.findIndex(w => w[0] === word);
+              if (idx !== -1) {
+                const removed = retainedWords.splice(idx, 1)[0];
+                if (!deletedWords.some(dw => dw[0] === removed[0] && dw[1] === removed[1])) {
+                  deletedWords.push(removed);
+                }
+              }
               // Update deleted words summary
               updateDeletedWordsSummary();
             });
@@ -193,8 +222,8 @@
             const saveBtn = detailsDiv.querySelector('#save-changes-btn');
             if (deletedWords.length > 0) {
               let undoHtml = `<span style='color:#ffb366; font-weight:600;'>Words to delete:</span> `;
-              deletedWords.forEach(word => {
-                undoHtml += `<span style='color:#fff; margin-right:8px;'>${word} <button class='undo-delete-btn' data-word='${word}' style='background:#228383; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:0.9rem; margin-left:4px; cursor:pointer;'>Undo</button></span>`;
+              deletedWords.forEach(wordArr => {
+                undoHtml += `<span style='color:#fff; margin-right:8px;'>${wordArr[0]} <button class='undo-delete-btn' data-word='${wordArr[0]}' style='background:#228383; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:0.9rem; margin-left:4px; cursor:pointer;'>Undo</button></span>`;
               });
               summaryDiv.innerHTML = undoHtml;
               saveBtn.style.display = '';
@@ -203,31 +232,40 @@
                 btn.addEventListener('click', () => {
                   const word = btn.getAttribute('data-word');
                   // Remove from deletedWords
-                  deletedWords = deletedWords.filter(w => w !== word);
-                  // Add back to retainedWords
-                  if (!retainedWords.includes(word)) retainedWords.push(word);
-                  // Re-render flashcard (add back to UI)
-                  const info = data[word];
-                  if (info) {
-                    const cardHtml = `<div class='flashcard' data-word='${word}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>` +
-                      `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>` +
-                      Object.entries(info).map(([key, val]) => `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`).join('') +
-                      `<button class='delete-flashcard-btn' data-word='${word}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>` +
-                      `</div>`;
-                    const flashcardList = detailsDiv.querySelector('#flashcard-list');
-                    // Only add if not already present
-                    if (!flashcardList.querySelector(`[data-word='${word}']`)) {
-                      flashcardList.insertAdjacentHTML('beforeend', cardHtml);
-                      // Re-add delete logic
-                      const newBtn = flashcardList.querySelector(`.delete-flashcard-btn[data-word='${word}']`);
-                      if (newBtn) {
-                        newBtn.addEventListener('click', () => {
-                          const card = newBtn.closest('.flashcard');
-                          if (card) card.remove();
-                          retainedWords = retainedWords.filter(w => w !== word);
-                          if (!deletedWords.includes(word)) deletedWords.push(word);
-                          updateDeletedWordsSummary();
-                        });
+                  const idx = deletedWords.findIndex(w => w[0] === word);
+                  if (idx !== -1) {
+                    const restored = deletedWords.splice(idx, 1)[0];
+                    if (!retainedWords.some(rw => rw[0] === restored[0] && rw[1] === restored[1])) {
+                      retainedWords.push(restored);
+                      // Re-render flashcard (add back to UI)
+                      const info = data[word];
+                      if (info) {
+                        const cardHtml = `<div class='flashcard' data-word='${word}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>` +
+                          `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>` +
+                          Object.entries(info).map(([key, val]) => `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`).join('') +
+                          `<button class='delete-flashcard-btn' data-word='${word}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>` +
+                          `</div>`;
+                        const flashcardList = detailsDiv.querySelector('#flashcard-list');
+                        // Only add if not already present
+                        if (!flashcardList.querySelector(`[data-word='${word}']`)) {
+                          flashcardList.insertAdjacentHTML('beforeend', cardHtml);
+                          // Re-add delete logic
+                          const newBtn = flashcardList.querySelector(`.delete-flashcard-btn[data-word='${word}']`);
+                          if (newBtn) {
+                            newBtn.addEventListener('click', () => {
+                              const card = newBtn.closest('.flashcard');
+                              if (card) card.remove();
+                              const idx = retainedWords.findIndex(w => w[0] === word);
+                              if (idx !== -1) {
+                                const removed = retainedWords.splice(idx, 1)[0];
+                                if (!deletedWords.some(dw => dw[0] === removed[0] && dw[1] === removed[1])) {
+                                  deletedWords.push(removed);
+                                }
+                              }
+                              updateDeletedWordsSummary();
+                            });
+                          }
+                        }
                       }
                     }
                   }
@@ -245,7 +283,7 @@
           saveBtn.addEventListener('click', async () => {
             saveBtn.textContent = 'Saving...';
             saveBtn.disabled = true;
-            // Send retainedWords to backend
+            // Send retainedWords to backend as 2D array
             try {
               const resp = await fetch(`/userspace/update_list`, {
                 method: 'POST',
@@ -348,45 +386,32 @@
       }
     });
 
-  const fetchHeadwordsBtn = document.getElementById('fetch-headwords-btn');
-  const fetchAllHeadwordsBtn = document.getElementById('fetch-all-headwords-btn');
-  const languageSelect = document.getElementById('language-select');
-  const headwordsSearchContainer = document.getElementById('headwords-search-container');
-  const headwordSearch = document.getElementById('headword-search');
-  const headwordsDropdown = document.getElementById('headwords-dropdown');
-  const selectedHeadwordsContainer = document.getElementById('selected-headwords-container');
-  const saveListBtn = document.getElementById('save-list-btn');
-  const listNameInput = document.getElementById('list-name');
-  const createListMessage = document.getElementById('create-list-message');
-  const searchHeadwordGroup = document.getElementById('search-headword-group');
-
-  let allHeadwords = [];
-  let filteredHeadwords = [];
-  let selectedHeadwords = [];
+  
 
   // Reset state when language changes
   languageSelect.addEventListener('change', () => {
-    selectedHeadwords = [];
-    renderSelectedHeadwords();
-    headwordsSearchContainer.style.display = 'none';
-    searchHeadwordGroup.style.display = 'none';
-    headwordsDropdown.innerHTML = '';
-    headwordSearch.value = '';
-    allHeadwords = [];
-    filteredHeadwords = [];
+    selectedWords = [];
+    renderSelectedWords();
+    wordsSearchContainer.style.display = 'none';
+    searchWordGroup.style.display = 'none';
+    const tbody = wordsTable.querySelector('tbody');
+    tbody.innerHTML = '';
+    wordSearch.value = '';
+    allWords = [];
+    filteredWords = [];
     createListMessage.textContent = '';
   });
 
-  // Fetch headwords by prefix (search mode starts here)
-  fetchHeadwordsBtn.addEventListener('click', () => {
+  // Fetch words by language
+  fetchWordsBtn.addEventListener('click', async () => {
     const lang = languageSelect.value;
     if (!lang) {
       createListMessage.textContent = 'Please select a language.';
       return;
     }
-    headwordsSearchContainer.style.display = 'block';
-    searchHeadwordGroup.style.display = 'flex';
-    createListMessage.textContent = 'Type in the search bar to load headwords.';
+    wordsSearchContainer.style.display = 'block';
+    searchWordGroup.style.display = 'flex';
+    createListMessage.textContent = 'Type in the search bar to load words.';
   });
 
   // Live search (prefix query to backend)
@@ -397,75 +422,81 @@
       timeout = setTimeout(() => fn(...args), delay);
     };
   }
+// Render words table
+  function renderWordsTable(wordsArr) {
+    const tbody = wordsTable.querySelector('tbody');
+    tbody.innerHTML = '';
+    wordsArr.forEach((wordArr, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:8px;">${wordArr[0]}</td>
+        <td style="padding:8px;">${wordArr[1]}</td>
+        <td style="padding:8px;"><input type="checkbox" class="word-select-checkbox" data-idx="${idx}" ${selectedWords.some(w => w[0] === wordArr[0] && w[1] === wordArr[1]) ? 'checked' : ''}></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-  headwordSearch.addEventListener('input', debounce(async () => {
-    const query = headwordSearch.value.trim();
+  wordSearch.addEventListener('input', debounce(async () => {
+    const query = wordSearch.value.trim();
     if (!query) {
-      headwordsDropdown.innerHTML = '';
+      const tbody = wordsTable.querySelector('tbody');
+      tbody.innerHTML = '';
       return;
     }
     createListMessage.textContent = 'Searching...';
     try {
-      const resp = await fetch(`/userspace/headwords?language=${languageSelect.value}&query=${encodeURIComponent(query)}`);
+      const resp = await fetch(`/userspace/words?language=${languageSelect.value}&query=${encodeURIComponent(query)}`);
       const data = await resp.json();
-      filteredHeadwords = data.headwords || [];
-      headwordsDropdown.innerHTML = '';
-      filteredHeadwords.forEach(hw => {
-        const opt = document.createElement('option');
-        opt.value = hw;
-        opt.textContent = hw;
-        headwordsDropdown.appendChild(opt);
-      });
+      filteredWords = data.words || [];
+      renderWordsTable(filteredWords);
       createListMessage.textContent = '';
-    } catch {
-      createListMessage.textContent = 'Error searching headwords.';
+    } catch (error) {
+      createListMessage.textContent = 'Error searching words.';
     }
   }, 500));
 
 
-  // Fetch ALL headwords (slow)
-  fetchAllHeadwordsBtn.addEventListener('click', async () => {
+  // Fetch ALL words (slow)
+  fetchAllWordsBtn.addEventListener('click', async () => {
     const lang = languageSelect.value;
     if (!lang) {
       createListMessage.textContent = 'Please select a language first.';
       return;
     }
-    createListMessage.textContent = 'Fetching ALL headwords (may be slow)...';
+    createListMessage.textContent = 'Fetching ALL words (may be slow)...';
     try {
-      const resp = await fetch(`/userspace/headwords?language=${lang}`);
+      const resp = await fetch(`/userspace/words?language=${lang}`);
       const data = await resp.json();
-      allHeadwords = data.headwords || [];
-      filteredHeadwords = allHeadwords;
-      headwordsDropdown.innerHTML = '';
-      filteredHeadwords.forEach(hw => {
-        const opt = document.createElement('option');
-        opt.value = hw;
-        opt.textContent = hw;
-        headwordsDropdown.appendChild(opt);
-      });
+      allWords = data.words || [];
+      filteredWords = allWords;
+      renderWordsTable(filteredWords);
       createListMessage.textContent = '';
     } catch {
-      createListMessage.textContent = 'Error fetching headwords.';
+      createListMessage.textContent = 'Error fetching words.';
     }
   });
 
-  // Handle selection from dropdown
-  headwordsDropdown.addEventListener('change', () => {
-    const selected = Array.from(headwordsDropdown.selectedOptions).map(opt => opt.value);
-    selected.forEach(hw => {
-      if (!selectedHeadwords.includes(hw)) {
-        selectedHeadwords.push(hw);
+  wordsTable.addEventListener('change', (e) => {
+    if (e.target.classList.contains('word-select-checkbox')) {
+      const idx = e.target.getAttribute('data-idx');
+      const wordArr = filteredWords[idx];
+      if (e.target.checked) {
+        if (!selectedWords.some(w => w[0] === wordArr[0] && w[1] === wordArr[1])) {
+          selectedWords.push(wordArr);
+        }
+      } else {
+        selectedWords = selectedWords.filter(w => !(w[0] === wordArr[0] && w[1] === wordArr[1]));
       }
-    });
-    renderSelectedHeadwords();
-  });
-
-  // Render selected headwords as tags
-  function renderSelectedHeadwords() {
-    selectedHeadwordsContainer.innerHTML = '';
-    selectedHeadwords.forEach(hw => {
+      renderSelectedWords();
+    }
+});
+  // Render selected words as tags
+  function renderSelectedWords() {
+    selectedWordsContainer.innerHTML = '';
+    selectedWords.forEach(wordArr => {
       const box = document.createElement('span');
-      box.textContent = hw;
+      box.textContent = `${wordArr[0]} (${wordArr[1]})`;
       box.style.display = 'inline-flex';
       box.style.alignItems = 'center';
       box.style.background = 'linear-gradient(90deg,#22b3b3 60%,#228383 100%)';
@@ -488,11 +519,11 @@
       x.onmouseover = () => { x.style.background = '#ff3333'; };
       x.onmouseout = () => { x.style.background = '#ff6666'; };
       x.onclick = () => {
-        selectedHeadwords = selectedHeadwords.filter(w => w !== hw);
-        renderSelectedHeadwords();
+        selectedWords = selectedWords.filter(w => !(w[0] === wordArr[0] && w[1] === wordArr[1]));
+        renderSelectedWords();
       };
       box.appendChild(x);
-      selectedHeadwordsContainer.appendChild(box);
+      selectedWordsContainer.appendChild(box);
     });
   }
 
@@ -508,8 +539,8 @@
       createListMessage.textContent = 'Please select a language.';
       return;
     }
-    if (selectedHeadwords.length === 0) {
-      createListMessage.textContent = 'Please select at least one headword.';
+    if (selectedWords.length === 0) {
+      createListMessage.textContent = 'Please select at least one word.';
       return;
     }
     createListMessage.textContent = 'Saving list...';
@@ -520,7 +551,7 @@
         body: JSON.stringify({
           list_name: listName,
           language: lang,
-          words: selectedHeadwords
+          words: selectedWords
         })
       });
       const data = await resp.json();
@@ -528,9 +559,9 @@
         createListMessage.textContent = 'List created successfully! Refreshing page in 3 seconds...';
         listNameInput.value = '';
         languageSelect.value = '';
-        headwordsSearchContainer.style.display = 'none';
-        selectedHeadwords = [];
-        renderSelectedHeadwords();
+        wordsSearchContainer.style.display = 'none';
+        selectedWords = [];
+        renderSelectedWords();
         setTimeout(() => {
           window.location.reload();
         }, 3000);
@@ -543,7 +574,7 @@
   });
 
   // Hide search group by default
-  searchHeadwordGroup.style.display = 'none';
+  searchWordGroup.style.display = 'none';
 </script>
 
 
