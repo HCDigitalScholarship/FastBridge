@@ -33,7 +33,13 @@
   <div class="container">
 <h2> Now showing <span id = "len"> {{ len }} </span> words in {{ section }} </h2>
 
-  <input class="form-control" style="width:30%" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
+  <div id="save-list-container" style="display:none; margin-bottom:18px;">
+    <input type="text" id="save-list-name" class="form-control" style="width:14rem; display:inline-block; margin-right:12px; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" placeholder="List name..." />
+    <button id="save-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save List</button>
+  </div>
+  <span id="save-list-message" style="margin-left:12px; color:#ffb366; font-weight:500;"></span>
+
+  <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
 
 <div id="export_wrapper">
 

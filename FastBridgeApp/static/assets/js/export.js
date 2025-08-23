@@ -154,3 +154,70 @@ function printData() {
   newWin.print();
   newWin.close();
 }
+
+fetch('/account/protected', { credentials: 'include' })
+  .then((resp) => {
+    if (!resp.ok) throw new Error('Not authenticated')
+    return resp.json()
+  })
+  .then((data) => {
+    document.getElementById('save-list-container').style.display = ''
+  })
+  .catch((err) => {
+    document.getElementById('save-list-container').style.display = 'none'
+  })
+
+document.getElementById('save-list-btn').addEventListener('click', async () => {
+  const listName = document.getElementById('save-list-name').value.trim();
+  if (!listName) {
+    document.getElementById('save-list-message').textContent = 'Please enter a list name.';
+    return;
+  }
+
+  const checkbox = document.getElementById("running");
+  const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
+  const simpleLemmaIndex = Object.keys(colMap).indexOf("SIMPLE_LEMMA");
+  const glossIndex = Object.keys(colMap).indexOf("SHORT_DEFINITION");
+  const rowDataRaw = checkbox.checked ? full_data : rows;
+  const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
+
+  if (simpleLemmaIndex === -1 || glossIndex === -1) {
+    document.getElementById('save-list-message').textContent = 'Required columns not found.';
+    return;
+  }
+  
+  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS
+  const words = (rowData || []).filter(row => row.active)
+    .map(row => [
+      row.values[simpleLemmaIndex],
+      row.values[glossIndex]
+    ]);
+
+  // Get the language from the URL (after /select/)
+  const urlParts = window.location.pathname.split('/');
+  const langIndex = urlParts.indexOf('select') + 1;
+  const language = urlParts[langIndex] || '';
+  
+  document.getElementById('save-list-message').textContent = 'Saving...';
+  console.log("List Name:", listName, "length:", words.length, "Language:", language, words.slice(0,5));
+  try {
+    const resp = await fetch('/userspace/create_list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        list_name: listName,
+        words: words,
+        language: language
+      })
+    });
+
+    const result = await resp.json();
+    if (result.success) {
+      document.getElementById('save-list-message').textContent = 'List saved!';
+    } else {
+      document.getElementById('save-list-message').textContent = 'Error saving list.';
+    }
+  } catch {
+    document.getElementById('save-list-message').textContent = 'Error saving list.';
+  }
+});
