@@ -138,7 +138,6 @@ async def get_list_details(request: Request, language: str, list_name: str, user
 
 @router.post("/update_list")
 async def update_user_list(payload: ListCreate, user=Depends(get_current_user_cookie)):
-    print(payload)
     user_id = user.get("uid", None)
     if not user_id:
         raise HTTPException(status_code=401, detail="User not authenticated")
