@@ -41,19 +41,19 @@ try {
     Object.entries(data.vocab).forEach(([lang, lists]) => {
         html += `<div style='margin-bottom:18px; text-align:left;'>`;
         html += `<h4 style='color:#22b3b3; margin-bottom:8px; text-align:left;'>${lang}</h4>`;
-        html += `<div class='vocab-list-col' style='display:flex; flex-direction:column; gap:12px; justify-content:flex-start;'>`;
+        // Flex row for list buttons
+        html += `<div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
         lists.forEach(listName => {
         html += `
-            <div style='display:flex; flex-direction:column; align-items:flex-start;'>
-            <div class='vocab-list-box' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; margin-bottom:4px;'>${listName}</div>
-            <div class='vocab-list-details' style='display:none; width:100%;'></div>
-            </div>
+            <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
         `;
         });
-        html += `</div></div>`;
+        html += `</div>`;
+        // Dedicated details area below all buttons
+        html += `<div class='vocab-list-details-area' style='width:100%; margin-top:10px;'></div>`;
+        html += `</div>`;
     });
     tabDataCache[route] = html;
-    // Add hover effect and click listeners
     setTimeout(() => {
         attachVocabListEvents();
     }, 0);
@@ -70,203 +70,209 @@ try {
 
 // Attach hover and click events for vocab list boxes
 function attachVocabListEvents() {
-document.querySelectorAll('.vocab-list-box').forEach(box => {
-    box.addEventListener('mouseenter', () => {
-    box.style.background = '#228383';
-    box.style.color = '#fff';
-    });
-    box.addEventListener('mouseleave', () => {
-    box.style.background = '#222';
-    box.style.color = '#fff';
-    });
-    box.addEventListener('click', async () => {
-    const lang = box.getAttribute('data-lang');
-    const list = box.getAttribute('data-list');
-    const detailsDiv = box.parentNode.querySelector('.vocab-list-details');
-    // Toggle: if details are visible and loaded, hide them and return
-    if (detailsDiv.style.display === 'block' && detailsDiv.innerHTML.trim() !== '') {
-        detailsDiv.style.display = 'none';
-        return;
-    }
-    box.textContent = 'Loading...';
-    try {
-        const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
-        const data = await resp.json();
-        box.textContent = `${list}`;
-        // Display details in the details div below the box as flash cards
-        detailsDiv.style.display = 'block';
-        detailsDiv.style.color = '#fff';
-        detailsDiv.style.marginTop = '6px';
-        detailsDiv.style.padding = '8px 12px';
-        detailsDiv.style.borderRadius = '6px';
-        // Track retained and deleted words
-        let retainedWords = Object.values(data).map(info => [info['SIMPLE LEMMA'], info['SHORT DEFINITION']]);
-        let deletedWords = [];
-        // Display flash cards
-        let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
-        Object.entries(data).forEach(([word, info]) => {
-        const simpleLemma = info['SIMPLE LEMMA'];
-        cardsHtml += `<div class='flashcard' data-word='${simpleLemma}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>`;
-        cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
-        Object.entries(info).forEach(([key, val]) => {
-            cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
-        });
-        cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
-        cardsHtml += `</div>`;
-        });
-        cardsHtml += '</div>';
-        // Deleted words summary and Save Changes button (initially hidden)
-        cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
-        cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px;'>`;
-        cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
-        cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete List</button>`;
-        cardsHtml += `</div>`;
-        detailsDiv.innerHTML = cardsHtml;
-
-        // Delete button logic
-        const flashcardList = detailsDiv.querySelector('#flashcard-list');
-        flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const word = btn.getAttribute('data-word');
-            // Remove card from UI
-            const card = btn.closest('.flashcard');
-            if (card) card.remove();
-            // Remove from retainedWords, add to deletedWords
-            const idx = retainedWords.findIndex(w => w[0] === word);
-            if (idx !== -1) {
-            const removed = retainedWords.splice(idx, 1)[0];
-            if (!deletedWords.some(dw => dw[0] === removed[0] && dw[1] === removed[1])) {
-                deletedWords.push(removed);
+    // No caching for list details
+    let activeBtn = null;
+    document.querySelectorAll('.vocab-list-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            if (btn !== activeBtn) {
+                btn.style.background = '#228383';
+                btn.style.color = '#fff';
             }
+        });
+        btn.addEventListener('mouseleave', () => {
+            if (btn !== activeBtn) {
+                btn.style.background = '#222';
+                btn.style.color = '#fff';
             }
-            // Update deleted words summary
-            updateDeletedWordsSummary();
         });
-        });
-
-        function updateDeletedWordsSummary() {
-        const summaryDiv = detailsDiv.querySelector('#deleted-words-summary');
-        const saveBtn = detailsDiv.querySelector('#save-changes-btn');
-        if (deletedWords.length > 0) {
-            let undoHtml = `<span style='color:#ffb366; font-weight:600;'>Words to delete:</span> `;
-            deletedWords.forEach(wordArr => {
-            undoHtml += `<span style='color:#fff; margin-right:8px;'>${wordArr[0]} <button class='undo-delete-btn' data-word='${wordArr[0]}' style='background:#228383; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:0.9rem; margin-left:4px; cursor:pointer;'>Undo</button></span>`;
+        btn.addEventListener('click', async () => {
+            const lang = btn.getAttribute('data-lang');
+            const list = btn.getAttribute('data-list');
+            // Highlight active button
+            if (activeBtn) {
+                activeBtn.style.background = '#222';
+                activeBtn.style.color = '#fff';
+            }
+            btn.style.background = '#22b3b3';
+            btn.style.color = '#fff';
+            activeBtn = btn;
+            // Find details area
+            const detailsArea = btn.closest('div').parentNode.querySelector('.vocab-list-details-area');
+            // Hide details in all details areas for this language
+            btn.closest('div').parentNode.querySelectorAll('.vocab-list-details-area').forEach(area => {
+                area.innerHTML = '';
             });
-            summaryDiv.innerHTML = undoHtml;
-            saveBtn.style.display = '';
-            // Add undo listeners
-            summaryDiv.querySelectorAll('.undo-delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const word = btn.getAttribute('data-word');
-                // Remove from deletedWords
-                const idx = deletedWords.findIndex(w => w[0] === word);
-                if (idx !== -1) {
-                const restored = deletedWords.splice(idx, 1)[0];
-                if (!retainedWords.some(rw => rw[0] === restored[0] && rw[1] === restored[1])) {
-                    retainedWords.push(restored);
-                    // Re-render flashcard (add back to UI)
-                    const info = data[word];
-                    if (info) {
-                    const cardHtml = `<div class='flashcard' data-word='${word}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:fit-content; max-width:fit-content; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative;'>` +
-                        `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>` +
-                        Object.entries(info).map(([key, val]) => `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`).join('') +
-                        `<button class='delete-flashcard-btn' data-word='${word}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>` +
-                        `</div>`;
-                    const flashcardList = detailsDiv.querySelector('#flashcard-list');
-                    // Only add if not already present
-                    if (!flashcardList.querySelector(`[data-word='${word}']`)) {
-                        flashcardList.insertAdjacentHTML('beforeend', cardHtml);
-                        // Re-add delete logic
-                        const newBtn = flashcardList.querySelector(`.delete-flashcard-btn[data-word='${word}']`);
-                        if (newBtn) {
-                        newBtn.addEventListener('click', () => {
-                            const card = newBtn.closest('.flashcard');
-                            if (card) card.remove();
-                            const idx = retainedWords.findIndex(w => w[0] === word);
-                            if (idx !== -1) {
+            detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
+            try {
+                const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
+                const data = await resp.json();
+                // Track retained and deleted words
+                let retainedWords = Object.entries(data).map(([word, info]) => info);
+                let deletedWords = [];
+                // Display flash cards
+                let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
+                Object.entries(data).forEach(([word, info]) => {
+                    const simpleLemma = info['SIMPLE LEMMA'];
+                    cardsHtml += `<div class='flashcard' data-word='${simpleLemma}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
+                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
+                    Object.entries(info).forEach(([key, val]) => {
+                        cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
+                    });
+                    cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
+                    cardsHtml += `</div>`;
+                });
+                cardsHtml += '</div>';
+                // Deleted words summary and Save Changes button (initially hidden)
+                cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
+                cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px;'>`;
+                cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
+                cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
+                cardsHtml += `</div>`;
+                detailsArea.innerHTML = cardsHtml;
+                // Delete button logic for flashcards
+                const flashcardList = detailsArea.querySelector('#flashcard-list');
+                flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const word = btn.getAttribute('data-word');
+                        // Remove card from UI
+                        const card = btn.closest('.flashcard');
+                        if (card) card.remove();
+                        // Remove from retainedWords, add to deletedWords
+                        const idx = retainedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
+                        if (idx !== -1) {
                             const removed = retainedWords.splice(idx, 1)[0];
-                            if (!deletedWords.some(dw => dw[0] === removed[0] && dw[1] === removed[1])) {
+                            if (!deletedWords.some(dw => dw['SIMPLE LEMMA'] === removed['SIMPLE LEMMA'])) {
                                 deletedWords.push(removed);
                             }
-                            }
-                            updateDeletedWordsSummary();
-                        });
                         }
+                        updateDeletedWordsSummary();
+                    });
+                });
+
+                // Delete Entire List button logic
+                const deleteListBtn = detailsArea.querySelector('#delete-list-btn');
+                deleteListBtn.addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to delete the entire list? This action cannot be undone.')) return;
+                    deleteListBtn.textContent = 'Deleting...';
+                    deleteListBtn.disabled = true;
+                    try {
+                        const resp = await fetch(`/userspace/delete_list`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                list_name: list,
+                                language: lang
+                            })
+                        });
+                        const result = await resp.json();
+                        if (result.success) {
+                            deleteListBtn.textContent = 'Deleted!';
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        } else {
+                            deleteListBtn.textContent = 'Error!';
+                            deleteListBtn.disabled = false;
+                        }
+                    } catch {
+                        deleteListBtn.textContent = 'Error!';
+                        deleteListBtn.disabled = false;
                     }
+                });
+                function updateDeletedWordsSummary() {
+                    const summaryDiv = detailsArea.querySelector('#deleted-words-summary');
+                    const saveBtn = detailsArea.querySelector('#save-changes-btn');
+                    saveBtn.onclick = async function() {
+                        saveBtn.textContent = 'Saving...';
+                        saveBtn.disabled = true;
+                        // Only pass SIMPLE LEMMA and SHORT DEFINITION to backend
+                        const wordsToSave = retainedWords.map(w => [w['SIMPLE LEMMA'], w['SHORT DEFINITION']]);
+                        try {
+                            const resp = await fetch(`/userspace/update_list`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    list_name: list,
+                                    language: lang,
+                                    words: wordsToSave
+                                })
+                            });
+                            const result = await resp.json();
+                            if (result.success) {
+                                saveBtn.textContent = 'Saved!';
+                                // Clear deletedWords and update summary so nothing to undo
+                                deletedWords = [];
+                                setTimeout(() => {
+                                    updateDeletedWordsSummary(); // This will hide the button
+                                    saveBtn.textContent = 'Save Changes';
+                                    saveBtn.disabled = false;
+                                }, 1500);
+                            } else {
+                                saveBtn.textContent = 'Error!';
+                                saveBtn.disabled = false;
+                            }
+                        } catch {
+                            saveBtn.textContent = 'Error!';
+                            saveBtn.disabled = false;
+                        }
+                    };
+                    if (deletedWords.length > 0) {
+                        let undoHtml = `<span style='color:#ffb366; font-weight:600;'>Words to delete:</span> `;
+                        deletedWords.forEach(info => {
+                            undoHtml += `<span style='color:#fff; margin-right:8px;'>${info['SIMPLE LEMMA']} <button class='undo-delete-btn' data-word='${info['SIMPLE LEMMA']}' style='background:#228383; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:0.9rem; margin-left:4px; cursor:pointer;'>Undo</button></span>`;
+                        });
+                        summaryDiv.innerHTML = undoHtml;
+                        saveBtn.style.display = '';
+                        // Add undo listeners
+                        summaryDiv.querySelectorAll('.undo-delete-btn').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const word = btn.getAttribute('data-word');
+                                const idx = deletedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
+                                if (idx !== -1) {
+                                    const restored = deletedWords.splice(idx, 1)[0];
+                                    retainedWords.push(restored);
+                                    // Re-render flashcard with full info
+                                    let cardHtml = `<div class='flashcard' data-word='${restored['SIMPLE LEMMA']}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
+                                    cardHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${restored['SIMPLE LEMMA']}</div>`;
+                                    Object.entries(restored).forEach(([key, val]) => {
+                                        cardHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
+                                    });
+                                    cardHtml += `<button class='delete-flashcard-btn' data-word='${restored['SIMPLE LEMMA']}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
+                                    cardHtml += `</div>`;
+                                    flashcardList.insertAdjacentHTML('beforeend', cardHtml);
+                                    // Re-attach delete listener
+                                    flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
+                                        btn.onclick = null;
+                                        btn.addEventListener('click', () => {
+                                            const word = btn.getAttribute('data-word');
+                                            const card = btn.closest('.flashcard');
+                                            if (card) card.remove();
+                                            const idx = retainedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
+                                            if (idx !== -1) {
+                                                const removed = retainedWords.splice(idx, 1)[0];
+                                                if (!deletedWords.some(dw => dw['SIMPLE LEMMA'] === removed['SIMPLE LEMMA'])) {
+                                                    deletedWords.push(removed);
+                                                }
+                                            }
+                                            updateDeletedWordsSummary();
+                                        });
+                                    });
+                                    updateDeletedWordsSummary();
+                                }
+                            });
+                        });
+                    } else {
+                        summaryDiv.innerHTML = '';
+                        saveBtn.style.display = 'none';
                     }
                 }
-                }
-                updateDeletedWordsSummary();
-            });
-            });
-        } else {
-            summaryDiv.innerHTML = '';
-            saveBtn.style.display = 'none';
-        }
-        }
-
-        // Save Changes button logic
-        const saveBtn = detailsDiv.querySelector('#save-changes-btn');
-        saveBtn.addEventListener('click', async () => {
-        saveBtn.textContent = 'Saving...';
-        saveBtn.disabled = true;
-        // Send retainedWords to backend as 2D array
-        try {
-            const resp = await fetch(`/userspace/update_list`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                list_name: list,
-                language: lang,
-                words: retainedWords
-            })
-            });
-            const result = await resp.json();
-            if (result.success) {
-            saveBtn.textContent = 'Saved!';
-            setTimeout(() => { detailsDiv.style.display = 'none'; }, 1500);
-            } else {
-            saveBtn.textContent = 'Error!';
+            } catch {
+                detailsArea.innerHTML = '<p style="color:#fff;">Error loading details.</p>';
             }
-        } catch {
-            saveBtn.textContent = 'Error!';
-        }
         });
-
-        // Delete List button logic
-        const deleteListBtn = detailsDiv.querySelector('#delete-list-btn');
-        deleteListBtn.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete the entire list? This action cannot be undone.')) return;
-        deleteListBtn.textContent = 'Deleting...';
-        deleteListBtn.disabled = true;
-        try {
-            const resp = await fetch(`/userspace/delete_list`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                list_name: list,
-                language: lang
-            })
-            });
-            const result = await resp.json();
-            if (result.success) {
-            deleteListBtn.textContent = 'Deleted!';
-            setTimeout(() => {
-                window.location.reload();
-            }, 1200);
-            } else {
-            deleteListBtn.textContent = 'Error!';
-            }
-        } catch {
-            deleteListBtn.textContent = 'Error!';
-        }
-        });
-    } catch {
-        box.textContent = `${list}`;
-        alert('Error loading list details');
-    }
     });
-});
+// All new flex/caching logic is now inside the previous patch block
+// Remove duplicate/old logic and close function
 }
 
 tabs.forEach((tab, idx) => {

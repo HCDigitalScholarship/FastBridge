@@ -214,6 +214,7 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
     const result = await resp.json();
     if (result.success) {
       document.getElementById('save-list-message').textContent = 'List saved!';
+      document.getElementById('save-list-name').value = '';
     } else {
       document.getElementById('save-list-message').textContent = 'Error saving list.';
     }

@@ -125,9 +125,15 @@ async def get_list_details(request: Request, language: str, list_name: str, user
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
     collection = dict_db.get_collection(dict_name)
-    
+
+    columns = ["SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", 
+            "PART_OF_SPEECH", "PRINCIPAL_PARTS", "TITLE"]
+
+    projection = {col: 1 for col in columns}
+    projection["_id"] = 0
     query_conditions = [{"$and": [{"SIMPLE_LEMMA": w[0]}, {"SHORT_DEFINITION": w[1]}]} for w in words]
-    cursor = collection.find({"$or": query_conditions})
+    
+    cursor = collection.find({"$or": query_conditions}, projection)
     
     words_info_dict = {
     word_doc["TITLE"]: {k.replace("_", " "): v for k, v in word_doc.items() if k != "_id" and k != "TITLE" and v is not None}
