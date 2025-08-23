@@ -29,7 +29,8 @@ function exportVisibleDataToCSV() {
   const renaming_dict = {
     "Location": "FIRST_APPEARANCE_IN_SELECTION",
     "SHORT_DEFINITION": "GLOSS",
-    "LONG_DEFINITION": "DEFINITION"
+    "LONG_DEFINITION": "DEFINITION",
+    "TITLE": "HEADWORD"
   };
 
   const headerCSV = visibleColumns
