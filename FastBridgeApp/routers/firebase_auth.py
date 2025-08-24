@@ -155,7 +155,7 @@ async def firebase_login(payload: AuthRequest):
         key="user_token",
         value=id_token,
         httponly=True,
-        secure=True, 
+        secure=False, #temp False for dev, change to True for prod 
         samesite="Lax",
         max_age=36000 # 10 hours
     )
