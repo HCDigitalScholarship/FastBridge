@@ -1,54 +1,3 @@
-function current_selections() {
-  filters = [
-    "running",
-    "toggle_all",
-    "Adjective",
-    "Adverb",
-    "Conjunction",
-    "Idiom",
-    "Interjection",
-    "Noun",
-    "Number",
-    "Preposition",
-    "Pronoun",
-    "Verb",
-    "CONJUNCTION_Verb_1",
-    "CONJUNCTION_Verb_2",
-    "CONJUNCTION_Verb_3",
-    "CONJUNCTION_Verb_4",
-    "CONJUNCTION_Verb_99", // irregular
-    "STOPWORD_Verb_0", // stopword verb
-    "CONJUGATION",
-    "DECLENSION",
-    "PROPER",
-    "REGULAR",
-    "STOPWORD",
-    "PRINCIPAL_PARTS_NO_DIACRITICALS",
-    "PRINCIPAL_PARTS",
-    "SHORT_DEFINITION",
-    "LONG_DEFINITION",
-    "SIMPLE_LEMMA",
-    "PART_OF_SPEECH",
-    "LOGEION_LINK",
-    "FORCELLINI_LINK",
-    "Total_Count_in_Text",
-    "Count_in_Selection",
-    "Location",
-    "Source_Text",
-  ];
-
-  let result = "{";
-  for (i = 0; i < filters.length - 1; i++) {
-    let filter = "#" + filters[i];
-    let value = $(filter).val();
-    result += '"' + filters[i] + '":"' + value + '",';
-  }
-  let filter = "#" + filters[filters.length - 1];
-  let value = $(filter).val();
-  result += '"' + filters[filters.length - 1] + '":"' + value + '"}';
-  return JSON.parse(result);
-}
-
 function exportVisibleDataToCSV() {
   const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
   const checkbox = document.getElementById("running");
@@ -77,7 +26,19 @@ function exportVisibleDataToCSV() {
   })
   .filter(col => col !== null)
 
-  const headerCSV = visibleColumns.map(col => `"${col.name}"`).join(",");
+  const renaming_dict = {
+    "Location": "FIRST_APPEARANCE_IN_SELECTION",
+    "SHORT_DEFINITION": "GLOSS",
+    "LONG_DEFINITION": "DEFINITION",
+    "TITLE": "HEADWORD"
+  };
+
+  const headerCSV = visibleColumns
+    .map(col => {
+      const renamed = renaming_dict[col.name] || col.name; 
+      return `"${renamed.replace(/_/g, " ")}"`;
+    })
+    .join(",");
 
   const csvRows = rowData
     .filter(row => row.active)
@@ -100,3 +61,164 @@ function exportVisibleDataToCSV() {
   link.click();
   document.body.removeChild(link);
 }
+
+function printData() {
+  const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
+  const checkbox = document.getElementById("running");
+
+  // get the active rows according to toggle
+  const rowDataRaw = checkbox.checked ? full_data : rows;
+  const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
+
+  const ths = Array.from(document.querySelector("thead tr").children);
+
+  // only columns currently visible
+  const visibleColumns = ths
+    .map((th, idx) => {
+      const style = getComputedStyle(th);
+      if (style.display === "none" || style.visibility === "hidden") return null;
+
+      const classList = th.classList;
+      const matchingCol = Object.entries(colMap).find(
+        ([name]) => classList.contains(name)
+      );
+
+      if (matchingCol) {
+        const [name] = matchingCol;
+        return { name, index: idx }; 
+      }
+
+      return null;
+    })
+    .filter(col => col !== null);
+
+  const renaming_dict = {
+    "Location": "FIRST_APPEARANCE_IN_SELECTION",
+    "SHORT_DEFINITION": "GLOSS",
+    "LONG_DEFINITION": "DEFINITION",
+    "TITLE": "HEADWORD"
+  };
+
+  // build table
+  const table = document.createElement("table");
+  table.className = "table table-striped";
+
+  // create thead
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  visibleColumns.forEach(col => {
+    const th = document.createElement("th");
+    const renamed = renaming_dict[col.name] || col.name;
+    th.innerText = renamed.replace(/_/g, " ");
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // create tbody with only active rows
+  const tbody = document.createElement("tbody");
+  rowData
+    .filter(row => row.active)
+    .forEach(row => {
+      const tr = document.createElement("tr");
+      visibleColumns.forEach(col => {
+        const td = document.createElement("td");
+        let val = row.values[col.index];
+        if (val === undefined || val === null) val = "";
+        td.innerText = val;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  table.appendChild(tbody);
+
+  // print
+  const newWin = window.open("");
+  newWin.document.write(`
+    <html>
+      <head>
+        <title>Print Table</title>
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+        </style>
+      </head>
+      <body>
+        ${table.outerHTML}
+      </body>
+    </html>
+  `);
+
+  newWin.document.close();
+  newWin.focus();
+  newWin.print();
+  newWin.close();
+}
+
+fetch('/account/protected', { credentials: 'include' })
+  .then((resp) => {
+    if (!resp.ok) throw new Error('Not authenticated')
+    return resp.json()
+  })
+  .then((data) => {
+    document.getElementById('save-list-container').style.display = ''
+  })
+  .catch((err) => {
+    document.getElementById('save-list-container').style.display = 'none'
+  })
+
+document.getElementById('save-list-btn').addEventListener('click', async () => {
+  const listName = document.getElementById('save-list-name').value.trim();
+  if (!listName) {
+    document.getElementById('save-list-message').textContent = 'Please enter a list name.';
+    return;
+  }
+
+  const checkbox = document.getElementById("running");
+  const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
+  const simpleLemmaIndex = Object.keys(colMap).indexOf("SIMPLE_LEMMA");
+  const glossIndex = Object.keys(colMap).indexOf("SHORT_DEFINITION");
+  const rowDataRaw = checkbox.checked ? full_data : rows;
+  const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
+
+  if (simpleLemmaIndex === -1 || glossIndex === -1) {
+    document.getElementById('save-list-message').textContent = 'Required columns not found.';
+    return;
+  }
+  
+  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS
+  const words = (rowData || []).filter(row => row.active)
+    .map(row => [
+      row.values[simpleLemmaIndex],
+      row.values[glossIndex]
+    ]);
+
+  // Get the language from the URL (after /select/)
+  const urlParts = window.location.pathname.split('/');
+  const langIndex = urlParts.indexOf('select') + 1;
+  const language = urlParts[langIndex] || '';
+  
+  document.getElementById('save-list-message').textContent = 'Saving...';
+  console.log("List Name:", listName, "length:", words.length, "Language:", language, words.slice(0,5));
+  try {
+    const resp = await fetch('/userspace/create_list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        list_name: listName,
+        words: words,
+        language: language
+      })
+    });
+
+    const result = await resp.json();
+    if (result.success) {
+      document.getElementById('save-list-message').textContent = 'List saved!';
+      document.getElementById('save-list-name').value = '';
+    } else {
+      document.getElementById('save-list-message').textContent = 'Error saving list.';
+    }
+  } catch {
+    document.getElementById('save-list-message').textContent = 'Error saving list.';
+  }
+});

@@ -1,27 +1,154 @@
-
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 
 {% block content %}
-<body>
-  <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover;background-position: top;">
-    <div class="container">
-      This is where you will be able to create an account with us – we are currently working on linking it to your Google account (and maybe eventually Quizlet, and Cerego) so you don't need to remember another password. When you make an account, you can save texts you have read to make oracle and list searches faster. 
-    </div>
+  <body>
+    <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover;background-position: top; max-height: 90vh;">
+      <div class="container"></div>
 
+      <style>
+        h2 {
+          text-align: center;
+          margin-top: 20px;
+          color: #228383;
+        }
+        .auth-form-container {
+          max-width: 400px;
+          margin: 40px auto;
+          background: #fff;
+          border-radius: 10px;
+          box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+          padding: 32px 24px;
+          text-align: center;
+          max-height: 60vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .auth-form-container h2 {
+          margin-bottom: 24px;
+          font-size: 1.6em;
+        }
+        .auth-form-container input[type='email'],
+        .auth-form-container input[type='text'],
+        .auth-form-container input[type='password'] {
+          width: 90%;
+          padding: 10px;
+          margin: 10px 0;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          font-size: 1em;
+        }
+        .auth-form-container input[type='submit'],
+        .auth-form-container button {
+          width: 95%;
+          padding: 10px;
+          margin: 12px 0 8px 0;
+          background: #228383;
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          font-size: 1em;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .auth-form-container button {
+          background: #ea4335;
+        }
+        .auth-form-container input[type='submit']:hover,
+        .auth-form-container button:hover {
+          background: #226464ff;
+        }
+        .auth-form-container button:hover {
+          background: #c5221f;
+        }
+        .auth-form-container a {
+          color: #228383;
+          text-decoration: none;
+          font-weight: 500;
+        }
+        .auth-form-container a:hover {
+          text-decoration: underline;
+        }
+      </style>
 
-  </section>
-</body>
+      <div class="auth-form-container">
+        <h2>Create an account</h2>
 
+        <!-- Email/password signup can still hit your FastAPI route if you want -->
+        <form id="signup-form">
+          <input type="email" name="email" placeholder="Email" autocomplete="username" required />
+          <input type="text" name="username" placeholder="username" autocomplete="username" required />
+          <input type="password" name="password" placeholder="Password" autocomplete="new-password" required />
+          <input type="submit" value="Sign Up" />
+        </form>
+
+        <!-- Google signup now handled by Firebase JS SDK -->
+        <button id="google-btn">Sign Up with Google</button>
+
+        <div style="margin-top:12px;">
+          Already have an account? <a role="button" href="/account/login">Login</a>
+        </div>
+      </div>
+
+      <script>
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+          e.preventDefault()
+          const email = e.target.email.value
+          const password = e.target.password.value
+          const username = e.target.username.value
+        
+          const res = await fetch('/account/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, username })
+          })
+          if (res.redirected) {
+            window.location.href = res.url;  
+          } else {
+            res.json().then(data => alert("Error: " + data.detail));
+          }
+        })
+      </script>
+
+      <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'
+        import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'
+        
+        // update this
+        const firebaseConfig = {
+          apiKey: 'YOUR_API_KEY',
+          authDomain: 'YOUR_PROJECT.firebaseapp.com',
+          projectId: 'YOUR_PROJECT_ID',
+          appId: 'YOUR_APP_ID'
+        }
+        
+        const app = initializeApp(firebaseConfig)
+        const auth = getAuth(app)
+        await setPersistence(auth, browserLocalPersistence)
+        
+        const provider = new GoogleAuthProvider()
+        
+        document.getElementById('google-btn').addEventListener('click', async () => {
+          try {
+            const result = await signInWithPopup(auth, provider)
+            const idToken = await result.user.getIdToken()
+        
+            const res = await fetch('/api/auth/sessionLogin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken }),
+              credentials: 'include' // ensures cookie is set
+            })
+        
+            if (!res.ok) throw new Error('Failed to create session')
+        
+            window.location.href = '/'
+          } catch (err) {
+            console.error(err)
+            alert('Google sign-in failed: ' + err.message)
+          }
+        })
+      </script>
+    </section>
+  </body>
 {% endblock %}
-
-<!--
-
-<form id = "signup form" action="" method="post" enctype= "multipart/form-data">
-        <input type="text" name="username" value="">
-        <br>
-        <input type="password" name="password" value="">
-        <br>
-        <input type="submit" id = "submit" name="submit" value="submit">
-</form>
--->

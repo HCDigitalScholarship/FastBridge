@@ -248,7 +248,7 @@ def build_html_for_clusterize(words, POS_list, columnheaders, row_filters, style
     emtpy = [list(a) for a in zip(emtpy, emtpy2)]
     header_js_obj = dict(zip(columnheaders, emtpy)) #will be a javascript object for tracking filters
     rules_added = 1 #we set table data width in this stylesheet already
-    renaming_dict = {"Location": "FIRST_APPEARANCE_IN_SELECTION", "SHORT_DEFINITION": "GLOSS", "LONG_DEFINITION": "DEFINITION"}
+    renaming_dict = {"Location": "FIRST_APPEARANCE_IN_SELECTION", "SHORT_DEFINITION": "GLOSS", "LONG_DEFINITION": "DEFINITION", "TITLE": "HEADWORD"}
     for i in range(len(columnheaders)):
         headers+= f'<div class="form-group"> <div class="custom-control custom-checkbox">'
         if columnheaders[i] == "PRINCIPAL_PARTS" or columnheaders[i] == "SHORT_DEFINITION" or columnheaders[i] == "TEXT_SPECIFIC_DEFINITION":
@@ -305,7 +305,7 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
                 lst.append(frequency_dict[words[j][0][0]])
             elif(columnheaders[i] == "Location"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Appearance}</td>'
-                lst.append(titles[j][1])
+                lst.append(words[j][0].Appearance)
                 #the display is the human location, but the value – which the js uses to sort – is the word number
             elif(columnheaders[i] == "SOURCE_TEXT"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].Source_Text}</td>'
