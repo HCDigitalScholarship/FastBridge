@@ -44,7 +44,7 @@ def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
         vocab_summary[language] = [lst["name"] for lst in lists]
     if not vocab_summary:
         vocab_summary = {"No Lists Found. <br> Create new list in the 'Create List' tab": []}
-    return {"vocab": vocab_summary}
+    return {"vocab": vocab_summary, "shared_vocab": vocab_summary}
 
 
 @router.get("/words")

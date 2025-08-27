@@ -139,58 +139,68 @@ let selectedWords = [];
 // Tab data cache
 const tabDataCache = {};
 
-// Helper to fetch and display data (with cache and event re-attachment)
+// Helper to fetch and display data 
 async function fetchTabData(route, contentDiv) {
-if (tabDataCache[route]) {
-    contentDiv.innerHTML = tabDataCache[route];
-    // Re-attach event listeners for vocab list boxes
-    setTimeout(() => {
-    attachVocabListEvents();
-    }, 0);
-    return;
-}
-contentDiv.innerHTML = '<p style="color:#fff;">Loading...</p>';
-try {
-    const resp = await fetch(route);
-    const data = await resp.json();
-    let html = '';
-    if (data.notes) {
-    html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.notes, null, 2)}</pre>`;
-    } else if (data.vocab) {
-    // Expecting {language: [list names]}
-    html = '';
-    Object.entries(data.vocab).forEach(([lang, lists]) => {
-        html += `<div style='margin-bottom:18px; text-align:left;'>`;
-        html += `<h4 style='color:#22b3b3; margin-bottom:8px; text-align:left;'>${lang}</h4>`;
-        // Flex row for list buttons
-        html += `<div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
-        lists.forEach(listName => {
-            html += `
-                <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
-                <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
-            `;
-        });
-        html += `</div>`;
-        // Dedicated details area below all buttons
-        html += `<div class='vocab-list-details-area' style='width:100%; margin-top:10px;'></div>`;
-        html += `</div>`;
-    });
-    tabDataCache[route] = html;
-    setTimeout(() => {
-        attachVocabListEvents();
-    }, 0);
-    } else if (data.media) {
-    html = `<pre style='color:#fff; background:transparent; text-align:left;'>${JSON.stringify(data.media, null, 2)}</pre>`;
-    } else {
-    html = '<p style="color:#fff;">No data found.</p>';
+    if (tabDataCache[route]) {
+        contentDiv.innerHTML = tabDataCache[route];
+        setTimeout(() => {
+            attachVocabListEvents();
+            attachSharedListEvents(); // Attach shared list events
+        }, 0);
+        return;
     }
-    contentDiv.innerHTML = html;
-} catch {
-    contentDiv.innerHTML = '<p style="color:#fff;">Error loading data.</p>';
-}
+    contentDiv.innerHTML = '<p style="color:#fff;">Loading...</p>';
+    try {
+        const resp = await fetch(route);
+        const data = await resp.json();
+        let html = '';
+        if (data.vocab) {
+            // User lists
+            Object.entries(data.vocab).forEach(([lang, lists]) => {
+                html += `<div style='margin-bottom:18px; text-align:left;'>
+                    <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
+                    <div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
+                lists.forEach(listName => {
+                    html += `
+                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                        <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
+                    `;
+                });
+                html += `</div>
+                    <div class='vocab-list-details-area' style='width:100%; margin-top:10px;'></div>
+                </div>`;
+            });
+            // Shared lists section
+            if (data.shared_vocab) {
+                html += `<div style="margin-bottom:32px;">
+                    <h3 style="color:#ffb366; margin-bottom:12px;">Shared Lists</h3>`;
+                Object.entries(data.shared_vocab).forEach(([lang, lists]) => {
+                    html += `<div style='margin-bottom:18px; text-align:left;'>
+                        <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
+                        <div class='shared-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
+                    lists.forEach(listName => {
+                        html += `
+                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                        `;
+                    });
+                    html += `</div>
+                        <div class='shared-list-details-area' style='width:100%; margin-top:10px;'></div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            tabDataCache[route] = html;
+            setTimeout(() => {
+                attachVocabListEvents();
+                attachSharedListEvents(); // Attach shared list events
+            }, 0);
+        }
+        contentDiv.innerHTML = html;
+    } catch {
+        contentDiv.innerHTML = '<p style="color:#fff;">Error loading data.</p>';
+    }
 }
 
-// Attach hover and click events for vocab list boxes
 function attachVocabListEvents() {
     // Add New Word modal logic (refactored)
     document.querySelectorAll('.add-word-btn').forEach(btn => {
@@ -289,14 +299,11 @@ function attachVocabListEvents() {
                 // Deleted words summary and Save Changes button (initially hidden)
                 cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
                 cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px;'>`;
+                cardsHtml += `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
                 cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
                 cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
                 cardsHtml += `</div>`;
                 detailsArea.innerHTML = cardsHtml;
-                // Add Share List button
-                const shareBtnHtml = `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
-                detailsArea.querySelector('div[style*="display:flex;"]').insertAdjacentHTML('beforeend', shareBtnHtml);
-                // Share List button logic
                 const shareListBtn = detailsArea.querySelector('#share-list-btn');
                 shareListBtn.addEventListener('click', () => {
                     // Show modal for share options
@@ -514,8 +521,100 @@ function attachVocabListEvents() {
             }
         });
     });
-// All new flex/caching logic is now inside the previous patch block
-// Remove duplicate/old logic and close function
+}
+
+function attachSharedListEvents() {
+    document.querySelectorAll('.shared-list-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = '#ffb366';
+            btn.style.color = '#222';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = '#333';
+            btn.style.color = '#fff';
+        });
+        btn.addEventListener('click', async () => {
+            const lang = btn.getAttribute('data-lang');
+            const list = btn.getAttribute('data-list');
+            // Highlight active button
+            document.querySelectorAll('.shared-list-btn').forEach(b => {
+                b.style.background = '#333';
+                b.style.color = '#fff';
+            });
+            btn.style.background = '#ffb366';
+            btn.style.color = '#222';
+            // Find details area
+            const detailsArea = btn.closest('div').parentNode.querySelector('.shared-list-details-area');
+            // Hide details in all details areas for this language
+            btn.closest('div').parentNode.querySelectorAll('.shared-list-details-area').forEach(area => {
+                area.innerHTML = '';
+            });
+            detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
+            try {
+                const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}&shared=true`);
+                const data = await resp.json();
+                // Display flash cards (no delete/share)
+                let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
+                Object.entries(data).forEach(([word, info]) => {
+                    cardsHtml += `<div class='flashcard' data-word='${info['SIMPLE LEMMA']}' style='background:#333; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(255,179,102,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
+                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#ffb366; margin-bottom:8px;'>${word}</div>`;
+                    Object.entries(info).forEach(([key, val]) => {
+                        cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#22b3b3;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
+                    });
+                    cardsHtml += `</div>`;
+                });
+                cardsHtml += '</div>';
+                // Add New Word button for shared lists
+                cardsHtml += `<button class='add-word-btn' data-lang='${lang}' data-list='${list}' data-shared='true' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-top:12px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>`;
+                detailsArea.innerHTML = cardsHtml;
+
+                // Attach Add New Word modal logic for shared lists
+                const addWordBtn = detailsArea.querySelector('.add-word-btn');
+                if (addWordBtn) {
+                    addWordBtn.addEventListener('click', () => {
+                        showWordSelectModal({
+                            lang,
+                            list,
+                            title: 'Add New Word to Shared List',
+                            saveLabel: 'Save',
+                            cancelLabel: 'Cancel',
+                            onSave: async (selected, {modal, messageDiv, saveBtn}) => {
+                                saveBtn.textContent = 'Saving...';
+                                saveBtn.disabled = true;
+                                try {
+                                    const resp = await fetch('/userspace/add_words', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            list_name: list,
+                                            language: lang,
+                                            words: selected,
+                                            shared: true
+                                        })
+                                    });
+                                    const data = await resp.json();
+                                    if (data.success) {
+                                        messageDiv.textContent = 'Words added!';
+                                        setTimeout(() => { window.location.reload(); }, 1200);
+                                    } else {
+                                        messageDiv.textContent = 'Error adding words.';
+                                        saveBtn.disabled = false;
+                                        saveBtn.textContent = 'Save';
+                                    }
+                                } catch {
+                                    messageDiv.textContent = 'Error adding words.';
+                                    saveBtn.disabled = false;
+                                    saveBtn.textContent = 'Save';
+                                }
+                            }
+                        });
+                    });
+                }
+            } catch {
+                detailsArea.innerHTML = '<p style="color:#fff;">Error loading details.</p>';
+            }
+        });
+    });
 }
 
 tabs.forEach((tab, idx) => {
