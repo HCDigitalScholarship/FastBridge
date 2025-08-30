@@ -32,19 +32,36 @@ def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
         return {"error": "No user logged in"}
 
     doc = storage.lists.find_one(
-        {"user_id": user_id}, {"languages": 1, "_id": 0}
+        {"user_id": user_id}, {"languages": 1, "shared_with_me": 1, "_id": 0}
     )
 
-    if not doc or "languages" not in doc:
-        return {"vocab": {"No lists Found. <br> Create new list in the 'Create List' tab": []}}
-
     vocab_summary = {}
-    for language, lists in doc["languages"].items():
-        if not lists: continue
-        vocab_summary[language] = [lst["name"] for lst in lists]
+    if doc and "languages" in doc:
+        for language, lists in doc["languages"].items():
+            if not lists: continue
+            vocab_summary[language] = [lst["name"] for lst in lists]
     if not vocab_summary:
-        vocab_summary = {"No Lists Found. <br> Create new list in the 'Create List' tab": []}
-    return {"vocab": vocab_summary, "shared_vocab": vocab_summary}
+        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab": []}
+    
+    shared_summary = {}
+    if doc and "shared_with_me" in doc:
+        for owner_id, langs in doc["shared_with_me"].items():
+            owner_doc = storage.lists.find_one(
+                {"user_id": owner_id}, {"languages": 1, "_id": 0}
+            )
+            if not owner_doc or "languages" not in owner_doc:
+                continue
+
+            for lang, list_names in langs.items():
+                available = owner_doc["languages"].get(lang, [])
+                for lst in available:
+                    if lst.get("name") in list_names:
+                        shared_summary.setdefault(lang, []).append(lst["name"])
+
+    if not shared_summary:
+        shared_summary = {"No Shared Lists": []}
+        
+    return {"vocab": vocab_summary, "shared_vocab": shared_summary}
 
 
 @router.get("/words")
@@ -66,6 +83,7 @@ class ListCreate(BaseModel):
     list_name: str
     language: str
     words: list[list[str]]
+    shared: bool = None
 
 @router.post("/create_list")
 async def create_list(payload: ListCreate, request: Request, user=Depends(get_current_user_cookie)):
@@ -110,14 +128,31 @@ async def create_list(payload: ListCreate, request: Request, user=Depends(get_cu
     }
     
 @router.get("/list_details")
-async def get_list_details(request: Request, language: str, list_name: str, user=Depends(get_current_user_cookie)):
+async def get_list_details(request: Request, language: str, list_name: str, shared: bool = None, user=Depends(get_current_user_cookie)):
     user_id = user.get('uid', None)
     storage = atlas_client.get_database("App-Storage")
 
-    doc = storage.lists.find_one(
-        {"user_id": user_id, f"languages.{language}.name": list_name},
-        {f"languages.{language}.$": 1, "_id": 0}  # the $ operator projects only the matched array element
-    )
+    if shared:
+        shared_doc = storage.lists.find_one({"user_id": user_id}, {"shared_with_me": 1, "_id": 0})
+        if not shared_doc: return JSONResponse({})
+        
+        owner_id = None
+        for oid, langs in shared_doc.get("shared_with_me", {}).items():
+            if language in langs and list_name in langs[language]:
+                owner_id = oid
+                break
+        if not owner_id:
+            return JSONResponse({})
+        
+        doc = storage.lists.find_one(
+            {"user_id": owner_id, f"languages.{language}.name": list_name},
+            {f"languages.{language}.$": 1, "_id": 0}
+        )
+    else:
+        doc = storage.lists.find_one(
+            {"user_id": user_id, f"languages.{language}.name": list_name},
+            {f"languages.{language}.$": 1, "_id": 0} 
+        )
 
     if doc:
         words = doc["languages"][language][0]["words"]
@@ -316,18 +351,29 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
 
 @router.post("/add_words")
 async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
+    storage = atlas_client.get_database("App-Storage")
     user_id = user.get("uid")
+    
     if not user_id:
         raise HTTPException(status_code=401, detail="User not authenticated")
-
+    
+    if payload.shared:
+        doc = storage.lists.find_one(
+            {"user_id": user_id}, {"shared_with_me": 1, "_id": 0}
+        )
+        user_id = None
+        if doc and "shared_with_me" in doc:
+            for owner_id, langs in doc["shared_with_me"].items():
+                print(owner_id, langs)
+                if payload.list_name in langs[payload.language]:
+                    user_id = owner_id
+        
     list_name = payload.list_name
     language = payload.language
     words_to_add = payload.words
     
     if not list_name or not language or not words_to_add:
         raise HTTPException(status_code=400, detail="Missing list_name, language, or words")
-
-    storage = atlas_client.get_database("App-Storage")
 
     # Append words to the existing list
     result = storage.lists.update_one(
@@ -344,7 +390,6 @@ async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
     return {
         "success": True,
         "message": f"Added {len(words_to_add)} words to list '{list_name}' in {language}.",
-        "added_words": words_to_add
     }
 
 class ShareListPayload(BaseModel):
