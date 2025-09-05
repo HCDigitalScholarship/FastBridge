@@ -366,7 +366,6 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
     word_list = deque()
     computed_row_filters = deque()
     dict_data = build_dict_structure(dict_name)
-
     # add extra fields if given text has local definitions and/or local lemmas
     if has_local_defs and has_local_lems:
         local_defs_list, local_lems_list = zip(*[(w[3], w[4]) for w in words_from_text])
@@ -432,9 +431,8 @@ def mg_get_lang_data(words_from_text : list, dict_name: str, has_local_defs : bo
     parts_of_speech = list(parts_of_speech)
     parts_of_speech.sort()
 
-    dict_fields = dict_fields[1:] #we don't want a filter for title, that is just to make accessing dicts easier
     links = dict_fields[-2:]
-    reorder = [head.lower() if head.split("_")[1]!="PARTS" else head for head in dict_fields[:-2]]
+    reorder = [head.lower() if "_" in head and head.split("_")[1]!="PARTS" else head for head in dict_fields[:-2]]
 
     if has_local_defs:
         reorder.append("text_specific_definition")

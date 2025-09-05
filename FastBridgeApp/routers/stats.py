@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import google.generativeai as genai
-from stats_prompts import get_stats_summary
+from stats_prompts import get_stats_summary, get_stats_compare_summary
 from dotenv import load_dotenv
 import os
 import json
@@ -13,7 +13,6 @@ from TextAnalyzer import TextAnalyzer
 
 load_dotenv("FastBridgeApp/.env")
 
-chat_sessions = {}
 
 def stats_compare_result(request, context, sourcetexts, starts, ends, language):
     analyzer_texts = sourcetexts.split('+')
@@ -263,26 +262,14 @@ async def read_formulas(request: Request):
     return templates.TemplateResponse("stats-formulas.html", {"request": request})
 
 
-@router.get("/cumulative/{language}/")
-async def stats_cumulative(request: Request, language: str):
-    # Retrieve the selected text names from the session or storage
-    # Replace with your storage retrieval logic
-    selected_texts = retrieve_selected_texts()
-
-    # Process the selected text names and retrieve the corresponding book data
-    sectionDict = mg_get_sections(language)
-    sectionBooks = [sectionDict[textname] for textname in selected_texts]
-
-    # Perform cumulative statistics calculations or any other operations on sectionBooks
-
-    return templates.TemplateResponse("stats_cumulative.html", {"request": request, "sectionBooks": sectionBooks})
-
 class ChatRequest(BaseModel):
     message: str
     chat_id: str | None = None
     context: dict | None = None
+    all_contexts: dict | None = None  # All loaded text contexts
     history: list[dict] = []
     initial: bool = False
+    mode: str = "single"  # "single" or "compare"
 
 api_key = os.getenv("API_KEY")
 genai.configure(api_key=api_key)
@@ -290,15 +277,70 @@ genai.configure(api_key=api_key)
 @router.post("/chat")
 def chat(req: ChatRequest):
     model = genai.GenerativeModel("gemini-2.5-flash")
-    if not req.initial:
-        chat = model.start_chat(history=req.history) if req.chat_id not in chat_sessions else chat_sessions[req.chat_id]
-        response = chat.send_message(req.message)
-        print("using chat session:", req.chat_id)
+    
+    if req.history:
+        formatted_history = []
+        for msg in req.history:
+            if 'role' in msg and 'parts' in msg:
+                # Convert role names to match Google AI expectations
+                role = 'user' if msg['role'] == 'user' else 'model'
+                formatted_history.append({
+                    'role': role,
+                    'parts': [{'text': msg['parts']}]
+                })
+        chat = model.start_chat(history=formatted_history)
     else:
-        print("creating new chat session")
         chat = model.start_chat()
-        chat_sessions[req.chat_id] = chat
-        response = chat.send_message(get_stats_summary(context=req.context))
+    
+    if req.initial:
+        if req.mode == "compare":
+            prompt_func = get_stats_compare_summary
+        else:
+            prompt_func = get_stats_summary
+        
+        # For compare mode, include all contexts in the prompt
+        if req.mode == "compare" and req.all_contexts:
+            all_contexts_str = json.dumps(req.all_contexts) if isinstance(req.all_contexts, dict) else str(req.all_contexts)
+            system_prompt = prompt_func(context=all_contexts_str)
+        else:
+            context_str = json.dumps(req.context) if isinstance(req.context, dict) else req.context
+            system_prompt = prompt_func(context=context_str)
+        if req.mode == "compare":
+            response = chat.send_message(system_prompt + "\n\nUser: " + req.message)
+        else:
+            response = chat.send_message(system_prompt)
+    else:
+        # Always include all loaded texts context in every message
+        if req.all_contexts:
+            for key, context in req.all_contexts.items():
+                text_name = context.get('text_name', 'Unknown')
+                hapax_count = len(context.get('hapax_legomena', [])) if context.get('hapax_legomena') else 'N/A'
+                spache_score = context.get('spache', 'N/A')
+                lex_r = context.get('LexR', 'N/A')
+            
+            # Include the FULL context data in the prompt
+            full_context_str = json.dumps(req.all_contexts, indent=2)
+            
+            contexts_summary = "\n\n=== REMINDER: Currently Loaded Texts for Analysis ===\n"
+            for key, context in req.all_contexts.items():
+                text_name = context.get('text_name', 'Unknown')
+                start_section = context.get('start_section', '')
+                end_section = context.get('end_section', '')
+                contexts_summary += f"✓ {text_name} ({start_section}-{end_section})\n"
+                # Include key stats for each text
+                word_count = context.get('word_count', 'N/A')
+                vocab_size = context.get('vocab_size', 'N/A')
+                lex_r = context.get('LexR', 'N/A')
+                hapax_count = len(context.get('hapax_legomena', [])) if context.get('hapax_legomena') else 'N/A'
+                spache_score = context.get('spache', 'N/A')
+                contexts_summary += f"  - Word count: {word_count}, Vocab size: {vocab_size}, LexR: {lex_r}, Hapax words: {hapax_count}, Spache: {spache_score}\n"
+            contexts_summary += "=== You have statistical data for ALL these texts ===\n\n"
+            contexts_summary += f"=== FULL CONTEXT DATA ===\n{full_context_str}\n=== END CONTEXT DATA ===\n\n"
+            enhanced_message = f"{contexts_summary}User Message: {req.message}"
+        else:
+            enhanced_message = req.message
+            
+        response = chat.send_message(enhanced_message)
 
     return {
         "response": response.text,

@@ -54,9 +54,11 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
         return book_cache[text]
 
     known_ranges = make_quads_or_trips(known_texts, known_starts, known_ends)
+    known_texts_display = ""
     ogknown_words = []
     for text, start, end in known_ranges:
         ogknown_words += get_book(text).get_words(start, end,oracle=True)
+        known_texts_display += f"{get_book(text).name} ({start} - {end}), "
 
     og_token_set = set(ogknown_words)
 
@@ -133,6 +135,8 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
     locations_display = locations_display.rstrip(", ")
     context["table_data"] = sorted(table_data, key=lambda row: float(row[5].strip('%')), reverse=True) # Sort by percent_words known
     context["etexts"] = locations_display
+    
+    context["known_texts"] = known_texts_display.rstrip(", ")
 
     return templates.TemplateResponse("result-oracle.html", context)
 

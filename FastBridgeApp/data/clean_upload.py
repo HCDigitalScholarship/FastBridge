@@ -12,6 +12,8 @@ new_titles = {}
 problematic_texts = {}
 dict_db = None
 checked_words = set()
+remap = None
+remap_dict = None
 
 # For general data
 possible_headers = [
@@ -75,7 +77,9 @@ def clean_dictionary_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
         update_problematic_texts(file_name, [f"Missing expected columns: {missing}"])
         for col in missing:
             df[col] = None
-    
+
+    if "TITLE" in df.columns:
+        df = df[~df["TITLE"].isin(remap_dict.keys())]
     return df[dictionary_expected_columns]
 
 def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
@@ -83,9 +87,9 @@ def clean_data(df: pd.DataFrame, file_name: str) -> pd.DataFrame:
     df = df.rename(columns=lambda x: "".join(x.split(" ")))
     df = df.rename(columns=target_headers)
     df["head_word"] = df["head_word"].str.upper()
+    df["head_word"] = df["head_word"].replace(remap_dict)
     
     cleaned_df = pd.DataFrame(columns=possible_headers)
-    # cleaned_df = pd.DataFrame(index=df.index, columns=possible_headers)
     for header in possible_headers:
         if header in df.columns:
             cleaned_df[header] = df[header]
@@ -169,10 +173,25 @@ def update_problematic_texts(file_name: str, issues: list):
     problematic_texts[file_name].extend(issues)
 
 def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name: str, chunk_size: int = 100000):
-    if collection_name in db.list_collection_names():
-        user_input = input(f"{collection_name} already exists. Do you want to overwrite it? (y/n): ").strip().lower()
-        if user_input != 'y': 
-            update_problematic_texts(collection_name, [f"Collection '{collection_name}' already exists. Skipping import."])
+    if not dict_db:
+        name_map = {
+            name.split("_")[0]: name
+            for name in db.list_collection_names()
+        }
+    else:
+        name_map = {
+            name: name
+            for name in db.list_collection_names()
+            if not name.startswith("bridge_")
+        }
+    first_part = collection_name.split("_")[0] if not dict_db else collection_name
+    if first_part in name_map:
+        actual_name_in_db = name_map[first_part]
+        user_input = input(
+            f"Collection '{collection_name}' matches existing DB collection '{actual_name_in_db}'. Overwrite? (y/n): "
+        ).strip().lower()
+        if user_input != 'y':
+            update_problematic_texts(collection_name, [f"Collection '{actual_name_in_db}' already exists. Skipping import."])
             return
         
     collection = db[collection_name]
@@ -267,6 +286,8 @@ if __name__ == "__main__":
     database_name = args.collection
     client = MongoClient(mongo_uri)
     db = client[database_name]
+    remap = pd.read_table('table.tsv')
+    remap_dict = dict(zip(remap['Remap'], remap['Preserve']))
     
     if database_name != "dictionaries":
         dict_name = f"bridge_{args.collection.split('-')[0].lower()}_dictionary"
