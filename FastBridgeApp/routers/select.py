@@ -297,9 +297,12 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
             elif(columnheaders[i] == "TEXT_SPECIFIC_PRINCIPAL_PARTS"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_PRINCIPAL_PARTS}</td>'
                 lst.append(words[j][0][-3])
-            elif(columnheaders[i][-5:] =="_LINK"):
-                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{words[j][0][i+1]}"> </a></td>'
-                lst.append(words[j][0][i+1])
+            elif(columnheaders[i] =="LOGEION_LINK"):
+                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" target="_blank" href="{words[j][0].LOGEION_LINK}"> </a></td>'
+                lst.append(words[j][0].LOGEION_LINK)
+            elif(columnheaders[i] =="FORCELLINI_LINK"):
+                to_add_to_render_words+=f'<td class="{columnheaders[i]}"><a class="fa fa-external-link" style="font-size: 20px;" role="button" target="_blank" href="{words[j][0].FORCELLINI_LINK}"> </a></td>'
+                lst.append(words[j][0].FORCELLINI_LINK)
             elif(columnheaders[i] == "Count_in_Selection"):
                 to_add_to_render_words+= f'<td class="{columnheaders[i]}">{frequency_dict[words[j][0][0]]}</td>'
                 lst.append(frequency_dict[words[j][0][0]])
