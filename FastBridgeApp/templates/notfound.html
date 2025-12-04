@@ -12,11 +12,11 @@
         <div class="card-body text-dark">
           <h5 class="card-title">
             {%  if  (statuscode == 404) %}
-              <h5 class="card-title"> You messed up!!</h5>
+              <h5 class="card-title"> Errare est humanum.</h5>
               <p class="card-text">But, Don't worry. Let's take you to Home Page. </p>
               <a href="/" class="btn btn-primary">Home Page</a>
               {% elif (statuscode == 401) %}
-              <h5 class="card-title"> You messed up!!</h5>
+              <h5 class="card-title"> Errare est humanum.</h5>
               <p class="card-text">{{ detail }}</p>
               <a href="/" class="btn btn-primary">Home Page</a>
             {% else %}
