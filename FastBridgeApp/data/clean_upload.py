@@ -173,7 +173,7 @@ def update_problematic_texts(file_name: str, issues: list):
     problematic_texts[file_name].extend(issues)
 
 def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name: str, chunk_size: int = 100000):
-    if not dict_db:
+    if dict_db is not None:
         name_map = {
             name.split("_")[0]: name
             for name in db.list_collection_names()
@@ -184,7 +184,7 @@ def import_dataframe_to_mongo(db: MongoClient, df: pd.DataFrame, collection_name
             for name in db.list_collection_names()
             if not name.startswith("bridge_")
         }
-    first_part = collection_name.split("_")[0] if not dict_db else collection_name
+    first_part = collection_name.split("_")[0] if dict_db is not None else collection_name
     if first_part in name_map:
         actual_name_in_db = name_map[first_part]
         user_input = input(

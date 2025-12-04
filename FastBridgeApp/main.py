@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 from routers.ToolsApp import lemmatize
-from routers import oracle, select, about, user_help,export, stats, firebase_auth, userspace
+from routers import oracle, select, about, user_help, stats, firebase_auth#, userspace
 
 
 async def not_found(request, exc):
@@ -39,7 +39,6 @@ app.include_router(oracle.router, prefix = "/oracle", tags=["oracle"])
 app.include_router(select.router, prefix = "/select", tags=["select"])
 app.include_router(about.router, prefix = "/about", tags=["about"])
 app.include_router(user_help.router, prefix = "/help", tags=["help"])
-app.include_router(export.router, prefix = "/export", tags=["export"])
 app.include_router(stats.router, prefix="/stats", tags=["stats"])
 
 templates = Jinja2Templates(directory="templates")

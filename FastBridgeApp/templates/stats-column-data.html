@@ -145,11 +145,20 @@
         text-decoration: none;
         cursor: pointer;
     }
+    .normalize-height {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: fit-content;
+        padding: 0.25rem 0.5rem;
+    }
+
 
 </style>
 <div class="container mt-5">
     <div class="content-container">
-        <h1>{{ context.text_name }}</h1>
+        <h1 class="normalize-height">{{ context.text_name }}</h1>
         <h2>{{ context.start_section }} - {{ context.end_section }}</h2>
         <h3>Metrics</h3>
         <div class="row">

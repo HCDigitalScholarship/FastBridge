@@ -285,10 +285,24 @@
                     console.error('Error parsing embedded context:', error);
                 }
             }
+            setTimeout(equalizeHeights, 100);
         }).catch(error => {
             loaderElement.style.display = "none";
         });
     }
+function equalizeHeights() {
+  const elements = document.querySelectorAll('.normalize-height');
+  if (elements.length < 2) return;
+
+  // Reset heights to natural size
+  elements.forEach(el => el.style.height = 'auto');
+
+  // Find tallest
+  const maxHeight = Math.max(...Array.from(elements).map(el => el.offsetHeight));
+
+  // Apply tallest height to both columns
+  elements.forEach(el => el.style.height = `${maxHeight}px`);
+}
 
 </script>
 
@@ -417,6 +431,7 @@
                         console.error('Error parsing embedded context:', error);
                     }
                 }
+                setTimeout(equalizeHeights, 100);
             })
             .catch(error => {
                 console.error('Error loading data for', dropdownId, ':', error);

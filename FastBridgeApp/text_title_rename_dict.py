@@ -358,5 +358,7 @@ title_renaming_dict = {
     "national_collegiate_greek_exam_core_list": "National Collegiate Greek Exam Core List_LIST",
     "groton_from_alpha_to_omega": "Groton, From Alpha to Omega_LIST",
     'brendan_navigatio_sancti_brendani_abbatis': 'Brendan, Navigatio Sancti Brendani Abbatis_TEXT',
-    'louisa_sigea_syntra': 'Louisa Sigea, Syntra_TEXT'
+    'louisa_sigea_syntra': 'Louisa Sigea, Syntra_TEXT',
+    'plautus_captivi': 'Plautus, Captivi_TEXT',
+    'domitius_marsus_in_bavium_courtney': 'Domitius Marsus, In Bavium (Courtney)'
 }
