@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 from routers.ToolsApp import lemmatize
-from routers import oracle, select, about, user_help, stats, firebase_auth, userspace
+from routers import oracle, select, about, user_help, stats, firebase_auth#, userspace
 
 
 async def not_found(request, exc):
@@ -34,7 +34,7 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, exception_handler
 
 app.include_router(lemmatize.router, prefix="/lemmatizer", tags=["lemmatize"])
 app.include_router(firebase_auth.router, prefix = "/account", tags=["account"])
-app.include_router(userspace.router, prefix = "/userspace", tags=["userspace"])
+# app.include_router(userspace.router, prefix = "/userspace", tags=["userspace"])
 app.include_router(oracle.router, prefix = "/oracle", tags=["oracle"])
 app.include_router(select.router, prefix = "/select", tags=["select"])
 app.include_router(about.router, prefix = "/about", tags=["about"])
