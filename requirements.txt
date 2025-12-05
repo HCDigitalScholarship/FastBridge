@@ -155,7 +155,7 @@ typing_extensions==4.14.1
 ujson==5.4.0
 Unidecode==1.1.1
 uritemplate==3.0.1
-urllib3==2.5.0
+urllib3==2.6.0
 uvicorn==0.34.2
 uvloop==0.21.0
 wasabi==1.1.3
