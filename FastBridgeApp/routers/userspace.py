@@ -24,10 +24,16 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
 
 
 @router.get("/vocab")
-def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
+def get_vocab(
+    request: Request,
+    page: int = 1,
+    limit: int = 5,
+    language_filter: str = None,
+    user=Depends(get_current_user_cookie)
+):
     user_id = user.get("uid", None)
     storage = atlas_client.get_database("App-Storage")
-    
+
     if not user_id:
         return {"error": "No user logged in"}
 
@@ -35,15 +41,22 @@ def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
         {"user_id": user_id}, {"languages": 1, "shared_with_me": 1, "_id": 0}
     )
 
-    vocab_summary = {}
+    # get user's vocabulary lists
+    all_vocab_lists = []
     if doc and "languages" in doc:
         for language, lists in doc["languages"].items():
             if not lists: continue
-            vocab_summary[language] = [lst["name"] for lst in lists]
-    if not vocab_summary:
-        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab": []}
-    
-    shared_summary = {}
+            if language_filter and language != language_filter:
+                continue
+            for lst in lists:
+                all_vocab_lists.append({
+                    "name": lst["name"],
+                    "language": language,
+                    "word_count": len(lst.get("words", [])),
+                    "type": "user"
+                })
+
+    # get shared vocabulary lists
     if doc and "shared_with_me" in doc:
         for owner_id, langs in doc["shared_with_me"].items():
             owner_doc = storage.lists.find_one(
@@ -53,15 +66,58 @@ def get_vocab(request: Request, user=Depends(get_current_user_cookie)):
                 continue
 
             for lang, list_names in langs.items():
+                if language_filter and lang != language_filter:
+                    continue
                 available = owner_doc["languages"].get(lang, [])
                 for lst in available:
                     if lst.get("name") in list_names:
-                        shared_summary.setdefault(lang, []).append(lst["name"])
+                        all_vocab_lists.append({
+                            "name": lst["name"],
+                            "language": lang,
+                            "word_count": len(lst.get("words", [])),
+                            "type": "shared"
+                        })
 
+    # Pagination logic
+    total_lists = len(all_vocab_lists)
+    total_pages = (total_lists + limit - 1) // limit if total_lists > 0 else 1
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated_lists = all_vocab_lists[start_idx:end_idx]
+
+    # Group paginated lists by language and type
+    vocab_summary = {}
+    shared_summary = {}
+
+    for lst in paginated_lists:
+        if lst["type"] == "user":
+            vocab_summary.setdefault(lst["language"], []).append({
+                "name": lst["name"],
+                "word_count": lst["word_count"]
+            })
+        else:
+            shared_summary.setdefault(lst["language"], []).append({
+                "name": lst["name"],
+                "word_count": lst["word_count"]
+            })
+
+    if not vocab_summary:
+        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab": []}
     if not shared_summary:
         shared_summary = {"No Shared Lists": []}
-        
-    return {"vocab": vocab_summary, "shared_vocab": shared_summary}
+
+    return {
+        "vocab": vocab_summary,
+        "shared_vocab": shared_summary,
+        "pagination": {
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_lists": total_lists,
+            "limit": limit,
+            "has_next": page < total_pages,
+            "has_prev": page > 1
+        }
+    }
 
 
 @router.get("/words")
@@ -128,7 +184,15 @@ async def create_list(payload: ListCreate, request: Request, user=Depends(get_cu
     }
     
 @router.get("/list_details")
-async def get_list_details(request: Request, language: str, list_name: str, shared: bool = None, user=Depends(get_current_user_cookie)):
+async def get_list_details(
+    request: Request,
+    language: str,
+    list_name: str,
+    page: int = 1,
+    limit: int = 20,
+    shared: bool = None,
+    user=Depends(get_current_user_cookie)
+):
     user_id = user.get('uid', None)
     storage = atlas_client.get_database("App-Storage")
 
@@ -156,29 +220,56 @@ async def get_list_details(request: Request, language: str, list_name: str, shar
 
     if doc:
         words = doc["languages"][language][0]["words"]
-    
+
     if not words:
-        return JSONResponse({})
-    
+        return JSONResponse({
+            "words": {},
+            "pagination": {
+                "current_page": page,
+                "total_pages": 0,
+                "total_words": 0,
+                "limit": limit,
+                "has_next": False,
+                "has_prev": False
+            }
+        })
+
+    # Pagination logic for words
+    total_words = len(words)
+    total_pages = (total_words + limit - 1) // limit if total_words > 0 else 1
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated_words = words[start_idx:end_idx]
+
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
     collection = dict_db.get_collection(dict_name)
 
-    columns = ["SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION", 
+    columns = ["SIMPLE_LEMMA", "SHORT_DEFINITION", "LONG_DEFINITION",
             "PART_OF_SPEECH", "PRINCIPAL_PARTS", "TITLE"]
 
     projection = {col: 1 for col in columns}
     projection["_id"] = 0
-    query_conditions = [{"$and": [{"SIMPLE_LEMMA": w[0]}, {"SHORT_DEFINITION": w[1]}]} for w in words]
-    
+    query_conditions = [{"$and": [{"SIMPLE_LEMMA": w[0]}, {"SHORT_DEFINITION": w[1]}]} for w in paginated_words]
+
     cursor = collection.find({"$or": query_conditions}, projection)
-    
+
     words_info_dict = {
     word_doc["TITLE"]: {k.replace("_", " "): v for k, v in word_doc.items() if k != "_id" and k != "TITLE" and v is not None}
         for word_doc in cursor
     }
 
-    return JSONResponse(words_info_dict)
+    return JSONResponse({
+        "words": words_info_dict,
+        "pagination": {
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_words": total_words,
+            "limit": limit,
+            "has_next": page < total_pages,
+            "has_prev": page > 1
+        }
+    })
 
 @router.post("/update_list")
 async def update_user_list(payload: ListCreate, user=Depends(get_current_user_cookie)):

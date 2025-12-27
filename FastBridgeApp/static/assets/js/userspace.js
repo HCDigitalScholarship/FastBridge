@@ -139,30 +139,35 @@ let selectedWords = [];
 // Tab data cache
 const tabDataCache = {};
 
-// Helper to fetch and display data 
+// Helper to fetch and display data
 async function fetchTabData(route, contentDiv) {
-    if (tabDataCache[route]) {
-        contentDiv.innerHTML = tabDataCache[route];
-        setTimeout(() => {
-            attachVocabListEvents();
-            attachSharedListEvents(); // Attach shared list events
-        }, 0);
-        return;
-    }
+    // Don't cache paginated results
     contentDiv.innerHTML = '<p style="color:#fff;">Loading...</p>';
     try {
         const resp = await fetch(route);
         const data = await resp.json();
         let html = '';
+
         if (data.vocab) {
+            // Add pagination info at top if available
+            if (data.pagination) {
+                const p = data.pagination;
+                html += `<div style="margin-bottom:16px; color:#fff; text-align:center;">
+                    <span>Showing ${p.total_lists > 0 ? ((p.current_page - 1) * p.limit + 1) : 0} - ${Math.min(p.current_page * p.limit, p.total_lists)} of ${p.total_lists} lists</span>
+                </div>`;
+            }
+
             // User lists
             Object.entries(data.vocab).forEach(([lang, lists]) => {
                 html += `<div style='margin-bottom:18px; text-align:left;'>
                     <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
                     <div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
-                lists.forEach(listName => {
+                lists.forEach(listItem => {
+                    // Handle both old format (string) and new format (object)
+                    const listName = typeof listItem === 'string' ? listItem : listItem.name;
+                    const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
                     html += `
-                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
                         <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
                     `;
                 });
@@ -170,6 +175,7 @@ async function fetchTabData(route, contentDiv) {
                     <div class='vocab-list-details-area' style='width:100%; margin-top:10px;'></div>
                 </div>`;
             });
+
             // Shared lists section
             if (data.shared_vocab) {
                 html += `<div style="margin-bottom:32px;">
@@ -178,9 +184,12 @@ async function fetchTabData(route, contentDiv) {
                     html += `<div style='margin-bottom:18px; text-align:left;'>
                         <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
                         <div class='shared-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
-                    lists.forEach(listName => {
+                    lists.forEach(listItem => {
+                        // Handle both old format (string) and new format (object)
+                        const listName = typeof listItem === 'string' ? listItem : listItem.name;
+                        const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
                         html += `
-                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
                         `;
                     });
                     html += `</div>
@@ -189,10 +198,38 @@ async function fetchTabData(route, contentDiv) {
                 });
                 html += '</div>';
             }
-            tabDataCache[route] = html;
+
+            // Add pagination controls at bottom
+            if (data.pagination && data.pagination.total_pages > 1) {
+                const p = data.pagination;
+                html += `<div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; color:#fff;">`;
+
+                // Previous button
+                if (p.has_prev) {
+                    html += `<button class="pagination-btn" data-page="${p.current_page - 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
+                }
+
+                // Page numbers
+                const startPage = Math.max(1, p.current_page - 2);
+                const endPage = Math.min(p.total_pages, p.current_page + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const isActive = i === p.current_page;
+                    html += `<button class="pagination-btn" data-page="${i}" style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
+                }
+
+                // Next button
+                if (p.has_next) {
+                    html += `<button class="pagination-btn" data-page="${p.current_page + 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
+                }
+
+                html += `</div>`;
+            }
+
             setTimeout(() => {
                 attachVocabListEvents();
-                attachSharedListEvents(); // Attach shared list events
+                attachSharedListEvents();
+                attachPaginationEvents(route, contentDiv);
             }, 0);
         }
         contentDiv.innerHTML = html;
@@ -276,16 +313,61 @@ function attachVocabListEvents() {
             btn.closest('div').parentNode.querySelectorAll('.vocab-list-details-area').forEach(area => {
                 area.innerHTML = '';
             });
-            detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
-            try {
-                const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
-                const data = await resp.json();
-                // Track retained and deleted words
-                let retainedWords = Object.entries(data).map(([word, info]) => info);
-                let deletedWords = [];
-                // Display flash cards
-                let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
-                Object.entries(data).forEach(([word, info]) => {
+
+            // Function to load words with pagination
+            const loadWordDetails = async (page = 1, limit = 20) => {
+                detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
+                try {
+                    const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}&page=${page}&limit=${limit}`);
+                    const response = await resp.json();
+
+                    // Handle both old format (direct words) and new format (with pagination)
+                    const data = response.words || response;
+                    const pagination = response.pagination || null;
+
+                    // Track retained and deleted words
+                    let retainedWords = Object.entries(data).map(([word, info]) => info);
+                    let deletedWords = [];
+
+                    // Add pagination controls at top if available
+                    let paginationHtml = '';
+                    if (pagination && pagination.total_pages > 1) {
+                        const p = pagination;
+                        paginationHtml = `<div style="margin-bottom:16px; display:flex; align-items:center; justify-content:center; gap:8px; color:#fff; flex-wrap:wrap;">
+                            <span>Showing ${Object.keys(data).length} of ${p.total_words} words (Page ${p.current_page} of ${p.total_pages})</span>
+                            <select id="words-per-page" style="padding:4px 8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin:0 8px;">
+                                <option value="10" ${p.limit === 10 ? 'selected' : ''}>10 per page</option>
+                                <option value="20" ${p.limit === 20 ? 'selected' : ''}>20 per page</option>
+                                <option value="50" ${p.limit === 50 ? 'selected' : ''}>50 per page</option>
+                                <option value="100" ${p.limit === 100 ? 'selected' : ''}>100 per page</option>
+                            </select>
+                            <div style="display:flex; gap:4px; flex-wrap:wrap;">`;
+
+                        // Previous button
+                        if (p.has_prev) {
+                            paginationHtml += `<button class="word-page-btn" data-page="${p.current_page - 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
+                        }
+
+                        // Page numbers (show up to 5 pages around current)
+                        const startPage = Math.max(1, p.current_page - 2);
+                        const endPage = Math.min(p.total_pages, p.current_page + 2);
+
+                        for (let i = startPage; i <= endPage; i++) {
+                            const isActive = i === p.current_page;
+                            paginationHtml += `<button class="word-page-btn" data-page="${i}" style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
+                        }
+
+                        // Next button
+                        if (p.has_next) {
+                            paginationHtml += `<button class="word-page-btn" data-page="${p.current_page + 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
+                        }
+
+                        paginationHtml += `</div></div>`;
+                    }
+
+                    // Display flash cards
+                    let cardsHtml = paginationHtml + '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
+                    Object.entries(data).forEach(([word, info]) => {
                     const simpleLemma = info['SIMPLE LEMMA'];
                     cardsHtml += `<div class='flashcard' data-word='${simpleLemma}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
                     cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
@@ -304,6 +386,25 @@ function attachVocabListEvents() {
                 cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
                 cardsHtml += `</div>`;
                 detailsArea.innerHTML = cardsHtml;
+
+                // Add word pagination event listeners
+                const wordPageButtons = detailsArea.querySelectorAll('.word-page-btn');
+                wordPageButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const newPage = parseInt(btn.getAttribute('data-page'));
+                        const currentLimit = parseInt(detailsArea.querySelector('#words-per-page')?.value || (pagination ? pagination.limit : 20));
+                        loadWordDetails(newPage, currentLimit);
+                    });
+                });
+
+                const wordsPerPageSelect = detailsArea.querySelector('#words-per-page');
+                if (wordsPerPageSelect) {
+                    wordsPerPageSelect.addEventListener('change', () => {
+                        const newLimit = parseInt(wordsPerPageSelect.value);
+                        loadWordDetails(1, newLimit); // Reset to page 1 when changing limit
+                    });
+                }
+
                 const shareListBtn = detailsArea.querySelector('#share-list-btn');
                 shareListBtn.addEventListener('click', () => {
                     // Show modal for share options
@@ -516,9 +617,14 @@ function attachVocabListEvents() {
                         saveBtn.style.display = 'none';
                     }
                 }
-            } catch {
-                detailsArea.innerHTML = '<p style="color:#fff;">Error loading details.</p>';
-            }
+                } catch (error) {
+                    console.error('Error loading word details:', error);
+                    detailsArea.innerHTML = '<p style="color:#fff;">Error loading word details.</p>';
+                }
+            };
+
+            // Initial load of first page
+            await loadWordDetails(1, 20);
         });
     });
 }
@@ -786,3 +892,70 @@ try {
     createListMessage.textContent = 'Error creating list.';
 }
 });
+
+// Add filter event listeners for vocabulary list pagination
+document.addEventListener('DOMContentLoaded', () => {
+    const languageFilter = document.getElementById('vocab-language-filter');
+    const pageLimitSelect = document.getElementById('vocab-page-limit');
+
+    if (languageFilter) {
+        languageFilter.addEventListener('change', () => {
+            updateVocabWithFilters();
+        });
+    }
+
+    if (pageLimitSelect) {
+        pageLimitSelect.addEventListener('change', () => {
+            updateVocabWithFilters();
+        });
+    }
+});
+
+function updateVocabWithFilters() {
+    const languageFilter = document.getElementById('vocab-language-filter');
+    const pageLimitSelect = document.getElementById('vocab-page-limit');
+    const vocabContent = document.getElementById('vocabulary');
+
+    if (!languageFilter || !pageLimitSelect || !vocabContent) return;
+
+    const params = new URLSearchParams({
+        page: '1', // Reset to first page when filters change
+        limit: pageLimitSelect.value,
+    });
+
+    if (languageFilter.value) {
+        params.set('language_filter', languageFilter.value);
+    }
+
+    const route = `/userspace/vocab?${params.toString()}`;
+    fetchTabData(route, vocabContent);
+}
+
+function attachPaginationEvents(currentRoute, contentDiv) {
+    document.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const page = btn.getAttribute('data-page');
+
+            // Parse current route to preserve filters
+            const url = new URL(currentRoute, window.location.origin);
+            url.searchParams.set('page', page);
+
+            // If no filters in current route, check UI for current filter values
+            if (!url.searchParams.has('language_filter') && !url.searchParams.has('limit')) {
+                const languageFilter = document.getElementById('vocab-language-filter');
+                const pageLimitSelect = document.getElementById('vocab-page-limit');
+
+                if (languageFilter && languageFilter.value) {
+                    url.searchParams.set('language_filter', languageFilter.value);
+                }
+
+                if (pageLimitSelect) {
+                    url.searchParams.set('limit', pageLimitSelect.value);
+                }
+            }
+
+            const newRoute = url.pathname + url.search;
+            await fetchTabData(newRoute, contentDiv);
+        });
+    });
+}
