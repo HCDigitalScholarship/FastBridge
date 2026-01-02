@@ -340,9 +340,11 @@ function showTabOracle(n, isNext) {
   }
   // fix next button
   if (n == x.length - 1) {
-    next.innerHTML = '<i class="fas fa-check"></i>';
+    next.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i><span class="sr-only">Submit and run Oracle search</span>';
+    next.setAttribute('aria-label', 'Submit and run Oracle search');
   } else {
-    next.innerHTML = '<i class="fas fa-angle-double-right"></i>';
+    next.innerHTML = '<i class="fas fa-angle-double-right" aria-hidden="true"></i><span class="sr-only">Go to next step</span>';
+    next.setAttribute('aria-label', 'Go to next step - customize your search');
   }
   // ... and run a function that displays the correct step indicator:
   fixStepIndicator(n + 1);

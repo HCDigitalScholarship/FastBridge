@@ -48,14 +48,14 @@ function showWordSelectModal({lang, list, onSave, saveLabel = 'Save', cancelLabe
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
     modal.innerHTML = `
-        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:520px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
-            <h3 style='color:#22b3b3; margin-bottom:18px;'>${title}${list ? ` <span style='color:#ffb366;'>${list}</span>` : ''} (${lang})</h3>
-            <input id='word-select-search' type='text' placeholder='Search for a word...' style='width:100%; padding:8px 12px; border-radius:6px; border:none; margin-bottom:12px; font-size:1rem;'>
+        <div role='dialog' aria-modal='true' aria-labelledby='word-select-title' style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:520px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+            <h3 id='word-select-title' style='color:#22b3b3; margin-bottom:18px;'>${title}${list ? ` <span style='color:#ffb366;'>${list}</span>` : ''} (${lang})</h3>
+            <input id='word-select-search' type='text' placeholder='Search for a word...' aria-label='Search for words to add' style='width:100%; padding:8px 12px; border-radius:6px; border:none; margin-bottom:12px; font-size:1rem;'>
             <div id='word-select-table-container' style='max-height:220px; overflow-y:auto; margin-bottom:12px;'></div>
-            <div id='word-select-message' style='color:#ffb366; margin-bottom:10px;'></div>
+            <div id='word-select-message' role='status' aria-live='polite' style='color:#ffb366; margin-bottom:10px;'></div>
             <div style='display:flex; gap:12px; justify-content:flex-end;'>
-                <button id='word-select-save-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${saveLabel}</button>
-                <button id='word-select-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${cancelLabel}</button>
+                <button id='word-select-save-btn' aria-label='Save selected words to list' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${saveLabel}</button>
+                <button id='word-select-cancel-btn' aria-label='Cancel and close word selection' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${cancelLabel}</button>
             </div>
         </div>
     `;
@@ -166,9 +166,10 @@ async function fetchTabData(route, contentDiv) {
                     // Handle both old format (string) and new format (object)
                     const listName = typeof listItem === 'string' ? listItem : listItem.name;
                     const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
+                    const wordCountNum = typeof listItem === 'object' ? listItem.word_count : 0;
                     html += `
-                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
-                        <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
+                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' aria-label='View vocabulary list: ${listName} (${wordCountNum} words)' aria-expanded='false' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
+                        <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' aria-label='Add new words to ${listName} list' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'><i class='fas fa-plus' aria-hidden='true'></i> Add New Word</button>
                     `;
                 });
                 html += `</div>
@@ -188,8 +189,9 @@ async function fetchTabData(route, contentDiv) {
                         // Handle both old format (string) and new format (object)
                         const listName = typeof listItem === 'string' ? listItem : listItem.name;
                         const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
+                        const wordCountNum = typeof listItem === 'object' ? listItem.word_count : 0;
                         html += `
-                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
+                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' aria-label='View shared vocabulary list: ${listName} (${wordCountNum} words)' aria-expanded='false' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}${wordCount}</button>
                         `;
                     });
                     html += `</div>
@@ -206,7 +208,7 @@ async function fetchTabData(route, contentDiv) {
 
                 // Previous button
                 if (p.has_prev) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page - 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
+                    html += `<button class="pagination-btn" data-page="${p.current_page - 1}" aria-label="Go to previous page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
                 }
 
                 // Page numbers
@@ -215,12 +217,12 @@ async function fetchTabData(route, contentDiv) {
 
                 for (let i = startPage; i <= endPage; i++) {
                     const isActive = i === p.current_page;
-                    html += `<button class="pagination-btn" data-page="${i}" style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
+                    html += `<button class="pagination-btn" data-page="${i}" aria-label="Go to page ${i}" aria-current="${isActive ? 'page' : 'false'}" ${isActive ? 'disabled' : ''} style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
                 }
 
                 // Next button
                 if (p.has_next) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page + 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
+                    html += `<button class="pagination-btn" data-page="${p.current_page + 1}" aria-label="Go to next page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
                 }
 
                 html += `</div>`;
@@ -354,12 +356,12 @@ function attachVocabListEvents() {
 
                         for (let i = startPage; i <= endPage; i++) {
                             const isActive = i === p.current_page;
-                            paginationHtml += `<button class="word-page-btn" data-page="${i}" style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
+                            paginationHtml += `<button class="word-page-btn" data-page="${i}" aria-label="Go to page ${i}" aria-current="${isActive ? 'page' : 'false'}" ${isActive ? 'disabled' : ''} style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
                         }
 
                         // Next button
                         if (p.has_next) {
-                            paginationHtml += `<button class="word-page-btn" data-page="${p.current_page + 1}" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
+                            paginationHtml += `<button class="word-page-btn" data-page="${p.current_page + 1}" aria-label="Go to next page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
                         }
 
                         paginationHtml += `</div></div>`;
@@ -374,17 +376,17 @@ function attachVocabListEvents() {
                     Object.entries(info).forEach(([key, val]) => {
                         cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
                     });
-                    cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
+                    cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' aria-label='Delete word ${word} from list' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'><i class='fas fa-trash' aria-hidden='true'></i><span class='sr-only'>Delete</span></button>`;
                     cardsHtml += `</div>`;
                 });
                 cardsHtml += '</div>';
                 // Deleted words summary and Save Changes button (initially hidden)
                 cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
-                cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap;'>`;
-                cardsHtml += `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
-                cardsHtml += `<button id='manage-permissions-btn' style='background:#ffb366; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,179,102,0.15); transition:background 0.2s;'>Manage Permissions</button>`;
-                cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
-                cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
+                cardsHtml += `<div role='group' aria-label='List actions' style='display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap;'>`;
+                cardsHtml += `<button id='share-list-btn' aria-label='Share ${list} list with others' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'><i class='fas fa-share-alt' aria-hidden='true'></i> Share List</button>`;
+                cardsHtml += `<button id='manage-permissions-btn' aria-label='Manage permissions for ${list} list' style='background:#ffb366; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,179,102,0.15); transition:background 0.2s;'><i class='fas fa-user-shield' aria-hidden='true'></i> Manage Permissions</button>`;
+                cardsHtml += `<button id='save-changes-btn' aria-label='Save changes to ${list} list' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'><i class='fas fa-save' aria-hidden='true'></i> Save Changes</button>`;
+                cardsHtml += `<button id='delete-list-btn' aria-label='Delete entire ${list} list' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'><i class='fas fa-trash-alt' aria-hidden='true'></i> Delete Entire List</button>`;
                 cardsHtml += `</div>`;
                 detailsArea.innerHTML = cardsHtml;
 
@@ -422,26 +424,26 @@ function attachVocabListEvents() {
                     modal.style.alignItems = 'center';
                     modal.style.justifyContent = 'center';
                     modal.innerHTML = `
-                        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:460px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
-                            <h3 style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>${list}</span> (${lang})</h3>
+                        <div role='dialog' aria-modal='true' aria-labelledby='share-modal-title' style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:460px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+                            <h3 id='share-modal-title' style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>${list}</span> (${lang})</h3>
                             <div style='margin-bottom:18px;'>
                                 <label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>
                                 <input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>
                                 <input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Linked Share (shared reference with permissions)</label>
                             </div>
                             <div id='permission-select-div' style='margin-bottom:18px; display:none;'>
-                                <label style='font-weight:600; color:#fff;'>Default Permission for Linked Share:</label><br>
-                                <select id='share-permission' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>
+                                <label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Linked Share:</label><br>
+                                <select id='share-permission' aria-label='Default permission level for linked share' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>
                                     <option value='view'>View Only (see words)</option>
                                     <option value='edit' selected>Edit (view + add words)</option>
                                     <option value='admin'>Admin (edit + delete + manage permissions)</option>
                                 </select>
                                 <small style='color:#aaa; display:block; margin-top:4px;'>You can change individual permissions later</small>
                             </div>
-                            <div id='share-list-message' style='color:#ffb366; margin-bottom:10px;'></div>
+                            <div id='share-list-message' role='status' aria-live='polite' style='color:#ffb366; margin-bottom:10px;'></div>
                             <div style='display:flex; gap:12px; justify-content:flex-end;'>
-                                <button id='share-list-confirm-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Get Share Link</button>
-                                <button id='share-list-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Cancel</button>
+                                <button id='share-list-confirm-btn' aria-label='Generate share link for this list' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Get Share Link</button>
+                                <button id='share-list-cancel-btn' aria-label='Cancel and close share dialog' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Cancel</button>
                             </div>
                         </div>
                     `;

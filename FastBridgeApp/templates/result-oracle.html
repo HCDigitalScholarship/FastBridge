@@ -2,7 +2,7 @@
 {% block content %}
 
 <body>
-  <section id="result" class="download-section content-section text-center" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
+  <section id="result" class="download-section content-section text-center" role="main" style="background:url('/assets/img/Oracle.jpg') fixed center center no-repeat; background-size:cover">
     <div class="container" style="border-radius: 5px;width: 80%;padding: 30px;padding-right: 15px;padding-left: 15px;">
       <h2> NOW LISTING THE LOCATION(S) OF {{ etexts }} WITH THE HIGHEST PERCENTAGE OF KNOWN WORDS BASED ON {{ known_texts }}</h2>
 
@@ -15,17 +15,21 @@
       </div>
 
       <div class="table-responsive mx-auto">
-        <table class="table table-striped" id="sortable-table">
+        <table class="table table-striped" id="sortable-table" role="table" aria-label="Oracle results - locations ranked by known vocabulary">
+          <caption class="sr-only">
+            Vocabulary analysis results for {{ etexts }} based on {{ known_texts }}.
+            Table shows locations sorted by percentage of known words. Click column headers to sort.
+          </caption>
           <thead>
-            <tr>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(0)">Location(s)</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(1)">% Words Known</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(2)">% Token Known</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(3)">Total Words</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(4)">Total Tokens</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(5)">Words Known</th>
-              <th style="color: rgb(255,255,255);" onclick="sortTable(6)">Tokens Known</th>
-              <th style="color: rgb(255,255,255);">Create List</th>
+            <tr role="row">
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(0);}">Location(s) <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(1);}">% Words Known <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(2)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(2);}">% Token Known <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(3)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(3);}">Total Words <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(4)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(4);}">Total Tokens <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(5)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(5);}">Words Known <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" aria-sort="none" tabindex="0" style="color: rgb(255,255,255); cursor: pointer;" onclick="sortTable(6)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(6);}">Tokens Known <span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" role="columnheader" style="color: rgb(255,255,255);">Create List</th>
             </tr>
           </thead>
           <tbody>
@@ -39,7 +43,7 @@
                 <td style="color: white;">{{ known_words }}</td>
                 <td style="color: white;">{{ known_tokes }}</td>
                 <td style="color: #d8d9da;">
-                  <a class="fa fa-external-link" style="font-size: 20px;" role="button" href="{{ link }}"></a>
+                  <a class="fa fa-external-link" style="font-size: 20px;" href="{{ link }}" aria-label="Create vocabulary list for {{ section }}" title="Create vocabulary list for this section"><span class="sr-only">Create vocabulary list for {{ section }}</span></a>
                 </td>
               </tr>
             {% endfor %}
@@ -58,12 +62,34 @@
     function sortTable(columnIndex) {
       const table = document.getElementById("sortable-table");
       const tbody = table.querySelector("tbody");
+      const headers = table.querySelectorAll("th");
+      const currentHeader = headers[columnIndex];
       const rows = Array.from(tbody.querySelectorAll("tr"));
 
       const isNumericColumn = columnIndex !== 0 && columnIndex !== 7;
 
       sortDirection[columnIndex] = !sortDirection[columnIndex];
       const direction = sortDirection[columnIndex] ? 1 : -1;
+
+      // Update ARIA attributes
+      headers.forEach((header, idx) => {
+        if (idx === columnIndex) {
+          const sortType = direction === 1 ? 'ascending' : 'descending';
+          header.setAttribute('aria-sort', sortType);
+          const indicator = header.querySelector('.sort-indicator');
+          if (indicator) {
+            indicator.textContent = direction === 1 ? ' ▲' : ' ▼';
+          }
+        } else {
+          if (header.hasAttribute('aria-sort')) {
+            header.setAttribute('aria-sort', 'none');
+          }
+          const indicator = header.querySelector('.sort-indicator');
+          if (indicator) {
+            indicator.textContent = '';
+          }
+        }
+      });
 
       rows.sort((a, b) => {
         let aText = a.children[columnIndex].innerText.trim();
@@ -79,6 +105,13 @@
       });
 
       rows.forEach(row => tbody.appendChild(row));
+
+      // Announce sort to screen readers
+      const columnName = currentHeader.textContent.trim().replace(/▲|▼/g, '').trim();
+      const sortType = direction === 1 ? 'ascending' : 'descending';
+      if (window.AccessibilityHelpers) {
+        AccessibilityHelpers.announce(`Table sorted by ${columnName}, ${sortType}`, 'polite');
+      }
     }
   </script>
 </body>
