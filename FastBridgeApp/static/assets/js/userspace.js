@@ -380,8 +380,9 @@ function attachVocabListEvents() {
                 cardsHtml += '</div>';
                 // Deleted words summary and Save Changes button (initially hidden)
                 cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
-                cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px;'>`;
+                cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap;'>`;
                 cardsHtml += `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
+                cardsHtml += `<button id='manage-permissions-btn' style='background:#ffb366; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,179,102,0.15); transition:background 0.2s;'>Manage Permissions</button>`;
                 cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
                 cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
                 cardsHtml += `</div>`;
@@ -421,12 +422,21 @@ function attachVocabListEvents() {
                     modal.style.alignItems = 'center';
                     modal.style.justifyContent = 'center';
                     modal.innerHTML = `
-                        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:420px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+                        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:460px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
                             <h3 style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>${list}</span> (${lang})</h3>
                             <div style='margin-bottom:18px;'>
                                 <label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>
                                 <input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>
-                                <input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Editable Share (allows others to edit)</label>
+                                <input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Linked Share (shared reference with permissions)</label>
+                            </div>
+                            <div id='permission-select-div' style='margin-bottom:18px; display:none;'>
+                                <label style='font-weight:600; color:#fff;'>Default Permission for Linked Share:</label><br>
+                                <select id='share-permission' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>
+                                    <option value='view'>View Only (see words)</option>
+                                    <option value='edit' selected>Edit (view + add words)</option>
+                                    <option value='admin'>Admin (edit + delete + manage permissions)</option>
+                                </select>
+                                <small style='color:#aaa; display:block; margin-top:4px;'>You can change individual permissions later</small>
                             </div>
                             <div id='share-list-message' style='color:#ffb366; margin-bottom:10px;'></div>
                             <div style='display:flex; gap:12px; justify-content:flex-end;'>
@@ -439,6 +449,19 @@ function attachVocabListEvents() {
                     const confirmBtn = modal.querySelector('#share-list-confirm-btn');
                     const cancelBtn = modal.querySelector('#share-list-cancel-btn');
                     const messageDiv = modal.querySelector('#share-list-message');
+
+                    // Show/hide permission selector based on mode
+                    const permissionDiv = modal.querySelector('#permission-select-div');
+                    modal.querySelectorAll('input[name="share-mode"]').forEach(radio => {
+                        radio.addEventListener('change', () => {
+                            if (radio.value === 'editable') {
+                                permissionDiv.style.display = 'block';
+                            } else {
+                                permissionDiv.style.display = 'none';
+                            }
+                        });
+                    });
+
                     confirmBtn.addEventListener('click', async () => {
                         const mode = modal.querySelector('input[name="share-mode"]:checked').value;
                         confirmBtn.textContent = 'Generating...';
@@ -480,6 +503,16 @@ function attachVocabListEvents() {
                         document.body.removeChild(modal);
                     });
                 });
+
+                // Manage Permissions button logic
+                const managePermissionsBtn = detailsArea.querySelector('#manage-permissions-btn');
+                if (managePermissionsBtn) {
+                    managePermissionsBtn.addEventListener('click', () => {
+                        // Redirect to settings page with sharing tab
+                        window.location.href = '/account/settings#sharing';
+                    });
+                }
+
                 // Delete button logic for flashcards
                 const flashcardList = detailsArea.querySelector('#flashcard-list');
                 flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
@@ -658,20 +691,56 @@ function attachSharedListEvents() {
             detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
             try {
                 const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}&shared=true`);
-                const data = await resp.json();
-                // Display flash cards (no delete/share)
+                const response = await resp.json();
+
+                // Extract data (words, pagination, permission info)
+                const { words, pagination, permission, is_owner } = response;
+                const data = words || response; // Backwards compatibility
+
+                // Permission level check
+                const permissionLevel = permission || 'edit'; // Default to edit for backwards compatibility
+                const canEdit = ['edit', 'admin'].includes(permissionLevel);
+                const canDelete = permissionLevel === 'admin'; // Only admin can delete
+                const canManagePermissions = permissionLevel === 'admin'; // Only admin can manage permissions
+
+                // Display flash cards with permission-based controls
                 let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
                 Object.entries(data).forEach(([word, info]) => {
-                    cardsHtml += `<div class='flashcard' data-word='${info['SIMPLE LEMMA']}' style='background:#333; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(255,179,102,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
-                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#ffb366; margin-bottom:8px;'>${word}</div>`;
-                    Object.entries(info).forEach(([key, val]) => {
-                        cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#22b3b3;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
-                    });
-                    cardsHtml += `</div>`;
+                    if (word !== 'pagination' && word !== 'permission' && word !== 'is_owner') {
+                        cardsHtml += `<div class='flashcard' data-word='${info['SIMPLE LEMMA']}' style='background:#333; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(255,179,102,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
+                        cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#ffb366; margin-bottom:8px;'>${word}</div>`;
+                        Object.entries(info).forEach(([key, val]) => {
+                            cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#22b3b3;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
+                        });
+
+                        // Add delete button for admin users
+                        if (canDelete) {
+                            cardsHtml += `<button class='delete-shared-word-btn' data-word='${info['SIMPLE LEMMA']}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
+                        }
+
+                        cardsHtml += `</div>`;
+                    }
                 });
                 cardsHtml += '</div>';
-                // Add New Word button for shared lists
-                cardsHtml += `<button class='add-word-btn' data-lang='${lang}' data-list='${list}' data-shared='true' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-top:12px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>`;
+
+                // Permission indicator and action buttons
+                const permissionColor = permissionLevel === 'admin' ? '#22b3b3' : permissionLevel === 'edit' ? '#ffb366' : '#ccc';
+                const permissionIcon = permissionLevel === 'admin' ? '👑' : permissionLevel === 'edit' ? '✏️' : '👁️';
+
+                cardsHtml += `<div style='margin-top:16px; padding:12px; background:#444; border-radius:6px;'>`;
+                cardsHtml += `<span style='color:${permissionColor}; font-weight:600; font-size:1rem;'>${permissionIcon} Your Permission: ${permissionLevel.toUpperCase()}</span>`;
+
+                if (canEdit) {
+                    cardsHtml += `<button class='add-word-btn' data-lang='${lang}' data-list='${list}' data-shared='true' style='background:#228383; color:#fff; border-radius:6px; padding:8px 16px; margin-left:12px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>`;
+                }
+
+                if (canManagePermissions) {
+                    cardsHtml += `<button class='manage-permissions-shared-btn' data-lang='${lang}' data-list='${list}' style='background:#ffb366; color:#fff; border-radius:6px; padding:8px 16px; margin-left:12px; cursor:pointer; font-weight:500; border:none;'>Manage Permissions</button>`;
+                }
+
+                cardsHtml += `<button class='unlink-shared-btn' data-lang='${lang}' data-list='${list}' style='background:#ff6666; color:#fff; border-radius:6px; padding:8px 16px; margin-left:12px; cursor:pointer; font-weight:500; border:none;'>Unlink List</button>`;
+                cardsHtml += `</div>`;
+
                 detailsArea.innerHTML = cardsHtml;
 
                 // Attach Add New Word modal logic for shared lists
@@ -714,6 +783,158 @@ function attachSharedListEvents() {
                                 }
                             }
                         });
+                    });
+                }
+
+                // Attach Unlink button logic for shared lists
+                const unlinkBtn = detailsArea.querySelector('.unlink-shared-btn');
+                if (unlinkBtn) {
+                    unlinkBtn.addEventListener('click', async () => {
+                        if (!confirm(`Are you sure you want to unlink "${list}"? You will lose access to this shared list.`)) {
+                            return;
+                        }
+
+                        try {
+                            // Get owner_id from shared_with_me by fetching shared lists
+                            const sharedResp = await fetch('/userspace/permissions/shared-with-me', {
+                                credentials: 'include'
+                            });
+                            const sharedData = await sharedResp.json();
+
+                            // Find the owner_id for this list
+                            let ownerId = null;
+                            if (sharedData.success) {
+                                const matchingList = sharedData.shared_lists.find(
+                                    sl => sl.list_name === list && sl.language === lang
+                                );
+                                if (matchingList) {
+                                    ownerId = matchingList.owner_id;
+                                }
+                            }
+
+                            if (!ownerId) {
+                                alert('Could not find owner information for this list.');
+                                return;
+                            }
+
+                            // Unlink the list
+                            const resp = await fetch('/userspace/permissions/unlink', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    list_name: list,
+                                    language: lang,
+                                    owner_id: ownerId
+                                })
+                            });
+
+                            const data = await resp.json();
+                            if (data.success) {
+                                alert('List unlinked successfully. Refreshing page...');
+                                window.location.reload();
+                            } else {
+                                alert('Failed to unlink list');
+                            }
+                        } catch (err) {
+                            alert('Failed to unlink list');
+                            console.error(err);
+                        }
+                    });
+                }
+
+                // Attach Delete word button listeners for admin users
+                const deleteWordBtns = detailsArea.querySelectorAll('.delete-shared-word-btn');
+                if (deleteWordBtns.length > 0) {
+                    deleteWordBtns.forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const wordToDelete = btn.getAttribute('data-word');
+                            if (!confirm(`Are you sure you want to delete "${wordToDelete}" from this shared list?`)) {
+                                return;
+                            }
+
+                            try {
+                                // Get owner_id first
+                                const sharedResp = await fetch('/userspace/permissions/shared-with-me', {
+                                    credentials: 'include'
+                                });
+                                const sharedData = await sharedResp.json();
+
+                                let ownerId = null;
+                                if (sharedData.success) {
+                                    const matchingList = sharedData.shared_lists.find(
+                                        sl => sl.list_name === list && sl.language === lang
+                                    );
+                                    if (matchingList) {
+                                        ownerId = matchingList.owner_id;
+                                    }
+                                }
+
+                                if (!ownerId) {
+                                    alert('Could not find owner information for this list.');
+                                    return;
+                                }
+
+                                // Delete the word
+                                const resp = await fetch('/userspace/delete_words', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({
+                                        list_name: list,
+                                        language: lang,
+                                        words_to_delete: [wordToDelete],
+                                        owner_id: ownerId
+                                    })
+                                });
+
+                                const data = await resp.json();
+                                if (data.success) {
+                                    alert('Word deleted successfully. Refreshing...');
+                                    window.location.reload();
+                                } else {
+                                    alert('Failed to delete word: ' + (data.message || 'Unknown error'));
+                                }
+                            } catch (err) {
+                                alert('Failed to delete word');
+                                console.error(err);
+                            }
+                        });
+                    });
+                }
+
+                // Attach Manage Permissions button listener for admin users
+                const managePermsBtn = detailsArea.querySelector('.manage-permissions-shared-btn');
+                if (managePermsBtn) {
+                    managePermsBtn.addEventListener('click', async () => {
+                        // Get owner_id first
+                        try {
+                            const sharedResp = await fetch('/userspace/permissions/shared-with-me', {
+                                credentials: 'include'
+                            });
+                            const sharedData = await sharedResp.json();
+
+                            let ownerId = null;
+                            if (sharedData.success) {
+                                const matchingList = sharedData.shared_lists.find(
+                                    sl => sl.list_name === list && sl.language === lang
+                                );
+                                if (matchingList) {
+                                    ownerId = matchingList.owner_id;
+                                }
+                            }
+
+                            if (!ownerId) {
+                                alert('Could not find owner information for this list.');
+                                return;
+                            }
+
+                            // Redirect to user settings with the list info
+                            window.location.href = `/account/settings#sharing?list=${encodeURIComponent(list)}&lang=${encodeURIComponent(lang)}&owner=${encodeURIComponent(ownerId)}`;
+                        } catch (err) {
+                            alert('Failed to open permissions management');
+                            console.error(err);
+                        }
                     });
                 }
             } catch {
