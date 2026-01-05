@@ -370,6 +370,14 @@ function nextPrevOracle(n, next) {
     eends = eends.join("+");
     eunits = eunits.join("+");
     e_section_size = e_section_size.join("+");
+
+    // Show loading spinner before navigation
+    const spinner = document.getElementById('global-loading-spinner');
+    if (spinner) {
+      spinner.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
     window.location.href =
       window.location.href +
       "/result/" +

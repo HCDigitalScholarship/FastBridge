@@ -28,6 +28,72 @@
   <!-- Global ARIA live region for announcements - WCAG 2.1 SC 4.1.3 -->
   <div id="aria-live-announcer" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
+  <!-- Global Loading Spinner -->
+  <div id="global-loading-spinner" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-text">Loading...</div>
+    </div>
+  </div>
+
+  <style>
+    /* Global Loading Spinner Styles */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(2px);
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem;
+      border-radius: 12px;
+    }
+
+    .spinner-ring {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1rem;
+      border: 4px solid var(--color-border-subtle, #e0e0e0);
+      border-top: 4px solid var(--color-primary, #007bff);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner-text {
+      font-family: var(--font-primary, 'Actor', sans-serif);
+      font-size: 1rem;
+      color: var(--color-text-primary, #fff);
+      font-weight: 600;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .spinner-ring {
+        animation: none;
+        border-top-color: var(--color-primary, #007bff);
+        opacity: 0.8;
+      }
+    }
+  </style>
+
   <script src=https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js></script>
 
   <script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js></script>
@@ -77,6 +143,74 @@
           }
         });
       }
+    })();
+  </script>
+
+  <!-- Global Loading Spinner Control -->
+  <script>
+    (function() {
+      const spinner = document.getElementById('global-loading-spinner');
+      if (!spinner) return;
+
+      // Show spinner
+      function showSpinner() {
+        spinner.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling while loading
+      }
+
+      // Hide spinner
+      function hideSpinner() {
+        spinner.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      // Show spinner on form submissions
+      document.addEventListener('submit', function(e) {
+        // Only show for forms that navigate to new pages (not AJAX forms)
+        const form = e.target;
+        if (form && !form.hasAttribute('data-no-spinner')) {
+          showSpinner();
+        }
+      });
+
+      // Show spinner on navigation link clicks
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+
+        // Only show for internal navigation links
+        if (link &&
+            link.href &&
+            !link.hasAttribute('data-no-spinner') &&
+            !link.hasAttribute('target') &&
+            !link.href.startsWith('javascript:') &&
+            !link.href.startsWith('#') &&
+            link.hostname === window.location.hostname) {
+          showSpinner();
+        }
+      });
+
+      // Hide spinner when page loads
+      window.addEventListener('load', function() {
+        hideSpinner();
+      });
+
+      // Hide spinner on page show (for back/forward navigation)
+      window.addEventListener('pageshow', function(event) {
+        hideSpinner();
+      });
+
+      // Fallback: hide spinner after 30 seconds to prevent permanent blocking
+      let spinnerTimeout;
+      const originalShowSpinner = showSpinner;
+      showSpinner = function() {
+        originalShowSpinner();
+        clearTimeout(spinnerTimeout);
+        spinnerTimeout = setTimeout(function() {
+          console.warn('Loading spinner auto-hidden after 30 seconds');
+          hideSpinner();
+        }, 30000);
+      };
+
     })();
   </script>
 </body></html>

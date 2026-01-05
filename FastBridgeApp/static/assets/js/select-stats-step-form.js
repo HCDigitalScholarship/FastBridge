@@ -365,6 +365,13 @@ function nextPrev(n, next) {
       "non_running" +
       "/";
 
+    // Show loading spinner before form submission
+    const spinner = document.getElementById('global-loading-spinner');
+    if (spinner) {
+      spinner.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
     post(path, []);
     return;
   }
