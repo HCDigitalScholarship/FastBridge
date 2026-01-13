@@ -27,7 +27,7 @@ dnspython==1.16.0
 email-validator==1.1.1
 emoji==2.14.1
 fastapi==0.101.1
-filelock==3.18.0
+filelock==3.20.3
 firebase_admin==7.1.0
 fonttools==4.59.0
 fsspec==2025.7.0
