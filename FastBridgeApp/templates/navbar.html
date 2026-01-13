@@ -39,33 +39,138 @@
         </li>
       </ul>
 
-      <span class="navbar-text actions" id="navbar-auth" role="navigation" aria-label="User account">
-        <span id="navbar-logged-in" style="display:none;">
-          <a class="btn btn-nonbs" role="button" href="/userspace" aria-label="Go to MySpace - manage your vocabulary lists" style="background-color:#228383;color:#fff; font-family: inherit">MySpace</a>
-          <a class="text-uppercase login btn-nonbs" href="/account/settings" aria-label="Account settings">Settings</a>
-          <a class="text-uppercase login btn-nonbs" href="/account/logout" aria-label="Log out of your account">Logout</a>
-        </span>
-        <span id="navbar-logged-out" style="display:none;">
-          <a class="text-uppercase login btn-nonbs" href="/account/login" aria-label="Log in to your account">Log In</a>
-          <a class="btn btn-nonbs" role="button" href="/account/signup" aria-label="Sign up for a new account" style="background-color:#228383;color:#fff; font-family: inherit">Sign Up</a>
-        </span>
+      <span class="navbar-text actions" id="navbar-auth" role="navigation" aria-label="User account navigation">
+        <!-- Menu items will be dynamically injected here -->
       </span>
       <script>
-        fetch('/account/protected', { credentials: 'include' })
-          .then((resp) => {
-            if (!resp.ok) throw new Error('Not authenticated')
-            return resp.json()
+        (function() {
+          'use strict';
+
+          const navbarAuthContainer = document.getElementById('navbar-auth');
+
+          if (!navbarAuthContainer) {
+            console.error('Navbar auth container not found');
+            return;
+          }
+
+          /**
+           * Create logged-in menu with dropdown
+           * @param {Object} userData - User data from /account/protected endpoint
+           */
+          function createLoggedInMenu(userData) {
+            const userName = userData?.user?.name || userData?.user?.email || 'User';
+
+            const menuHtml = `
+              <ul class="nav navbar-nav" style="margin-bottom: 0;">
+                <li class="nav-item">
+                  <a class="btn btn-nonbs"
+                     role="button"
+                     href="/userspace"
+                     aria-label="Go to MySpace - manage your vocabulary lists"
+                     style="background-color:#228383;color:#fff; font-family: inherit; margin-right: 8px;">
+                    MySpace
+                  </a>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="dropdown-toggle nav-link"
+                     data-toggle="dropdown"
+                     aria-haspopup="true"
+                     aria-expanded="false"
+                     role="button"
+                     id="user-menu-dropdown"
+                     aria-label="User account menu for ${userName}"
+                     style="cursor: pointer; padding: 8px 12px;">
+                    <i class="fas fa-user-circle" aria-hidden="true" style="font-size: 1.2em;"></i>
+                    <span class="sr-only">Account menu</span>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-right"
+                       role="menu"
+                       aria-labelledby="user-menu-dropdown">
+                    <h6 class="dropdown-header">${userName}</h6>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a class="dropdown-item"
+                       role="menuitem"
+                       href="/account/settings">
+                      <i class="fas fa-cog" aria-hidden="true"></i> Settings
+                    </a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a class="dropdown-item"
+                       role="menuitem"
+                       href="/account/logout">
+                      <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+                    </a>
+                  </div>
+                </li>
+              </ul>
+            `;
+
+            navbarAuthContainer.innerHTML = menuHtml;
+
+            // Announce to screen readers
+            if (window.AccessibilityHelpers) {
+              window.AccessibilityHelpers.announce('You are logged in', 'polite', 3000);
+            }
+          }
+
+          /**
+           * Create logged-out menu
+           */
+          function createLoggedOutMenu() {
+            const menuHtml = `
+              <span>
+                <a class="text-uppercase login btn-nonbs"
+                   href="/account/login"
+                   aria-label="Log in to your account">
+                  Log In
+                </a>
+                <a class="btn btn-nonbs"
+                   role="button"
+                   href="/account/signup"
+                   aria-label="Sign up for a new account"
+                   style="background-color:#228383;color:#fff; font-family: inherit">
+                  Sign Up
+                </a>
+              </span>
+            `;
+
+            navbarAuthContainer.innerHTML = menuHtml;
+          }
+
+          /**
+           * Show loading state in navbar
+           */
+          function showLoadingState() {
+            navbarAuthContainer.innerHTML = `
+              <span class="navbar-text" style="opacity: 0.6;">
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                <span class="sr-only">Checking authentication status...</span>
+              </span>
+            `;
+          }
+
+          // Show loading state initially
+          showLoadingState();
+
+          // Check authentication
+          fetch('/account/protected', {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json'
+            }
           })
-          .then((data) => {
-            console.log('User data:', data)
-            document.getElementById('navbar-logged-in').style.display = ''
-            document.getElementById('navbar-logged-out').style.display = 'none'
-          })
-          .catch((err) => {
-            console.log('User is not authenticated or got HTML:', err.message)
-            document.getElementById('navbar-logged-in').style.display = 'none'
-            document.getElementById('navbar-logged-out').style.display = ''
-          })
+            .then((resp) => {
+              if (!resp.ok) {
+                throw new Error('Not authenticated');
+              }
+              return resp.json();
+            })
+            .then((data) => {
+              createLoggedInMenu(data);
+            })
+            .catch((err) => {
+              createLoggedOutMenu();
+            });
+        })();
       </script>
     </div>
   </div>
