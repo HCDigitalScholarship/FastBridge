@@ -55,7 +55,7 @@ title_font = {'fontname': 'serif', 'size': '13', 'color': 'black', 'weight': 'no
               'verticalalignment': 'bottom'}  # This is for the title properties
 axis_font = {'fontname': 'serif', 'size': '11'}  # This is for the axis labels
 colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
-                      '#F0E442', '#0072B2', '#D55E00', '#CC79A7']
+                      '#F0E442', '#0072B2', '#D55E00']
 
 
 @timer_decorator
@@ -162,18 +162,13 @@ class TextAnalyzer:
     def vocab_size(self) -> int:
         if len(self.texts) == 0:
             return -1
-        elif len(self.texts) == 1:
-            text_slice = get_slice(
-                self.texts[0][0], self.texts[0][1], self.texts[0][2])
-            vocabulary = set(word[0] for word in text_slice)
-            return len(vocabulary)
-        else:
-            vocab = set()
-            for text in self.texts:
-                text_slice = get_slice(text[0], text[1], text[2])
-                vocabulary = set(word[0] for word in text_slice)
-                vocab = vocab.union(vocabulary)
-            return len(vocab)
+
+        # Build vocabulary set directly without intermediate sets
+        vocab = set()
+        for text in self.texts:
+            text_slice = get_slice(text[0], text[1], text[2])
+            vocab.update(word[0] for word in text_slice)
+        return len(vocab)
 
     @round_decorator
     def hapax_legonema(self, tupleFlag=False):
@@ -207,7 +202,8 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                if word in self.dictionary and self.dictionary[word]["PART_OF_SPEECH"] in lexical_categories:
+                word_info = self.dictionary.get(word)
+                if word_info and word_info["PART_OF_SPEECH"] in lexical_categories:
                     lexical_sum += 1
 
         total_words = self.num_words()
@@ -314,7 +310,8 @@ class TextAnalyzer:
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                word_info = self.dictionary.get(word)
+                if word_info and word_info["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
         return len(words)
@@ -329,7 +326,8 @@ class TextAnalyzer:
             text_slice = get_slice(text[0], text[1], text[2])
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                word_info = self.dictionary.get(word)
+                if word_info and word_info["PROPER"] not in ["1", "T"]:
                     vocabulary.add(word)
 
         return len(vocabulary)
@@ -369,16 +367,18 @@ class TextAnalyzer:
 
             for word_tuple in text_slice:
                 word = word_tuple[0]
-                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                word_info = self.dictionary.get(word)
+                if word_info and word_info["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
         # Frequency bins
         bins = {"0_200": 0, "201_500": 0, "501_1000": 0, "1001_1500": 0, "1501_2500": 0, "2500_plus": 0}
 
         for word in words:
-            if word in self.dictionary:
+            word_info = self.dictionary.get(word)
+            if word_info:
                 try:
-                    freq = float(self.dictionary[word]["CORPUSFREQ"])
+                    freq = float(word_info["CORPUSFREQ"])
                 except (ValueError, TypeError):
                     continue  # skip malformed frequencies
 
@@ -458,18 +458,8 @@ class TextAnalyzer:
         ax = plt.gca()
         plt.setp(ax.get_xticklabels(), fontproperties=prop)
         plt.setp(ax.get_yticklabels(), fontproperties=prop)
-        
-        # Save path
-        plot_partial = f'static/assets/plots/plot{plot_num}.png'
-        plot_path = parent_dir + plot_partial
-        
-        
-        plt.tight_layout()
-        plt.savefig(plot_partial)
-        plt.close()
-        
-        # Return a relative path suitable for front-end use
-        return f'/plot{plot_num}.png'
+
+        return self._save_and_close_plot(plot_num)
 
     def plot_lin_lex_load(self, plot_num=2):
         if len(self.texts) == 0:
@@ -544,14 +534,7 @@ class TextAnalyzer:
         plt.xlabel('Text Location', **axis_font)
         plt.ylabel('Smoothed Lexical Load', **axis_font)
 
-        plt.tight_layout()
-
-        plot_partial = f'static/assets/plots/plot{plot_num}.png'
-        plot_path = parent_dir + plot_partial
-        plt.savefig(plot_partial)
-        plt.close()
-
-        return f'/plot{plot_num}.png'
+        return self._save_and_close_plot(plot_num)
 
 
     def plot_cum_lex_load(self, plot_num=1):
@@ -616,14 +599,7 @@ class TextAnalyzer:
         plt.xlabel('Text Location', fontdict={'fontsize': 10})
         plt.ylabel('Cumulative Lexical Load', fontdict={'fontsize': 10})
 
-        plot_partial = f'static/assets/plots/plot{plot_num}.png'
-        plot_path = parent_dir + plot_partial
-
-        plt.tight_layout()
-        plt.savefig(plot_partial)
-        plt.close()
-
-        return f'/plot{plot_num}.png'
+        return self._save_and_close_plot(plot_num)
 
 
     def plot_freq_bin(self, plot_num=3):
@@ -637,7 +613,8 @@ class TextAnalyzer:
             for word_tuple in text_slice:
                 word = word_tuple[0]
                 # filter out proper nouns
-                if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+                word_info = self.dictionary.get(word)
+                if word_info and word_info["PROPER"] not in ["1", "T"]:
                     words.append(word)
 
         if not words:
@@ -708,21 +685,30 @@ class TextAnalyzer:
                             xytext=(0, 10),
                             textcoords='offset points')
 
-        # Save and return path
-        plot_partial = f'static/assets/plots/plot{plot_num}.png'
-        plot_path = parent_dir + plot_partial
-
-        plt.tight_layout()
-        plt.savefig(plot_partial)
-        plt.close()
-
-        return f'/plot{plot_num}.png'
+        return self._save_and_close_plot(plot_num)
 
     def _flatten_texts(self):
         text_slice = []
         for text in self.texts:
             text_slice.extend(get_slice(text[0], text[1], text[2]))
         return text_slice
+
+    def _save_and_close_plot(self, plot_num):
+        """
+        Helper method to save plot and close matplotlib figure.
+        Eliminates duplicate save/close logic across all plot methods.
+
+        Args:
+            plot_num: The plot number for filename
+
+        Returns:
+            str: Relative path for frontend use
+        """
+        plot_partial = f'static/assets/plots/plot{plot_num}.png'
+        plt.tight_layout()
+        plt.savefig(plot_partial)
+        plt.close()
+        return f'/plot{plot_num}.png'
     
     @round_decorator
     def spache_score(self):
@@ -940,25 +926,28 @@ class TextAnalyzer:
         for word_tuple in text_slice:
             word = word_tuple[0]
             # filter out proper nouns
-            if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+            word_info = self.dictionary.get(word)
+            if word_info and word_info["PROPER"] not in ["1", "T"]:
                 words.append(word)
 
         for word in words:
-            if word in self.dictionary:
-                if not self.dictionary[word]["CORPUSFREQ"]: continue
-                if self.dictionary[word]["CORPUSFREQ"] <= 200:
+            word_info = self.dictionary.get(word)
+            if word_info:
+                freq = word_info["CORPUSFREQ"]
+                if not freq: continue
+                if freq <= 200:
                     scores.append(2)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 200 and self.dictionary[word]["CORPUSFREQ"] <= 1000:
+                if freq > 200 and freq <= 1000:
                     scores.append(1)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 1000 and self.dictionary[word]["CORPUSFREQ"] <= 2000:
+                if freq > 1000 and freq <= 2000:
                     scores.append(-1)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 2000 and self.dictionary[word]["CORPUSFREQ"] <= 5000:
+                if freq > 2000 and freq <= 5000:
                     scores.append(-2)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 5000:
+                if freq > 5000:
                     scores.append(-4)
                     continue
             else:
@@ -1021,25 +1010,28 @@ class TextAnalyzer:
         for word_tuple in text_slice:
             word = word_tuple[0]
             # filter out proper nouns
-            if word in self.dictionary and self.dictionary[word]["PROPER"] not in ["1", "T"]:
+            word_info = self.dictionary.get(word)
+            if word_info and word_info["PROPER"] not in ["1", "T"]:
                 words.append(word)
 
         for word in words:
-            if word in self.dictionary:
-                if not self.dictionary[word]["CORPUSFREQ"]: continue
-                if self.dictionary[word]["CORPUSFREQ"] <= 200:
+            word_info = self.dictionary.get(word)
+            if word_info:
+                freq = word_info["CORPUSFREQ"]
+                if not freq: continue
+                if freq <= 200:
                     scores.append(2)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 200 and self.dictionary[word]["CORPUSFREQ"] <= 1000:
+                if freq > 200 and freq <= 1000:
                     scores.append(1)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 1000 and self.dictionary[word]["CORPUSFREQ"] <= 2000:
+                if freq > 1000 and freq <= 2000:
                     scores.append(-1)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 2000 and self.dictionary[word]["CORPUSFREQ"] <= 5000:
+                if freq > 2000 and freq <= 5000:
                     scores.append(-2)
                     continue
-                if self.dictionary[word]["CORPUSFREQ"] > 5000:
+                if freq > 5000:
                     scores.append(-4)
                     continue
             else:
