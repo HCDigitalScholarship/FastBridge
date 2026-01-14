@@ -58,7 +58,6 @@ colorblind_palette = ['#E69F00', '#56B4E9', '#009E73',
                       '#F0E442', '#0072B2', '#D55E00']
 
 
-@timer_decorator
 def mg_get_latin_dictionary(db):
     word_dictionary = {}
     cursor = db.bridge_latin_dictionary.find()
@@ -67,7 +66,6 @@ def mg_get_latin_dictionary(db):
             word_dictionary[row['TITLE']] = row
     return word_dictionary
 
-@timer_decorator
 def mg_get_dcc(db, collection_name):
     dcc = set()
     cursor = db[collection_name].find()
@@ -75,7 +73,6 @@ def mg_get_dcc(db, collection_name):
         dcc.add(row['head_word'])
     return dcc
 
-@timer_decorator
 def mg_get_diederich(collection_name):
     diederich300 = set()
     diederich1500 = set()
@@ -112,10 +109,7 @@ def find_hapax_legomena(words, dictionary:dict):
         if word and word in dictionary:
             if(dictionary[word]): word_frequencies[dictionary[word]['SIMPLE_LEMMA']] += 1
         elif word.upper() in dictionary:
-            print(f"Using uppercase version for word '{word}'")
             word_frequencies[dictionary[word.upper()]['SIMPLE_LEMMA']] += 1
-        else:
-            print(f"Word '{word}' not found in dictionary, skipping.")
     return [word.capitalize() for word, freq in word_frequencies.items() if freq == 1 and word]
 
 
@@ -126,15 +120,11 @@ class TextAnalyzer:
         self.texts = [] 
         self.num_words_ct = None
         
-        self.dictionary, self.dictionary_time = mg_get_latin_dictionary(dict_db)
-        print("Dictionary Loaded: {} seconds".format(self.dictionary_time))
+        self.dictionary = mg_get_latin_dictionary(dict_db)
 
-        (result, self.diederich_time) = mg_get_diederich("Diederich Frequency List (General)_LIST")
-        self.diederich300, self.diederich1500 = result
+        self.diederich300, self.diederich1500 = mg_get_diederich("Diederich Frequency List (General)_LIST")
 
-        self.dcc, self.dcc_time = mg_get_dcc(db, "DCC Latin Core_LOCAL_LIST")
-        print("DCC Loaded: {} seconds".format(self.dcc_time))
-
+        self.dcc = mg_get_dcc(db, "DCC Latin Core_LOCAL_LIST")
 
     # Add working file for subordinations/section?
     def add_text(self, form_request: str, language: str, start_section, end_section):
