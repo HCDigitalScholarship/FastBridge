@@ -11,7 +11,9 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBearer
 from fastapi import Cookie
-
+from models.user_models import AuthRequest, UpdateProfileRequest, PasswordChangeRequest
+from mongo_connection import atlas_client
+from datetime import datetime
 
 security = HTTPBearer()
 router = APIRouter()
@@ -198,3 +200,164 @@ async def forgot_password(request: Request):
         raise HTTPException(status_code=404, detail="User not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/profile")
+async def get_profile(user=Depends(get_current_user_cookie)):
+    """Get user profile information"""
+    try:
+        storage = atlas_client.get_database("App-Storage")
+
+        # Get user profile from database
+        user_doc = storage.user_profiles.find_one({"uid": user.get("uid")}, {"_id": 0})
+
+        if not user_doc:
+            # Create profile if it doesn't exist
+            profile_data = {
+                "uid": user.get("uid"),
+                "email": user.get("email"),
+                "display_name": user.get("name", ""),
+                "created_at": datetime.now(),
+                "last_login": datetime.now(),
+                "is_active": True,
+                "preferences": {
+                    "language": "en",
+                    "notifications_enabled": True,
+                    "default_dictionary_language": "Latin",
+                    "session_timeout_hours": 10
+                }
+            }
+            storage.user_profiles.insert_one(profile_data)
+            user_doc = profile_data
+        else:
+            # Update last login
+            storage.user_profiles.update_one(
+                {"uid": user.get("uid")},
+                {"$set": {"last_login": datetime.now()}}
+            )
+
+        # Convert datetime objects to strings for JSON serialization
+        if "created_at" in user_doc:
+            user_doc["created_at"] = user_doc["created_at"].isoformat()
+        if "last_login" in user_doc:
+            user_doc["last_login"] = user_doc["last_login"].isoformat()
+
+        return user_doc
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get profile: {str(e)}")
+
+@router.put("/profile")
+async def update_profile(
+    payload: UpdateProfileRequest,
+    user=Depends(get_current_user_cookie)
+):
+    """Update user profile"""
+    try:
+        storage = atlas_client.get_database("App-Storage")
+        update_data = {}
+
+        if payload.display_name is not None:
+            update_data["display_name"] = payload.display_name
+            # Also update in Firebase
+            auth.update_user(user.get("uid"), display_name=payload.display_name)
+
+        if payload.preferences is not None:
+            update_data["preferences"] = payload.preferences.model_dump()
+
+        if update_data:
+            update_data["last_update"] = datetime.now()
+            result = storage.user_profiles.update_one(
+                {"uid": user.get("uid")},
+                {"$set": update_data}
+            )
+
+            if result.matched_count == 0:
+                raise HTTPException(status_code=404, detail="User profile not found")
+
+        return {"success": True, "message": "Profile updated successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
+
+@router.post("/change-password")
+async def change_password(
+    payload: PasswordChangeRequest,
+    user=Depends(get_current_user_cookie)
+):
+    """Change user password"""
+    try:
+        # Verify current password by attempting to sign in
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={firebase_config['apiKey']}"
+        body = {
+            "email": user.get("email"),
+            "password": payload.current_password,
+            "returnSecureToken": True
+        }
+
+        res = requests.post(url, json=body)
+        if res.status_code != 200:
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+        # Update password in Firebase
+        auth.update_user(user.get("uid"), password=payload.new_password)
+
+        # Log the password change
+        storage = atlas_client.get_database("App-Storage")
+        audit_entry = {
+            "user_id": user.get("uid"),
+            "action": "password_change",
+            "resource": "user_account",
+            "timestamp": datetime.now(),
+            "success": True
+        }
+        storage.audit_logs.insert_one(audit_entry)
+
+        return {"success": True, "message": "Password changed successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to change password: {str(e)}")
+
+@router.get("/settings")
+async def get_settings(request: Request, user=Depends(get_current_user_cookie)):
+    """Get user settings page"""
+    context = {"request": request}
+    profile = await get_profile(user)
+    context.update(profile)
+    return templates.TemplateResponse("user_settings.html", context)
+
+@router.delete("/account")
+async def delete_account(user=Depends(get_current_user_cookie)):
+    """Delete user account and all associated data"""
+    try:
+        user_id = user.get("uid")
+        storage = atlas_client.get_database("App-Storage")
+
+        # Delete user data
+        storage.lists.delete_many({"user_id": user_id})
+        storage.user_profiles.delete_one({"uid": user_id})
+
+        # Remove user from shared lists
+        storage.lists.update_many(
+            {},
+            {"$unset": {f"shared_with_me.{user_id}": ""}}
+        )
+
+        # Log the deletion before deleting Firebase account
+        audit_entry = {
+            "user_id": user_id,
+            "action": "account_deletion",
+            "resource": "user_account",
+            "timestamp": datetime.now(),
+            "success": True
+        }
+        storage.audit_logs.insert_one(audit_entry)
+
+        # Delete Firebase account
+        auth.delete_user(user_id)
+
+        return {"success": True, "message": "Account deleted successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete account: {str(e)}")

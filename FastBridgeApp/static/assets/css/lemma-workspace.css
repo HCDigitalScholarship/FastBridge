@@ -1,0 +1,351 @@
+/**
+ * Lemmatization Workspace Styles
+ * Additional styles for dashboard and workspace views
+ */
+
+/* ============================================================================
+   General Workspace Styles
+   ============================================================================ */
+
+.workspace-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--color-accent-bright, #22b3b3);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Project Cards
+   ============================================================================ */
+
+.project-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #22b3b3 0%, #228383 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.project-card:hover::before {
+    opacity: 1;
+}
+
+.project-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #444;
+}
+
+.project-card-action-btn {
+    background: transparent;
+    color: #22b3b3;
+    border: 1px solid #22b3b3;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.project-card-action-btn:hover {
+    background: #22b3b3;
+    color: #fff;
+}
+
+/* ============================================================================
+   Table Styles
+   ============================================================================ */
+
+.lemma-data-table {
+    table-layout: auto;
+    min-width: 100%;
+}
+
+.lemma-data-table th {
+    user-select: none;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.lemma-data-table td {
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+/* Confidence legend */
+.confidence-legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.confidence-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    font-size: 0.85rem;
+}
+
+.confidence-legend-color {
+    width: 24px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================================
+   Search & Filters
+   ============================================================================ */
+
+.search-highlight {
+    background-color: rgba(255, 215, 0, 0.3);
+    font-weight: 600;
+}
+
+#table-search:focus {
+    outline: none;
+    border-color: #1a8f8f;
+    box-shadow: 0 0 0 3px rgba(34, 179, 179, 0.1);
+}
+
+/* ============================================================================
+   Modal Overrides
+   ============================================================================ */
+
+.modal-content {
+    border-radius: 10px;
+}
+
+.modal-header {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.modal-footer {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* ============================================================================
+   Buttons
+   ============================================================================ */
+
+.btn-primary:hover {
+    background: #1a8f8f !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 179, 179, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary:hover {
+    background: #666 !important;
+}
+
+/* ============================================================================
+   Empty States
+   ============================================================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.empty-state-title {
+    font-size: 1.4rem;
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+.empty-state-description {
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 24px;
+}
+
+/* ============================================================================
+   Tooltips
+   ============================================================================ */
+
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    margin-bottom: 8px;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+/* ============================================================================
+   Accessibility
+   ============================================================================ */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus styles */
+*:focus-visible {
+    outline: 3px solid var(--color-accent-bright, #22b3b3);
+    outline-offset: 2px;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .workspace-toolbar {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .projects-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .lemma-data-table {
+        font-size: 0.8rem;
+    }
+
+    .lemma-data-table th,
+    .lemma-data-table td {
+        padding: 8px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .project-card-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .toolbar-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================================================
+   Print Styles
+   ============================================================================ */
+
+@media print {
+    .workspace-toolbar,
+    .sidebar-container,
+    #table-search {
+        display: none !important;
+    }
+
+    .table-editor-container {
+        background: #fff !important;
+    }
+
+    .lemma-data-table {
+        color: #000 !important;
+    }
+
+    .lemma-data-table thead th {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+    }
+
+    /* Remove confidence colors for print */
+    .lemma-data-table tbody tr {
+        background: transparent !important;
+    }
+}
+
+/* ============================================================================
+   Reduced Motion
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .loading-spinner {
+        animation: none;
+        border-top-color: var(--color-accent-bright, #22b3b3);
+        opacity: 0.8;
+    }
+}
+
+/* ============================================================================
+   Dark Mode Support (already the default, but prepared for light mode)
+   ============================================================================ */
+
+@media (prefers-color-scheme: light) {
+    /* Future light mode support can go here */
+}

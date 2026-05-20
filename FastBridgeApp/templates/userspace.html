@@ -16,6 +16,21 @@
 
         <div class="tab-content">
           <div id="vocabulary">
+            <div id="vocabulary-controls" style="margin-bottom:16px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
+              <label style="color:#fff; font-weight:500;">Filter by language:</label>
+              <select id="vocab-language-filter" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Languages</option>
+                <option value="Latin">Latin</option>
+                <option value="Greek">Greek</option>
+              </select>
+              <label style="color:#fff; font-weight:500;">Lists per page:</label>
+              <select id="vocab-page-limit" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
             <p style="color:#fff;">Your vocabulary will appear here.</p>
           </div>
           <div id="create" style="display:none;">
