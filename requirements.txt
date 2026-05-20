@@ -98,7 +98,7 @@ oauth2client==4.1.3
 oauthlib==3.1.0
 orjson==3.10.18
 packaging==20.4
-pandas==1.3.4
+# pandas==1.3.4 DOES NOT WORK
 passlib==1.7.2
 pillow==11.3.0
 plotly==6.2.0
