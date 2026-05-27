@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator, field_serializer
+from pydantic import BaseModel, EmailStr, Field, field_validator, field_serializer
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -103,24 +103,8 @@ class UserData(BaseModel):
     languages: Dict[LanguageType, List[VocabularyList]] = Field(default={}, description="User's vocabulary lists by language")
     shared_with_me: Dict[str, Dict[LanguageType, List[Any]]] = Field(default={}, description="Lists shared with this user (supports both str and Dict formats)")
 
-class AuthRequest(BaseModel):
-    email: EmailStr = Field(..., description="User email")
-    password: str = Field(..., min_length=8, description="User password")
-    username: Optional[str] = Field(None, max_length=50, description="Display name for registration")
-
 class UpdateProfileRequest(BaseModel):
     display_name: Optional[str] = Field(None, max_length=50, description="New display name")
-
-class PasswordChangeRequest(BaseModel):
-    current_password: str = Field(..., min_length=8, description="Current password")
-    new_password: str = Field(..., min_length=8, description="New password")
-    confirm_password: str = Field(..., min_length=8, description="Password confirmation")
-
-    @model_validator(mode='after')
-    def passwords_match(self):
-        if self.new_password != self.confirm_password:
-            raise ValueError('Passwords do not match')
-        return self
 
 class ListCreateRequest(BaseModel):
     list_name: str = Field(..., min_length=1, max_length=100, description="List name")

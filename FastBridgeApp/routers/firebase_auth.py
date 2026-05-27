@@ -2,8 +2,7 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import firebase_admin
 from firebase_admin import auth, credentials
-import os, re, json
-from pydantic import BaseModel
+import os, json
 from dotenv import load_dotenv
 from fastapi.responses import RedirectResponse
 import requests
@@ -11,7 +10,7 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBearer
 from fastapi import Cookie
-from models.user_models import AuthRequest, UpdateProfileRequest, PasswordChangeRequest
+from models.user_models import UpdateProfileRequest
 from mongo_connection import atlas_client
 from datetime import datetime
 
@@ -79,90 +78,39 @@ async def google_callback(code: str):
 
     custom_token = auth.create_custom_token(user.uid).decode("utf-8")
 
-    redirect_url = f"/?firebase_token={custom_token}"
-    return RedirectResponse(redirect_url)
+    # Exchange custom token for an ID token so we can set it as a session cookie
+    sign_in_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={firebase_config['apiKey']}"
+    sign_in_resp = requests.post(sign_in_url, json={"token": custom_token, "returnSecureToken": True})
+    sign_in_data = sign_in_resp.json()
+    id_token = sign_in_data.get("idToken")
 
-@router.get("/signup")
-def signup_handler(request: Request):
-    context = {"request" : request}
-    return templates.TemplateResponse("signup.html", context)
+    if not id_token:
+        return JSONResponse({"error": "Failed to exchange custom token for session"}, status_code=400)
 
-@router.get("/login")
-def login_handler(request: Request):
-    context = {"request" : request}
-    return templates.TemplateResponse("login.html", context)
-
-class AuthRequest(BaseModel):
-    email: str
-    password: str
-    username: str = None
-
-@router.post("/signup")
-async def firebase_signup(payload: AuthRequest):
-    try:
-        email_regex = re.compile(r"[^@]+@[^@]+\.[^@]+")
-        if not email_regex.match(payload.email):
-            raise ValueError("Invalid email format")
-        
-        if len(payload.password) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        
-        auth.create_user(email=payload.email, password=payload.password, display_name=payload.username)
-        login_result = await firebase_login(payload)
-        
-        return login_result
-    except Exception as e:
-        error_detail = str(e)
-        if "EMAIL_EXISTS" in str(e):
-            error_detail = "Email already exists"
-        elif "INVALID_EMAIL" in str(e):
-            error_detail = "Invalid email format"
-        return JSONResponse(
-                status_code=401, 
-                content={"detail": error_detail}
-            )
-
-@router.post("/login")
-async def firebase_login(payload: AuthRequest):
-    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={firebase_config['apiKey']}"
-    body = {
-        "email": payload.email,
-        "password": payload.password,
-        "returnSecureToken": True
-    }
-
-    res = requests.post(url, json=body)
-    if res.status_code != 200:
-        try:
-            error_data = res.json()
-            message = (
-                error_data.get("error", {})
-                .get("message", "Invalid email or password")
-                .replace("_", " ")
-            )
-        except ValueError:
-            message = "Invalid email or password"
-
-        return JSONResponse(
-            status_code=401,  # force 401 for auth errors
-            content={"detail": message}
-        )
-
-    data = res.json()
-    id_token = data["idToken"]  
-    refresh_token = data["refreshToken"]
-
-    response = RedirectResponse(url="/userspace")
+    response = RedirectResponse(url="/userspace", status_code=302)
     response.set_cookie(
         key="user_token",
         value=id_token,
         httponly=True,
-        secure=os.getenv("ENV") == "PROD", 
+        secure=os.getenv("ENV") == "PROD",
         samesite="Lax",
-        max_age=36000 # 10 hours
+        max_age=36000
     )
-
     return response
+
+@router.get("/signin")
+def signin_handler(request: Request):
+    context = {
+        "request": request,
+        "firebase_api_key": firebase_config.get("apiKey", ""),
+        "firebase_project_id": firebase_config.get("project_id", ""),
+        "firebase_app_id": os.getenv("FIREBASE_APP_ID", ""),
+    }
+    return templates.TemplateResponse("signin.html", context)
+
+@router.get("/login")
+async def login_handler():
+    return RedirectResponse(url="/account/signin")
 
 @router.get("/logout")
 async def logout(request: Request):
@@ -184,22 +132,28 @@ def get_current_user_cookie(user_token: str = Cookie(None)):
 async def protected_route(user=Depends(get_current_user_cookie)):
     return {"message": "You are authenticated!", "user": user}
 
-@router.post("/forgot-password")
-async def forgot_password(request: Request):
+@router.post("/session-login")
+async def session_login(request: Request):
+    """Accept a Firebase ID token from client-side auth (e.g. Google popup) and set it as a session cookie."""
     data = await request.json()
-    email = data.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-
+    id_token = data.get("idToken")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="ID token required")
     try:
-        reset_link = auth.generate_password_reset_link(email)
-        # TODO: Send this link via email
-        print(f"Password reset link for {email}: {reset_link}")
-        return JSONResponse({"message": "Password reset link generated. Check your email."})
-    except auth.UserNotFoundError:
-        raise HTTPException(status_code=404, detail="User not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        auth.verify_id_token(id_token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    response = JSONResponse({"success": True})
+    response.set_cookie(
+        key="user_token",
+        value=id_token,
+        httponly=True,
+        secure=os.getenv("ENV") == "PROD",
+        samesite="Lax",
+        max_age=36000
+    )
+    return response
+
 
 @router.get("/profile")
 async def get_profile(user=Depends(get_current_user_cookie)):
@@ -279,45 +233,6 @@ async def update_profile(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
-@router.post("/change-password")
-async def change_password(
-    payload: PasswordChangeRequest,
-    user=Depends(get_current_user_cookie)
-):
-    """Change user password"""
-    try:
-        # Verify current password by attempting to sign in
-        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={firebase_config['apiKey']}"
-        body = {
-            "email": user.get("email"),
-            "password": payload.current_password,
-            "returnSecureToken": True
-        }
-
-        res = requests.post(url, json=body)
-        if res.status_code != 200:
-            raise HTTPException(status_code=400, detail="Current password is incorrect")
-
-        # Update password in Firebase
-        auth.update_user(user.get("uid"), password=payload.new_password)
-
-        # Log the password change
-        storage = atlas_client.get_database("App-Storage")
-        audit_entry = {
-            "user_id": user.get("uid"),
-            "action": "password_change",
-            "resource": "user_account",
-            "timestamp": datetime.now(),
-            "success": True
-        }
-        storage.audit_logs.insert_one(audit_entry)
-
-        return {"success": True, "message": "Password changed successfully"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to change password: {str(e)}")
 
 @router.get("/settings")
 async def get_settings(request: Request, user=Depends(get_current_user_cookie)):

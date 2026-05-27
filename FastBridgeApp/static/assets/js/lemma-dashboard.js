@@ -56,7 +56,7 @@ async function loadProjects() {
         if (!response.ok) {
             // Check if it's an authentication error
             if (response.status === 401) {
-                window.location.href = '/account/login';
+                window.location.href = '/account/signin';
                 return;
             }
             throw new Error(`Failed to load projects: ${response.statusText}`);
