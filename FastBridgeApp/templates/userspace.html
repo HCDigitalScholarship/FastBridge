@@ -9,13 +9,14 @@
         <h2 style="color:#fff; margin-bottom:16px;">{{ username }}'s Space</h2>
         <p style="color:#ccc; margin-bottom:24px;"><em>This is your user dashboard. Here you can manage your account and saved lists.</em></p>
 
-        <div class="dashboard-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
-          <a href="/userspace/vocab" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Vocabulary</a>
-          <a href="#" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
+        <div class="dashboard-tabs" role="tablist" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
+          <a href="/userspace/vocab" class="user-tab active" role="tab" aria-selected="true" aria-controls="vocabulary" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Vocabulary</a>
+          <a href="#" class="user-tab" role="tab" aria-selected="false" aria-controls="create" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
+          <a href="#" class="user-tab" role="tab" aria-selected="false" aria-controls="saved-searches" id="saved-searches-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Saved Searches</a>
         </div>
 
         <div class="tab-content">
-          <div id="vocabulary">
+          <div id="vocabulary" role="tabpanel" aria-labelledby="tab-vocabulary">
             <div id="vocabulary-controls" style="margin-bottom:16px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
               <label style="color:#fff; font-weight:500;">Filter by language:</label>
               <select id="vocab-language-filter" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
@@ -33,7 +34,7 @@
             </div>
             <p style="color:#fff;">Your vocabulary will appear here.</p>
           </div>
-          <div id="create" style="display:none;">
+          <div id="create" role="tabpanel" aria-labelledby="tab-create" style="display:none;">
             <div id="create-list-container" style="color:#fff; text-align:left;">
               <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
                 <h3 style="margin-bottom:18px; font-size:1.5rem; font-weight:600; color:#22b3b3; text-align:center;">Create a New List</h3>
@@ -74,6 +75,28 @@
               </div>
               </div>
           </div>
+
+          <div id="saved-searches" role="tabpanel" aria-labelledby="saved-searches-tab" style="display:none;">
+            <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+              <label style="color:#fff; font-weight:500;">Filter by app:</label>
+              <select id="search-app-filter" title="Filter by app" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Apps</option>
+                <option value="LISTS">Lists</option>
+                <option value="STATS">Stats</option>
+                <option value="ORACLE">Oracle</option>
+              </select>
+              <label style="color:#fff; font-weight:500;">Filter by language:</label>
+              <select id="search-lang-filter" title="Filter by language" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Languages</option>
+                <option value="Latin">Latin</option>
+                <option value="Greek">Greek</option>
+              </select>
+            </div>
+            <div id="saved-searches-content" style="color:#fff;">
+              <p style="color:#ccc;">Loading saved searches...</p>
+            </div>
+          </div>
+
         </div>
       </div>
 

@@ -947,12 +947,14 @@ function attachSharedListEvents() {
 }
 
 tabs.forEach((tab, idx) => {
+if (tab.id === 'saved-searches-tab') return; // has its own dedicated handler below
 tab.addEventListener('click', (e) => {
     e.preventDefault();
     tabs.forEach(t => {
     t.classList.remove('active');
     t.style.borderBottom = 'none';
     t.style.color = '#ccc';
+    t.setAttribute('aria-selected', 'false');
     });
     // Only show Vocabulary and Create List
     contents.forEach((c, i) => {
@@ -964,6 +966,7 @@ tab.addEventListener('click', (e) => {
     tab.classList.add('active');
     tab.style.borderBottom = '3px solid #228383';
     tab.style.color = '#fff';
+    tab.setAttribute('aria-selected', 'true');
     // Show only the relevant tab content
     if (tab.getAttribute('href') === '/userspace/vocab') {
     contents[idx].style.display = 'block';
@@ -976,6 +979,7 @@ tab.addEventListener('click', (e) => {
 
 // Initial load for Vocabulary tab
 tabs.forEach((t, i) => {
+    if (t.id === 'saved-searches-tab') return; // managed by its own handler
     if (t.getAttribute('href') === '/userspace/vocab') {
     t.classList.add('active');
     t.style.borderBottom = '3px solid #228383';
@@ -1182,3 +1186,105 @@ function attachPaginationEvents(currentRoute, contentDiv) {
         });
     });
 }
+
+// Saved Searches tab
+
+async function loadSavedSearches() {
+    const appFilter  = document.getElementById('search-app-filter')?.value  || '';
+    const langFilter = document.getElementById('search-lang-filter')?.value || '';
+    const container  = document.getElementById('saved-searches-content');
+    if (!container) return;
+
+    const params = new URLSearchParams();
+    if (appFilter)  params.set('app', appFilter);
+    if (langFilter) params.set('language', langFilter);
+
+    try {
+        const resp = await fetch(`/userspace/saved_searches?${params}`, { credentials: 'include' });
+        const data = await resp.json();
+
+        if (!data.success || !data.searches.length) {
+            container.innerHTML = '<p style="color:#ccc;">No saved searches yet. Run a search in Lists, Stats, or Oracle and click "Save Search".</p>';
+            return;
+        }
+
+        const rows = data.searches.map(s => `
+            <tr>
+                <td style="color:#fff; padding:8px;">${escapeHtml(s.name)}</td>
+                <td style="color:#ccc; padding:8px;">${s.app}</td>
+                <td style="color:#ccc; padding:8px;">${s.language}</td>
+                <td style="color:#ccc; padding:8px;">${s.created_at ? s.created_at.slice(0,10) : ''}</td>
+                <td style="padding:8px;">
+                    <button type="button" aria-label="Load search: ${escapeHtml(s.name)}" onclick="window.location.href='${escapeHtml(s.url)}'"
+                            style="background:#228383; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; margin-right:6px;">
+                        Load
+                    </button>
+                    <button type="button" aria-label="Delete search: ${escapeHtml(s.name)}" onclick="deleteSavedSearch('${s.search_id}')"
+                            style="background:#dc3545; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer;">
+                        Delete
+                    </button>
+                </td>
+            </tr>`).join('');
+
+        container.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="border-bottom:1px solid #444;">
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Name</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">App</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Language</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Saved</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch (err) {
+        container.innerHTML = '<p style="color:#ff6b6b;">Failed to load saved searches.</p>';
+    }
+}
+
+async function deleteSavedSearch(searchId) {
+    if (!confirm('Delete this saved search?')) return;
+    try {
+        const resp = await fetch('/userspace/delete_search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ search_id: searchId })
+        });
+        const data = await resp.json();
+        if (data.success) loadSavedSearches();
+    } catch (err) {
+        alert('Failed to delete search.');
+    }
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Wire up Saved Searches tab click and filters
+(function() {
+    const tab = document.getElementById('saved-searches-tab');
+    if (!tab) return;
+
+    tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('vocabulary').style.display = 'none';
+        document.getElementById('create').style.display = 'none';
+        document.getElementById('saved-searches').style.display = 'block';
+        document.querySelectorAll('.user-tab').forEach(t => {
+            t.style.color = '#ccc';
+            t.style.borderBottom = 'none';
+            t.setAttribute('aria-selected', 'false');
+        });
+        tab.style.color = '#fff';
+        tab.style.borderBottom = '3px solid #228383';
+        tab.setAttribute('aria-selected', 'true');
+        loadSavedSearches();
+    });
+
+    document.getElementById('search-app-filter')?.addEventListener('change', loadSavedSearches);
+    document.getElementById('search-lang-filter')?.addEventListener('change', loadSavedSearches);
+})();

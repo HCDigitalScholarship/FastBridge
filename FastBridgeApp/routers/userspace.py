@@ -9,7 +9,7 @@ import uuid
 from utils.permissions import PermissionChecker
 from models.user_models import (
     PermissionLevel, GrantPermissionRequest, ModifyPermissionRequest,
-    RevokePermissionRequest, UnlinkListRequest
+    RevokePermissionRequest, UnlinkListRequest, SaveSearchRequest
 )
 from firebase_admin import auth
 
@@ -1276,3 +1276,77 @@ async def get_my_shared_lists(user=Depends(get_current_user_cookie)):
         "success": True,
         "my_shared_lists": my_shared_lists
     }
+
+# Saving Searches
+@router.post("/save_search")
+async def save_search(payload: SaveSearchRequest, user=Depends(get_current_user_cookie)):
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    storage = atlas_client.get_database("App-Storage")
+
+    # Prevent duplicate names for same user
+    existing = storage.saved_searches.find_one(
+        {"user_id": user_id, "name": payload.name, "app": payload.app}
+    )
+    name = payload.name
+    if existing:
+        counter = 1
+        while storage.saved_searches.find_one({"user_id": user_id, "name": f"{name} ({counter})", "app": payload.app}):
+            counter += 1
+        name = f"{name} ({counter})"
+
+    doc = {
+        "user_id": user_id,
+        "search_id": str(uuid.uuid4()),
+        "app": payload.app,
+        "name": name,
+        "language": payload.language,
+        "url": payload.url,
+        "created_at": datetime.now().isoformat(),
+    }
+    storage.saved_searches.insert_one(doc)
+
+    return {"success": True, "message": f"Search '{name}' saved.", "search_id": doc["search_id"]}
+
+
+@router.get("/saved_searches")
+async def get_saved_searches(
+    user=Depends(get_current_user_cookie),
+    app: str = None,
+    language: str = None,
+):
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    storage = atlas_client.get_database("App-Storage")
+    query = {"user_id": user_id}
+    if app:
+        query["app"] = app
+    if language:
+        query["language"] = language
+
+    searches = list(storage.saved_searches.find(query, {"_id": 0}).sort("created_at", -1))
+    return {"success": True, "searches": searches}
+
+
+@router.post("/delete_search")
+async def delete_search(request: Request, user=Depends(get_current_user_cookie)):
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    data = await request.json()
+    search_id = data.get("search_id")
+    if not search_id:
+        raise HTTPException(status_code=400, detail="search_id required")
+
+    storage = atlas_client.get_database("App-Storage")
+    result = storage.saved_searches.delete_one({"user_id": user_id, "search_id": search_id})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Search not found")
+
+    return {"success": True, "message": "Search deleted."}

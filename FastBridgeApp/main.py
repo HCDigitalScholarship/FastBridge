@@ -22,7 +22,7 @@ async def server_error(request, exc):
 async def invalid_accesss(request, exc):
     context = {"request": request, "detail": exc.detail}
     context["statuscode"] = 401
-    return templates.TemplateResponse("notfound.html", context)
+    return templates.TemplateResponse("notfound.html", context, status_code=401)
 
 exception_handlers = {
     404: not_found,

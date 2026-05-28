@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import firebase_admin
 from firebase_admin import auth, credentials
-import os, json
+import os, json, uuid
 from dotenv import load_dotenv
 from fastapi.responses import RedirectResponse
 import requests
@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer
 from fastapi import Cookie
 from models.user_models import UpdateProfileRequest
 from mongo_connection import atlas_client
-from datetime import datetime
+from datetime import datetime, timedelta
 
 security = HTTPBearer()
 router = APIRouter()
@@ -20,15 +20,44 @@ router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
 load_dotenv()
 
+firebase_config_str = os.getenv("FIREBASE_CONFIG")
+firebase_config = json.loads(firebase_config_str)
+
 if not firebase_admin._apps:
-    firebase_config_str = os.getenv("FIREBASE_CONFIG")
-    firebase_config = json.loads(firebase_config_str)
     cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
     
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/firebase/google-callback")
+
+SESSION_DURATION_DAYS = 30
+RENEWAL_THRESHOLD_DAYS = 7
+
+
+def _set_session_cookie(response, session_id: str):
+    response.set_cookie(
+        key="user_token",
+        value=session_id,
+        httponly=True,
+        secure=os.getenv("ENV") == "PROD",
+        samesite="Lax",
+        max_age=SESSION_DURATION_DAYS * 24 * 3600,
+    )
+
+
+def create_session(user_id: str, email: str, name: str) -> str:
+    session_id = str(uuid.uuid4())
+    storage = atlas_client.get_database("App-Storage")
+    storage.sessions.insert_one({
+        "session_id": session_id,
+        "user_id": user_id,
+        "email": email,
+        "name": name,
+        "created_at": datetime.now(),
+        "expires_at": datetime.now() + timedelta(days=SESSION_DURATION_DAYS),
+    })
+    return session_id
 
 @router.get("/google-login")
 async def google_login():
@@ -76,26 +105,9 @@ async def google_callback(code: str):
     except auth.UserNotFoundError:
         user = auth.create_user(email=email, display_name=name)
 
-    custom_token = auth.create_custom_token(user.uid).decode("utf-8")
-
-    # Exchange custom token for an ID token so we can set it as a session cookie
-    sign_in_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={firebase_config['apiKey']}"
-    sign_in_resp = requests.post(sign_in_url, json={"token": custom_token, "returnSecureToken": True})
-    sign_in_data = sign_in_resp.json()
-    id_token = sign_in_data.get("idToken")
-
-    if not id_token:
-        return JSONResponse({"error": "Failed to exchange custom token for session"}, status_code=400)
-
+    session_id = create_session(user.uid, email, name or email)
     response = RedirectResponse(url="/userspace", status_code=302)
-    response.set_cookie(
-        key="user_token",
-        value=id_token,
-        httponly=True,
-        secure=os.getenv("ENV") == "PROD",
-        samesite="Lax",
-        max_age=36000
-    )
+    _set_session_cookie(response, session_id)
     return response
 
 @router.get("/signin")
@@ -114,6 +126,10 @@ async def login_handler():
 
 @router.get("/logout")
 async def logout(request: Request):
+    user_token = request.cookies.get("user_token")
+    if user_token:
+        storage = atlas_client.get_database("App-Storage")
+        storage.sessions.delete_one({"session_id": user_token})
     response = RedirectResponse("/")
     response.delete_cookie("user_token")
     return response
@@ -121,11 +137,21 @@ async def logout(request: Request):
 def get_current_user_cookie(user_token: str = Cookie(None)):
     if not user_token:
         raise HTTPException(status_code=401, detail="Not authorized")
-    try:
-        decoded_token = auth.verify_id_token(user_token)
-        return decoded_token
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid Firebase token")
+    storage = atlas_client.get_database("App-Storage")
+    now = datetime.now()
+    session = storage.sessions.find_one(
+        {"session_id": user_token, "expires_at": {"$gt": now}},
+        {"_id": 0}
+    )
+    if not session:
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
+    # Roll the session forward if within the renewal window
+    if (session["expires_at"] - now).days < RENEWAL_THRESHOLD_DAYS:
+        storage.sessions.update_one(
+            {"session_id": user_token},
+            {"$set": {"expires_at": now + timedelta(days=SESSION_DURATION_DAYS)}}
+        )
+    return {"uid": session["user_id"], "email": session["email"], "name": session["name"]}
 
 
 @router.get("/protected")
@@ -134,24 +160,22 @@ async def protected_route(user=Depends(get_current_user_cookie)):
 
 @router.post("/session-login")
 async def session_login(request: Request):
-    """Accept a Firebase ID token from client-side auth (e.g. Google popup) and set it as a session cookie."""
+    """Accept a Firebase ID token from client-side auth (e.g. Google popup) and create a persistent session."""
     data = await request.json()
     id_token = data.get("idToken")
     if not id_token:
         raise HTTPException(status_code=400, detail="ID token required")
     try:
-        auth.verify_id_token(id_token)
+        decoded = auth.verify_id_token(id_token)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
-    response = JSONResponse({"success": True})
-    response.set_cookie(
-        key="user_token",
-        value=id_token,
-        httponly=True,
-        secure=os.getenv("ENV") == "PROD",
-        samesite="Lax",
-        max_age=36000
+    session_id = create_session(
+        user_id=decoded.get("uid"),
+        email=decoded.get("email", ""),
+        name=decoded.get("name", decoded.get("email", "")),
     )
+    response = JSONResponse({"success": True})
+    _set_session_cookie(response, session_id)
     return response
 
 
@@ -191,7 +215,8 @@ async def get_profile(user=Depends(get_current_user_cookie)):
 
         # Convert datetime objects to strings for JSON serialization
         if "created_at" in user_doc:
-            user_doc["created_at"] = user_doc["created_at"].isoformat()
+            dt = user_doc["created_at"]
+            user_doc["created_at"] = f"{dt.strftime('%B')} {dt.day}, {dt.year}"
         if "last_login" in user_doc:
             user_doc["last_login"] = user_doc["last_login"].isoformat()
 
@@ -252,6 +277,7 @@ async def delete_account(user=Depends(get_current_user_cookie)):
         # Delete user data
         storage.lists.delete_many({"user_id": user_id})
         storage.user_profiles.delete_one({"uid": user_id})
+        storage.sessions.delete_many({"user_id": user_id})
 
         # Remove user from shared lists
         storage.lists.update_many(

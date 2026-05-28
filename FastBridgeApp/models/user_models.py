@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, field_serializer
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from enum import Enum
 import uuid
@@ -102,6 +102,12 @@ class UserData(BaseModel):
     user_id: str = Field(..., description="Firebase user ID")
     languages: Dict[LanguageType, List[VocabularyList]] = Field(default={}, description="User's vocabulary lists by language")
     shared_with_me: Dict[str, Dict[LanguageType, List[Any]]] = Field(default={}, description="Lists shared with this user (supports both str and Dict formats)")
+
+class SaveSearchRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, description="User-given name for this search")
+    app: Literal["LISTS", "STATS", "ORACLE"] = Field(..., description="Which app produced the result")
+    language: LanguageType = Field(..., description="Latin or Greek")
+    url: str = Field(..., description="Full relative result URL used to reload the search")
 
 class UpdateProfileRequest(BaseModel):
     display_name: Optional[str] = Field(None, max_length=50, description="New display name")

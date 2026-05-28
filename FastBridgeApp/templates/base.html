@@ -178,12 +178,13 @@
         const link = e.target.closest('a');
 
         // Only show for internal navigation links
+        const rawHref = link.getAttribute('href') || '';
         if (link &&
             link.href &&
             !link.hasAttribute('data-no-spinner') &&
             !link.hasAttribute('target') &&
-            !link.href.startsWith('javascript:') &&
-            !link.href.startsWith('#') &&
+            !rawHref.startsWith('javascript:') &&
+            !rawHref.startsWith('#') &&
             link.hostname === window.location.hostname) {
           showSpinner();
         }
