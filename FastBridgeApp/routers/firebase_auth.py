@@ -35,11 +35,20 @@ SESSION_DURATION_DAYS = 30
 RENEWAL_THRESHOLD_DAYS = 7
 
 
-def _set_session_cookie(response, session_id: str):
+def _set_session_cookie(response, session_id: str, display_name: str = ""):
     response.set_cookie(
         key="user_token",
         value=session_id,
         httponly=True,
+        secure=os.getenv("ENV") == "PROD",
+        samesite="Lax",
+        max_age=SESSION_DURATION_DAYS * 24 * 3600,
+    )
+    # Non-sensitive hint for client-side navbar rendering — avoids a network round-trip
+    response.set_cookie(
+        key="session_name",
+        value=display_name or "User",
+        httponly=False,
         secure=os.getenv("ENV") == "PROD",
         samesite="Lax",
         max_age=SESSION_DURATION_DAYS * 24 * 3600,
@@ -107,7 +116,7 @@ async def google_callback(code: str):
 
     session_id = create_session(user.uid, email, name or email)
     response = RedirectResponse(url="/userspace", status_code=302)
-    _set_session_cookie(response, session_id)
+    _set_session_cookie(response, session_id, display_name=name or email)
     return response
 
 @router.get("/signin")
@@ -132,6 +141,7 @@ async def logout(request: Request):
         storage.sessions.delete_one({"session_id": user_token})
     response = RedirectResponse("/")
     response.delete_cookie("user_token")
+    response.delete_cookie("session_name")
     return response
 
 def get_current_user_cookie(user_token: str = Cookie(None)):
@@ -169,13 +179,14 @@ async def session_login(request: Request):
         decoded = auth.verify_id_token(id_token)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
+    display_name = decoded.get("name", decoded.get("email", ""))
     session_id = create_session(
         user_id=decoded.get("uid"),
         email=decoded.get("email", ""),
-        name=decoded.get("name", decoded.get("email", "")),
+        name=display_name,
     )
     response = JSONResponse({"success": True})
-    _set_session_cookie(response, session_id)
+    _set_session_cookie(response, session_id, display_name=display_name)
     return response
 
 

@@ -48,18 +48,14 @@
 
           const navbarAuthContainer = document.getElementById('navbar-auth');
 
-          if (!navbarAuthContainer) {
-            console.error('Navbar auth container not found');
-            return;
+          if (!navbarAuthContainer) return;
+
+          function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? decodeURIComponent(match[2]) : null;
           }
 
-          /**
-           * Create logged-in menu with dropdown
-           * @param {Object} userData - User data from /account/protected endpoint
-           */
-          function createLoggedInMenu(userData) {
-            const userName = userData?.user?.name || userData?.user?.email || 'User';
-
+          function createLoggedInMenu(userName) {
             const menuHtml = `
               <ul class="nav navbar-nav" style="margin-bottom: 0;">
                 <li class="nav-item">
@@ -118,11 +114,8 @@
             }
           }
 
-          /**
-           * Create logged-out menu
-           */
           function createLoggedOutMenu() {
-            const menuHtml = `
+            navbarAuthContainer.innerHTML = `
               <span>
                 <a class="btn btn-nonbs"
                    role="button"
@@ -133,44 +126,14 @@
                 </a>
               </span>
             `;
-
-            navbarAuthContainer.innerHTML = menuHtml;
           }
 
-          /**
-           * Show loading state in navbar
-           */
-          function showLoadingState() {
-            navbarAuthContainer.innerHTML = `
-              <span class="navbar-text" style="opacity: 0.6;">
-                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                <span class="sr-only">Checking authentication status...</span>
-              </span>
-            `;
+          const sessionName = getCookie('session_name');
+          if (sessionName) {
+            createLoggedInMenu(sessionName);
+          } else {
+            createLoggedOutMenu();
           }
-
-          // Show loading state initially
-          showLoadingState();
-
-          // Check authentication
-          fetch('/account/protected', {
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json'
-            }
-          })
-            .then((resp) => {
-              if (!resp.ok) {
-                throw new Error('Not authenticated');
-              }
-              return resp.json();
-            })
-            .then((data) => {
-              createLoggedInMenu(data);
-            })
-            .catch((err) => {
-              createLoggedOutMenu();
-            });
         })();
       </script>
     </div>
