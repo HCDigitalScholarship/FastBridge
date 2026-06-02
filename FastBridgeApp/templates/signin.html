@@ -96,7 +96,7 @@
 
             if (!res.ok) throw new Error('Failed to create session')
 
-            window.location.href = '/userspace'
+            window.location.href = '{{ next_url }}'
           } catch (err) {
             console.error(err)
             alert('Sign-in failed: ' + err.message)

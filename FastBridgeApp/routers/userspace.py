@@ -525,7 +525,7 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
 @router.get("/accept-list/{share_id}")
 async def accept_list(share_id: str, user_token: str = Cookie(None)):
     if not user_token:
-        return RedirectResponse(url="/account/signin", status_code=302)
+        return RedirectResponse(url=f"/account/signin?next=/userspace/accept-list/{share_id}", status_code=302)
 
     storage = atlas_client.get_database("App-Storage")
     session = storage.sessions.find_one(
@@ -1484,7 +1484,7 @@ async def get_search_share_link(
 @router.get("/accept-search/{share_id}")
 async def accept_search(share_id: str, user_token: str = Cookie(None)):
     if not user_token:
-        return RedirectResponse(url="/account/signin", status_code=302)
+        return RedirectResponse(url=f"/account/signin?next=/userspace/accept-search/{share_id}", status_code=302)
 
     storage = atlas_client.get_database("App-Storage")
     session = storage.sessions.find_one(

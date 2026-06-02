@@ -120,12 +120,15 @@ async def google_callback(code: str):
     return response
 
 @router.get("/signin")
-def signin_handler(request: Request):
+def signin_handler(request: Request, next: str = None):
+    # Only allow same-origin relative paths to prevent open redirect
+    safe_next = next if (next and next.startswith("/") and not next.startswith("//")) else "/userspace"
     context = {
         "request": request,
         "firebase_api_key": firebase_config.get("apiKey", ""),
         "firebase_project_id": firebase_config.get("project_id", ""),
         "firebase_app_id": os.getenv("FIREBASE_APP_ID", ""),
+        "next_url": safe_next,
     }
     return templates.TemplateResponse("signin.html", context)
 
