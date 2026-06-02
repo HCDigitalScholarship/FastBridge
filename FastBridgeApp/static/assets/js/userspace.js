@@ -1192,12 +1192,14 @@ function attachPaginationEvents(currentRoute, contentDiv) {
 async function loadSavedSearches() {
     const appFilter  = document.getElementById('search-app-filter')?.value  || '';
     const langFilter = document.getElementById('search-lang-filter')?.value || '';
+    const nameFilter = document.getElementById('search-name-filter')?.value || '';
     const container  = document.getElementById('saved-searches-content');
     if (!container) return;
 
     const params = new URLSearchParams();
     if (appFilter)  params.set('app', appFilter);
     if (langFilter) params.set('language', langFilter);
+    if (nameFilter) params.set('name', nameFilter);
 
     try {
         const resp = await fetch(`/userspace/saved_searches?${params}`, { credentials: 'include' });
@@ -1218,6 +1220,10 @@ async function loadSavedSearches() {
                     <button type="button" aria-label="Load search: ${escapeHtml(s.name)}" onclick="window.location.href='${escapeHtml(s.url)}'"
                             style="background:#228383; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; margin-right:6px;">
                         Load
+                    </button>
+                    <button type="button" aria-label="Share search: ${escapeHtml(s.name)}" onclick="shareSearch('${escapeHtml(s.search_id)}')"
+                            style="background:#1a5276; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; margin-right:6px;">
+                        Share
                     </button>
                     <button type="button" aria-label="Delete search: ${escapeHtml(s.name)}" onclick="deleteSavedSearch('${s.search_id}')"
                             style="background:#dc3545; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer;">
@@ -1241,6 +1247,45 @@ async function loadSavedSearches() {
             </table>`;
     } catch (err) {
         container.innerHTML = '<p style="color:#ff6b6b;">Failed to load saved searches.</p>';
+    }
+}
+
+async function shareSearch(searchId) {
+    try {
+        const resp = await fetch(`/userspace/get_search_share_link?search_id=${encodeURIComponent(searchId)}`, {
+            credentials: 'include'
+        });
+        const data = await resp.json();
+        if (!data.success) { alert('Could not generate share link.'); return; }
+
+        let modal = document.getElementById('search-share-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'search-share-modal';
+            modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; display:flex; align-items:center; justify-content:center;';
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = `
+            <div style="background:#1a2a2a; border:1px solid #22b3b3; border-radius:10px; padding:28px 32px; min-width:340px; max-width:480px; position:relative;">
+                <button onclick="document.getElementById('search-share-modal').style.display='none'"
+                        style="position:absolute; top:12px; right:16px; background:none; border:none; color:#ccc; font-size:1.3rem; cursor:pointer;" aria-label="Close">&#x2715;</button>
+                <h5 style="color:#22b3b3; margin:0 0 16px;">Share Search</h5>
+                <p style="color:#ccc; font-size:0.9rem; margin:0 0 12px;">Anyone with this link can add a copy of this search to their account.</p>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input id="search-share-url" type="text" readonly value="${escapeHtml(data.share_url)}"
+                           style="flex:1; padding:8px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.85rem;" />
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('search-share-url').value).then(()=>{this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',1500)})"
+                            style="background:#228383; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; white-space:nowrap;">
+                        Copy
+                    </button>
+                </div>
+            </div>`;
+        modal.style.display = 'flex';
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; }, { once: true });
+    } catch {
+        alert('Failed to generate share link. Please try again.');
     }
 }
 
@@ -1287,4 +1332,10 @@ function escapeHtml(str) {
 
     document.getElementById('search-app-filter')?.addEventListener('change', loadSavedSearches);
     document.getElementById('search-lang-filter')?.addEventListener('change', loadSavedSearches);
+
+    let nameFilterTimer;
+    document.getElementById('search-name-filter')?.addEventListener('input', () => {
+        clearTimeout(nameFilterTimer);
+        nameFilterTimer = setTimeout(loadSavedSearches, 300);
+    });
 })();

@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, Cookie
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from .firebase_auth import get_current_user_cookie
 from mongo_connection import dict_db, atlas_client
 from datetime import datetime
@@ -1300,6 +1300,7 @@ async def save_search(payload: SaveSearchRequest, user=Depends(get_current_user_
     doc = {
         "user_id": user_id,
         "search_id": str(uuid.uuid4()),
+        "share_id": str(uuid.uuid4()),
         "app": payload.app,
         "name": name,
         "language": payload.language,
@@ -1316,6 +1317,7 @@ async def get_saved_searches(
     user=Depends(get_current_user_cookie),
     app: str = None,
     language: str = None,
+    name: str = None,
 ):
     user_id = user.get("uid")
     if not user_id:
@@ -1327,6 +1329,8 @@ async def get_saved_searches(
         query["app"] = app
     if language:
         query["language"] = language
+    if name:
+        query["name"] = {"$regex": name, "$options": "i"}
 
     searches = list(storage.saved_searches.find(query, {"_id": 0}).sort("created_at", -1))
     return {"success": True, "searches": searches}
@@ -1350,3 +1354,75 @@ async def delete_search(request: Request, user=Depends(get_current_user_cookie))
         raise HTTPException(status_code=404, detail="Search not found")
 
     return {"success": True, "message": "Search deleted."}
+
+
+@router.get("/get_search_share_link")
+async def get_search_share_link(
+    search_id: str,
+    request: Request,
+    user=Depends(get_current_user_cookie)
+):
+    user_id = user.get("uid")
+    storage = atlas_client.get_database("App-Storage")
+    search = storage.saved_searches.find_one(
+        {"user_id": user_id, "search_id": search_id},
+        {"share_id": 1, "_id": 0}
+    )
+    if not search:
+        raise HTTPException(status_code=404, detail="Search not found")
+
+    share_id = search.get("share_id")
+    if not share_id:
+        share_id = str(uuid.uuid4())
+        storage.saved_searches.update_one(
+            {"user_id": user_id, "search_id": search_id},
+            {"$set": {"share_id": share_id}}
+        )
+
+    base_url = str(request.base_url).rstrip("/")
+    return {"success": True, "share_url": f"{base_url}/userspace/accept-search/{share_id}"}
+
+
+@router.get("/accept-search/{share_id}")
+async def accept_search(share_id: str, user_token: str = Cookie(None)):
+    if not user_token:
+        return RedirectResponse(url="/account/signin", status_code=302)
+
+    storage = atlas_client.get_database("App-Storage")
+    session = storage.sessions.find_one(
+        {"session_id": user_token, "expires_at": {"$gt": datetime.now()}},
+        {"_id": 0}
+    )
+    if not session:
+        return RedirectResponse(url="/account/signin", status_code=302)
+
+    user_id = session["user_id"]
+
+    source = storage.saved_searches.find_one({"share_id": share_id}, {"_id": 0})
+    if not source:
+        raise HTTPException(status_code=404, detail="Shared search not found")
+
+    # If sharing with yourself just navigate to the search
+    if source["user_id"] == user_id:
+        return RedirectResponse(url=source["url"], status_code=302)
+
+    # Name collision handling (same logic as save_search)
+    name = source["name"]
+    if storage.saved_searches.find_one({"user_id": user_id, "name": name, "app": source["app"]}):
+        counter = 1
+        while storage.saved_searches.find_one({"user_id": user_id, "name": f"{name} ({counter})", "app": source["app"]}):
+            counter += 1
+        name = f"{name} ({counter})"
+
+    storage.saved_searches.insert_one({
+        "user_id": user_id,
+        "search_id": str(uuid.uuid4()),
+        "share_id": str(uuid.uuid4()),
+        "app": source["app"],
+        "name": name,
+        "language": source["language"],
+        "url": source["url"],
+        "created_at": datetime.now().isoformat(),
+    })
+
+    return RedirectResponse(url=source["url"], status_code=302)
