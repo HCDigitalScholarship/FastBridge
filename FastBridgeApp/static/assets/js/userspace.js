@@ -1,36 +1,22 @@
 // Import Shared List logic
 const importSharedBtn = document.getElementById('import-shared-btn');
 if (importSharedBtn) {
-    importSharedBtn.addEventListener('click', async () => {
-        const link = document.getElementById('import-shared-link').value.trim();
-        const language = document.getElementById('import-shared-language').value;
-        const mode = document.getElementById('import-shared-mode').value;
+    importSharedBtn.addEventListener('click', () => {
+        const raw = document.getElementById('import-shared-link').value.trim();
         const messageDiv = document.getElementById('import-shared-message');
-        if (!link || !language || !mode) {
-            messageDiv.textContent = 'Please enter the shared link/code, select language, and mode.';
+        if (!raw) {
+            messageDiv.textContent = 'Please paste a share link.';
             return;
         }
-        messageDiv.textContent = 'Importing shared list...';
+        // Accept a full URL or a bare share_id
+        let target;
         try {
-            const resp = await fetch('/userspace/add_shared_list', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    share_link: link,
-                    language: language,
-                    mode: mode
-                })
-            });
-            const data = await resp.json();
-            if (data.success) {
-                messageDiv.textContent = 'Shared list imported successfully! Refreshing page...';
-                setTimeout(() => { window.location.reload(); }, 2000);
-            } else {
-                messageDiv.textContent = data.message || 'Error importing shared list.';
-            }
+            const url = new URL(raw);
+            target = url.pathname;
         } catch {
-            messageDiv.textContent = 'Error importing shared list.';
+            target = `/userspace/accept-list/${raw}`;
         }
+        window.location.href = target;
     });
 }
 // Reusable modal for word selection
@@ -479,15 +465,14 @@ function attachVocabListEvents() {
                                 })
                             });
                             const data = await resp.json();
-                            if (data.success && data.share_id) {
-                                messageDiv.innerHTML = `<span style='color:#22b3b3;'>Share ID:</span> <input type='text' value='${data.share_id}' style='width:70%; padding:6px; border-radius:6px; border:none; background:#333; color:#fff; font-size:1rem;' readonly> <button id='copy-share-link-btn' style='background:#228383; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Copy</button>`;
+                            if (data.success && data.share_url) {
+                                messageDiv.innerHTML = `<span style='color:#22b3b3;'>Share Link:</span> <input type='text' value='${data.share_url}' style='width:70%; padding:6px; border-radius:6px; border:none; background:#333; color:#fff; font-size:1rem;' readonly> <button id='copy-share-link-btn' style='background:#228383; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Copy</button>`;
                                 const copyBtn = messageDiv.querySelector('#copy-share-link-btn');
                                 copyBtn.addEventListener('click', () => {
-                                    const input = messageDiv.querySelector('input');
-                                    input.select();
-                                    document.execCommand('copy');
-                                    copyBtn.textContent = 'Copied!';
-                                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+                                    navigator.clipboard.writeText(data.share_url).then(() => {
+                                        copyBtn.textContent = 'Copied!';
+                                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+                                    });
                                 });
                                 confirmBtn.style.display = 'none';
                             } else {
@@ -970,7 +955,7 @@ tab.addEventListener('click', (e) => {
     // Show only the relevant tab content
     if (tab.getAttribute('href') === '/userspace/vocab') {
     contents[idx].style.display = 'block';
-    fetchTabData(tab.getAttribute('href'), contents[idx]);
+    fetchTabData(tab.getAttribute('href'), document.getElementById('vocabulary-content'));
     } else if (tab.getAttribute('href') === '#') {
     contents[idx].style.display = 'block';
     }
@@ -985,7 +970,7 @@ tabs.forEach((t, i) => {
     t.style.borderBottom = '3px solid #228383';
     t.style.color = '#fff';
     contents[i].style.display = 'block';
-    fetchTabData(t.getAttribute('href'), contents[i]);
+    fetchTabData(t.getAttribute('href'), document.getElementById('vocabulary-content'));
     } else if (t.getAttribute('href') === '#') {
     t.classList.remove('active');
     t.style.borderBottom = 'none';
@@ -1141,12 +1126,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateVocabWithFilters() {
     const languageFilter = document.getElementById('vocab-language-filter');
     const pageLimitSelect = document.getElementById('vocab-page-limit');
-    const vocabContent = document.getElementById('vocabulary');
+    const vocabContent = document.getElementById('vocabulary-content');
 
     if (!languageFilter || !pageLimitSelect || !vocabContent) return;
 
     const params = new URLSearchParams({
-        page: '1', // Reset to first page when filters change
+        page: '1',
         limit: pageLimitSelect.value,
     });
 

@@ -521,6 +521,99 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
     else:
         raise HTTPException(status_code=400, detail="Invalid mode")
 
+
+@router.get("/accept-list/{share_id}")
+async def accept_list(share_id: str, user_token: str = Cookie(None)):
+    if not user_token:
+        return RedirectResponse(url="/account/signin", status_code=302)
+
+    storage = atlas_client.get_database("App-Storage")
+    session = storage.sessions.find_one(
+        {"session_id": user_token, "expires_at": {"$gt": datetime.now()}},
+        {"_id": 0}
+    )
+    if not session:
+        return RedirectResponse(url="/account/signin", status_code=302)
+
+    user_id = session["user_id"]
+
+    # Find which list/language/mode this share_id belongs to
+    languages = ["Latin", "Greek"]
+    modes = ["copy", "linked"]
+    owner_doc = language = list_name = mode = shared_list = None
+
+    for lang in languages:
+        for m in modes:
+            doc = storage.lists.find_one({f"languages.{lang}.share_links.{m}": share_id})
+            if doc:
+                owner_doc = doc
+                language = lang
+                mode = m
+                for lst in doc["languages"][lang]:
+                    if lst.get("share_links", {}).get(m) == share_id:
+                        shared_list = lst
+                        list_name = lst["name"]
+                        break
+                break
+        if owner_doc:
+            break
+
+    if not owner_doc or not shared_list:
+        raise HTTPException(status_code=404, detail="Share link not found or expired")
+
+    owner_id = owner_doc["user_id"]
+
+    # Redirect to userspace if this is your own list
+    if owner_id == user_id:
+        return RedirectResponse(url="/userspace", status_code=302)
+
+    if mode == "copy":
+        # Create an independent copy
+        user_doc = storage.lists.find_one({"user_id": user_id})
+        existing_names = [lst["name"] for lst in (user_doc or {}).get("languages", {}).get(language, [])] if user_doc else []
+        name = list_name
+        counter = 1
+        while name in existing_names:
+            name = f"{list_name} (copy {counter})"
+            counter += 1
+
+        new_list = {
+            "name": name,
+            "words": shared_list["words"],
+            "owner_id": user_id,
+            "original_owner_id": shared_list.get("owner_id", owner_id),
+            "created_at": datetime.now().isoformat(),
+            "share_links": {"copy": str(uuid.uuid4()), "linked": str(uuid.uuid4())}
+        }
+        storage.lists.update_one(
+            {"user_id": user_id},
+            {"$push": {f"languages.{language}": new_list}},
+            upsert=True
+        )
+    else:
+        # Linked share — grant view permission by default
+        permission_grant = {
+            "level": "view",
+            "granted_at": datetime.now().isoformat(),
+            "granted_by": owner_id
+        }
+        storage.lists.update_one(
+            {"user_id": owner_id, f"languages.{language}.name": list_name},
+            {"$set": {f"languages.{language}.$.permissions.{user_id}": permission_grant}}
+        )
+        storage.lists.update_one(
+            {"user_id": user_id},
+            {"$addToSet": {f"shared_with_me.{owner_id}.{language}": {
+                "list_name": list_name,
+                "permission": "view",
+                "shared_at": datetime.now().isoformat()
+            }}},
+            upsert=True
+        )
+
+    return RedirectResponse(url="/userspace", status_code=302)
+
+
 @router.post("/add_words")
 async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
     storage = atlas_client.get_database("App-Storage")
@@ -624,7 +717,12 @@ async def get_share_id(
     if not share_id:
         return {"success": False, "message": "Share link not found."}
 
-    return {"success": True, "share_id": share_id}
+    base_url = str(request.base_url).rstrip("/")
+    return {
+        "success": True,
+        "share_id": share_id,
+        "share_url": f"{base_url}/userspace/accept-list/{share_id}"
+    }
 
 
 @router.post("/permissions/grant")
