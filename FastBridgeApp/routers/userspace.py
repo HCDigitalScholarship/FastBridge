@@ -15,6 +15,8 @@ from firebase_admin import auth
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+from utils.assets import static_v
+templates.env.globals["static_v"] = static_v
 
 @router.get("/", response_class=HTMLResponse)
 def userspace(request: Request, user=Depends(get_current_user_cookie)):

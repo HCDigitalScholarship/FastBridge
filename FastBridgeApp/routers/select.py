@@ -8,6 +8,8 @@ from collections import Counter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+from utils.assets import static_v
+templates.env.globals["static_v"] = static_v
 """Expected Prefix: /select"""
 
 

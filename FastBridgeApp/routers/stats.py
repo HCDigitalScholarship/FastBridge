@@ -143,6 +143,8 @@ def stats_compare_result(request, context, sourcetexts, starts, ends, language):
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
+from utils.assets import static_v
+templates.env.globals["static_v"] = static_v
 """Expected Prefix: /stats"""
 
 @router.get("/")

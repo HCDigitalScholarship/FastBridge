@@ -2,7 +2,7 @@
 {% block content %}
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="/assets/js/chat.js"></script>
+<script src="{{ static_v('/assets/js/chat.js') }}"></script>
 <link rel="stylesheet" href="/assets/css/chat.css">
 <link rel="stylesheet" href="/assets/css/stats.css">
 
@@ -907,6 +907,6 @@ function loadJsPDF(callback) {
 <script>
   const context = {{ context | tojson }};
 </script>
-<script src="/assets/js/save-search.js"></script>
+<script src="{{ static_v('/assets/js/save-search.js') }}"></script>
 {% endblock %}
 {% endblock %}
