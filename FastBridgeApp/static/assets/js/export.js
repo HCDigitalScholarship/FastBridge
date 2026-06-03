@@ -155,17 +155,30 @@ function printData() {
   newWin.close();
 }
 
-fetch('/account/protected', { credentials: 'include' })
-  .then((resp) => {
-    if (!resp.ok) throw new Error('Not authenticated')
-    return resp.json()
-  })
-  .then((data) => {
-    document.getElementById('save-list-container').style.display = ''
-  })
-  .catch((err) => {
-    document.getElementById('save-list-container').style.display = 'none'
-  })
+(function initSaveList() {
+  const isLoggedIn = document.cookie.split(';').some(c => c.trim().startsWith('session_name='));
+  if (!isLoggedIn) return;
+
+  document.getElementById('save-list-container').style.display = '';
+
+  const urlParts = window.location.pathname.split('/');
+  const language = urlParts[urlParts.indexOf('select') + 1] || '';
+
+  fetch(`/userspace/list_names?language=${encodeURIComponent(language)}`, { credentials: 'include' })
+    .then(r => r.json())
+    .then(lists => {
+      if (!lists || lists.length === 0) return;
+      const select = document.getElementById('add-to-list-select');
+      lists.forEach(lst => {
+        const opt = document.createElement('option');
+        opt.value = lst.name;
+        opt.textContent = lst.name;
+        select.appendChild(opt);
+      });
+      document.getElementById('add-to-list-section').style.display = '';
+    })
+    .catch(() => {});
+})();
 
 document.getElementById('save-list-btn').addEventListener('click', async () => {
   const listName = document.getElementById('save-list-name').value.trim();
@@ -220,5 +233,41 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
     }
   } catch {
     document.getElementById('save-list-message').textContent = 'Error saving list.';
+  }
+});
+
+document.getElementById('add-to-list-btn').addEventListener('click', async () => {
+  const listName = document.getElementById('add-to-list-select').value;
+  if (!listName) {
+    document.getElementById('add-to-list-message').textContent = 'Please select a list.';
+    return;
+  }
+
+  const checkbox = document.getElementById("running");
+  const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
+  const simpleLemmaIndex = Object.keys(colMap).indexOf("SIMPLE_LEMMA");
+  const glossIndex = Object.keys(colMap).indexOf("SHORT_DEFINITION");
+  const rowDataRaw = checkbox.checked ? full_data : rows;
+  const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
+
+  const words = (rowData || []).filter(row => row.active)
+    .map(row => [row.values[simpleLemmaIndex], row.values[glossIndex]]);
+
+  const urlParts = window.location.pathname.split('/');
+  const language = urlParts[urlParts.indexOf('select') + 1] || '';
+
+  document.getElementById('add-to-list-message').textContent = 'Adding...';
+  try {
+    const resp = await fetch('/userspace/add_words', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ list_name: listName, language, words })
+    });
+    const result = await resp.json();
+    document.getElementById('add-to-list-message').textContent = result.success
+      ? result.message
+      : 'Error adding words.';
+  } catch {
+    document.getElementById('add-to-list-message').textContent = 'Error adding words.';
   }
 });

@@ -130,6 +130,20 @@ def get_vocab(
     }
 
 
+@router.get("/list_names")
+def get_list_names(language: str = None, user=Depends(get_current_user_cookie)):
+    storage = atlas_client.get_database("App-Storage")
+    doc = storage.lists.find_one({"user_id": user["uid"]}, {"_id": 0, "languages": 1})
+    if not doc:
+        return []
+    result = []
+    langs = [language] if language else ["Latin", "Greek"]
+    for lang in langs:
+        for lst in doc.get("languages", {}).get(lang, []):
+            result.append({"name": lst["name"], "language": lang})
+    return result
+
+
 @router.get("/words")
 async def get_words(request: Request, language: str = "Latin", query: str = None):
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
