@@ -293,7 +293,8 @@ def build_table(words: list, columnheaders: list, frequency_dict: dict, titles :
     for j in range(len(words)):
         lst = []
 
-        row_parts = [f'<tr class="{words[j][1]}">']
+        lemma_attr = str(getattr(words[j][0], "SIMPLE_LEMMA", "")).replace('"', '&quot;')
+        row_parts = [f'<tr class="{words[j][1]}" data-lemma="{lemma_attr}">']
         for i in range(len(columnheaders)): #removing TITLE from the column headers makes things be o
             if(columnheaders[i] == "LOCAL_DEFINITION"):
                 row_parts.append(f'<td class="{columnheaders[i]}">{words[j][0].TEXT_SPECIFIC_DEFINITION}</td>')

@@ -53,6 +53,18 @@
 
   <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
 
+  <style>
+    #contentArea tr[data-lemma] { cursor: pointer; }
+    #contentArea tr.row-selected > td { background: rgba(34,179,179,0.35) !important; }
+  </style>
+  <div id="selection-bar" style="display:none; margin:14px 0; color:#fff;">
+    <span style="margin-right:12px; color:#ccc; font-size:0.9rem;">Click rows to select for saving:</span>
+    <span id="selection-count" style="margin-right:14px; font-weight:600;">0 selected</span>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="selectAllActive()">Select All</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="invertSelection()">Invert</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="clearSelection()">Clear</button>
+  </div>
+
 <div id="export_wrapper">
 
   <div class="clusterize table-responsive mx-auto">

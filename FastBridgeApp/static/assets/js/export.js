@@ -180,6 +180,17 @@ function printData() {
     .catch(() => {});
 })();
 
+// Extract [lemma, gloss] pairs to save. If the user has hand-picked rows
+// (selectedLemmas, from select-result.js), save only those; otherwise save
+// all currently filtered rows.
+function collectWordsForSave(rowData, simpleLemmaIndex, glossIndex) {
+  let chosen = (rowData || []).filter(row => row.active);
+  if (typeof selectedLemmas !== "undefined" && selectedLemmas.size > 0) {
+    chosen = chosen.filter(row => selectedLemmas.has(row.values[simpleLemmaIndex]));
+  }
+  return chosen.map(row => [row.values[simpleLemmaIndex], row.values[glossIndex]]);
+}
+
 document.getElementById('save-list-btn').addEventListener('click', async () => {
   const listName = document.getElementById('save-list-name').value.trim();
   if (!listName) {
@@ -199,12 +210,8 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
     return;
   }
   
-  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS
-  const words = (rowData || []).filter(row => row.active)
-    .map(row => [
-      row.values[simpleLemmaIndex],
-      row.values[glossIndex]
-    ]);
+  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS (selection-aware)
+  const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
 
   // Get the language from the URL (after /select/)
   const urlParts = window.location.pathname.split('/');
@@ -250,8 +257,7 @@ document.getElementById('add-to-list-btn').addEventListener('click', async () =>
   const rowDataRaw = checkbox.checked ? full_data : rows;
   const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
 
-  const words = (rowData || []).filter(row => row.active)
-    .map(row => [row.values[simpleLemmaIndex], row.values[glossIndex]]);
+  const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
 
   const urlParts = window.location.pathname.split('/');
   const language = urlParts[urlParts.indexOf('select') + 1] || '';
