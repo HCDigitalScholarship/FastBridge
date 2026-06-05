@@ -158,8 +158,7 @@ function printData() {
 (function initSaveList() {
   const isLoggedIn = document.cookie.split(';').some(c => c.trim().startsWith('session_name='));
   if (!isLoggedIn) return;
-
-  document.getElementById('save-list-container').style.display = '';
+  // The floating action bar reveals itself on selection (select-result.js); nothing to show here.
 
   const urlParts = window.location.pathname.split('/');
   const language = urlParts[urlParts.indexOf('select') + 1] || '';

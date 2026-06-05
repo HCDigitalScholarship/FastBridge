@@ -29,9 +29,16 @@ function applySelectionClasses() {
   }
 }
 
+function updateActionBar() {
+  // Gmail-style: the floating bar is only present while something is selected
+  var bar = document.getElementById("floating-action-bar");
+  if (bar) bar.style.display = selectedLemmas.size > 0 ? "flex" : "none";
+}
+
 function updateSelectionCount() {
   var el = document.getElementById("selection-count");
   if (el) el.textContent = selectedLemmas.size + " selected";
+  updateActionBar();
 }
 
 function selectAllActive() {
@@ -298,8 +305,8 @@ setTimeout(line_up_header_columns, 0);
 
 // Wire row-click selection only when logged in (selection feeds the save/add-to-list actions)
 if (_selectionLoggedIn()) {
-  var _selBar = document.getElementById("selection-bar");
-  if (_selBar) _selBar.style.display = "";
+  var _selAllBtn = document.getElementById("select-all-terms-btn");
+  if (_selAllBtn) _selAllBtn.style.display = "";
   var _contentArea = document.getElementById("contentArea");
   if (_contentArea) {
     _contentArea.addEventListener("click", function (e) {
