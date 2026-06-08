@@ -321,3 +321,15 @@ if (_selectionLoggedIn()) {
     });
   }
 }
+
+// Restore Options state from a saved search URL (?hp=ID1,ID2) by replaying the
+// same unchecks the user made — clicking each checkbox fires hide_show_row.
+(function restoreSavedFilters() {
+  var hp = new URLSearchParams(window.location.search).get("hp");
+  if (!hp) return;
+  hp.split(",").forEach(function (id) {
+    if (!id) return;
+    var cb = document.getElementById(decodeURIComponent(id));
+    if (cb && cb.checked && !cb.disabled) cb.click();
+  });
+})();

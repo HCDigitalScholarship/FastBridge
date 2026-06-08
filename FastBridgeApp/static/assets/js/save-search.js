@@ -21,6 +21,18 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // Capture the current Options state (which POS/row filters the user has unchecked)
+    // so a saved search restores them on reload. Encoded as ?hp=ID1,ID2 in the saved URL.
+    // No-op on pages without these filters (STATS/ORACLE).
+    function currentSearchUrl() {
+        var unchecked = [];
+        document.querySelectorAll('input[name="filterChecks"]').forEach(function (cb) {
+            if (!cb.checked && !cb.disabled && cb.id) unchecked.push(cb.id);
+        });
+        var path = window.location.pathname;
+        return unchecked.length ? path + '?hp=' + encodeURIComponent(unchecked.join(',')) : path;
+    }
+
     function initSaveSearch() {
         const container = document.getElementById('save-search-container');
         if (!container || !isLoggedIn()) return;
@@ -50,7 +62,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ name, app, language, url: window.location.pathname })
+                    body: JSON.stringify({ name, app, language, url: currentSearchUrl() })
                 });
                 if (res.status === 401) {
                     msgEl.style.color = '#ffb366';
