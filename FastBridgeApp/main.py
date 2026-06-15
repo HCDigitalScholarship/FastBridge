@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 from routers.ToolsApp import lemmatize
-from routers import oracle, select, about, user_help, stats, firebase_auth#, userspace
+from routers import oracle, select, about, user_help, stats, firebase_auth, userspace, lemma_workspace
 
 
 async def not_found(request, exc):
@@ -22,7 +22,7 @@ async def server_error(request, exc):
 async def invalid_accesss(request, exc):
     context = {"request": request, "detail": exc.detail}
     context["statuscode"] = 401
-    return templates.TemplateResponse("notfound.html", context)
+    return templates.TemplateResponse("notfound.html", context, status_code=401)
 
 exception_handlers = {
     404: not_found,
@@ -34,12 +34,13 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, exception_handler
 
 app.include_router(lemmatize.router, prefix="/lemmatizer", tags=["lemmatize"])
 app.include_router(firebase_auth.router, prefix = "/account", tags=["account"])
-# app.include_router(userspace.router, prefix = "/userspace", tags=["userspace"])
+app.include_router(userspace.router, prefix = "/userspace", tags=["userspace"])
 app.include_router(oracle.router, prefix = "/oracle", tags=["oracle"])
 app.include_router(select.router, prefix = "/select", tags=["select"])
 app.include_router(about.router, prefix = "/about", tags=["about"])
 app.include_router(user_help.router, prefix = "/help", tags=["help"])
 app.include_router(stats.router, prefix="/stats", tags=["stats"])
+app.include_router(lemma_workspace.router, prefix="/lemma-workspace", tags=["lemma-workspace"])
 
 templates = Jinja2Templates(directory="templates")
 app_path = Path.cwd()

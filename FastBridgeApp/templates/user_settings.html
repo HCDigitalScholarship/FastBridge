@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+  <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover; background-position: top; min-height: 100vh;">
+    <div class="container" style="max-width: 95vw; margin: 40px auto;">
+
+      <div class="auth-form-container" style="background:rgba(0,0,0,0.76); border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,0.1); padding:32px 24px; color:#fff;">
+        <h2 style="color:#22b3b3; margin-bottom:24px; text-align:center;">Account Settings</h2>
+
+        <div class="settings-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444;">
+          <button class="settings-tab active" onclick="showTab('profile')" style="color:#fff; padding:12px 24px; background:none; border:none; border-bottom: 3px solid #228383; cursor:pointer;">Profile</button>
+          <button class="settings-tab" onclick="showTab('sharing')" style="color:#ccc; padding:12px 24px; background:none; border:none; cursor:pointer;">Sharing</button>
+        </div>
+
+        <div class="tab-content">
+          <!-- Profile Tab -->
+          <div id="profile" class="tab-pane active">
+            <h3 style="color:#22b3b3; margin-bottom:16px;">Profile Information</h3>
+            <form id="profile-form" style="text-align:left;">
+              <div style="margin-bottom:16px;">
+                <label for="email" style="display:block; margin-bottom:6px; color:#fff;">Email:</label>
+                <input type="email" id="email" value="{{ email }}" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #444; background:#333; color:#ccc;">
+              </div>
+              <div style="margin-bottom:16px;">
+                <label for="display-name" style="display:block; margin-bottom:6px; color:#fff;">Display Name:</label>
+                <input type="text" id="display-name" value="{{ display_name or '' }}" style="width:100%; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+              </div>
+              <div style="margin-bottom:16px;">
+                <label style="display:block; margin-bottom:6px; color:#fff;">Member Since:</label>
+                <span style="color:#ccc;">{{ created_at }}</span>
+              </div>
+              <button type="submit" style="background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; cursor:pointer;">Update Profile</button>
+            </form>
+
+            <div style="border-top: 1px solid #444; padding-top:24px; margin-top:24px;">
+              <h4 style="color:#ff6b6b; margin-bottom:12px;">Danger Zone</h4>
+              <p style="color:#ccc; margin-bottom:16px;">Once you delete your account, there is no going back. Please be certain.</p>
+              <button id="delete-account-btn" style="background:#dc3545; color:#fff; padding:10px 24px; border:none; border-radius:6px; cursor:pointer;">Delete Account</button>
+            </div>
+          </div>
+
+          <!-- Sharing Tab -->
+          <div id="sharing" class="tab-pane" style="display:none;">
+            <h3 style="color:#22b3b3; margin-bottom:16px;">List Sharing Management</h3>
+
+            <!-- Lists I've Shared -->
+            <div style="margin-bottom:32px;">
+              <h4 style="color:#fff; margin-bottom:12px;">Lists I've Shared with Others</h4>
+              <div id="my-shared-lists-container" style="background:#222; padding:16px; border-radius:6px;">
+                <p style="color:#ccc;">Loading...</p>
+              </div>
+            </div>
+
+            <!-- Lists Shared with Me -->
+            <div>
+              <h4 style="color:#fff; margin-bottom:12px;">Lists Shared with Me</h4>
+              <div id="shared-with-me-container" style="background:#222; padding:16px; border-radius:6px;">
+                <p style="color:#ccc;">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="message" style="margin-top:16px; padding:10px; border-radius:6px; display:none;"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    // Tab switching functionality
+    function showTab(tabName) {
+      // Hide all tab panes
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.style.display = 'none';
+      });
+
+      // Remove active class from all tabs
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.style.borderBottom = 'none';
+        tab.style.color = '#ccc';
+      });
+
+      // Show selected tab and mark as active
+      document.getElementById(tabName).style.display = 'block';
+      event.target.style.borderBottom = '3px solid #228383';
+      event.target.style.color = '#fff';
+    }
+
+
+    // Profile form handler
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const displayName = document.getElementById('display-name').value;
+
+      try {
+        const response = await fetch('/account/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ display_name: displayName })
+        });
+
+        const data = await response.json();
+        showMessage(data.message, response.ok ? 'success' : 'error');
+      } catch (err) {
+        showMessage('Failed to update profile', 'error');
+      }
+    });
+
+    // Delete account handler
+    document.getElementById('delete-account-btn').addEventListener('click', async () => {
+      if (!confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.')) {
+        return;
+      }
+
+      const confirmation = prompt('Type "DELETE" to confirm account deletion:');
+      if (confirmation !== 'DELETE') {
+        showMessage('Account deletion cancelled', 'info');
+        return;
+      }
+
+      try {
+        const response = await fetch('/account/account', {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          alert('Account deleted successfully. You will be redirected to the home page.');
+          window.location.href = '/';
+        } else {
+          const data = await response.json();
+          showMessage(data.detail || 'Failed to delete account', 'error');
+        }
+      } catch (err) {
+        showMessage('Failed to delete account', 'error');
+      }
+    });
+
+    // Message display function
+    function showMessage(message, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      messageDiv.style.display = 'block';
+      messageDiv.style.backgroundColor = type === 'success' ? '#22b373' : type === 'error' ? '#dc3545' : '#6c757d';
+      messageDiv.style.color = '#fff';
+
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+
+
+    // Override showTab to load sharing data when tab is opened
+    const originalShowTab = showTab;
+    showTab = function(tabName) {
+      originalShowTab.call(this, tabName);
+      if (tabName === 'sharing') {
+        loadMySharedLists();
+        loadSharedWithMe();
+      }
+    };
+
+    async function loadMySharedLists() {
+      const container = document.getElementById('my-shared-lists-container');
+      container.innerHTML = '<p style="color:#ccc;">Loading...</p>';
+
+      try {
+        const response = await fetch('/userspace/permissions/my-shared-lists', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+
+        if (!data.success || data.my_shared_lists.length === 0) {
+          container.innerHTML = '<p style="color:#ccc;">You haven\'t shared any lists yet.</p>';
+          return;
+        }
+
+        let html = '';
+        data.my_shared_lists.forEach(list => {
+          html += `
+            <div style="background:#333; padding:12px; border-radius:6px; margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <span style="color:#22b3b3; font-weight:600; font-size:1.1rem;">${list.list_name}</span>
+                  <span style="color:#ccc; margin-left:8px;">(${list.language})</span>
+                  <span style="color:#ffb366; margin-left:8px;">${list.word_count} words</span>
+                  <span style="color:#aaa; margin-left:8px;">• Shared with ${list.recipient_count} user(s)</span>
+                </div>
+                <button class="manage-permissions-btn" data-list="${list.list_name}" data-lang="${list.language}" style="background:#22b3b3; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Manage Access</button>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Attach event listeners
+        document.querySelectorAll('.manage-permissions-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const listName = btn.getAttribute('data-list');
+            const lang = btn.getAttribute('data-lang');
+            showPermissionsModal(listName, lang);
+          });
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="color:#ff6666;">Error loading shared lists.</p>';
+      }
+    }
+
+    async function loadSharedWithMe() {
+      const container = document.getElementById('shared-with-me-container');
+      container.innerHTML = '<p style="color:#ccc;">Loading...</p>';
+
+      try {
+        const response = await fetch('/userspace/permissions/shared-with-me', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+
+        if (!data.success || data.shared_lists.length === 0) {
+          container.innerHTML = '<p style="color:#ccc;">No lists have been shared with you yet.</p>';
+          return;
+        }
+
+        let html = '';
+        data.shared_lists.forEach(list => {
+          const permissionColor = list.permission === 'admin' ? '#22b3b3' : list.permission === 'edit' ? '#ffb366' : '#ccc';
+          const permissionIcon = list.permission === 'admin' ? '👑' : list.permission === 'edit' ? '✏️' : '👁️';
+          const isAdmin = list.permission === 'admin';
+
+          html += `
+            <div style="background:#333; padding:12px; border-radius:6px; margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="flex:1; min-width:200px;">
+                  <span style="color:#22b3b3; font-weight:600; font-size:1.1rem;">${list.list_name}</span>
+                  <span style="color:#ccc; margin-left:8px;">(${list.language})</span>
+                  <br>
+                  <small style="color:#aaa;">Shared by: ${list.owner_name}</small>
+                  <span style="color:${permissionColor}; margin-left:12px; font-weight:600;">${permissionIcon} ${list.permission}</span>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  ${isAdmin ? `<button class="manage-shared-permissions-btn" data-list="${list.list_name}" data-lang="${list.language}" data-owner="${list.owner_id}" style="background:#ffb366; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem; font-weight:600;">Manage Permissions</button>` : ''}
+                  <button class="unlink-btn" data-list="${list.list_name}" data-lang="${list.language}" data-owner="${list.owner_id}" style="background:#ff6666; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem;">Unlink</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Attach Manage Permissions event listeners for admin users
+        document.querySelectorAll('.manage-shared-permissions-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const listName = btn.getAttribute('data-list');
+            const lang = btn.getAttribute('data-lang');
+            const ownerId = btn.getAttribute('data-owner');
+            showPermissionsModal(listName, lang, ownerId);
+          });
+        });
+
+        // Attach Unlink event listeners
+        document.querySelectorAll('.unlink-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const listName = btn.getAttribute('data-list');
+            const lang = btn.getAttribute('data-lang');
+            const ownerId = btn.getAttribute('data-owner');
+
+            if (!confirm(`Are you sure you want to unlink "${listName}"? You will lose access to this list.`)) {
+              return;
+            }
+
+            try {
+              const response = await fetch('/userspace/permissions/unlink', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  list_name: listName,
+                  language: lang,
+                  owner_id: ownerId
+                })
+              });
+
+              const data = await response.json();
+              if (data.success) {
+                showMessage('List unlinked successfully', 'success');
+                loadSharedWithMe(); // Reload
+              } else {
+                showMessage('Failed to unlink list', 'error');
+              }
+            } catch (err) {
+              showMessage('Failed to unlink list', 'error');
+            }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="color:#ff6666;">Error loading shared lists.</p>';
+      }
+    }
+
+    function showPermissionsModal(listName, language, ownerId = null) {
+      let modal = document.createElement('div');
+      modal.className = 'permissions-modal';
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100vw';
+      modal.style.height = '100vh';
+      modal.style.background = 'rgba(0,0,0,0.7)';
+      modal.style.zIndex = '9999';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+
+      modal.innerHTML = `
+        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:500px; max-width:700px; max-height:80vh; overflow-y:auto; box-shadow:0 2px 16px rgba(34,179,179,0.25);'>
+          <h3 style='color:#22b3b3; margin-bottom:18px;'>Manage Permissions: ${listName} (${language})</h3>
+
+          <!-- Grant new access section -->
+          <div style='background:#333; padding:16px; border-radius:6px; margin-bottom:20px;'>
+            <h4 style='color:#ffb366; margin-bottom:12px;'>Grant Access to New User</h4>
+            <div style='display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;'>
+              <div style='flex:1; min-width:200px;'>
+                <label style='display:block; color:#fff; margin-bottom:4px; font-size:0.9rem;'>User Email:</label>
+                <input type='email' id='new-user-email' placeholder='user@example.com' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff;'>
+              </div>
+              <div style='flex:0 0 140px;'>
+                <label style='display:block; color:#fff; margin-bottom:4px; font-size:0.9rem;'>Permission:</label>
+                <select id='new-permission-level' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff;'>
+                  <option value='view'>View</option>
+                  <option value='edit' selected>Edit</option>
+                  <option value='admin'>Admin</option>
+                </select>
+              </div>
+              <button id='grant-access-btn' style='flex:0 0 auto; background:#22b3b3; color:#fff; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-weight:600;'>Grant Access</button>
+            </div>
+            <div id='grant-message' style='margin-top:8px; color:#ffb366; font-size:0.9rem;'></div>
+          </div>
+
+          <!-- Current access list -->
+          <div>
+            <h4 style='color:#fff; margin-bottom:12px;'>Current Access</h4>
+            <div id='permissions-list' style='max-height:300px; overflow-y:auto;'>
+              <p style='color:#ccc;'>Loading...</p>
+            </div>
+          </div>
+
+          <div style='display:flex; justify-content:flex-end; margin-top:20px;'>
+            <button id='close-permissions-modal' style='background:#6c757d; color:#fff; border:none; border-radius:6px; padding:8px 18px; cursor:pointer;'>Close</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Load current permissions
+      loadPermissionsList(listName, language, ownerId);
+
+      // Grant access button
+      document.getElementById('grant-access-btn').addEventListener('click', async () => {
+        const email = document.getElementById('new-user-email').value.trim();
+        const permission = document.getElementById('new-permission-level').value;
+        const messageDiv = document.getElementById('grant-message');
+        const grantBtn = document.getElementById('grant-access-btn');
+
+        if (!email) {
+          messageDiv.textContent = 'Please enter an email address.';
+          return;
+        }
+
+        // Prevent sharing with self - get current user's email
+        try {
+          const profileResp = await fetch('/account/profile', { credentials: 'include' });
+          const profileData = await profileResp.json();
+          if (profileData.email && email.toLowerCase() === profileData.email.toLowerCase()) {
+            messageDiv.style.color = '#ff6666';
+            messageDiv.textContent = 'You cannot share a list with yourself';
+            return;
+          }
+        } catch (err) {
+          console.error('Error checking user email:', err);
+        }
+
+        grantBtn.textContent = 'Granting...';
+        grantBtn.disabled = true;
+
+        try {
+          const response = await fetch('/userspace/permissions/grant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              list_name: listName,
+              language: language,
+              recipient_email: email,
+              permission: permission,
+              owner_id: ownerId  // Pass owner_id for admin users
+            })
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            messageDiv.style.color = '#22b373';
+            messageDiv.textContent = 'Access granted successfully!';
+            document.getElementById('new-user-email').value = '';
+            loadPermissionsList(listName, language, ownerId); // Reload permissions list
+            // Also refresh the parent lists
+            loadMySharedLists();
+            loadSharedWithMe();
+            setTimeout(() => {
+              messageDiv.textContent = '';
+            }, 3000);
+          } else {
+            messageDiv.style.color = '#ff6666';
+            messageDiv.textContent = data.detail || 'Failed to grant access';
+          }
+        } catch (err) {
+          messageDiv.style.color = '#ff6666';
+          messageDiv.textContent = 'Failed to grant access';
+        }
+
+        grantBtn.textContent = 'Grant Access';
+        grantBtn.disabled = false;
+      });
+
+      // Close modal
+      document.getElementById('close-permissions-modal').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        // Refresh both lists to ensure everything is up to date
+        loadSharedWithMe();
+      });
+    }
+
+    async function loadPermissionsList(listName, language, ownerId = null) {
+      const container = document.getElementById('permissions-list');
+      container.innerHTML = '<p style="color:#ccc;">Loading...</p>';
+
+      try {
+        // Get current user ID first
+        console.log('Fetching current user ID...'); // Debug log
+        const profileResp = await fetch('/account/profile', { credentials: 'include' });
+        console.log('Profile response status:', profileResp.status); // Debug log
+        const profileData = await profileResp.json();
+        console.log('Profile data:', profileData); // Debug log
+        const currentUserId = profileData.uid;
+        console.log('Current User ID:', currentUserId); // Debug log
+        console.log('Loading permissions for:', listName, language, ownerId); // Debug log
+        let url = `/userspace/permissions/list?language=${encodeURIComponent(language)}&list_name=${encodeURIComponent(listName)}`;
+        console.log('Constructed URL before ownerId:', url); // Debug log
+        if (ownerId) {
+          url += `&owner_id=${encodeURIComponent(ownerId)}`;
+        }
+        console.log(url, "why?"); // Debug log
+        const response = await fetch(url, { credentials: 'include' });
+        const data = await response.json();
+
+        if (!data.success || data.permissions.length === 0) {
+          container.innerHTML = '<p style="color:#ccc;">No users have access to this list yet.</p>';
+          return;
+        }
+
+        let html = '';
+        data.permissions.forEach(perm => {
+          const permissionColor = perm.permission === 'admin' ? '#22b3b3' : perm.permission === 'edit' ? '#ffb366' : '#ccc';
+          const isSelf = perm.user_id === currentUserId;
+
+          html += `
+            <div style='background:#333; padding:10px; border-radius:4px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;'>
+              <div>
+                <span style='color:#fff; font-weight:600;'>${perm.display_name}</span>
+                ${isSelf ? `<span style='color:#22b3b3; margin-left:8px; font-weight:600;'>(You)</span>` : ''}
+                <small style='color:#aaa; margin-left:8px;'>(${perm.email})</small>
+                <br>
+                <small style='color:#aaa;'>Granted: ${new Date(perm.granted_at).toLocaleDateString()}</small>
+              </div>
+              <div style='display:flex; gap:8px; align-items:center;'>
+                ${isSelf ?
+                  `<span style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>${perm.permission === 'admin' ? '👑' : perm.permission === 'edit' ? '✏️' : '👁️'} ${perm.permission.charAt(0).toUpperCase() + perm.permission.slice(1)}</span>`
+                  :
+                  `<select class='permission-change' data-user-id='${perm.user_id}' data-original='${perm.permission}' style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>
+                    <option value='view' ${perm.permission === 'view' ? 'selected' : ''}>👁️ View</option>
+                    <option value='edit' ${perm.permission === 'edit' ? 'selected' : ''}>✏️ Edit</option>
+                    <option value='admin' ${perm.permission === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                  </select>
+                  <button class='revoke-btn' data-user-id='${perm.user_id}' style='background:#ff6666; color:#fff; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:0.9rem;'>Revoke</button>`
+                }
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Attach change permission listeners
+        container.querySelectorAll('.permission-change').forEach(select => {
+          const originalValue = select.getAttribute('data-original');
+          select.addEventListener('change', async () => {
+            const userId = select.getAttribute('data-user-id');
+            const newPermission = select.value;
+
+            if (!confirm(`Change this user's permission to ${newPermission}?`)) {
+              select.value = originalValue;
+              return;
+            }
+
+            // Store original for rollback
+            const tempOriginal = originalValue;
+
+            try {
+              const response = await fetch('/userspace/permissions/modify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  list_name: listName,
+                  language: language,
+                  recipient_id: userId,
+                  new_permission: newPermission,
+                  owner_id: ownerId  // Pass owner_id for admin users
+                })
+              });
+
+              const data = await response.json();
+              console.log('Modify response:', response.status, data); // Debug log
+
+              if (response.ok && data.success) {
+                showMessage('Permission updated', 'success');
+
+                // Update the UI without full reload - just update colors and data attribute
+                select.setAttribute('data-original', newPermission);
+                const permissionColor = newPermission === 'admin' ? '#22b3b3' : newPermission === 'edit' ? '#ffb366' : '#ccc';
+                select.style.borderColor = permissionColor;
+                select.style.color = permissionColor;
+
+                // Also refresh the parent lists to ensure consistency
+                loadMySharedLists();
+                loadSharedWithMe();
+              } else {
+                const errorMsg = data.detail || data.message || 'Failed to update permission';
+                showMessage(errorMsg, 'error');
+                select.value = tempOriginal;
+              }
+            } catch (err) {
+              console.error('Error modifying permission:', err); // Debug log
+              showMessage('Failed to update permission: ' + err.message, 'error');
+              select.value = tempOriginal;
+            }
+          });
+        });
+
+        // Attach revoke listeners
+        container.querySelectorAll('.revoke-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const userId = btn.getAttribute('data-user-id');
+
+            if (!confirm('Are you sure you want to revoke access for this user?')) {
+              return;
+            }
+
+            // Disable button during request
+            btn.disabled = true;
+            btn.textContent = 'Revoking...';
+
+            try {
+              const response = await fetch('/userspace/permissions/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  list_name: listName,
+                  language: language,
+                  recipient_id: userId,
+                  owner_id: ownerId  // Pass owner_id for admin users
+                })
+              });
+
+              const data = await response.json();
+              if (data.success) {
+                showMessage('Access revoked', 'success');
+
+                // Remove the user's entry from the UI without full reload
+                const userEntry = btn.closest('div[style*="background:#333"]');
+                if (userEntry) {
+                  userEntry.style.transition = 'opacity 0.3s';
+                  userEntry.style.opacity = '0';
+                  setTimeout(() => {
+                    userEntry.remove();
+                    // Refresh the parent lists to ensure consistency
+                    loadMySharedLists();
+                    loadSharedWithMe();
+                  }, 300);
+                }
+              } else {
+                showMessage('Failed to revoke access', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Revoke';
+              }
+            } catch (err) {
+              showMessage('Failed to revoke access', 'error');
+              btn.disabled = false;
+              btn.textContent = 'Revoke';
+            }
+          });
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="color:#ff6666;">Error loading permissions.</p>';
+      }
+    }
+
+    // Check URL parameters on page load to auto-open permissions modal
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash;
+      if (hash.includes('#sharing')) {
+        // Parse URL parameters
+        const params = new URLSearchParams(hash.split('?')[1] || '');
+        const listName = params.get('list');
+        const language = params.get('lang');
+        const ownerId = params.get('owner');
+
+        if (listName && language && ownerId) {
+          // Switch to sharing tab
+          showTab('sharing');
+
+          // Wait a moment for the tab to load, then open the modal
+          setTimeout(() => {
+            showPermissionsModal(listName, language, ownerId);
+            // Clean up URL
+            history.replaceState(null, '', '/account/settings#sharing');
+          }, 500);
+        } else if (hash === '#sharing') {
+          // Just show the sharing tab
+          showTab('sharing');
+        }
+      }
+    });
+  </script>
+</body>
+{% endblock %}

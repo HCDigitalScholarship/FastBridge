@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+
+{% block extra_static %}
+<link rel="stylesheet" href="/assets/css/lemma-workspace.css">
+<link rel="stylesheet" href="/assets/css/clusterize.css">
+{% endblock %}
+
+{% block content %}
+<body>
+  <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover; background-position: top; min-height: 100vh;">
+    <div class="container-fluid" style="max-width: 98vw; margin: 20px auto;">
+
+      <!-- Toolbar -->
+      <div class="workspace-toolbar" style="background:rgba(0,0,0,0.76); border-radius:10px; padding:16px 24px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <a href="/lemma-workspace" style="color:#22b3b3; text-decoration:none; font-size:1.1rem;">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <h3 style="color:#fff; margin:0; font-size:1.3rem; font-weight:600;">
+            <i class="fas fa-file-csv" style="color:#22b3b3; margin-right:8px;"></i>
+            <span id="project-name-display">{{ project_name }}</span>
+          </h3>
+          <span id="active-users-badge" style="background:#228383; color:#fff; font-size:0.85rem; padding:6px 12px; border-radius:4px; display:none;">
+            <i class="fas fa-users" style="margin-right:6px;"></i>
+            <span id="active-users-count">1</span> active
+          </span>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <button id="export-btn" class="toolbar-btn" title="Export to CSV">
+            <i class="fas fa-download" style="margin-right:6px;"></i>
+            Export
+          </button>
+          <button id="share-btn" class="toolbar-btn" title="Share project" style="display:{% if is_owner %}inline-flex{% else %}none{% endif %};">
+            <i class="fas fa-share-alt" style="margin-right:6px;"></i>
+            Share
+          </button>
+          <button id="permissions-btn" class="toolbar-btn" title="Manage permissions" style="display:{% if is_owner %}inline-flex{% else %}none{% endif %};">
+            <i class="fas fa-user-lock" style="margin-right:6px;"></i>
+            Permissions
+          </button>
+          <button id="suggest-mode-toggle" class="toolbar-btn" title="Toggle suggest mode">
+            <i class="fas fa-pencil-alt" style="margin-right:6px;"></i>
+            Suggest Mode: OFF
+          </button>
+          <button id="comments-btn" class="toolbar-btn" title="View all comments">
+            <i class="fas fa-comments" style="margin-right:6px;"></i>
+            Comments
+          </button>
+          <button id="view-history-btn" class="toolbar-btn" title="View edit history">
+            <i class="fas fa-history" style="margin-right:6px;"></i>
+            History
+          </button>
+          <button id="view-suggestions-btn" class="toolbar-btn" title="{% if permission == 'CAN_EDIT' or is_owner %}Review pending suggestions{% else %}View your suggestions{% endif %}">
+            <i class="fas fa-lightbulb" style="margin-right:6px;"></i>
+            Suggestions
+            <span id="suggestions-count-badge" style="background:#ff6b6b; color:#fff; font-size:0.75rem; padding:2px 6px; border-radius:10px; margin-left:6px; display:none;">0</span>
+          </button>
+          <span id="permission-badge" style="background:#555; color:#fff; font-size:0.85rem; padding:6px 12px; border-radius:4px;">
+            <i class="fas fa-{% if permission == 'CAN_EDIT' %}edit{% else %}eye{% endif %}" style="margin-right:6px;"></i>
+            {{ permission.replace('CAN_', '') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Workspace -->
+      <div class="workspace-content" style="display:flex; gap:16px; min-height:calc(100vh - 200px);">
+
+        <!-- Table Editor (75%) -->
+        <div class="table-editor-container" style="flex:3; background:rgba(0,0,0,0.76); border-radius:10px; padding:24px; display:flex; flex-direction:column;">
+
+          <!-- Search Bar -->
+          <div style="margin-bottom:16px; display:flex; gap:12px; align-items:center;">
+            <div style="flex:1; position:relative;">
+              <input type="text" id="table-search" placeholder="Search table..." style="width:100%; padding:10px 40px 10px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem;">
+              <i class="fas fa-search" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#777;"></i>
+            </div>
+            <button id="clear-search-btn" class="toolbar-btn" style="display:none;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Table Container -->
+          <div id="table-wrapper" style="border:1px solid #444; border-radius:6px; max-height:calc(100vh - 280px); min-height:400px;">
+            <!-- Loading State -->
+            <div id="table-loading" style="text-align:center; color:#fff; padding:60px 20px;">
+              <div class="spinner-ring" style="width:50px; height:50px; margin:0 auto 16px; border:4px solid #444; border-top:4px solid #22b3b3; border-radius:50%; animation:spin 1s linear infinite;"></div>
+              <p>Loading table data...</p>
+            </div>
+
+            <!-- Table will be rendered here by Clusterize.js -->
+            <div id="scrollArea" class="clusterize-scroll">
+              <table id="lemma-table" class="lemma-data-table">
+                <thead>
+                  <tr id="table-header">
+                    <!-- Column headers will be inserted here -->
+                  </tr>
+                </thead>
+                <tbody id="table-content" class="clusterize-content">
+                  <tr class="clusterize-no-data">
+                    <td>Loading...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Table Info -->
+          <div style="margin-top:12px; color:#999; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;">
+            <span id="table-info">Loading...</span>
+            <span id="table-stats"></span>
+          </div>
+
+        </div>
+
+        <!-- Sidebar (25%) - Comments Panel (toggleable) -->
+        <div id="comments-panel" class="sidebar-container" style="flex:1; background:rgba(0,0,0,0.76); border-radius:10px; padding:24px; overflow-y:auto; max-height:calc(100vh - 200px); display:none;">
+          <h4 style="color:#22b3b3; margin-bottom:16px; font-size:1.2rem; font-weight:600; border-bottom:1px solid #444; padding-bottom:12px;">
+            <i class="fas fa-comments" style="margin-right:8px;"></i>
+            Comments
+          </h4>
+
+          <div id="comments-content" style="display:flex; flex-direction:column; gap:16px;">
+            <p style="color:#ccc; text-align:center; padding:20px;">
+              Loading comments...
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Hidden data for JavaScript -->
+  <input type="hidden" id="project-id" value="{{ project_id }}">
+  <input type="hidden" id="user-id" value="{{ user_id }}">
+  <input type="hidden" id="username" value="{{ username }}">
+  <input type="hidden" id="user-permission" value="{{ permission }}">
+  <input type="hidden" id="is-owner" value="{{ is_owner }}">
+
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .toolbar-btn {
+      background: #22b3b3;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .toolbar-btn:hover {
+      background: #1a8f8f;
+    }
+
+    .toolbar-btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .lemma-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .lemma-data-table thead th {
+      background: #228383;
+      color: #fff;
+      padding: 12px 8px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-right: 1px solid #444;
+    }
+
+    .lemma-data-table thead th:last-child {
+      border-right: none;
+    }
+
+    .lemma-data-table tbody tr {
+      transition: background 0.2s;
+    }
+
+    .lemma-data-table tbody tr:hover {
+      background: rgba(34, 179, 179, 0.1);
+    }
+
+    .lemma-data-table tbody td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #333;
+      border-right: 1px solid #333;
+    }
+
+    .lemma-data-table tbody td:last-child {
+      border-right: none;
+    }
+
+    /* Confidence-based row highlighting */
+    .lemma-data-table tbody tr[data-confidence] {
+      /* Background will be set dynamically via JavaScript */
+    }
+
+    .clusterize-scroll {
+      height: auto;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    .clusterize-content {
+      /* Clusterize.js styles - content will be dynamically sized */
+    }
+
+    #table-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scrollbar styling */
+    #scrollArea::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    #scrollArea::-webkit-scrollbar-track {
+      background: #222;
+    }
+
+    #scrollArea::-webkit-scrollbar-thumb {
+      background: #22b3b3;
+      border-radius: 5px;
+    }
+
+    #scrollArea::-webkit-scrollbar-thumb:hover {
+      background: #1a8f8f;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1200px) {
+      .workspace-content {
+        flex-direction: column;
+      }
+      .table-editor-container,
+      .sidebar-container {
+        flex: none;
+        width: 100%;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .toolbar-btn,
+      .lemma-data-table tbody tr {
+        transition: none;
+      }
+      .spinner-ring {
+        animation: none;
+        border-top-color: #22b3b3;
+        opacity: 0.8;
+      }
+    }
+
+    /* Phase 4: Comments & History Styles */
+    .comment-card {
+      background: rgba(34, 179, 179, 0.1);
+      border: 1px solid rgba(34, 179, 179, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .comment-time {
+      font-size: 0.75rem;
+      color: #999;
+    }
+
+    .comment-row-preview {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-bottom: 8px;
+      font-style: italic;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    .comment-text {
+      color: #eee;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      margin-bottom: 8px;
+    }
+
+    .btn-delete-comment {
+      background: #ff6b6b;
+      color: #fff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-delete-comment:hover {
+      background: #ff5252;
+    }
+
+    .history-entry {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid #333;
+    }
+
+    .history-entry:last-child {
+      border-bottom: none;
+    }
+
+    .history-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: rgba(34, 179, 179, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22b3b3;
+    }
+
+    .history-details {
+      flex: 1;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .history-action {
+      font-size: 0.8rem;
+      color: #999;
+      text-transform: capitalize;
+    }
+
+    .history-time {
+      font-size: 0.75rem;
+      color: #777;
+      margin-bottom: 4px;
+    }
+
+    .history-changes {
+      font-size: 0.85rem;
+      color: #ccc;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-family: monospace;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    .toolbar-btn.active {
+      background: #1a8f8f;
+      box-shadow: 0 0 10px rgba(34, 179, 179, 0.5);
+    }
+
+    /* Row action buttons */
+    .row-comment-btn:hover {
+      color: #1a8f8f !important;
+      transform: scale(1.1);
+    }
+
+    .row-comment-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Suggestions styling */
+    .suggestion-card {
+      background: rgba(255, 212, 59, 0.1);
+      border: 1px solid rgba(255, 212, 59, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 212, 59, 0.2);
+    }
+
+    .suggestion-author {
+      font-size: 0.9rem;
+      color: #ffd43b;
+    }
+
+    .suggestion-time {
+      font-size: 0.75rem;
+      color: #999;
+    }
+
+    .suggestion-row-context {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-style: italic;
+    }
+
+    .suggestion-changes {
+      margin-bottom: 12px;
+    }
+
+    .suggestion-change-item {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .suggestion-field-name {
+      font-weight: 600;
+      color: #22b3b3;
+      margin-bottom: 4px;
+    }
+
+    .suggestion-value-from {
+      color: #ff6b6b;
+      text-decoration: line-through;
+      font-family: monospace;
+    }
+
+    .suggestion-value-to {
+      color: #51cf66;
+      font-family: monospace;
+    }
+
+    .suggestion-comment {
+      font-size: 0.85rem;
+      color: #ccc;
+      font-style: italic;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-left: 3px solid #ffd43b;
+    }
+
+    .suggestion-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-approve-suggestion {
+      background: #51cf66;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-approve-suggestion:hover {
+      background: #40c057;
+    }
+
+    .btn-reject-suggestion {
+      background: #ff6b6b;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-reject-suggestion:hover {
+      background: #ff5252;
+    }
+  </style>
+
+  <!-- Share Modal -->
+  <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content" style="background:#1e1e1e; color:#fff; border:1px solid #444;">
+        <div class="modal-header" style="border-bottom:1px solid #444;">
+          <h5 class="modal-title" id="shareModalLabel">
+            <i class="fas fa-share-alt"></i> Share Project
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="share-form">
+            <div class="form-group">
+              <label for="share-email">Email Address</label>
+              <input type="email" class="form-control" id="share-email" placeholder="user@example.com" required
+                     style="background:#2a2a2a; color:#fff; border:1px solid #444;">
+              <small class="form-text text-muted">Enter the email address of the person you want to share with.</small>
+            </div>
+            <div class="form-group">
+              <label for="share-permission">Permission Level</label>
+              <select class="form-control" id="share-permission"
+                      style="background:#2a2a2a; color:#fff; border:1px solid #444;">
+                <option value="CAN_VIEW">Can View (read-only + comments)</option>
+                <option value="CAN_EDIT">Can Edit (modify cells)</option>
+              </select>
+              <small class="form-text text-muted">
+                <strong>Can View:</strong> Read-only access with ability to add comments.<br>
+                <strong>Can Edit:</strong> Full editing access to modify cell values.
+              </small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #444;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="share-submit-btn" onclick="submitShare()">Share</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permissions Management Modal -->
+  <div class="modal fade" id="permissionsModal" tabindex="-1" role="dialog" aria-labelledby="permissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content" style="background:#1e1e1e; color:#fff; border:1px solid #444;">
+        <div class="modal-header" style="border-bottom:1px solid #444;">
+          <h5 class="modal-title" id="permissionsModalLabel">
+            <i class="fas fa-users-cog"></i> Manage Permissions
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="permissions-loading" style="text-align:center; padding:40px;">
+            <div class="spinner-ring" style="margin:0 auto;"></div>
+            <p style="margin-top:16px; color:#888;">Loading permissions...</p>
+          </div>
+          <div id="permissions-list" style="display:none;">
+            <!-- Permissions will be loaded here dynamically -->
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #444;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit History Modal -->
+  <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content" style="background:#1e1e1e; color:#fff; border:1px solid #444;">
+        <div class="modal-header" style="border-bottom:1px solid #444;">
+          <h5 class="modal-title" id="historyModalLabel">
+            <i class="fas fa-history"></i> Edit History
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
+          <div id="history-loading" style="text-align:center; padding:40px;">
+            <div class="spinner-ring" style="margin:0 auto;"></div>
+            <p style="margin-top:16px; color:#888;">Loading history...</p>
+          </div>
+          <div id="history-list" style="display:none;">
+            <!-- History entries will be loaded here dynamically -->
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #444;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions Modal -->
+  <div class="modal fade" id="suggestionsModal" tabindex="-1" role="dialog" aria-labelledby="suggestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content" style="background:#1e1e1e; color:#fff; border:1px solid #444;">
+        <div class="modal-header" style="border-bottom:1px solid #444;">
+          <h5 class="modal-title" id="suggestionsModalLabel">
+            <i class="fas fa-lightbulb"></i> Pending Suggestions
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+          <div id="suggestions-loading" style="text-align:center; padding:40px;">
+            <div class="spinner-ring" style="margin:0 auto;"></div>
+            <p style="margin-top:16px; color:#888;">Loading suggestions...</p>
+          </div>
+          <div id="suggestions-list" style="display:none;">
+            <!-- Suggestions will be loaded here dynamically -->
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #444;">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/clusterize.min.js"></script>
+  <script src="/assets/js/lemma-table-editor.js"></script>
+</body>
+{% endblock %}

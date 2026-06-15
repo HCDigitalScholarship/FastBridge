@@ -3,6 +3,8 @@ import json
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import pandas as pd
+from sentence_transformers import SentenceTransformer, util
+import json
 
 load_dotenv("../../FastBridgeApp/.env")
 
@@ -159,9 +161,73 @@ def group_dictionary_by_lemma_and_gloss(language):
     print(f"Saved grouped dictionary for {language} to {out_path}")
     return filtered_result
 
+def group_by_similar_definition(language, column, min_similarity_score=0.8):
+    """
+    Group dictionary entries that have similar SHORT_DEFINITION or LONG_DEFINITION values.
+    Uses semantic similarity between definition texts (via SentenceTransformer embeddings).
+    
+    Args:
+        language (str): The language key for dict_names and dict_db.
+        column (str): "SHORT_DEFINITION" or "LONG_DEFINITION".
+        min_similarity_score (float): Minimum cosine similarity for grouping.
+    """
+    assert column in {"SHORT_DEFINITION", "LONG_DEFINITION"}, "column must be SHORT_DEFINITION or LONG_DEFINITION"
+    print(f"Getting similar definition for {language} texts based on {column}")
+    
+    dict_name = dict_names[language]
+    collection = dict_db[dict_name]
+    
+    docs = list(collection.find({}, {"_id": 0, "TITLE": 1, "SIMPLE_LEMMA": 1, 
+                                     "SHORT_DEFINITION": 1, "LONG_DEFINITION": 1}))
+    texts = [d.get(column, "") or "" for d in docs]
+    size = len(docs)
+    # Load a semantic embedding model (multilingual version handles different languages)
+    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+    embeddings = model.encode(texts, convert_to_tensor=True, show_progress_bar=True)
+
+    result = {}
+
+    for i, doc in enumerate(docs):
+        title = doc.get("TITLE")
+        if not title:
+            continue
+        definition_i = texts[i]
+        if not definition_i.strip():
+            continue
+
+        # Compute cosine similarity to all others
+        cosine_scores = util.cos_sim(embeddings[i], embeddings)[0]
+        similar_docs = []
+        
+        for j, score in enumerate(cosine_scores):
+            if i == j:
+                continue
+            if score >= min_similarity_score:
+                d = docs[j]
+                similar_docs.append({
+                    "TITLE": d.get("TITLE"),
+                    "SIMPLE_LEMMA": d.get("SIMPLE_LEMMA"),
+                    "SHORT_DEFINITION": d.get("SHORT_DEFINITION"),
+                    "LONG_DEFINITION": d.get("LONG_DEFINITION"),
+                    "similarity_score": round(float(score), 3)
+                })
+        
+        if similar_docs:
+            result[title] = similar_docs
+        print(f"Processed {i} of {size}")
+
+    out_path = f"grouped_by_similarity_{language}_{column.lower()}.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    
+    print(f"Saved grouped similar definitions for {language} ({column}) to {out_path}")
+    return result
+
+
 if __name__ == "__main__":
     # get_excel_dups_in_folder("check/", "duplicates.json")
-    get_titles_not_in_texts("Latin")
+    # get_titles_not_in_texts("Latin")
+    group_by_similar_definition("Latin", "SHORT_DEFINITION", min_similarity_score=0.95)
     # sample_words = ["AVENTINVS/N1", "AVENTINVS/N2", "AARON/N"]
     # find_texts_with_words("Latin-Texts", sample_words)
     # group_dictionary_by_lemma_and_gloss("Latin")

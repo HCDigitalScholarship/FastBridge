@@ -1,6 +1,75 @@
 var rows = data,
   search = document.getElementById("search");
 var display_len = document.getElementById("len");
+
+// --- word selection (Phase 2) ---
+// Rows are virtualized by Clusterize, so selection can't live in the DOM.
+// We track selected SIMPLE_LEMMA values in a Set and re-apply the highlight
+// class to whatever rows are currently rendered (on scroll, filter, etc.).
+var selectedLemmas = new Set();
+var _colDef = (typeof columns === "string") ? JSON.parse(columns) : columns;
+var simpleLemmaIndex = Object.keys(_colDef).indexOf("SIMPLE_LEMMA");
+
+function _selectionLoggedIn() {
+  return document.cookie.split(";").some(function (c) {
+    return c.trim().indexOf("session_name=") === 0;
+  });
+}
+
+function lemmaOfRow(row) {
+  return simpleLemmaIndex > -1 ? row.values[simpleLemmaIndex] : null;
+}
+
+function applySelectionClasses() {
+  var area = document.getElementById("contentArea");
+  if (!area) return;
+  var trs = area.querySelectorAll("tr[data-lemma]");
+  for (var i = 0; i < trs.length; i++) {
+    trs[i].classList.toggle("row-selected", selectedLemmas.has(trs[i].getAttribute("data-lemma")));
+  }
+}
+
+function updateActionBar() {
+  // Gmail-style: the floating bar is only present while something is selected
+  var bar = document.getElementById("floating-action-bar");
+  if (bar) bar.style.display = selectedLemmas.size > 0 ? "flex" : "none";
+}
+
+function updateSelectionCount() {
+  var el = document.getElementById("selection-count");
+  if (el) el.textContent = selectedLemmas.size + " selected";
+  updateActionBar();
+}
+
+function selectAllActive() {
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].active) {
+      var l = lemmaOfRow(rows[i]);
+      if (l != null) selectedLemmas.add(l);
+    }
+  }
+  updateSelectionCount();
+  applySelectionClasses();
+}
+
+function clearSelection() {
+  selectedLemmas.clear();
+  updateSelectionCount();
+  applySelectionClasses();
+}
+
+function invertSelection() {
+  for (var i = 0; i < rows.length; i++) {
+    if (!rows[i].active) continue;
+    var l = lemmaOfRow(rows[i]);
+    if (l == null) continue;
+    if (selectedLemmas.has(l)) selectedLemmas.delete(l);
+    else selectedLemmas.add(l);
+  }
+  updateSelectionCount();
+  applySelectionClasses();
+}
+
 //Clusterize Stuff
 /*
  * Fetch suitable rows
@@ -22,8 +91,11 @@ var filterRows = function (rows) {
 var clusterize = new Clusterize({
   rows: filterRows(rows),
   scrollId: "scrollArea",
-  contentId: "contentArea", //,
-  //blocks_in_cluster: blocks_in_cluster
+  contentId: "contentArea",
+  callbacks: {
+    // Re-apply selection highlight to rows as they get (re-)rendered on scroll
+    clusterChanged: applySelectionClasses,
+  },
 });
 
 /*
@@ -230,3 +302,34 @@ function hide_show_row(row_value) {
   setTimeout(line_up_header_columns, 0);
 }
 setTimeout(line_up_header_columns, 0);
+
+// Wire row-click selection only when logged in (selection feeds the save/add-to-list actions)
+if (_selectionLoggedIn()) {
+  var _selAllBtn = document.getElementById("select-all-terms-btn");
+  if (_selAllBtn) _selAllBtn.style.display = "";
+  var _contentArea = document.getElementById("contentArea");
+  if (_contentArea) {
+    _contentArea.addEventListener("click", function (e) {
+      if (e.target.closest("a")) return; // don't hijack external-link clicks
+      var tr = e.target.closest("tr[data-lemma]");
+      if (!tr) return;
+      var lemma = tr.getAttribute("data-lemma");
+      if (selectedLemmas.has(lemma)) selectedLemmas.delete(lemma);
+      else selectedLemmas.add(lemma);
+      tr.classList.toggle("row-selected", selectedLemmas.has(lemma));
+      updateSelectionCount();
+    });
+  }
+}
+
+// Restore Options state from a saved search URL (?hp=ID1,ID2) by replaying the
+// same unchecks the user made — clicking each checkbox fires hide_show_row.
+(function restoreSavedFilters() {
+  var hp = new URLSearchParams(window.location.search).get("hp");
+  if (!hp) return;
+  hp.split(",").forEach(function (id) {
+    if (!id) return;
+    var cb = document.getElementById(decodeURIComponent(id));
+    if (cb && cb.checked && !cb.disabled) cb.click();
+  });
+})();

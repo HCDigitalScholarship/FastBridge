@@ -283,3 +283,315 @@ section {
   background-color: white;
   color: black;
 }
+/* Add smooth transitions to all buttons */
+.btn,
+button {
+  transition: var(--transition-base);
+}
+
+/* Subtle hover lift for buttons */
+.btn:not(:disabled):hover,
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active,
+button:active {
+  transform: translateY(0);
+}
+
+/* Icon Buttons (.myBtn) - Only add transitions */
+.myBtn {
+  transition: var(--transition-all);
+}
+
+.myBtn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.myBtn:active {
+  transform: scale(0.98);
+}
+
+.myBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Modern Card - Use class="modern-card" to opt-in */
+.modern-card {
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition-all);
+}
+
+.modern-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+/* Glass Card - Use class="glass-card" to opt-in */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Modal - Only enhance border radius, don't change colors */
+.modal-content {
+  border-radius: var(--radius-xl) !important;
+}
+
+/* Only enhance focus states, don't change backgrounds */
+.form-control:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #22b3b3 !important;
+  box-shadow: 0 0 0 3px rgba(34, 179, 179, 0.15) !important;
+  outline: none !important;
+  transition: var(--transition-base);
+}
+
+/* Optional: Add rounded corners if desired */
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  border-radius: var(--radius-md);
+  transition: var(--transition-base);
+}
+
+/* Add smooth transitions to table rows */
+.table tbody tr {
+  transition: var(--transition-fast);
+}
+
+/* Subtle hover effect - only brightness change */
+.table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+
+/* Add smooth transitions to nav links */
+.nav-link {
+  transition: var(--transition-base);
+}
+
+/* Add smooth transitions to dropdown items */
+.dropdown-item {
+  transition: var(--transition-fast);
+}
+
+/* Button loading state */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  border-top-color: currentColor;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Glassmorphism */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effect */
+.glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.glow-strong {
+  box-shadow: var(--shadow-glow-strong);
+}
+
+/* Hover lift */
+.hover-lift {
+  transition: var(--transition-all);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: var(--transition-all);
+}
+
+/* Modern scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-glass);
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: var(--transition-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  background-clip: padding-box;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-glass) rgba(0, 0, 0, 0.1);
+}
+
+/* User dropdown menu styling */
+#user-menu-dropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #333;
+}
+
+#user-menu-dropdown:hover,
+#user-menu-dropdown:focus {
+  color: #228383;
+}
+
+/* Dropdown menu styling */
+#navbar-auth .dropdown-menu {
+  min-width: 200px;
+  padding: 0.5rem 0;
+  margin-top: 0.125rem;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+}
+
+#navbar-auth .dropdown-header {
+  padding: 0.5rem 1rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+#navbar-auth .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  clear: both;
+  font-weight: 400;
+  color: #212529;
+  text-align: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+}
+
+#navbar-auth .dropdown-item:hover,
+#navbar-auth .dropdown-item:focus {
+  color: #16181b;
+  text-decoration: none;
+  background-color: #f8f9fa;
+}
+
+#navbar-auth .dropdown-item i {
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* Ensure navbar items align properly */
+#navbar-auth .nav.navbar-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+}
+
+#navbar-auth .nav-item {
+  list-style: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+  #navbar-auth .dropdown-menu-right {
+    right: 0;
+    left: auto;
+  }
+}

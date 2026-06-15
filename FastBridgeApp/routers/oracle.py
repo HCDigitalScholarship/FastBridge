@@ -3,9 +3,12 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from MongoDefinitionTools import get_title_location_levels, render_titles, mg_get_text_as_Text, mg_get_locations, make_quads_or_trips
 import json
+from utils.timing import timer_decorator
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+from utils.assets import static_v
+templates.env.globals["static_v"] = static_v
 
 
 @router.get("/")
@@ -43,8 +46,8 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
     book_cache = {}
 
     def get_book(text):
-        location_list, location_words = mg_get_locations(language, text, get_index=True)
         if text not in book_cache:
+            location_list, location_words = mg_get_locations(language, text, get_index=True)
             book_cache[text] = mg_get_text_as_Text(
                 language,
                 text,
@@ -54,19 +57,20 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
         return book_cache[text]
 
     known_ranges = make_quads_or_trips(known_texts, known_starts, known_ends)
-    known_texts_display = ""
+    known_texts_display_parts = []
     ogknown_words = []
     for text, start, end in known_ranges:
         ogknown_words += get_book(text).get_words(start, end,oracle=True)
-        known_texts_display += f"{get_book(text).name} ({start} - {end}), "
+        known_texts_display_parts.append(f"{get_book(text).name} ({start} - {end})")
 
-    og_token_set = set(ogknown_words)
+    known_texts_display = ", ".join(known_texts_display_parts)
+    ogknown_words_set = set(ogknown_words)  # Create set once for efficient intersection
 
     # Prepare exploration ranges
     explore_ranges = make_quads_or_trips(etexts, e_location_start, e_location_end)
     location_sizes = list(map(int, e_location_size.split("+")))
     levels = list(map(int, e_levels.split("+")))
-    locations_display = ""
+    locations_display_parts = []
 
     for (text, sec_start, sec_end), location_size, level in zip(explore_ranges, location_sizes, levels):
         book = get_book(text)
@@ -100,10 +104,11 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
             wordforms = book.get_words(start_key, end_key, oracle=True)
             token_set = set(wordforms)
 
-            known_words = list_intersection(wordforms, ogknown_words)
+            # Use pre-computed set for efficient intersection
+            known_words = [word for word in wordforms if word in ogknown_words_set]
             known_word_count = len(known_words)
 
-            known_tokens = token_set.intersection(og_token_set)
+            known_tokens = token_set.intersection(ogknown_words_set)
             known_token_count = len(known_tokens)
 
             total_word_count = len(wordforms)
@@ -130,21 +135,15 @@ async def oracle(request: Request, language: str, etexts: str, e_levels: str, e_
 
             start_idx += 1  # slide window forward
 
-        locations_display += f"{book.name}: {sec_start} - {sec_end}, "
+        locations_display_parts.append(f"{book.name}: {sec_start} - {sec_end}")
 
-    locations_display = locations_display.rstrip(", ")
+    locations_display = ", ".join(locations_display_parts)
     context["table_data"] = sorted(table_data, key=lambda row: float(row[5].strip('%')), reverse=True) # Sort by percent_words known
     context["etexts"] = locations_display
-    
-    context["known_texts"] = known_texts_display.rstrip(", ")
+
+    context["known_texts"] = known_texts_display
 
     return templates.TemplateResponse("result-oracle.html", context)
-
-
-def list_intersection(list1, list2):
-    """Returns items in both lists, preserving duplicates."""
-    set2 = set(list2)
-    return [item for item in list1 if item in set2]
 
 
 def handle_levels(level: int, location_keys: list) -> list:
