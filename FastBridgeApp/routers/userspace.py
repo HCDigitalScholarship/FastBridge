@@ -6,7 +6,7 @@ from .firebase_auth import get_current_user_cookie
 from mongo_connection import dict_db, atlas_client
 from datetime import datetime
 import uuid
-from utils.permissions import PermissionChecker
+from utils.collaboration import PermissionChecker
 from models.user_models import (
     PermissionLevel, GrantPermissionRequest, ModifyPermissionRequest,
     RevokePermissionRequest, UnlinkListRequest, SaveSearchRequest
