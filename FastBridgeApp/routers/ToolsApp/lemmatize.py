@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request, File, Form, UploadFile
 from fastapi.templating import Jinja2Templates
 from starlette.responses import FileResponse
 import importlib
+import os
 import tempfile
 from pathlib import Path
 import re as regex
@@ -21,7 +22,8 @@ logging.getLogger("stanza.pipeline").setLevel(logging.ERROR)
 
 from cltk.lemmatize.lat import LatinBackoffLemmatizer
 from cltk.lemmatize.grc import GreekBackoffLemmatizer
-
+from cltk.utils import CLTK_DATA_DIR
+from cltk.data.fetch import FetchCorpus
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
@@ -35,6 +37,24 @@ cltk_lemmatizers = {
     "latin": None,
     "greek": None,
 }
+# CLTK backoff-lemmatizer corpora, fetched into ~/cltk_data on demand
+CLTK_CORPORA = {
+    "latin": ("lat", "lat_models_cltk"),
+    "greek": ("grc", "grc_models_cltk"),
+}
+
+
+def _ensure_cltk_corpus(language: str):
+    """Download the CLTK backoff corpus for `language` if it isn't already
+    present. Mirrors the runtime stanza.download() pattern in get_pipeline().
+    No-op when the corpus was baked into the image at build time."""
+    lang_code, corpus_name = CLTK_CORPORA[language.lower()]
+    model_dir = os.path.join(CLTK_DATA_DIR, lang_code, "model", corpus_name)
+    if not os.path.isdir(model_dir):
+        try:
+            FetchCorpus(lang_code).import_corpus(corpus_name)
+        except Exception as e:
+            print(f"Warning: could not fetch CLTK corpus {corpus_name}: {e}")
 
 # Invariable Latin words — hardcoded ground truth
 LATIN_INVARIABLES = {
@@ -130,8 +150,10 @@ def get_pipeline(language: str):
 def get_cltk_lemmatizer(language: str):
     global cltk_lemmatizers
     if language.lower() == "latin" and cltk_lemmatizers["latin"] is None:
+        _ensure_cltk_corpus("latin")
         cltk_lemmatizers["latin"] = LatinBackoffLemmatizer()
     if language.lower() == "greek" and cltk_lemmatizers["greek"] is None:
+        _ensure_cltk_corpus("greek")
         cltk_lemmatizers["greek"] = GreekBackoffLemmatizer()
     return cltk_lemmatizers.get(language.lower())
 
