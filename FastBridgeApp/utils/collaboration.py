@@ -1,17 +1,17 @@
 """
 Collaboration permission utilities.
 
-Single source of truth for the "who can do what on a shared resource" model used
-across the app. A collaboration resource has an owner (who implicitly holds the
-top role) and a ``permissions`` map of ``{user_id: {"level": <value>}}``. The
-role hierarchy, the permission check, and the require/error behaviour are
-identical across resource types and live in :class:`PermissionPolicy`. Only the
-resource-specific lookup (how a list or a lemma project is found in MongoDB)
-differs, and that lives in the thin checker classes that delegate to a shared
-policy.
+The single source of truth for the "who can do what on a shared resource" model
+the app uses everywhere. A collaboration resource has an owner, who implicitly
+holds the top role, plus a permissions map of {user_id: {"level":
+<value>}}. The role hierarchy, the permission check, and the error raised when
+a check fails are the same for every resource type and live in
+PermissionPolicy. What changes between resources is how each one is found
+in MongoDB, and that lookup lives in the thin checker classes that delegate to a
+shared policy:
 
-  - :class:`PermissionChecker`      -- vocabulary lists (formerly utils.permissions)
-  - :class:`LemmaPermissionChecker` -- lemmatization projects (formerly utils.lemma_permissions)
+  - PermissionChecker: vocabulary lists (was utils.permissions)
+  - LemmaPermissionChecker: lemmatization projects (was utils.lemma_permissions)
 """
 
 from typing import Optional, Tuple, Type, Dict, Sequence
@@ -24,7 +24,8 @@ from utils.error_handlers import AuthorizationError
 
 
 class PermissionPolicy:
-    """Role hierarchy + permission-check engine shared by all collaboration resources.
+    """
+    Role hierarchy + permission-check engine shared by all collaboration resources.
 
     Add a role or fix the hierarchy here once, and every resource type benefits.
     """
@@ -63,14 +64,14 @@ class PermissionPolicy:
         required: Enum,
     ) -> Tuple[bool, Optional[Enum]]:
         """
-        Resolve a user's effective permission and whether it meets ``required``.
+        Resolve a user's effective permission and whether it meets required.
 
-        The owner implicitly holds ``owner_level``; any other user gets the level
-        recorded in ``permissions`` for them, or no access at all.
+        The owner implicitly holds owner_level; any other user gets the level
+        recorded in permissions for them, or no access at all.
 
         Returns:
-            Tuple of (has_permission, actual_permission_level). ``actual`` is
-            ``None`` when the user has no access.
+            Tuple of (has_permission, actual_permission_level). actual is
+            None when the user has no access.
         """
         if owner_id is not None and user_id == owner_id:
             return True, self._owner_level
@@ -84,7 +85,7 @@ class PermissionPolicy:
         return has_permission, actual
 
     def require(self, has_permission: bool, actual: Optional[Enum], required: Enum) -> None:
-        """Raise :class:`AuthorizationError` if a check (from :meth:`evaluate`) did not pass."""
+        """Raise AuthorizationError if a check (from evaluate) did not pass."""
         if has_permission:
             return
         if actual is None:
@@ -95,7 +96,7 @@ class PermissionPolicy:
         )
 
 
-# Per-resource policies -- the single place where each resource's roles live.
+# Per-resource policies: the single place where each resource's roles live.
 _LIST_POLICY = PermissionPolicy(
     level_enum=PermissionLevel,
     ordered_levels=(PermissionLevel.VIEW, PermissionLevel.EDIT, PermissionLevel.ADMIN),
@@ -116,13 +117,13 @@ _LEMMA_POLICY = PermissionPolicy(
 class PermissionChecker:
     """Permission checks for vocabulary lists.
 
-    A list is stored as an embedded sub-document inside its owner's ``lists``
-    document, addressed by ``(owner_id, language, list_name)``.
+    A list is stored as an embedded sub-document inside its owner's lists
+    document, addressed by (owner_id, language, list_name).
     """
 
     @staticmethod
     def _get_list_permissions(owner_id: str, language: str, list_name: str) -> Optional[Dict]:
-        """Return the permissions map for a list, or ``None`` if the list is not found."""
+        """Return the permissions map for a list, or None if the list is not found."""
         storage = atlas_client.get_database("App-Storage")
         owner_doc = storage.lists.find_one(
             {"user_id": owner_id, f"languages.{language}.name": list_name},
@@ -159,7 +160,7 @@ class PermissionChecker:
         Returns:
             Tuple of (has_permission, actual_permission_level)
         """
-        # Owner always has admin permission -- skip the lookup entirely.
+        # Owner always has admin permission, so skip the lookup entirely.
         if user_id == owner_id:
             return True, PermissionLevel.ADMIN
 
@@ -197,8 +198,8 @@ class PermissionChecker:
 class LemmaPermissionChecker:
     """Permission checks for lemmatization projects.
 
-    A project is a top-level document in ``lemma_projects`` addressed by
-    ``project_id``; the owner is recorded on the document itself.
+    A project is a top-level document in lemma_projects addressed by
+    project_id; the owner is recorded on the document itself.
     """
 
     @staticmethod
