@@ -269,7 +269,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
     words = text.split()
 
     stanza_pipeline = None
-    if format.upper() in ("STANZA", "HYBRID"):
+    if "STANZA" in format.upper() or "HYBRID" in format.upper():
         stanza_pipeline = get_pipeline(language.lower())
 
     for word in words:
@@ -296,7 +296,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         if not word_clean:
             continue
 
-        if format.upper() == "HYBRID":
+        if "HYBRID" in format.upper():
             lemma = hybrid_lemmatize_word(word_clean, language, stanza_pipeline)
             title = f"hybrid: {lemma}" if lemma != "NONE" else "hybrid: NONE"
 
