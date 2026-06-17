@@ -42,8 +42,9 @@ With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin 
   <p style="color: #ccc; font-size: 0.9em;">
     <strong>Bridge</strong> uses a pre-built morpheus lexicon dictionary to quickly look up lemmas. Fast and reliable for common words, but limited in coverage for rarer forms.<br><br>
     <strong>Stanza</strong> uses a neural network trained on classical Latin and Greek texts. Better at rare words and unusual forms, but slower and occasionally unreliable on common function words.<br><br>
-    <strong>Hybrid (CLTK)</strong> combines both approaches for the best accuracy. Common function words (prepositions, conjunctions, pronouns) are resolved from a hardcoded table, CLTK handles the bulk of classical vocabulary, and Stanza steps in as a fallback for anything CLTK cannot resolve. Recommended for most texts.
-  </p>
+    <strong>Hybrid (CLTK)</strong> combines both approaches for the best accuracy. Common function words (prepositions, conjunctions, pronouns) are resolved from a hardcoded table, CLTK (Classical Language Toolkit, a rule-based NLP library for ancient languages) handles the bulk of classical vocabulary, and Stanza steps in as a fallback for anything CLTK cannot resolve. Recommended for most texts.
+
+
   <select name="format" id="format" class="form-select">
     <option>Bridge</option>
     <option>Stanza</option>
