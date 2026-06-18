@@ -11,6 +11,10 @@ COPY . /app
 #install all the requirements
 RUN pip install --upgrade pip
 RUN pip install -r /app/requirements.txt
+RUN python -c "\
+from cltk.data.fetch import FetchCorpus; \
+FetchCorpus('lat').import_corpus('lat_models_cltk'); \
+FetchCorpus('grc').import_corpus('grc_models_cltk')"
 
 #change the working container directory to FastBridgeApp, so that the run command
 #can find the app in main.py
