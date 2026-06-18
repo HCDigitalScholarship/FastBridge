@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from .firebase_auth import get_current_user_cookie
 from mongo_connection import dict_db, atlas_client
 from datetime import datetime
+from typing import Optional
 import uuid
 from utils.collaboration import PermissionChecker
 from models.user_models import (
@@ -607,9 +608,23 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
             upsert=True
         )
     else:
-        # Linked share — grant view permission by default
+        # Linked share — grant whatever level the owner set on the link (defaults
+        # to view). Never downgrade a recipient who already holds a higher level,
+        # e.g. one the owner granted via Manage Permissions.
+        rank = {"view": 0, "edit": 1, "admin": 2}
+        link_permission = shared_list.get("link_permission", "view")
+        if link_permission not in rank:
+            link_permission = "view"
+
+        existing = (shared_list.get("permissions", {}) or {}).get(user_id)
+        existing_level = existing.get("level") if existing else None
+        if existing_level in rank and rank[existing_level] >= rank[link_permission]:
+            granted_level = existing_level
+        else:
+            granted_level = link_permission
+
         permission_grant = {
-            "level": "view",
+            "level": granted_level,
             "granted_at": datetime.now().isoformat(),
             "granted_by": owner_id
         }
@@ -617,11 +632,19 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
             {"user_id": owner_id, f"languages.{language}.name": list_name},
             {"$set": {f"languages.{language}.$.permissions.{user_id}": permission_grant}}
         )
+
+        # Refresh the recipient's shared_with_me entry. Drop any stale copy first
+        # so re-accepting a link doesn't pile up duplicates or leave the level out
+        # of date.
         storage.lists.update_one(
             {"user_id": user_id},
-            {"$addToSet": {f"shared_with_me.{owner_id}.{language}": {
+            {"$pull": {f"shared_with_me.{owner_id}.{language}": {"list_name": list_name}}}
+        )
+        storage.lists.update_one(
+            {"user_id": user_id},
+            {"$push": {f"shared_with_me.{owner_id}.{language}": {
                 "list_name": list_name,
-                "permission": "view",
+                "permission": granted_level,
                 "shared_at": datetime.now().isoformat()
             }}},
             upsert=True
@@ -698,6 +721,7 @@ class ShareListPayload(BaseModel):
     list_name: str
     language: str
     sharing_mode: str   # "copy" or "editable"
+    permission: Optional[str] = None   # default level granted by a linked share
 
 @router.post("/get_share_id", response_class=JSONResponse)
 async def get_share_id(
@@ -727,6 +751,18 @@ async def get_share_id(
         share_id = share_links.get("copy")
     elif payload.sharing_mode == "editable":
         share_id = share_links.get("linked")
+        # Persist the owner's chosen default level so accept-list can honor it.
+        # The link itself only carries an opaque id, so the level has to live on
+        # the list document.
+        valid_levels = {level.value for level in PermissionLevel}
+        link_permission = (
+            payload.permission if payload.permission in valid_levels
+            else PermissionLevel.VIEW.value
+        )
+        storage.lists.update_one(
+            {"user_id": user_id, f"languages.{payload.language}.name": payload.list_name},
+            {"$set": {f"languages.{payload.language}.$.link_permission": link_permission}}
+        )
     else:
         return {"success": False, "message": "Invalid sharing mode."}
 

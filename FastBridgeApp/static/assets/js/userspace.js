@@ -452,6 +452,10 @@ function attachVocabListEvents() {
 
                     confirmBtn.addEventListener('click', async () => {
                         const mode = modal.querySelector('input[name="share-mode"]:checked').value;
+                        // Only linked shares carry a permission level; copy shares ignore it.
+                        const permission = mode === 'editable'
+                            ? modal.querySelector('#share-permission').value
+                            : undefined;
                         confirmBtn.textContent = 'Generating...';
                         confirmBtn.disabled = true;
                         try {
@@ -461,7 +465,8 @@ function attachVocabListEvents() {
                                 body: JSON.stringify({
                                     list_name: list,
                                     sharing_mode: mode,
-                                    language: lang
+                                    language: lang,
+                                    permission: permission
                                 })
                             });
                             const data = await resp.json();
