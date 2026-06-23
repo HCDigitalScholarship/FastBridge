@@ -420,9 +420,9 @@ function attachVocabListEvents() {
                             <div id='permission-select-div' style='margin-bottom:18px; display:none;'>
                                 <label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Linked Share:</label><br>
                                 <select id='share-permission' aria-label='Default permission level for linked share' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>
-                                    <option value='view'>View Only (see words)</option>
+                                    <option value='view'>View only (see words)</option>
                                     <option value='edit' selected>Edit (view + add words)</option>
-                                    <option value='admin'>Admin (edit + delete + manage permissions)</option>
+                                    <option value='admin'>Admin (edit + remove words + manage access)</option>
                                 </select>
                                 <small style='color:#aaa; display:block; margin-top:4px;'>You can change individual permissions later</small>
                             </div>
