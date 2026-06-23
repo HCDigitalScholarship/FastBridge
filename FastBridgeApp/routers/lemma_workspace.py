@@ -39,7 +39,7 @@ from models.lemma_models import (
     CreateSuggestionRequest
 )
 from utils.lemma_csv_parser import parse_csv_file, export_to_csv
-from utils.lemma_permissions import LemmaPermissionChecker
+from utils.collaboration import LemmaPermissionChecker
 
 
 router = APIRouter()

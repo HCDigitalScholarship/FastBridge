@@ -331,9 +331,9 @@
               <div style='flex:0 0 140px;'>
                 <label style='display:block; color:#fff; margin-bottom:4px; font-size:0.9rem;'>Permission:</label>
                 <select id='new-permission-level' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff;'>
-                  <option value='view'>View</option>
-                  <option value='edit' selected>Edit</option>
-                  <option value='admin'>Admin</option>
+                  <option value='view'>View — see words only</option>
+                  <option value='edit' selected>Edit — view + add words</option>
+                  <option value='admin'>Admin — edit + remove words + manage access</option>
                 </select>
               </div>
               <button id='grant-access-btn' style='flex:0 0 auto; background:#22b3b3; color:#fff; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-weight:600;'>Grant Access</button>
@@ -482,9 +482,9 @@
                   `<span style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>${perm.permission === 'admin' ? '👑' : perm.permission === 'edit' ? '✏️' : '👁️'} ${perm.permission.charAt(0).toUpperCase() + perm.permission.slice(1)}</span>`
                   :
                   `<select class='permission-change' data-user-id='${perm.user_id}' data-original='${perm.permission}' style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>
-                    <option value='view' ${perm.permission === 'view' ? 'selected' : ''}>👁️ View</option>
-                    <option value='edit' ${perm.permission === 'edit' ? 'selected' : ''}>✏️ Edit</option>
-                    <option value='admin' ${perm.permission === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                    <option value='view' ${perm.permission === 'view' ? 'selected' : ''}>👁️ View — see words only</option>
+                    <option value='edit' ${perm.permission === 'edit' ? 'selected' : ''}>✏️ Edit — view + add words</option>
+                    <option value='admin' ${perm.permission === 'admin' ? 'selected' : ''}>👑 Admin — edit + remove words + manage access</option>
                   </select>
                   <button class='revoke-btn' data-user-id='${perm.user_id}' style='background:#ff6666; color:#fff; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:0.9rem;'>Revoke</button>`
                 }
