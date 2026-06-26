@@ -58,6 +58,16 @@ If out of uvicorn, but you cannot run the host command due to activity on that p
 
 the app will be running on http://localhost:5001/, so navigate to that in your browser to test the changes
 
+## Running the tests
+
+Unit tests live in `FastBridgeApp/tests/unit/`. They don't need a database or a network connection, so they run anywhere.
+
+With your environment activated:
+
+`pip install -r requirements-dev.txt` - install the test-only packages (pytest etc.) on top of the regular requirements
+
+`pytest FastBridgeApp/tests/unit` - run the unit tests from the repo root, add `-v` to see each test by name
+
 ## IMPORTANT - BELOW THIS LINE IS OLD README SETUP ONLY.  DO NOT DELETE
 
 `heroku local`
