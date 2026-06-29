@@ -6,9 +6,9 @@ in pandas/scipy/matplotlib/plotly. To test the two standalone functions
 before importing, so no Mongo connection happens and the heavy libraries don't load. No
 production code changes.
 
-The readability formulas (ari/lix/rix/spache/dale_chall) aren't tested here on purpose:
-they read instance state (self.texts) instead of taking numbers as arguments, so there's
-no clean way to test them without a refactor or an awkward fake analyzer. Left for later.
+The readability formulas (ari/lix/rix/spache/dale_chall) live in test_readability.py
+instead. They read instance state rather than taking numbers as arguments, so that file
+tests them by building an analyzer with __new__ and stubbing the word-extraction seam.
 """
 import importlib
 import sys
