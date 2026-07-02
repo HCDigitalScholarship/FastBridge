@@ -35,3 +35,30 @@ jobs:
 
       - name: Run unit tests
         run: pytest FastBridgeApp/tests/unit -m "not slow"
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      # The integration tests mock the heavy ML stack and exercise only the web and Mongo
+      # layers, so we install just those libraries instead of the full requirements.txt.
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv
+
+      - name: Run integration tests
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_TLS: "false"
+        run: pytest FastBridgeApp/tests/integration -ra
