@@ -1,0 +1,8 @@
+# This is the Playwright e2e Node project. FastBridgeApp/.gitignore ignores *.json
+# app-wide (for the app's data/credential files), which would drop this suite's
+# manifest — keep it tracked.
+!package.json
+!package-lock.json
+
+# Saved auth storageState (holds a session cookie minted by /e2e-login) — never commit.
+playwright/.auth/

@@ -31,21 +31,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      # The harness mounts only the non-auth routers, so it needs the web + Mongo libraries
-      # but not the full (torch-heavy) requirements.txt.
+      # The harness stubs Firebase + the torch NLP stack, so it needs the web + Mongo
+      # libraries but not the full requirements.txt. email-validator (userspace models) and
+      # requests (firebase_auth import) are the two extra runtime imports the mounted routers
+      # pull in beyond the base set.
       - name: Install Python deps
-        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv uvicorn
+        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv uvicorn email-validator requests
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - name: Install Playwright
-        working-directory: tests-e2e
+        working-directory: FastBridgeApp/tests/e2e
         run: |
           npm install
           npx playwright install --with-deps chromium
 
       - name: Run Playwright (accessibility + e2e)
-        working-directory: tests-e2e
+        working-directory: FastBridgeApp/tests/e2e
         run: npm test

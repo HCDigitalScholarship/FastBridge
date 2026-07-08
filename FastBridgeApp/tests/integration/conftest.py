@@ -76,3 +76,91 @@ def seeded(mdt):
     latin.drop_collection("fixture_text")
     dictionaries.drop_collection("fixture_dict")
     mdt.title_renaming_dict.pop("Fixture Text", None)
+
+
+@pytest.fixture
+def messy_seeded(mdt):
+    """A deliberately messy corpus, unlike the clean 4-row `seeded` fixture.
+
+    Real texts carry the mess that actually breaks the corpus-load path: a document with no
+    `section`, a null `location`, a gap in `counter`, an out-of-order `counter`, and repeated
+    consecutive locations. Also registers an "Empty Text" that maps to a collection which is
+    never created, for the empty-corpus case.
+    """
+    client = mdt.atlas_client.mongodb_client
+    latin = client["Latin-Texts"]
+
+    latin.drop_collection("messy_text")
+    latin["messy_text"].insert_many([
+        {"counter": 1, "head_word": "ALPHA",   "orthographic_form": "alpha",   "location": "1_1", "section": "1"},
+        {"counter": 2, "head_word": "BETA",    "orthographic_form": "beta",    "location": "1_1"},               # no section
+        {"counter": 3, "head_word": "EPSILON", "orthographic_form": "epsilon", "location": None, "section": "1"},# null location
+        {"counter": 5, "head_word": "DELTA",   "orthographic_form": "delta",   "location": "1_2", "section": "1"},# counter gap (4 missing)
+        {"counter": 4, "head_word": "GAMMA",   "orthographic_form": "gamma",   "location": "1_2", "section": "1"},# out-of-order counter, dup location
+    ])
+    mdt.title_renaming_dict["Messy Text"] = "messy_text"
+    mdt.title_renaming_dict["Empty Text"] = "empty_text"
+
+    yield
+
+    latin.drop_collection("messy_text")
+    mdt.title_renaming_dict.pop("Messy Text", None)
+    mdt.title_renaming_dict.pop("Empty Text", None)
+
+
+@pytest.fixture
+def filter_texts(mdt):
+    """Two overlapping texts so the include/exclude filters (the intended word-removal
+    feature) can be asserted: 'include' keeps A ∩ B, 'exclude' keeps A - B.
+
+    A = {AMO, AMAS, PUELLA, REX}; B = {PUELLA, REX, LUNA}. PUELLA/REX are the shared words.
+    """
+    client = mdt.atlas_client.mongodb_client
+    latin = client["Latin-Texts"]
+
+    latin.drop_collection("filter_text_a")
+    latin["filter_text_a"].insert_many([
+        {"counter": 1, "head_word": "AMO",    "orthographic_form": "amo",    "location": "1_1", "section": "1"},
+        {"counter": 2, "head_word": "AMAS",   "orthographic_form": "amas",   "location": "1_1", "section": "1"},
+        {"counter": 3, "head_word": "PUELLA", "orthographic_form": "puella", "location": "1_2", "section": "1"},
+        {"counter": 4, "head_word": "REX",    "orthographic_form": "rex",    "location": "1_2", "section": "1"},
+    ])
+    latin.drop_collection("filter_text_b")
+    latin["filter_text_b"].insert_many([
+        {"counter": 1, "head_word": "PUELLA", "orthographic_form": "puella", "location": "1_1", "section": "1"},
+        {"counter": 2, "head_word": "REX",    "orthographic_form": "rex",    "location": "1_1", "section": "1"},
+        {"counter": 3, "head_word": "LUNA",   "orthographic_form": "luna",   "location": "1_2", "section": "1"},
+    ])
+    mdt.title_renaming_dict["Filter Text A"] = "filter_text_a"
+    mdt.title_renaming_dict["Filter Text B"] = "filter_text_b"
+
+    yield
+
+    latin.drop_collection("filter_text_a")
+    latin.drop_collection("filter_text_b")
+    mdt.title_renaming_dict.pop("Filter Text A", None)
+    mdt.title_renaming_dict.pop("Filter Text B", None)
+
+
+@pytest.fixture
+def leading_null_seeded(mdt):
+    """A corpus whose first document (by counter) has a null location.
+
+    This is the ordering `messy_seeded` deliberately avoids: mg_get_locations references its
+    local `key` before assigning it, so the get_index path raises on the very first document.
+    Kept separate so it can drive an xfail regression around that prod bug.
+    """
+    client = mdt.atlas_client.mongodb_client
+    latin = client["Latin-Texts"]
+
+    latin.drop_collection("leading_null_text")
+    latin["leading_null_text"].insert_many([
+        {"counter": 1, "head_word": "ALPHA", "orthographic_form": "alpha", "location": None,  "section": "1"},
+        {"counter": 2, "head_word": "BETA",  "orthographic_form": "beta",  "location": "1_1", "section": "1"},
+    ])
+    mdt.title_renaming_dict["Leading Null Text"] = "leading_null_text"
+
+    yield
+
+    latin.drop_collection("leading_null_text")
+    mdt.title_renaming_dict.pop("Leading Null Text", None)

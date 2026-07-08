@@ -1,8 +1,13 @@
 // Playwright config for FastBridge's e2e + accessibility checks.
 //
-// It boots a test-only app (harness/e2e_app.py) that mounts the non-auth routers, so it
-// runs without a Firebase config. It needs a local MongoDB on port 27017.
+// It boots a test-only app (harness/e2e_app.py) that mounts the app routers, so it runs
+// without a Firebase config or the torch NLP stack. It needs a local MongoDB on port 27017.
+//
+// A one-time `setup` project hits the harness's /e2e-login to mint a Mongo-backed session and
+// saves it as storageState, so the chromium project runs signed-in (needed for /userspace).
 const { defineConfig, devices } = require('@playwright/test');
+
+const STORAGE_STATE = 'playwright/.auth/user.json';
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -13,7 +18,12 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'setup', testMatch: /auth\.setup\.js/ },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+    },
   ],
   webServer: {
     command: 'python -m uvicorn e2e_app:app --app-dir harness --host 127.0.0.1 --port 8000',

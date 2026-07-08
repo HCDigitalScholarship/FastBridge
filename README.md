@@ -22,11 +22,26 @@ To whom this reaches, definitely follow these directions chronilogically to get 
 
 `python3 -m venv env`
 
-Linux/Mac: `source env/bin/activate` Windows: `env/Scripts/activate` - activate the envrionemnt in the terminal
+Linux (including WSL)/Mac: `source env/bin/activate` Windows: `env/Scripts/activate` - activate the envrionemnt in the terminal
 
 `python -m pip install --upgrade pip` - not really necessary but useful.
 
 `pip install -r requirements.txt` - install the packages into the environment
+
+
+## Running the tests
+
+Unit tests live in `FastBridgeApp/tests/unit/`. They don't need a database or a network connection, so they run anywhere.
+
+With your environment activated:
+
+`pip install -r requirements-dev.txt` - install the test-only packages (pytest etc.) on top of the regular requirements
+
+`pytest FastBridgeApp/tests/unit` - run the unit tests from the repo root, add `-v` to see each test by name
+
+End-to-end tests (Playwright + accessibility) live in `FastBridgeApp/tests/e2e/`. See the [end-to-end tests README](FastBridgeApp/tests/e2e/README.md) for how to run them and what they cover.
+
+
 
 ### Notes
 
@@ -58,15 +73,6 @@ If out of uvicorn, but you cannot run the host command due to activity on that p
 
 the app will be running on http://localhost:5001/, so navigate to that in your browser to test the changes
 
-## Running the tests
-
-Unit tests live in `FastBridgeApp/tests/unit/`. They don't need a database or a network connection, so they run anywhere.
-
-With your environment activated:
-
-`pip install -r requirements-dev.txt` - install the test-only packages (pytest etc.) on top of the regular requirements
-
-`pytest FastBridgeApp/tests/unit` - run the unit tests from the repo root, add `-v` to see each test by name
 
 ## IMPORTANT - BELOW THIS LINE IS OLD README SETUP ONLY.  DO NOT DELETE
 

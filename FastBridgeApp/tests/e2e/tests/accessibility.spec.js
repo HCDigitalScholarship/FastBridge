@@ -7,7 +7,13 @@ const PAGES = [
   { name: 'home', path: '/' },
   { name: 'select (Latin)', path: '/select/Latin/' },
   { name: 'about', path: '/about/' },
-  { name: 'help', path: '/help/' },
+  // /help/ has no route (user_help only defines /user_guide, /collaborate, /lemmatize);
+  // the old '/help/' entry was a silent 404. Point at the real help page.
+  { name: 'help', path: '/help/user_guide' },
+  // Interactive pages, where nameless controls hide. /userspace/ needs the signed-in
+  // storageState from the setup project (see playwright.config.js).
+  { name: 'userspace', path: '/userspace/' },
+  { name: 'lemmatizer', path: '/lemmatizer/' },
 ];
 
 for (const pageInfo of PAGES) {

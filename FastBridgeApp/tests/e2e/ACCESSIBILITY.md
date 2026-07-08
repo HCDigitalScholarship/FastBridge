@@ -4,6 +4,11 @@ Automated axe checks catch the mechanical issues (missing labels, contrast, brok
 but only about a third of real problems. The rest need a human. Run this before a release,
 on the main flows.
 
+Some of the keyboard and accessible-name checks below are now partly automated in
+`interactive-a11y.spec.js`, but it only sees focusable buttons and links. Controls that
+aren't keyboard-reachable at all (like the `/select` onclick anchors) slip past it, so this
+manual pass still matters.
+
 ## Keyboard only (put the mouse away)
 
 - [ ] Tab through the whole page. Can you reach every control?
