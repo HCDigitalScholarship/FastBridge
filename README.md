@@ -36,8 +36,9 @@ Unit tests live in `FastBridgeApp/tests/unit/`. They don't need a database or a 
 With your environment activated:
 
 `pip install -r requirements-dev.txt` - install the test-only packages (pytest etc.) on top of the regular requirements
-
-`pytest FastBridgeApp/tests/unit` - run the unit tests from the repo root, add `-v` to see each test by name
+- Unit: `pytest FastBridgeApp/tests/unit -m "not slow"`. Add `-v` to see each test by name
+- Integration: start a local Mongo (for example `docker run -d --rm -p 27017:27017 mongo:7`),
+  then `pytest FastBridgeApp/tests/integration`. Skips cleanly if none is running.
 
 End-to-end tests (Playwright + accessibility) live in `FastBridgeApp/tests/e2e/`. See the [end-to-end tests README](FastBridgeApp/tests/e2e/README.md) for how to run them and what they cover.
 
