@@ -1,5 +1,4 @@
 """Unit tests for the small string helpers in routers/ToolsApp/lemmatize.py.
-
 lemmatize.py imports Stanza, CLTK and FastAPI at the top of the file, so a unit test can't
 import it the normal way. Instead we put fake versions of those modules into sys.modules
 before importing it (see the `lemmatize` fixture). The heavy libraries never load, and no
@@ -11,16 +10,18 @@ from unittest import mock
 
 import pytest
 
-# Heavy third-party modules imported at the top of lemmatize.py. We don't want the real
-# ones loading in a unit test, so each is swapped for a MagicMock before the import.
+# Heavy third-party / framework modules imported at the top of lemmatize.py. We don't want
+# the real ones loading in a unit test, so each is swapped for a MagicMock before the import.
+# NOTE: the dotted submodules (fastapi.responses, starlette.concurrency, ...) must be listed
+# individually — a mocked parent package is NOT a real package, so `from fastapi.responses
+# import JSONResponse` only resolves if "fastapi.responses" is itself in sys.modules.
 _FAKE_MODULES = [
     "stanza",
     "cltk", "cltk.lemmatize", "cltk.lemmatize.lat", "cltk.lemmatize.grc",
     "cltk.utils", "cltk.data", "cltk.data.fetch",
-    "fastapi", "fastapi.templating",
-    "starlette", "starlette.responses",
+    "fastapi", "fastapi.templating", "fastapi.responses",
+    "starlette", "starlette.responses", "starlette.concurrency",
 ]
-
 _TARGET = "routers.ToolsApp.lemmatize"
 
 
@@ -41,7 +42,6 @@ def lemmatize():
 
 
 # strip accents
-
 def test_strip_accents_removes_latin_diacritics(lemmatize):
     assert lemmatize.strip_accents("café") == "cafe"
     assert lemmatize.strip_accents("āēīōū") == "aeiou"
@@ -55,8 +55,8 @@ def test_strip_accents_leaves_plain_text_unchanged(lemmatize):
     assert lemmatize.strip_accents("Ovid") == "Ovid"
     assert lemmatize.strip_accents("") == ""
 
-# remove punctuation
 
+# remove punctuation
 def test_depunctuate_removes_punctuation_keeps_spaces(lemmatize):
     assert lemmatize.depunctuate("hello, world!") == "hello world"
 

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request, File, Form, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from starlette.responses import FileResponse
+from starlette.concurrency import run_in_threadpool
 import importlib
 import os
 import tempfile
@@ -208,18 +209,29 @@ def _clean_form(word: str, language: str) -> str:
     return depunctuate(strip_accents(word)).lower()
 
 
-def build_stanza_lemma_map(text: str, language: str) -> dict:
+def build_stanza_lemma_map(text: str, language: str):
     """Run Stanza ONCE over the whole text (so every word is lemmatized in
-    context, and we don't pay the neural cost per word). Returns a
-    {clean_form: lemma} lookup keyed the same way the main loop keys words."""
+    context, and we don't pay the neural cost per word).
+
+    Returns (mapping, error) where mapping is
+        {clean_form: {"lemma": <lemma>, "upos": <POS tag or None>}}
+    keyed the same way the main loop keys words, and error is None on success or
+    a short string describing a Stanza failure. The error is surfaced to the
+    caller so a broken pipeline doesn't silently look like "no lemma found".
+
+    Limitation: the map keys by surface form and keeps the FIRST occurrence, so a
+    form that legitimately has two different lemmas in the same text (a true
+    homograph) resolves every occurrence to the first one's lemma.
+    """
     lang = language.lower()
     mapping = {}
     try:
         pipeline = get_pipeline(lang)
         doc = pipeline(text)
     except Exception as e:
-        print(f"Warning: Stanza failed on the full text: {e}")
-        return mapping
+        error = f"{type(e).__name__}: {e}"
+        print(f"ERROR: Stanza failed on the full text: {error}")
+        return mapping, error
 
     for sent in doc.sentences:
         for w in sent.words:
@@ -227,8 +239,8 @@ def build_stanza_lemma_map(text: str, language: str) -> dict:
                 continue
             key = _clean_form(w.text, language)
             if key and key not in mapping:
-                mapping[key] = w.lemma
-    return mapping
+                mapping[key] = {"lemma": w.lemma, "upos": getattr(w, "upos", None)}
+    return mapping, None
 
 
 def cltk_lemma_for(word_clean: str, language: str, cltk) -> str:
@@ -277,14 +289,17 @@ def resolve_ensemble(word: str, word_clean: str, language: str, cltk, stanza_map
         return GREEK_INVARIABLES[word_clean], "high", "", ""
 
     c = cltk_lemma_for(word_clean, language, cltk)
-    s = stanza_map.get(word_clean, "")
+    entry = stanza_map.get(word_clean)
+    s = entry["lemma"] if entry else ""
+    s_upos = entry["upos"] if entry else None
 
     if c and s:
         if _normalize_for_compare(c, language) == _normalize_for_compare(s, language):
             return c, "high", c, s
-        # Disagreement: prefer Stanza for proper-noun-looking (capitalized)
-        # tokens, which is where CLTK is weakest; otherwise trust CLTK.
-        chosen = s if word[:1].isupper() else c
+        # Disagreement: prefer Stanza for proper nouns (where CLTK is weakest).
+        # Use Stanza's own POS tag when available; fall back to capitalization.
+        is_proper = (s_upos == "PROPN") if s_upos else word[:1].isupper()
+        chosen = s if is_proper else c
         return chosen, "review", c, s
     if c:
         return c, "medium", c, ""
@@ -307,7 +322,7 @@ async def lemmatizing_handler(
     poetry: str = Form(...),
     resulting_filename: str = Form("tempfile"),
     text: str = Form(""),
-    file: Optional[UploadFile] = File(...)
+    file: Optional[UploadFile] = File(None)
 ):
     lemma_lex = importlib.import_module(f'routers.ToolsApp.{language}_lemmata').LEMMATA
     poetry = poetry == 'Yes'
@@ -319,23 +334,26 @@ async def lemmatizing_handler(
         print(resulting_filename)
         print(outputfile.name)
 
-        the_text = file.file.read()
-        regex_go_brrr = regex.compile(r'\[[0-9]+(\_|\.?[0-9]+)*\]')
+        uploaded_bytes = file.file.read() if file is not None else b''
+        marker_re = regex.compile(r'\[[0-9]+(\_|\.?[0-9]+)*\]')
 
-        if text and the_text != b'':
+        if text and uploaded_bytes != b'':
             return "Please choose just one input method."
 
         if text:
-            csv_output = lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry)
-            outputfile.write('﻿'.encode('utf-8'))
-            outputfile.write(csv_output.encode('utf-8'))
-        elif the_text:
-            text = the_text.decode("utf-8")
-            csv_output = lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry)
-            outputfile.write('﻿'.encode('utf-8'))
-            outputfile.write(csv_output.encode('utf-8'))
+            source = text
+        elif uploaded_bytes:
+            source = uploaded_bytes.decode("utf-8")
         else:
             return "Please enter or upload text."
+
+        # Stanza/CLTK inference is CPU-bound; run it off the event loop so a
+        # single request can't stall other concurrent requests on this worker.
+        csv_output = await run_in_threadpool(
+            lemmatize, source, location, marker_re, language, lemma_lex, format, poetry
+        )
+        outputfile.write('﻿'.encode('utf-8'))
+        outputfile.write(csv_output.encode('utf-8'))
 
         return FileResponse(f'{outputfile.name}', media_type='application/octet-stream', filename=resulting_filename)
 
@@ -356,37 +374,45 @@ async def lemmatizing_json_handler(
     lemma_lex = importlib.import_module(f'routers.ToolsApp.{language}_lemmata').LEMMATA
     poetry_bool = poetry == 'Yes'
     location = ""
-    regex_go_brrr = regex.compile(r'\[[0-9]+(\_|\.?[0-9]+)*\]')
+    marker_re = regex.compile(r'\[[0-9]+(\_|\.?[0-9]+)*\]')
 
-    the_text = b''
+    uploaded_bytes = b''
     if file is not None:
-        the_text = file.file.read()
+        uploaded_bytes = file.file.read()
 
-    if text and the_text != b'':
+    if text and uploaded_bytes != b'':
         return JSONResponse({"error": "Please choose just one input method."}, status_code=400)
 
     if text:
         source = text
-    elif the_text:
-        source = the_text.decode("utf-8")
+    elif uploaded_bytes:
+        source = uploaded_bytes.decode("utf-8")
     else:
         return JSONResponse({"error": "Please enter or upload text."}, status_code=400)
 
-    annotated = lemmatize_annotate(source, location, regex_go_brrr, language, lemma_lex, format, poetry_bool)
+    annotated = await run_in_threadpool(
+        lemmatize_annotate, source, location, marker_re, language, lemma_lex, format, poetry_bool
+    )
     segments = annotated["segments"]
 
     word_segments = [s for s in segments if s["t"] == "w"]
     none_count = sum(1 for s in word_segments if s["none"])
     review_count = sum(1 for s in word_segments if s.get("conf") == "review")
 
-    return JSONResponse({
+    payload = {
         "language": language,
         "format": format,
         "count": len(word_segments),
         "none_count": none_count,
         "review_count": review_count,
         "segments": segments,
-    })
+    }
+    if annotated.get("stanza_error"):
+        payload["warning"] = (
+            "The neural model (Stanza) failed, so results rely on CLTK only: "
+            + annotated["stanza_error"]
+        )
+    return JSONResponse(payload)
 
 
 def strip_accents(s: str):
@@ -399,7 +425,7 @@ def depunctuate(text: str):
     return regex.sub(f"[{string.punctuation}{GREEK_PUNCTUATION}]", "", text)
 
 
-def lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
+def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, poetry):
     """Core lemmatization loop. Single pass producing two things:
 
       rows     — one dict per lemmatized token (title/location/section/
@@ -432,7 +458,11 @@ def lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, forma
 
     # Run Stanza once over the ORIGINAL text (before we insert poetry markers or
     # swap periods for underscores), so it tokenizes and lemmatizes naturally.
-    stanza_map = build_stanza_lemma_map(text, language) if use_stanza else {}
+    stanza_error = None
+    if use_stanza:
+        stanza_map, stanza_error = build_stanza_lemma_map(text, language)
+    else:
+        stanza_map = {}
     cltk = get_cltk_lemmatizer(language) if is_hybrid else None
 
     if poetry:
@@ -453,8 +483,8 @@ def lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, forma
 
         word_original = part
         word = part
-        match_full = regex_go_brrr.fullmatch(word)
-        match_start = regex_go_brrr.match(word)
+        match_full = marker_re.fullmatch(word)
+        match_start = marker_re.match(word)
 
         if match_full:
             location = match_full.group()[1:-1]
@@ -484,7 +514,8 @@ def lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, forma
             title = f"hybrid: {lemma}"
 
         elif "STANZA" in fmt:
-            s = stanza_map.get(word_clean, "")
+            entry = stanza_map.get(word_clean)
+            s = entry["lemma"] if entry else ""
             lemma = s if s else "NONE"
             title = f"stanza: {lemma}" if s else "stanza: NONE"
             conf = "medium" if s else "none"
@@ -532,12 +563,12 @@ def lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, forma
         segments.append(seg)
         running_count += 1
 
-    return {"rows": rows, "segments": segments}
+    return {"rows": rows, "segments": segments, "stanza_error": stanza_error}
 
 
-def lemmatize_rows(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
+def lemmatize_rows(text, location, marker_re, language, lemma_lex, format, poetry):
     """Thin wrapper kept for the CSV path — returns just the rows."""
-    return lemmatize_annotate(text, location, regex_go_brrr, language, lemma_lex, format, poetry)["rows"]
+    return lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, poetry)["rows"]
 
 
 def _csv_field(value) -> str:
@@ -550,7 +581,7 @@ def _csv_field(value) -> str:
     return s
 
 
-def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry):
+def lemmatize(text, location, marker_re, language, lemma_lex, format, poetry):
     """Build the CSV string. Delegates the actual lemmatization to
     lemmatize_rows() so the CSV and JSON endpoints stay in sync.
 
@@ -566,7 +597,7 @@ def lemmatize(text, location, regex_go_brrr, language, lemma_lex, format, poetry
         "TITLE,LOCATION,SECTION,RUNNINGCOUNT,TEXT,LOGEION,CONFIDENCE,"
         "CLTK,CLTK_LOGEION,STANZA,STANZA_LOGEION"
     ]
-    rows = lemmatize_rows(text, location, regex_go_brrr, language, lemma_lex, format, poetry)
+    rows = lemmatize_rows(text, location, marker_re, language, lemma_lex, format, poetry)
     for row in rows:
         _tool, lemma = split_title(row["title"])
         is_none = lemma.strip().upper() == "NONE"
