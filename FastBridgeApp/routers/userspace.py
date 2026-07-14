@@ -6,8 +6,12 @@ from .firebase_auth import get_current_user_cookie
 from mongo_connection import dict_db, atlas_client
 from datetime import datetime
 from typing import Optional
+from collections import Counter
 import uuid
 from utils.collaboration import PermissionChecker
+from utils.user_lists import resolve_list_words, paginate_words
+from MongoDefinitionTools import mg_get_lang_data
+from routers.select import build_html_for_clusterize
 from models.user_models import (
     PermissionLevel, GrantPermissionRequest, ModifyPermissionRequest,
     RevokePermissionRequest, UnlinkListRequest, SaveSearchRequest
@@ -223,46 +227,12 @@ async def get_list_details(
     user_id = user.get('uid', None)
     storage = atlas_client.get_database("App-Storage")
 
-    owner_id = user_id
-    user_permission = None
+    words, user_permission, is_owner, _ = resolve_list_words(
+        storage, user_id, language, list_name, shared
+    )
 
-    if shared:
-        shared_doc = storage.lists.find_one({"user_id": user_id}, {"shared_with_me": 1, "_id": 0})
-        if not shared_doc: return JSONResponse({})
-
-        for oid, langs in shared_doc.get("shared_with_me", {}).items():
-            shared_lists = langs.get(language, [])
-            for shared_list in shared_lists:
-                list_name_match = (
-                    shared_list["list_name"] if isinstance(shared_list, dict)
-                    else shared_list
-                ) == list_name
-                if list_name_match:
-                    owner_id = oid
-                    user_permission = (
-                        shared_list.get("permission", "edit")
-                        if isinstance(shared_list, dict)
-                        else "edit"
-                    )
-                    break
-            if owner_id != user_id:
-                break
-
-        if not owner_id or owner_id == user_id:
-            return JSONResponse({})
-
-        doc = storage.lists.find_one(
-            {"user_id": owner_id, f"languages.{language}.name": list_name},
-            {f"languages.{language}.$": 1, "_id": 0}
-        )
-    else:
-        doc = storage.lists.find_one(
-            {"user_id": user_id, f"languages.{language}.name": list_name},
-            {f"languages.{language}.$": 1, "_id": 0}
-        )
-
-    if doc:
-        words = doc["languages"][language][0]["words"]
+    if words is None:
+        return JSONResponse({})
 
     if not words:
         return JSONResponse({
@@ -276,15 +246,10 @@ async def get_list_details(
                 "has_prev": False
             },
             "permission": user_permission,
-            "is_owner": owner_id == user_id
+            "is_owner": is_owner
         })
 
-    # Pagination logic for words
-    total_words = len(words)
-    total_pages = (total_words + limit - 1) // limit if total_words > 0 else 1
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_words = words[start_idx:end_idx]
+    paginated_words, pagination = paginate_words(words, page, limit)
 
     db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
     dict_name = db_dicts.get(language, "bridge_latin_dictionary")
@@ -306,17 +271,100 @@ async def get_list_details(
 
     return JSONResponse({
         "words": words_info_dict,
-        "pagination": {
-            "current_page": page,
-            "total_pages": total_pages,
-            "total_words": total_words,
-            "limit": limit,
-            "has_next": page < total_pages,
-            "has_prev": page > 1
-        },
+        "pagination": pagination,
         "permission": user_permission,
-        "is_owner": owner_id == user_id
+        "is_owner": is_owner
     })
+
+
+@router.get("/list/{language}/{list_name}", response_class=HTMLResponse)
+async def list_study_page(
+    request: Request,
+    language: str,
+    list_name: str,
+    shared: bool = False,
+    user=Depends(get_current_user_cookie),
+):
+    """Dedicated page for one saved list, rendered with the full result.html
+    filter/table UI (Browse mode) via the shared clusterize pipeline."""
+    user_id = user.get('uid', None)
+    storage = atlas_client.get_database("App-Storage")
+
+    words, permission, is_owner, owner_id = resolve_list_words(
+        storage, user_id, language, list_name, shared
+    )
+    if words is None:
+        raise HTTPException(status_code=404, detail="List not found")
+
+    # Privileges drive which action buttons the page shows; the endpoints
+    # re-check server-side. Edit (add words) needs owner or edit/admin; delete
+    # words needs owner or admin; list-level actions are owner-only.
+    can_edit = is_owner or permission in ("edit", "admin")
+    can_delete = is_owner or permission == "admin"
+    can_manage = is_owner
+
+    context = {
+        "request": request, "language": language, "list_name": list_name,
+        "permission": permission, "is_owner": is_owner, "owner_id": owner_id,
+        "shared": shared, "section": list_name,
+        "can_edit": can_edit, "can_delete": can_delete, "can_manage": can_manage,
+    }
+
+    if not words:
+        context.update({
+            "len": 0, "style": "", "headers": "", "POS_list": "", "filters": "",
+            "other_headers": "", "render_words": "[]",
+            "render_words_optional": "[]", "columnheaders": "{}",
+        })
+        return templates.TemplateResponse("list_study.html", context)
+
+    db_dicts = {"Latin": "bridge_latin_dictionary", "Greek": "bridge_greek_dictionary"}
+    dict_name = db_dicts.get(language, "bridge_latin_dictionary")
+    collection = dict_db.get_collection(dict_name)
+
+    # Saved lists store (SIMPLE_LEMMA, SHORT_DEFINITION) pairs; the clusterize
+    # pipeline keys on the dictionary TITLE, so resolve pairs -> TITLE first.
+    query_conditions = [{"$and": [{"SIMPLE_LEMMA": w[0]}, {"SHORT_DEFINITION": w[1]}]} for w in words]
+    cursor = collection.find(
+        {"$or": query_conditions},
+        {"SIMPLE_LEMMA": 1, "SHORT_DEFINITION": 1, "TITLE": 1, "_id": 0},
+    )
+    title_by_pair = {(d["SIMPLE_LEMMA"], d["SHORT_DEFINITION"]): d["TITLE"] for d in cursor}
+
+    # Build word tuples in the shape Text.get_words() produces so mg_get_lang_data
+    # can consume them: [0]=TITLE, [3]/[4]=local def/lem (none here), [5]=location
+    # (used as the in-list position), [-1]=source text (the list name).
+    synthetic = []
+    for i, w in enumerate(words):
+        title = title_by_pair.get((w[0], w[1]))
+        if not title:
+            continue
+        synthetic.append((title, i, "", "", "", str(i), 1, "", "", "", "", list_name))
+
+    lang_words, POS_list, columnheaders, row_filters, global_filters = (
+        mg_get_lang_data(synthetic, dict_name, False, False)
+    )
+
+    columnheaders.append("Count_in_Selection")
+    columnheaders.append("Location")
+    columnheaders.append("Source_Text")
+    columnheaders.append("Corpus_Frequency_Rank")
+
+    frequency_dict = {t[0]: 1 for t in synthetic}
+    count_in_text = {list_name: Counter(t[0] for t in synthetic)}
+
+    context["len"] = len(lang_words)
+    length = len(columnheaders) + 2
+    style = f"td{{max-width: calc(100vh/{length});overflow: hidden;min-height: fit-content}}"
+
+    context = build_html_for_clusterize(
+        lang_words, POS_list, columnheaders, row_filters, style, context,
+        frequency_dict, synthetic, global_filters, lang_words, synthetic,
+        language, count_in_text,
+    )
+
+    return templates.TemplateResponse("list_study.html", context)
+
 
 @router.post("/update_list")
 async def update_user_list(payload: ListCreate, user=Depends(get_current_user_cookie)):

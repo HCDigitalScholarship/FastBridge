@@ -1,8 +1,8 @@
 
 <head lang="en">
   <script type="text/javascript">
-    console.log("rendering template")
-  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Bridge: Customizable Vocabulary Lists</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
+    console.log("rendering list study page")
+  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Bridge: {{ list_name }}</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
    <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css>
    <style id = "local_styling" media="screen">{{style|safe}}</style>
  </head>
@@ -10,7 +10,7 @@
 <body style="height:70vh;" id="main">{% include "partials/refine_sidebar.html" %}<section id="result" class="download-section content-section text-center" role="main" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
 
   <div class="container">
-<h2> Now showing <span id = "len"> {{ len }} </span> words in {{ section }} </h2>
+<h2> {{ list_name }} — <span id = "len"> {{ len }} </span> words </h2>
 
   <style>
     #contentArea tr[data-lemma] { cursor: pointer; }
@@ -22,16 +22,40 @@
       box-shadow: 0 8px 28px rgba(0,0,0,0.55); padding: 12px 18px; color: #fff; max-width: 94vw;
     }
     #floating-action-bar .fab-divider { width:1px; height:26px; background:#444; margin:0 4px; }
+    .mode-tabs { display:flex; gap:4px; justify-content:center; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+    .mode-tab {
+      background:#222; color:#bbb; border:1px solid #2a6b6b; border-bottom:none;
+      border-radius:8px 8px 0 0; padding:10px 24px; cursor:pointer; font-weight:600; font-size:1rem;
+    }
+    .mode-tab.active { background:#228383; color:#fff; }
+    .back-btn {
+      background:#333; color:#fff; border:1px solid #2a6b6b; border-radius:8px;
+      padding:10px 18px; font-weight:600; font-size:1rem; text-decoration:none;
+      display:inline-flex; align-items:center; gap:6px; margin-right:auto;
+    }
+    .list-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:18px; }
+    .list-action-btn {
+      border:none; border-radius:8px; padding:9px 18px; font-weight:600; font-size:0.95rem;
+      cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:6px;
+    }
   </style>
 
-  <!-- Save this search: bookmark the current search URL + filters to re-run later -->
-  <div id="load-search-container"></div>
-  <div id="save-search-container" style="display:none; margin-bottom:10px;">
-    <input type="text" id="save-search-name" class="form-control" aria-label="Name this search" style="width:14rem; display:inline-block; margin-right:12px; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" placeholder="Name this search..." />
-    <button id="save-search-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save Search</button>
+  <div class="mode-tabs">
+    <a href="/userspace" class="back-btn" aria-label="Back to my lists"><i class="fas fa-arrow-left" aria-hidden="true"></i> My lists</a>
+    <span role="tablist" style="display:flex; gap:4px;">
+      <button type="button" id="tab-browse" class="mode-tab active" role="tab" aria-selected="true" onclick="showMode('browse')">Browse</button>
+      <button type="button" id="tab-flashcards" class="mode-tab" role="tab" aria-selected="false" onclick="showMode('flashcards')">Flashcards</button>
+    </span>
   </div>
-  <span id="save-search-message" style="margin-left:12px; color:#ffb366; font-weight:500;"></span>
 
+  <div class="list-actions">
+    {% if can_edit %}<button type="button" id="add-word-btn" class="list-action-btn" style="background:#228383;"><i class="fas fa-plus" aria-hidden="true"></i> Add Word</button>{% endif %}
+    {% if can_manage %}<button type="button" id="share-list-btn" class="list-action-btn" style="background:#22b3b3;"><i class="fas fa-share-alt" aria-hidden="true"></i> Share</button>{% endif %}
+    {% if can_manage %}<button type="button" id="manage-permissions-btn" class="list-action-btn" style="background:#ffb366;"><i class="fas fa-user-shield" aria-hidden="true"></i> Permissions</button>{% endif %}
+    {% if can_manage %}<button type="button" id="delete-list-btn" class="list-action-btn" style="background:#ff6666;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete List</button>{% endif %}
+  </div>
+
+  <div id="mode-browse" role="tabpanel">
   <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
     <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search for terms..." aria-label="Search for terms" id="search"/>
     <button type="button" id="select-all-terms-btn" class="btn btn-default" style="display:none; border-radius:6px; font-weight:600; border:1px solid #22b3b3; color:#22b3b3;" onclick="selectAllActive()">Select all terms</button>
@@ -43,6 +67,8 @@
     <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="selectAllActive()">Select All</button>
     <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="invertSelection()">Invert</button>
     <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="clearSelection()">Clear</button>
+    {% if can_delete %}<span class="fab-divider"></span>
+    <button type="button" id="delete-selected-btn" class="btn btn-sm btn-danger" style="border-radius:6px; font-weight:600;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete selected</button>{% endif %}
     <span class="fab-divider"></span>
     <span id="save-list-container">
       <input type="text" id="save-list-name" class="form-control" style="width:11rem; display:inline-block; margin-right:8px; padding:8px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;" placeholder="New list name..." />
@@ -58,8 +84,11 @@
   </div>
 
 {% include "partials/results_table.html" %}
-  <a class="btn btn-primary btn-lg btn-default" role="button" href="/select" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
-  <div style="text-align:center;margin-top:40px;"><span class="step"></span><span class="step"></span><span class="step"></span><span class="step active"></span></div>
+  </div>
+
+  <div id="mode-flashcards" role="tabpanel" style="display:none; min-height:40vh; color:#fff;">
+    <p style="margin-top:40px; font-size:1.2rem;">Flashcards mode is coming soon.</p>
+  </div>
 </div>
 </section></body><script type="text/javascript">
   var True = true
@@ -67,12 +96,37 @@
   var full_data = {{ render_words_optional|safe }}
   var data = {{ render_words|safe }}
 
+  window.STUDY_LIST = {
+    language: {{ language|tojson }},
+    listName: {{ list_name|tojson }},
+    ownerId: {{ owner_id|tojson }},
+    shared: {{ (shared or false)|tojson }},
+    isOwner: {{ is_owner|tojson }},
+    permission: {{ permission|tojson }},
+    canEdit: {{ can_edit|tojson }},
+    canDelete: {{ can_delete|tojson }},
+    canManage: {{ can_manage|tojson }}
+  };
+
+  function showMode(mode) {
+    var browse = document.getElementById('mode-browse');
+    var cards = document.getElementById('mode-flashcards');
+    var tb = document.getElementById('tab-browse');
+    var tf = document.getElementById('tab-flashcards');
+    var onBrowse = mode === 'browse';
+    browse.style.display = onBrowse ? '' : 'none';
+    cards.style.display = onBrowse ? 'none' : '';
+    tb.classList.toggle('active', onBrowse);
+    tf.classList.toggle('active', !onBrowse);
+    tb.setAttribute('aria-selected', onBrowse);
+    tf.setAttribute('aria-selected', !onBrowse);
+  }
 </script>
 <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"> </script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js></script>
 <script src="{{ static_v('/assets/js/clusterize.min.js') }}"></script>
 <script src="{{ static_v('/assets/js/select-result.js') }}"></script>
 <script src="{{ static_v('/assets/js/export.js') }}"></script>
-<script src="{{ static_v('/assets/js/save-search.js') }}"></script>
+<script src="{{ static_v('/assets/js/study-list-actions.js') }}"></script>
 
 {% include "footer.html" %}
