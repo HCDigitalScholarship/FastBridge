@@ -6,6 +6,7 @@ from pathlib import Path
 import uvicorn
 from routers.ToolsApp import lemmatize
 from routers import oracle, select, about, user_help, stats, firebase_auth, userspace, lemma_workspace
+from utils.study_meta import ensure_study_meta
 
 
 async def not_found(request, exc):
@@ -31,6 +32,16 @@ exception_handlers = {
 }
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, exception_handlers=exception_handlers)
+
+
+@app.on_event("startup")
+async def _ensure_collections():
+    # Guarded so a read-only/CI Mongo without write access doesn't block startup.
+    try:
+        ensure_study_meta()
+    except Exception as e:
+        print(f"study_meta init skipped: {e}")
+
 
 app.include_router(lemmatize.router, prefix="/lemmatizer", tags=["lemmatize"])
 app.include_router(firebase_auth.router, prefix = "/account", tags=["account"])
