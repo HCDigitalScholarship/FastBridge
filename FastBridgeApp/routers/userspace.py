@@ -40,7 +40,7 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
 def get_vocab(
     request: Request,
     page: int = 1,
-    limit: int = 5,
+    limit: int = None,
     language_filter: str = None,
     user=Depends(get_current_user_cookie)
 ):
@@ -95,8 +95,11 @@ def get_vocab(
                             "type": "shared"
                         })
 
-    # Pagination logic
+    # Pagination logic. With no explicit limit we return every list on a single
+    # page — the whole document is already loaded above, so paging saves nothing.
     total_lists = len(all_vocab_lists)
+    if limit is None or limit <= 0:
+        limit = total_lists if total_lists > 0 else 1
     total_pages = (total_lists + limit - 1) // limit if total_lists > 0 else 1
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit

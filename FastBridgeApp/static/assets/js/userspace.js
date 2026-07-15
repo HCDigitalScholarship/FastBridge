@@ -397,19 +397,11 @@ try {
 }
 });
 
-// Add filter event listeners for vocabulary list pagination
+// Reload the vocabulary list when the language filter changes.
 document.addEventListener('DOMContentLoaded', () => {
     const languageFilter = document.getElementById('vocab-language-filter');
-    const pageLimitSelect = document.getElementById('vocab-page-limit');
-
     if (languageFilter) {
         languageFilter.addEventListener('change', () => {
-            updateVocabWithFilters();
-        });
-    }
-
-    if (pageLimitSelect) {
-        pageLimitSelect.addEventListener('change', () => {
             updateVocabWithFilters();
         });
     }
@@ -417,22 +409,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function updateVocabWithFilters() {
     const languageFilter = document.getElementById('vocab-language-filter');
-    const pageLimitSelect = document.getElementById('vocab-page-limit');
     const vocabContent = document.getElementById('vocabulary-content');
 
-    if (!languageFilter || !pageLimitSelect || !vocabContent) return;
+    if (!languageFilter || !vocabContent) return;
 
-    const params = new URLSearchParams({
-        page: '1',
-        limit: pageLimitSelect.value,
-    });
-
+    const params = new URLSearchParams();
     if (languageFilter.value) {
         params.set('language_filter', languageFilter.value);
     }
 
-    const route = `/userspace/vocab?${params.toString()}`;
-    fetchTabData(route, vocabContent);
+    const query = params.toString();
+    fetchTabData(query ? `/userspace/vocab?${query}` : '/userspace/vocab', vocabContent);
 }
 
 function attachPaginationEvents(currentRoute, contentDiv) {
@@ -444,17 +431,11 @@ function attachPaginationEvents(currentRoute, contentDiv) {
             const url = new URL(currentRoute, window.location.origin);
             url.searchParams.set('page', page);
 
-            // If no filters in current route, check UI for current filter values
-            if (!url.searchParams.has('language_filter') && !url.searchParams.has('limit')) {
+            // If no filter in current route, check UI for the current filter value
+            if (!url.searchParams.has('language_filter')) {
                 const languageFilter = document.getElementById('vocab-language-filter');
-                const pageLimitSelect = document.getElementById('vocab-page-limit');
-
                 if (languageFilter && languageFilter.value) {
                     url.searchParams.set('language_filter', languageFilter.value);
-                }
-
-                if (pageLimitSelect) {
-                    url.searchParams.set('limit', pageLimitSelect.value);
                 }
             }
 
