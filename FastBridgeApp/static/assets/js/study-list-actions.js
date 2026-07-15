@@ -154,7 +154,12 @@
   var delListBtn = document.getElementById('delete-list-btn');
   if (delListBtn) {
     delListBtn.addEventListener('click', async function () {
-      if (!confirm('Delete the entire list "' + S.listName + '"? This cannot be undone.')) return;
+      var typed = prompt('This will permanently delete the entire list "' + S.listName + '". Type "delete list" to confirm.');
+      if (typed === null) return;
+      if (typed.trim().toLowerCase() !== 'delete list') {
+        alert('Deletion cancelled — you must type "delete list" to confirm.');
+        return;
+      }
       delListBtn.disabled = true;
       delListBtn.textContent = 'Deleting...';
       try {
@@ -190,9 +195,9 @@
         "<h3 id='share-modal-title' style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>" + S.listName + "</span> (" + S.language + ")</h3>" +
         "<div style='margin-bottom:18px;'><label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>" +
         "<input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>" +
-        "<input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Linked Share (shared reference with permissions)</label></div>" +
+        "<input type='radio' name='share-mode' id='share-live' value='live'> <label for='share-live' style='color:#22b3b3;'>Live Share (shared reference with permissions)</label></div>" +
         "<div id='permission-select-div' style='margin-bottom:18px; display:none;'>" +
-        "<label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Linked Share:</label><br>" +
+        "<label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Live Share:</label><br>" +
         "<select id='share-permission' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>" +
         "<option value='view'>View only (see words)</option><option value='edit' selected>Edit (view + add words)</option><option value='admin'>Admin (edit + remove words + manage access)</option></select></div>" +
         "<div id='share-list-message' role='status' aria-live='polite' style='color:#ffb366; margin-bottom:10px;'></div>" +
@@ -209,13 +214,13 @@
 
       modal.querySelectorAll('input[name="share-mode"]').forEach(function (radio) {
         radio.addEventListener('change', function () {
-          permissionDiv.style.display = radio.value === 'editable' ? 'block' : 'none';
+          permissionDiv.style.display = radio.value === 'live' ? 'block' : 'none';
         });
       });
 
       confirmBtn.addEventListener('click', async function () {
         var mode = modal.querySelector('input[name="share-mode"]:checked').value;
-        var permission = mode === 'editable' ? modal.querySelector('#share-permission').value : undefined;
+        var permission = mode === 'live' ? modal.querySelector('#share-permission').value : undefined;
         confirmBtn.textContent = 'Generating...';
         confirmBtn.disabled = true;
         try {
