@@ -139,7 +139,7 @@ async function fetchTabData(route, contentDiv) {
             if (data.pagination) {
                 const p = data.pagination;
                 html += `<div style="margin-bottom:16px; color:#fff; text-align:center;">
-                    <span>Showing ${p.total_lists > 0 ? ((p.current_page - 1) * p.limit + 1) : 0} - ${Math.min(p.current_page * p.limit, p.total_lists)} of ${p.total_lists} lists</span>
+                    <span>Showing ${p.total_lists} lists</span>
                 </div>`;
             }
 
