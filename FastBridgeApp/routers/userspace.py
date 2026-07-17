@@ -39,8 +39,6 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
 @router.get("/vocab")
 def get_vocab(
     request: Request,
-    page: int = 1,
-    limit: int = None,
     language_filter: str = None,
     user=Depends(get_current_user_cookie)
 ):
@@ -95,21 +93,11 @@ def get_vocab(
                             "type": "shared"
                         })
 
-    # Pagination logic. With no explicit limit we return every list on a single
-    # page — the whole document is already loaded above, so paging saves nothing.
-    total_lists = len(all_vocab_lists)
-    if limit is None or limit <= 0:
-        limit = total_lists if total_lists > 0 else 1
-    total_pages = (total_lists + limit - 1) // limit if total_lists > 0 else 1
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_lists = all_vocab_lists[start_idx:end_idx]
-
-    # Group paginated lists by language and type
+    # Group lists by language and type
     vocab_summary = {}
     shared_summary = {}
 
-    for lst in paginated_lists:
+    for lst in all_vocab_lists:
         if lst["type"] == "user":
             vocab_summary.setdefault(lst["language"], []).append({
                 "name": lst["name"],
@@ -122,21 +110,14 @@ def get_vocab(
             })
 
     if not vocab_summary:
-        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab": []}
+        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab, or by creating one on a search result.": []}
     if not shared_summary:
         shared_summary = {"No Shared Lists": []}
 
     return {
         "vocab": vocab_summary,
         "shared_vocab": shared_summary,
-        "pagination": {
-            "current_page": page,
-            "total_pages": total_pages,
-            "total_lists": total_lists,
-            "limit": limit,
-            "has_next": page < total_pages,
-            "has_prev": page > 1
-        }
+        "total_lists": len(all_vocab_lists)
     }
 
 

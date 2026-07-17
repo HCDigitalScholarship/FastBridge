@@ -135,11 +135,9 @@ async function fetchTabData(route, contentDiv) {
         let html = '';
 
         if (data.vocab) {
-            // Add pagination info at top if available
-            if (data.pagination) {
-                const p = data.pagination;
+            if (typeof data.total_lists === 'number') {
                 html += `<div style="margin-bottom:16px; color:#fff; text-align:center;">
-                    <span>Showing ${p.total_lists} lists</span>
+                    <span>Showing ${data.total_lists} lists</span>
                 </div>`;
             }
 
@@ -184,38 +182,6 @@ async function fetchTabData(route, contentDiv) {
                 html += '</div>';
             }
 
-            // Add pagination controls at bottom
-            if (data.pagination && data.pagination.total_pages > 1) {
-                const p = data.pagination;
-                html += `<div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; color:#fff;">`;
-
-                // Previous button
-                if (p.has_prev) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page - 1}" aria-label="Go to previous page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
-                }
-
-                // Page numbers
-                const startPage = Math.max(1, p.current_page - 2);
-                const endPage = Math.min(p.total_pages, p.current_page + 2);
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const isActive = i === p.current_page;
-                    html += `<button class="pagination-btn" data-page="${i}" aria-label="Go to page ${i}" aria-current="${isActive ? 'page' : 'false'}" ${isActive ? 'disabled' : ''} style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
-                }
-
-                // Next button
-                if (p.has_next) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page + 1}" aria-label="Go to next page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
-                }
-
-                html += `</div>`;
-            }
-
-            setTimeout(() => {
-                // List names are now links straight to the dedicated study page,
-                // so the old inline card/expansion panel is no longer wired up.
-                attachPaginationEvents(route, contentDiv);
-            }, 0);
         }
         contentDiv.innerHTML = html;
     } catch {
@@ -420,29 +386,6 @@ function updateVocabWithFilters() {
 
     const query = params.toString();
     fetchTabData(query ? `/userspace/vocab?${query}` : '/userspace/vocab', vocabContent);
-}
-
-function attachPaginationEvents(currentRoute, contentDiv) {
-    document.querySelectorAll('.pagination-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const page = btn.getAttribute('data-page');
-
-            // Parse current route to preserve filters
-            const url = new URL(currentRoute, window.location.origin);
-            url.searchParams.set('page', page);
-
-            // If no filter in current route, check UI for the current filter value
-            if (!url.searchParams.has('language_filter')) {
-                const languageFilter = document.getElementById('vocab-language-filter');
-                if (languageFilter && languageFilter.value) {
-                    url.searchParams.set('language_filter', languageFilter.value);
-                }
-            }
-
-            const newRoute = url.pathname + url.search;
-            await fetchTabData(newRoute, contentDiv);
-        });
-    });
 }
 
 // Saved Searches tab
