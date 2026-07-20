@@ -39,8 +39,6 @@ def userspace(request: Request, user=Depends(get_current_user_cookie)):
 @router.get("/vocab")
 def get_vocab(
     request: Request,
-    page: int = 1,
-    limit: int = 5,
     language_filter: str = None,
     user=Depends(get_current_user_cookie)
 ):
@@ -95,18 +93,11 @@ def get_vocab(
                             "type": "shared"
                         })
 
-    # Pagination logic
-    total_lists = len(all_vocab_lists)
-    total_pages = (total_lists + limit - 1) // limit if total_lists > 0 else 1
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_lists = all_vocab_lists[start_idx:end_idx]
-
-    # Group paginated lists by language and type
+    # Group lists by language and type
     vocab_summary = {}
     shared_summary = {}
 
-    for lst in paginated_lists:
+    for lst in all_vocab_lists:
         if lst["type"] == "user":
             vocab_summary.setdefault(lst["language"], []).append({
                 "name": lst["name"],
@@ -119,21 +110,14 @@ def get_vocab(
             })
 
     if not vocab_summary:
-        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab": []}
+        vocab_summary = {"You haven't created any lists. <br> Create a new list in the 'Create List' tab, or by creating one on a search result.": []}
     if not shared_summary:
         shared_summary = {"No Shared Lists": []}
 
     return {
         "vocab": vocab_summary,
         "shared_vocab": shared_summary,
-        "pagination": {
-            "current_page": page,
-            "total_pages": total_pages,
-            "total_lists": total_lists,
-            "limit": limit,
-            "has_next": page < total_pages,
-            "has_prev": page > 1
-        }
+        "total_lists": len(all_vocab_lists)
     }
 
 
@@ -174,9 +158,12 @@ class ListCreate(BaseModel):
 
 @router.post("/create_list")
 async def create_list(payload: ListCreate, request: Request, user=Depends(get_current_user_cookie)):
-    user_id = user.get('uid', None) 
+    user_id = user.get('uid', None)
     if not user_id:
         raise HTTPException(status_code=401, detail="User not authenticated")
+
+    if not payload.language or not payload.list_name:
+        raise HTTPException(status_code=400, detail="Missing language or list_name")
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -199,7 +186,7 @@ async def create_list(payload: ListCreate, request: Request, user=Depends(get_cu
         "created_at": datetime.now().isoformat(),
         "share_links": {
             "copy": str(uuid.uuid4()),
-            "linked": str(uuid.uuid4())
+            "live": str(uuid.uuid4())
         }
     }
 
@@ -523,7 +510,7 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
             "created_at": datetime.now().isoformat(),
             "share_links": {
                 "copy": str(uuid.uuid4()),
-                "linked": str(uuid.uuid4())
+                "live": str(uuid.uuid4())
             }
         }
 
@@ -537,9 +524,9 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
             "message": f"Copied list '{new_name}' added to {language}.",
         }
 
-    elif mode == "linked":
+    elif mode == "live":
         # Store pointer in `shared_with_me` with permissions
-        permission = data.get("permission", "edit")  # Default permission for linked mode
+        permission = data.get("permission", "edit")  # Default permission for live mode
         list_name = shared_list.get("name")
         if not list_name:
             raise HTTPException(status_code=500, detail="Shared list is missing a name")
@@ -604,7 +591,7 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
 
     # Find which list/language/mode this share_id belongs to
     languages = ["Latin", "Greek"]
-    modes = ["copy", "linked"]
+    modes = ["copy", "live"]
     owner_doc = language = list_name = mode = shared_list = None
 
     for lang in languages:
@@ -648,7 +635,7 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
             "owner_id": user_id,
             "original_owner_id": shared_list.get("owner_id", owner_id),
             "created_at": datetime.now().isoformat(),
-            "share_links": {"copy": str(uuid.uuid4()), "linked": str(uuid.uuid4())}
+            "share_links": {"copy": str(uuid.uuid4()), "live": str(uuid.uuid4())}
         }
         storage.lists.update_one(
             {"user_id": user_id},
@@ -656,7 +643,7 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
             upsert=True
         )
     else:
-        # Linked share — grant whatever level the owner set on the link (defaults
+        # Live share — grant whatever level the owner set on the link (defaults
         # to view). Never downgrade a recipient who already holds a higher level,
         # e.g. one the owner granted via Manage Permissions.
         rank = {"view": 0, "edit": 1, "admin": 2}
@@ -768,8 +755,8 @@ async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
 class ShareListPayload(BaseModel):
     list_name: str
     language: str
-    sharing_mode: str   # "copy" or "editable"
-    permission: Optional[str] = None   # default level granted by a linked share
+    sharing_mode: str   # "copy" or "live"
+    permission: Optional[str] = None   # default level granted by a live share
 
 @router.post("/get_share_id", response_class=JSONResponse)
 async def get_share_id(
@@ -797,8 +784,8 @@ async def get_share_id(
     
     if payload.sharing_mode == "copy":
         share_id = share_links.get("copy")
-    elif payload.sharing_mode == "editable":
-        share_id = share_links.get("linked")
+    elif payload.sharing_mode == "live":
+        share_id = share_links.get("live")
         # Persist the owner's chosen default level so accept-list can honor it.
         # The link itself only carries an opaque id, so the level has to live on
         # the list document.
@@ -831,7 +818,7 @@ async def grant_permission(
     user=Depends(get_current_user_cookie)
 ):
     """
-    Grant permission to another user for a linked list.
+    Grant permission to another user for a live-shared list.
     Owner or admin users can grant permissions.
     """
     user_id = user.get("uid")

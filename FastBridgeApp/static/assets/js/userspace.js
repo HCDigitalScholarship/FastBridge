@@ -135,11 +135,9 @@ async function fetchTabData(route, contentDiv) {
         let html = '';
 
         if (data.vocab) {
-            // Add pagination info at top if available
-            if (data.pagination) {
-                const p = data.pagination;
+            if (typeof data.total_lists === 'number') {
                 html += `<div style="margin-bottom:16px; color:#fff; text-align:center;">
-                    <span>Showing ${p.total_lists > 0 ? ((p.current_page - 1) * p.limit + 1) : 0} - ${Math.min(p.current_page * p.limit, p.total_lists)} of ${p.total_lists} lists</span>
+                    <span>Showing ${data.total_lists} lists</span>
                 </div>`;
             }
 
@@ -184,38 +182,6 @@ async function fetchTabData(route, contentDiv) {
                 html += '</div>';
             }
 
-            // Add pagination controls at bottom
-            if (data.pagination && data.pagination.total_pages > 1) {
-                const p = data.pagination;
-                html += `<div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; color:#fff;">`;
-
-                // Previous button
-                if (p.has_prev) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page - 1}" aria-label="Go to previous page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Previous</button>`;
-                }
-
-                // Page numbers
-                const startPage = Math.max(1, p.current_page - 2);
-                const endPage = Math.min(p.total_pages, p.current_page + 2);
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const isActive = i === p.current_page;
-                    html += `<button class="pagination-btn" data-page="${i}" aria-label="Go to page ${i}" aria-current="${isActive ? 'page' : 'false'}" ${isActive ? 'disabled' : ''} style="background:${isActive ? '#22b3b3' : '#444'}; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem; font-weight:${isActive ? '600' : '400'};">${i}</button>`;
-                }
-
-                // Next button
-                if (p.has_next) {
-                    html += `<button class="pagination-btn" data-page="${p.current_page + 1}" aria-label="Go to next page" style="background:#228383; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:0.9rem;">Next</button>`;
-                }
-
-                html += `</div>`;
-            }
-
-            setTimeout(() => {
-                // List names are now links straight to the dedicated study page,
-                // so the old inline card/expansion panel is no longer wired up.
-                attachPaginationEvents(route, contentDiv);
-            }, 0);
         }
         contentDiv.innerHTML = html;
     } catch {
@@ -397,19 +363,11 @@ try {
 }
 });
 
-// Add filter event listeners for vocabulary list pagination
+// Reload the vocabulary list when the language filter changes.
 document.addEventListener('DOMContentLoaded', () => {
     const languageFilter = document.getElementById('vocab-language-filter');
-    const pageLimitSelect = document.getElementById('vocab-page-limit');
-
     if (languageFilter) {
         languageFilter.addEventListener('change', () => {
-            updateVocabWithFilters();
-        });
-    }
-
-    if (pageLimitSelect) {
-        pageLimitSelect.addEventListener('change', () => {
             updateVocabWithFilters();
         });
     }
@@ -417,51 +375,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function updateVocabWithFilters() {
     const languageFilter = document.getElementById('vocab-language-filter');
-    const pageLimitSelect = document.getElementById('vocab-page-limit');
     const vocabContent = document.getElementById('vocabulary-content');
 
-    if (!languageFilter || !pageLimitSelect || !vocabContent) return;
+    if (!languageFilter || !vocabContent) return;
 
-    const params = new URLSearchParams({
-        page: '1',
-        limit: pageLimitSelect.value,
-    });
-
+    const params = new URLSearchParams();
     if (languageFilter.value) {
         params.set('language_filter', languageFilter.value);
     }
 
-    const route = `/userspace/vocab?${params.toString()}`;
-    fetchTabData(route, vocabContent);
-}
-
-function attachPaginationEvents(currentRoute, contentDiv) {
-    document.querySelectorAll('.pagination-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const page = btn.getAttribute('data-page');
-
-            // Parse current route to preserve filters
-            const url = new URL(currentRoute, window.location.origin);
-            url.searchParams.set('page', page);
-
-            // If no filters in current route, check UI for current filter values
-            if (!url.searchParams.has('language_filter') && !url.searchParams.has('limit')) {
-                const languageFilter = document.getElementById('vocab-language-filter');
-                const pageLimitSelect = document.getElementById('vocab-page-limit');
-
-                if (languageFilter && languageFilter.value) {
-                    url.searchParams.set('language_filter', languageFilter.value);
-                }
-
-                if (pageLimitSelect) {
-                    url.searchParams.set('limit', pageLimitSelect.value);
-                }
-            }
-
-            const newRoute = url.pathname + url.search;
-            await fetchTabData(newRoute, contentDiv);
-        });
-    });
+    const query = params.toString();
+    fetchTabData(query ? `/userspace/vocab?${query}` : '/userspace/vocab', vocabContent);
 }
 
 // Saved Searches tab

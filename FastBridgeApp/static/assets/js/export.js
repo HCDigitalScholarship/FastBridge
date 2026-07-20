@@ -155,13 +155,20 @@ function printData() {
   newWin.close();
 }
 
+// Resolve the language for the current page. The study page exposes it via
+// window.STUDY_LIST; the results page (/select/{lang}/...) carries it in the URL.
+function getListLanguage() {
+  if (window.STUDY_LIST && window.STUDY_LIST.language) return window.STUDY_LIST.language;
+  const parts = window.location.pathname.split('/');
+  return parts[parts.indexOf('select') + 1] || '';
+}
+
 (function initSaveList() {
   const isLoggedIn = document.cookie.split(';').some(c => c.trim().startsWith('session_name='));
   if (!isLoggedIn) return;
   // The floating action bar reveals itself on selection (select-result.js); nothing to show here.
 
-  const urlParts = window.location.pathname.split('/');
-  const language = urlParts[urlParts.indexOf('select') + 1] || '';
+  const language = getListLanguage();
 
   fetch(`/userspace/list_names?language=${encodeURIComponent(language)}`, { credentials: 'include' })
     .then(r => r.json())
@@ -212,11 +219,8 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
   // Filter active rows and extract only SIMPLE_LEMMA and GLOSS (selection-aware)
   const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
 
-  // Get the language from the URL (after /select/)
-  const urlParts = window.location.pathname.split('/');
-  const langIndex = urlParts.indexOf('select') + 1;
-  const language = urlParts[langIndex] || '';
-  
+  const language = getListLanguage();
+
   document.getElementById('save-list-message').textContent = 'Saving...';
   console.log("List Name:", listName, "length:", words.length, "Language:", language, words.slice(0,5));
   try {
@@ -258,8 +262,7 @@ document.getElementById('add-to-list-btn').addEventListener('click', async () =>
 
   const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
 
-  const urlParts = window.location.pathname.split('/');
-  const language = urlParts[urlParts.indexOf('select') + 1] || '';
+  const language = getListLanguage();
 
   document.getElementById('add-to-list-message').textContent = 'Adding...';
   try {

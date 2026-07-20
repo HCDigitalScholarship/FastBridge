@@ -10,7 +10,7 @@ class LanguageType(str, Enum):
 
 class ShareMode(str, Enum):
     COPY = "copy"
-    LINKED = "linked"
+    LIVE = "live"
 
 class PermissionLevel(str, Enum):
     VIEW = "view"
@@ -69,7 +69,7 @@ def create_share_links() -> Dict[str, str]:
     """Create default share links dictionary"""
     return {
         "copy": str(uuid.uuid4()),
-        "linked": str(uuid.uuid4())
+        "live": str(uuid.uuid4())
     }
 
 class VocabularyWord(BaseModel):
@@ -131,7 +131,7 @@ class ListCreateRequest(BaseModel):
 class ShareListRequest(BaseModel):
     list_name: str = Field(..., min_length=1, description="Name of list to share")
     language: LanguageType = Field(..., description="Language of the list")
-    sharing_mode: ShareMode = Field(..., description="Sharing mode (copy or linked)")
+    sharing_mode: ShareMode = Field(..., description="Sharing mode (copy or live)")
 
 class AddSharedListRequest(BaseModel):
     share_link: str = Field(..., description="Share link or code")

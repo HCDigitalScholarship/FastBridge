@@ -312,7 +312,11 @@ async def delete_account(user=Depends(get_current_user_cookie)):
         # Delete Firebase account
         auth.delete_user(user_id)
 
-        return {"success": True, "message": "Account deleted successfully"}
+        # Clear session cookies so the browser no longer appears logged in
+        response = JSONResponse({"success": True, "message": "Account deleted successfully"})
+        response.delete_cookie("user_token")
+        response.delete_cookie("session_name")
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete account: {str(e)}")

@@ -82,10 +82,17 @@
         tab.style.color = '#ccc';
       });
 
-      // Show selected tab and mark as active
+      // Show selected tab and mark as active. Locate the button by tabName
+      // rather than event.target, so this also works when called programmatically
+      // (e.g. from the #sharing on-load handler, which has no click event).
       document.getElementById(tabName).style.display = 'block';
-      event.target.style.borderBottom = '3px solid #228383';
-      event.target.style.color = '#fff';
+      const activeTab = Array.from(document.querySelectorAll('.settings-tab')).find(
+        tab => (tab.getAttribute('onclick') || '').includes("'" + tabName + "'")
+      );
+      if (activeTab) {
+        activeTab.style.borderBottom = '3px solid #228383';
+        activeTab.style.color = '#fff';
+      }
     }
 
 
@@ -115,8 +122,8 @@
         return;
       }
 
-      const confirmation = prompt('Type "DELETE" to confirm account deletion:');
-      if (confirmation !== 'DELETE') {
+      const confirmation = prompt('Type exactly "DELETE MY ACCOUNT" to confirm account deletion:');
+      if (confirmation !== 'DELETE MY ACCOUNT') {
         showMessage('Account deletion cancelled', 'info');
         return;
       }
