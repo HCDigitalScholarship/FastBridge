@@ -11,7 +11,7 @@ With Bridge/Lemmatizer you can find the dictionary form (lemma) of every word in
 </p>
 
 <!-- data-no-spinner: keep base.html's global overlay from firing on AJAX submit -->
-<form id="post_text" method="post" enctype="multipart/form-data" data-no-spinner>
+<form id="post_text" method="post" enctype="multipart/form-data" data-no-spinner autocomplete="off">
   <div class="mb-3">
     <label for="text" class="form-label">1. Paste plain text to lemmatize below or upload a .txt file</label>
     <textarea class="form-control" name="text" id="text" rows="8" style="resize: vertical; color: black;"></textarea>
@@ -41,15 +41,17 @@ With Bridge/Lemmatizer you can find the dictionary form (lemma) of every word in
 <div class="mb-3">
   <label for="format" class="form-label">4. In which format would you like your lemmata? </label>
   <p style="color: #ccc; font-size: 0.9em;">
-    <strong>Bridge</strong> uses a pre-built morpheus lexicon dictionary to quickly look up lemmas. Fast and reliable for common words, but limited in coverage for rarer forms.<br><br>
+    <strong>Hybrid (CLTK)</strong> combines all three approaches for the best accuracy. Common function words are resolved from a hardcoded table, then CLTK and Stanza are BOTH consulted for every word. When they agree, the answer is high confidence; when they disagree, the word is flagged for you to check. Recommended for most texts, and selected by default.<br><br>
+    <strong>CLTK</strong> (Classical Language Toolkit) is a rule-based lemmatizer for ancient languages. It looks each word up in a lexicon, applies morphological rules, and falls back to the most frequent lemma. Fast and strong on the bulk of classical vocabulary, but it can leave rare or unusual forms unresolved.<br><br>
     <strong>Stanza</strong> uses a neural network trained on classical Latin and Greek texts. Better at rare words and unusual forms, but slower and occasionally unreliable on common function words.<br><br>
-    <strong>Hybrid (CLTK)</strong> combines both approaches for the best accuracy. Common function words are resolved from a hardcoded table, then CLTK and Stanza are BOTH consulted for every word. When they agree, the answer is high confidence; when they disagree, the word is flagged for you to check. Recommended for most texts.
+    <strong>Bridge</strong> uses a pre-built morpheus lexicon dictionary to quickly look up lemmas. Fast and reliable for common words, but limited in coverage for rarer forms.
 
 
   <select name="format" id="format" class="form-select">
-    <option>Bridge</option>
-    <option>Stanza</option>
     <option>Hybrid (CLTK)</option>
+    <option>CLTK</option>
+    <option>Stanza</option>
+    <option>Bridge</option>
   </select>
 </div>
 
@@ -95,10 +97,22 @@ With Bridge/Lemmatizer you can find the dictionary form (lemma) of every word in
 
 <script>
   const fileInput = document.getElementById("file");
+  const fileLabel = document.querySelector("label[for='file']");
+  const FILE_LABEL_DEFAULT = fileLabel.textContent;
+
   fileInput.oninput = () => {
-    const label = document.querySelector("label[for='file']");
-    label.textContent = `You chose: ${fileInput.files[0].name}`;
-  }
+    fileLabel.textContent = fileInput.files.length
+      ? `You chose: ${fileInput.files[0].name}`
+      : FILE_LABEL_DEFAULT;
+  };
+
+  // Some browsers restore the previously chosen file when the page is refreshed
+  // or navigated back to (bfcache). Clear it on show so a stale upload doesn't
+  // linger and then collide with pasted text.
+  window.addEventListener("pageshow", () => {
+    fileInput.value = "";
+    fileLabel.textContent = FILE_LABEL_DEFAULT;
+  });
 </script>
 
 <script>
@@ -364,7 +378,11 @@ With Bridge/Lemmatizer you can find the dictionary form (lemma) of every word in
       (noneCount ? ", " + noneCount + " unresolved" : "") +
       (reviewCount ? ", " + reviewCount + " to check" : "");
     wrapper.style.display = "block";
-    setStatus("");
+    if (data.warning) {
+      setStatus('<div class="alert alert-warning mb-0" role="alert">' + escapeHtml(data.warning) + '</div>');
+    } else {
+      setStatus("");
+    }
     renderView();
   }
 
