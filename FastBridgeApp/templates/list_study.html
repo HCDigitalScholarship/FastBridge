@@ -69,6 +69,7 @@
     .fc-nav-btn { background:#228383; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-weight:600; font-size:1rem; cursor:pointer; }
     .fc-nav-btn:disabled { opacity:0.4; cursor:default; }
     .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
+    .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   </style>
 
   <div class="mode-tabs">
@@ -128,7 +129,7 @@
 
       <div class="fc-card-wrap">
         <button type="button" id="fc-star" class="fc-star" aria-pressed="false" aria-label="Star this word" title="Star this word">&#9733;</button>
-        <div id="fc-card" class="fc-card" role="button" tabindex="0" aria-label="Show definition">
+        <div id="fc-card" class="fc-card" tabindex="0">
           <div class="fc-card-inner">
             <div id="fc-front" class="fc-face fc-front">
               <div id="fc-front-parts" class="fc-parts"></div>
@@ -143,6 +144,7 @@
         </div>
       </div>
       <p class="fc-instructions">Click the card or press Space to show the definition.</p>
+      <div id="fc-live" class="fc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
       <div class="fc-nav" aria-label="Flashcard navigation">
         <button type="button" id="fc-prev" class="fc-nav-btn">Previous</button>
