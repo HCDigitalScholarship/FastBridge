@@ -6,6 +6,7 @@ than the query in isolation. Auth is overridden to a fixed test user, and fireba
 stubbed so the router imports without a service-account cert (mirrors the e2e harness). Skips
 when no local Mongo is reachable, via the shared `mdt` fixture.
 """
+import os
 import sys
 from unittest.mock import MagicMock
 
@@ -17,6 +18,11 @@ pytest.importorskip("httpx")
 # userspace.py does `from firebase_admin import auth` at import
 # stub it so the router loads without Firebase credentials. setdefault leaves a real module in place if one already exists
 sys.modules.setdefault("firebase_admin", MagicMock())
+
+# firebase_auth.py runs `json.loads(os.getenv("FIREBASE_CONFIG"))` at import; without the var
+# that's json.loads(None) -> TypeError. Feed it empty JSON so the router imports (the stub above
+# skips the cert/initialize_app path). setdefault leaves a real config in place if one is set.
+os.environ.setdefault("FIREBASE_CONFIG", "{}")
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
