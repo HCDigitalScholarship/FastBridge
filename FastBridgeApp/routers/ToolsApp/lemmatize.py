@@ -50,7 +50,7 @@ CLTK_CORPORA = {
 LOGEION_BASE_URL = "https://logeion.uchicago.edu/"
 
 # Tool prefixes that may be attached to the TITLE column
-TOOL_PREFIXES = ("hybrid", "stanza", "morpheus")
+TOOL_PREFIXES = ("hybrid", "cltk", "stanza", "morpheus")
 
 # Greek sentence punctuation that string.punctuation does NOT cover.
 # Defined via code points to avoid two visually-identical dot characters in
@@ -161,10 +161,18 @@ def split_title(title: str):
     return "", title
 
 
-def build_logeion_url(lemma: str) -> str:
-    """Construct a Logeion dictionary URL for a lemma (Latin or Greek).
-    Greek lemmas are polytonic Unicode, so the path segment is percent-encoded."""
-    return LOGEION_BASE_URL + quote(lemma.strip())
+def build_logeion_url(lemma: str, language: str = None) -> str:
+    """Construct a Logeion dictionary URL for a lemma.
+
+    Cleans the lemma for the link: strips a morpheus homograph suffix like "/1"
+    or "/2", and for Latin lowercases and normalizes the dictionary spelling
+    (V->u, J->i), so "SVM/1" links to .../sum and "VT/4" to .../ut. Greek is left
+    as-is (its accents and capitalization matter to the lexicon) and is
+    percent-encoded for the URL."""
+    key = regex.sub(r"/\d+$", "", lemma.strip())
+    if language and language.lower() == "latin":
+        key = key.lower().replace("v", "u").replace("j", "i")
+    return LOGEION_BASE_URL + quote(key)
 
 
 def get_pipeline(language: str):
@@ -454,7 +462,12 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
 
     fmt = format.upper()
     is_hybrid = "HYBRID" in fmt
-    use_stanza = is_hybrid or "STANZA" in fmt
+    # "Hybrid (CLTK)" also contains "CLTK"/"STANZA", so the standalone options are
+    # only those keywords WITHOUT hybrid.
+    is_cltk_only = ("CLTK" in fmt) and not is_hybrid
+    is_stanza_only = ("STANZA" in fmt) and not is_hybrid
+    use_stanza = is_hybrid or is_stanza_only
+    use_cltk = is_hybrid or is_cltk_only
 
     # Run Stanza once over the ORIGINAL text (before we insert poetry markers or
     # swap periods for underscores), so it tokenizes and lemmatizes naturally.
@@ -463,7 +476,7 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
         stanza_map, stanza_error = build_stanza_lemma_map(text, language)
     else:
         stanza_map = {}
-    cltk = get_cltk_lemmatizer(language) if is_hybrid else None
+    cltk = get_cltk_lemmatizer(language) if use_cltk else None
 
     if poetry:
         lines = text.strip().splitlines()
@@ -513,11 +526,15 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
             lemma, conf, cltk_alt, stanza_alt = resolve_ensemble(word, word_clean, language, cltk, stanza_map)
             title = f"hybrid: {lemma}"
 
-        elif "STANZA" in fmt:
+        elif is_cltk_only:
+            c = cltk_lemma_for(word_clean, language, cltk)
+            title = f"cltk: {c}" if c else "cltk: NONE"
+            conf = "medium" if c else "none"
+
+        elif is_stanza_only:
             entry = stanza_map.get(word_clean)
             s = entry["lemma"] if entry else ""
-            lemma = s if s else "NONE"
-            title = f"stanza: {lemma}" if s else "stanza: NONE"
+            title = f"stanza: {s}" if s else "stanza: NONE"
             conf = "medium" if s else "none"
 
         else:
@@ -546,7 +563,7 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
             "t": "w",
             "x": word.strip(string.punctuation + GREEK_PUNCTUATION),
             "lemma": disp_lemma,
-            "logeion": None if is_none else build_logeion_url(disp_lemma),
+            "logeion": None if is_none else build_logeion_url(disp_lemma, language),
             "none": is_none,
             "loc": location,
             "n": running_count,
@@ -558,8 +575,8 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
             # can show both and the reader can look up either and choose.
             seg["cltk"] = cltk_alt
             seg["stanza"] = stanza_alt
-            seg["cltk_logeion"] = build_logeion_url(cltk_alt) if cltk_alt else None
-            seg["stanza_logeion"] = build_logeion_url(stanza_alt) if stanza_alt else None
+            seg["cltk_logeion"] = build_logeion_url(cltk_alt, language) if cltk_alt else None
+            seg["stanza_logeion"] = build_logeion_url(stanza_alt, language) if stanza_alt else None
         segments.append(seg)
         running_count += 1
 
@@ -601,12 +618,12 @@ def lemmatize(text, location, marker_re, language, lemma_lex, format, poetry):
     for row in rows:
         _tool, lemma = split_title(row["title"])
         is_none = lemma.strip().upper() == "NONE"
-        logeion = "" if is_none else build_logeion_url(lemma)
+        logeion = "" if is_none else build_logeion_url(lemma, language)
         conf = row.get("conf") or ""
         cltk_lem = row.get("cltk") or ""
         stanza_lem = row.get("stanza") or ""
-        cltk_log = build_logeion_url(cltk_lem) if cltk_lem else ""
-        stanza_log = build_logeion_url(stanza_lem) if stanza_lem else ""
+        cltk_log = build_logeion_url(cltk_lem, language) if cltk_lem else ""
+        stanza_log = build_logeion_url(stanza_lem, language) if stanza_lem else ""
         fields = [
             row["title"], row["location"], row["section"], row["running_count"],
             row["text"], logeion, conf, cltk_lem, cltk_log, stanza_lem, stanza_log,
