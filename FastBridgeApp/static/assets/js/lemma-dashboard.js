@@ -140,7 +140,7 @@ function renderProjectCard(project) {
 
     const badge = project.is_owner
         ? '<span class="project-card-badge">Owner</span>'
-        : `<span class="project-card-badge" style="background:#555;">${project.permission.replace('CAN_', '')}</span>`;
+        : `<span class="project-card-badge" style="background:#555;">${project.permission.charAt(0).toUpperCase() + project.permission.slice(1)}</span>`;
 
     const description = project.description
         ? `<div class="project-card-description">${escapeHtml(project.description)}</div>`

@@ -40,8 +40,8 @@ def resolve_list_words(storage, user_id, language, list_name, shared=False):
                 if name == list_name:
                     owner_id = oid
                     permission = (
-                        shared_list.get("permission", "edit")
-                        if isinstance(shared_list, dict) else "edit"
+                        shared_list.get("permission", "contribute")
+                        if isinstance(shared_list, dict) else "contribute"
                     )
                     break
             if owner_id != user_id:

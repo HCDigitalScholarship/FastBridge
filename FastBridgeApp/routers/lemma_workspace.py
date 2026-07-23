@@ -211,7 +211,7 @@ async def lemma_workspace(
 
     # Check if user has access to this project
     has_permission, permission_level = await LemmaPermissionChecker.check_project_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+        user_id, project_id, LemmaPermissionLevel.VIEW
     )
 
     if not has_permission:
@@ -235,7 +235,7 @@ async def lemma_workspace(
         "project_id": project_id,
         "project_name": project.get("project_name"),
         "is_owner": is_owner,
-        "permission": permission_level.value if permission_level else "CAN_VIEW"
+        "permission": permission_level.value if permission_level else "view"
     }
 
     return templates.TemplateResponse("lemma_workspace.html", context)
@@ -423,7 +423,7 @@ async def get_project_rows(
 
     # Check permission
     await LemmaPermissionChecker.require_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+        user_id, project_id, LemmaPermissionLevel.VIEW
     )
 
     storage = atlas_client.get_database("App-Storage")
@@ -472,7 +472,7 @@ async def export_project(
 
     # Check permission
     await LemmaPermissionChecker.require_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+        user_id, project_id, LemmaPermissionLevel.VIEW
     )
 
     storage = atlas_client.get_database("App-Storage")
@@ -527,7 +527,7 @@ async def get_project_info(
 
     # Check permission
     has_permission, permission_level = await LemmaPermissionChecker.check_project_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+        user_id, project_id, LemmaPermissionLevel.VIEW
     )
 
     if not has_permission:
@@ -581,14 +581,14 @@ async def edit_row_cell(
     user=Depends(get_current_user_cookie)
 ):
     """
-    Edit a single cell in a row (requires CAN_EDIT permission).
+    Edit a single cell in a row (requires EDIT permission).
     """
     user_id = user.get("uid")
     username = user.get("name", "Unknown User")
 
     # Check permission
     await LemmaPermissionChecker.require_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_EDIT
+        user_id, project_id, LemmaPermissionLevel.EDIT
     )
 
     storage = atlas_client.get_database("App-Storage")
@@ -975,13 +975,13 @@ async def add_comment(
 ):
     """
     Add a comment to a specific row.
-    Requires CAN_VIEW permission minimum.
+    Requires VIEW permission minimum.
     """
     user_id = user.get("uid")
     username = user.get("name", "Unknown User")
 
-    # Check permission (CAN_VIEW minimum)
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    # Check permission (VIEW minimum)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1032,12 +1032,12 @@ async def get_all_project_comments(
     """
     Get all comments for a project (all rows at once).
     Much more efficient than fetching per-row.
-    Requires CAN_VIEW permission minimum.
+    Requires VIEW permission minimum.
     """
     user_id = user.get("uid")
 
     # Check permission
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1071,13 +1071,13 @@ async def get_row_comments(
 ):
     """
     Get all comments for a specific row.
-    Requires CAN_VIEW permission minimum.
+    Requires VIEW permission minimum.
     NOTE: Consider using GET /projects/{project_id}/comments to fetch all at once (more efficient).
     """
     user_id = user.get("uid")
 
     # Check permission
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1116,7 +1116,7 @@ async def delete_comment(
     user_id = user.get("uid")
 
     # Check permission
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1149,15 +1149,15 @@ async def create_suggestion(
 ):
     """
     Create an edit suggestion.
-    Suggestions are ALWAYS created as pending, even for owners/CAN_EDIT users.
+    Suggestions are ALWAYS created as pending, even for owners/EDIT users.
     This allows users to review their own suggestions before applying them.
     """
     user_id = user.get("uid")
     username = user.get("name", "Unknown User")
 
-    # Check permission (CAN_VIEW minimum)
+    # Check permission (VIEW minimum)
     has_permission, actual_permission = await LemmaPermissionChecker.check_project_permission(
-        user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+        user_id, project_id, LemmaPermissionLevel.VIEW
     )
     if not has_permission:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -1233,12 +1233,12 @@ async def get_suggestions(
     """
     Get all suggestions for a project.
     Optional filter by status (pending, accepted, rejected).
-    Requires CAN_VIEW permission minimum.
+    Requires VIEW permission minimum.
     """
     user_id = user.get("uid")
 
     # Check permission
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1274,13 +1274,13 @@ async def approve_suggestion(
 ):
     """
     Approve and apply a pending suggestion.
-    Only project owner or users with CAN_EDIT can approve.
+    Only project owner or users with EDIT can approve.
     """
     user_id = user.get("uid")
     username = user.get("name", "Unknown User")
 
-    # Check permission (CAN_EDIT required)
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_EDIT)
+    # Check permission (EDIT required)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.EDIT)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1364,13 +1364,13 @@ async def reject_suggestion(
 ):
     """
     Reject a pending suggestion.
-    Only project owner or users with CAN_EDIT can reject.
+    Only project owner or users with EDIT can reject.
     """
     user_id = user.get("uid")
     username = user.get("name", "Unknown User")
 
-    # Check permission (CAN_EDIT required)
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_EDIT)
+    # Check permission (EDIT required)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.EDIT)
 
     storage = atlas_client.get_database("App-Storage")
 
@@ -1419,12 +1419,12 @@ async def get_edit_history(
     """
     Get edit history for a project.
     Optional filters: row_id, action type, limit.
-    Requires CAN_VIEW permission minimum.
+    Requires VIEW permission minimum.
     """
     user_id = user.get("uid")
 
     # Check permission
-    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.CAN_VIEW)
+    await LemmaPermissionChecker.require_permission(user_id, project_id, LemmaPermissionLevel.VIEW)
 
     storage = atlas_client.get_database("App-Storage")
 

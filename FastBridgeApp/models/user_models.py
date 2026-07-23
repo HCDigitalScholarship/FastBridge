@@ -14,8 +14,8 @@ class ShareMode(str, Enum):
 
 class PermissionLevel(str, Enum):
     VIEW = "view"
+    CONTRIBUTE = "contribute"
     EDIT = "edit"
-    ADMIN = "admin"
 
 class PermissionGrant(BaseModel):
     level: PermissionLevel = Field(..., description="Permission level granted")

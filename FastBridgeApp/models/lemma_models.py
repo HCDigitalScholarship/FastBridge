@@ -15,8 +15,8 @@ import re
 
 class LemmaPermissionLevel(str, Enum):
     """Permission levels for lemmatization projects."""
-    CAN_VIEW = "CAN_VIEW"    # Read-only + comment
-    CAN_EDIT = "CAN_EDIT"    # Can modify cells
+    VIEW = "view"    # Read-only + comment
+    EDIT = "edit"    # Can modify cells
 
 
 class PermissionGrant(BaseModel):
