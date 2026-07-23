@@ -1,0 +1,203 @@
+// Flashcard flip mode for the study list page. Cards are built from the same
+// `data` (render_words) the Browse table uses: each row's `markup` already
+// carries every dictionary field as a <td class="COLUMN">, so principal parts,
+// definition and part of speech are all read client-side — no server round-trip.
+(function () {
+  var raw = (typeof data !== 'undefined') ? data : [];
+  if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch (e) { raw = []; } }
+
+  var parser = document.createElement('table');
+  function cell(tr, cls) {
+    var el = tr.querySelector('td.' + cls);
+    return el ? el.textContent.trim() : '';
+  }
+
+  // Parse each row's markup once into a flat card record.
+  var allCards = [];
+  raw.forEach(function (row) {
+    if (!row || !row.markup) return;
+    parser.innerHTML = '<tbody>' + row.markup + '</tbody>';
+    var tr = parser.querySelector('tr');
+    if (!tr) return;
+    var parts = cell(tr, 'PRINCIPAL_PARTS');
+    var title = cell(tr, 'TITLE');
+    allCards.push({
+      front: parts || title,
+      shortDef: cell(tr, 'SHORT_DEFINITION'),
+      longDef: cell(tr, 'LONG_DEFINITION'),
+      pos: cell(tr, 'PART_OF_SPEECH'),
+      // [SIMPLE_LEMMA, SHORT_DEFINITION] — the pair a saved list stores, used as
+      // the star identity so homographs with different glosses star separately.
+      lemma: tr.getAttribute('data-lemma') || cell(tr, 'SIMPLE_LEMMA') || title
+    });
+  });
+
+  var ui = document.getElementById('flashcards-ui');
+  var emptyMsg = document.getElementById('flashcards-empty');
+  if (!ui) return;
+  if (allCards.length === 0) {
+    if (emptyMsg) emptyMsg.style.display = 'block';
+    return;
+  }
+  ui.style.display = 'block';
+
+  var posFilter = document.getElementById('fc-pos-filter');
+  var progress = document.getElementById('fc-progress');
+  var cardEl = document.getElementById('fc-card');
+  var frontParts = document.getElementById('fc-front-parts');
+  var frontFace = document.getElementById('fc-front');
+  var backFace = document.getElementById('fc-back');
+  var backPos = document.getElementById('fc-back-pos');
+  var backDef = document.getElementById('fc-back-def');
+  var prevBtn = document.getElementById('fc-prev');
+  var flipBtn = document.getElementById('fc-flip');
+  var nextBtn = document.getElementById('fc-next');
+  var nav = document.querySelector('#mode-flashcards .fc-nav');
+  var filteredEmpty = document.getElementById('fc-filtered-empty');
+  var starBtn = document.getElementById('fc-star');
+  var starredToggle = document.getElementById('fc-starred-only');
+  var liveEl = document.getElementById('fc-live');
+
+  // The card content is normal readable text (not buried in a button), but the
+  // flip and navigation are silent to a screen reader on their own, so mirror
+  // the visible face into a polite live region.
+  function announce(msg) { if (liveEl) liveEl.textContent = msg || ''; }
+
+  var S = window.STUDY_LIST || {};
+  // Star identity keyed on the [lemma, gloss] pair (NUL delimiter can't collide).
+  function keyOf(lemma, def) { return lemma + '\x00' + def; }
+  var starred = {};
+  (window.STUDY_STARRED || []).forEach(function (w) {
+    if (w && w.length >= 2) starred[keyOf(w[0], w[1])] = true;
+  });
+
+  // POS dropdown from the values actually present in this list, sorted.
+  var posSet = {};
+  allCards.forEach(function (c) { if (c.pos) posSet[c.pos] = true; });
+  ['', ].concat(Object.keys(posSet).sort()).forEach(function (p) {
+    var opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p || 'All parts of speech';
+    posFilter.appendChild(opt);
+  });
+
+  var cards = allCards;
+  var idx = 0;
+
+  function render() {
+    cardEl.classList.remove('flipped');
+    frontFace.setAttribute('aria-hidden', 'false');
+    backFace.setAttribute('aria-hidden', 'true');
+    if (cards.length === 0) {
+      cardEl.style.display = 'none';
+      nav.style.display = 'none';
+      filteredEmpty.style.display = 'block';
+      progress.textContent = '';
+      announce('No flashcards match these filters.');
+      return;
+    }
+    cardEl.style.display = '';
+    nav.style.display = 'flex';
+    filteredEmpty.style.display = 'none';
+
+    var c = cards[idx];
+    frontParts.textContent = c.front;
+    backPos.textContent = c.pos || '';
+    backPos.style.display = c.pos ? '' : 'none';
+    backDef.textContent = c.shortDef || c.longDef || '(no definition)';
+
+    var on = !!starred[keyOf(c.lemma, c.shortDef)];
+    starBtn.classList.toggle('starred', on);
+    starBtn.setAttribute('aria-pressed', String(on));
+
+    progress.textContent = (idx + 1) + ' / ' + cards.length;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === cards.length - 1;
+    announce(c.front);
+  }
+
+  function applyFilter() {
+    var pos = posFilter.value;
+    var starredOnly = starredToggle && starredToggle.checked;
+    cards = allCards.filter(function (c) {
+      if (pos && c.pos !== pos) return false;
+      if (starredOnly && !starred[keyOf(c.lemma, c.shortDef)]) return false;
+      return true;
+    });
+    idx = 0;
+    render();
+  }
+
+  function flip() {
+    if (!cards.length) return;
+    var isFlipped = cardEl.classList.toggle('flipped');
+    frontFace.setAttribute('aria-hidden', String(isFlipped));
+    backFace.setAttribute('aria-hidden', String(!isFlipped));
+    var c = cards[idx];
+    if (isFlipped) {
+      var def = c.shortDef || c.longDef || '(no definition)';
+      announce(c.pos ? c.pos + '. ' + def : def);
+    } else {
+      announce(c.front);
+    }
+  }
+  function next() { if (idx < cards.length - 1) { idx++; render(); } }
+  function prev() { if (idx > 0) { idx--; render(); } }
+
+  // Under "starred only" a star change moves the current card in or out of the
+  // deck, so re-filter; otherwise repaint in place to keep the position.
+  function refreshAfterStar() {
+    if (starredToggle && starredToggle.checked) applyFilter();
+    else render();
+  }
+
+  // Toggle the star on the current card. Optimistic: flip local state and UI
+  // right away, persist in the background, and revert if the request fails.
+  function toggleStar() {
+    if (!cards.length) return;
+    var c = cards[idx];
+    var key = keyOf(c.lemma, c.shortDef);
+    var willStar = !starred[key];
+    if (willStar) starred[key] = true; else delete starred[key];
+    refreshAfterStar();
+
+    fetch('/userspace/toggle_star', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        owner_id: S.ownerId, language: S.language, list_name: S.listName,
+        word: [c.lemma, c.shortDef], starred: willStar
+      })
+    }).then(function (resp) {
+      if (!resp.ok) throw new Error('save failed');
+    }).catch(function () {
+      if (willStar) delete starred[key]; else starred[key] = true;
+      refreshAfterStar();
+    });
+  }
+
+  posFilter.addEventListener('change', applyFilter);
+  if (starredToggle) starredToggle.addEventListener('change', applyFilter);
+  cardEl.addEventListener('click', flip);
+  flipBtn.addEventListener('click', function (e) { e.stopPropagation(); flip(); });
+  starBtn.addEventListener('click', function (e) { e.stopPropagation(); toggleStar(); });
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  // Keyboard shortcuts, but only while the Flashcards tab is the visible panel
+  // and focus isn't in the POS <select>.
+  document.addEventListener('keydown', function (e) {
+    var panel = document.getElementById('mode-flashcards');
+    if (!panel || panel.style.display === 'none') return;
+    var tag = (e.target.tagName || '').toLowerCase();
+    // Let native buttons/links handle their own Space/Enter activation; the card
+    // itself is a focusable <div> (flip is also on the "Flip card" button) that
+    // relies on this handler.
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' ||
+        tag === 'button' || tag === 'a') return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  render();
+})();

@@ -38,13 +38,45 @@
       border:none; border-radius:8px; padding:9px 18px; font-weight:600; font-size:0.95rem;
       cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:6px;
     }
+
+    /* Flashcards */
+    .fc-controls { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin:18px 0 8px; }
+    #fc-pos-filter { padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem; }
+    .fc-progress { color:#bbb; font-weight:600; }
+    .fc-card-wrap { position:relative; width:min(560px,92vw); margin:24px auto 0; }
+    .fc-card { position:relative; width:100%; height:320px; perspective:1200px; cursor:pointer; outline:none; }
+    .fc-card:focus-visible .fc-card-inner { box-shadow:0 0 0 3px rgba(34,179,179,0.6); border-radius:16px; }
+    .fc-starred-toggle { color:#fff; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .fc-star { position:absolute; top:12px; right:14px; z-index:2; background:none; border:none; cursor:pointer; font-size:1.7rem; line-height:1; color:#c9c9c9; padding:2px 6px; }
+    .fc-star.starred { color:#f5b301; }
+    .fc-star:focus-visible { outline:2px solid #22b3b3; border-radius:6px; }
+    .fc-card-inner { position:relative; width:100%; height:100%; transition:transform 0.5s; transform-style:preserve-3d; }
+    .fc-card.flipped .fc-card-inner { transform:rotateY(180deg); }
+    .fc-face {
+      position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+      border:1px solid #2a6b6b; border-radius:16px; background:#fff;
+      display:flex; flex-direction:column; align-items:center; padding:26px 28px;
+      box-shadow:0 8px 28px rgba(0,0,0,0.45); overflow:hidden;
+    }
+    .fc-front { justify-content:center; }
+    .fc-back { transform:rotateY(180deg); justify-content:center; }
+    .fc-parts { font-family:'Lora',serif; font-size:clamp(1.35rem,4vw,1.9rem); font-weight:700; color:#1f2937; line-height:1.3; overflow-wrap:anywhere; text-align:center; }
+    .fc-back-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-height:100%; }
+    .fc-instructions { margin:10px auto 0; font-size:0.9rem; color:#aaa; text-align:center; }
+    .fc-pos-badge { font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; color:#9a5718; margin-bottom:16px; }
+    .fc-def { font-size:clamp(1.25rem,3vw,1.4rem); color:#25313a; line-height:1.55; text-align:center; overflow-y:auto; width:100%; max-height:210px; overflow-wrap:anywhere; }
+    .fc-nav { display:flex; gap:12px; justify-content:center; margin-top:22px; }
+    .fc-nav-btn { background:#228383; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-weight:600; font-size:1rem; cursor:pointer; }
+    .fc-nav-btn:disabled { opacity:0.4; cursor:default; }
+    .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
+    .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   </style>
 
   <div class="mode-tabs">
     <a href="/userspace" class="back-btn" aria-label="Back to my lists"><i class="fas fa-arrow-left" aria-hidden="true"></i> My lists</a>
     <span role="tablist" style="display:flex; gap:4px;">
-      <button type="button" id="tab-browse" class="mode-tab active" role="tab" aria-selected="true" onclick="showMode('browse')">Browse</button>
-      <button type="button" id="tab-flashcards" class="mode-tab" role="tab" aria-selected="false" onclick="showMode('flashcards')">Flashcards</button>
+      <button type="button" id="tab-browse" class="mode-tab active" role="tab" aria-selected="true" aria-controls="mode-browse" onclick="showMode('browse')">Browse</button>
+      <button type="button" id="tab-flashcards" class="mode-tab" role="tab" aria-selected="false" aria-controls="mode-flashcards" onclick="showMode('flashcards')">Flashcards</button>
     </span>
   </div>
 
@@ -55,7 +87,7 @@
     {% if can_manage %}<button type="button" id="delete-list-btn" class="list-action-btn" style="background:#ff6666;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete List</button>{% endif %}
   </div>
 
-  <div id="mode-browse" role="tabpanel">
+  <div id="mode-browse" role="tabpanel" aria-labelledby="tab-browse">
   <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
     <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search for terms..." aria-label="Search for terms" id="search"/>
     <button type="button" id="select-all-terms-btn" class="btn btn-default" style="display:none; border-radius:6px; font-weight:600; border:1px solid #22b3b3; color:#22b3b3;" onclick="selectAllActive()">Select all terms</button>
@@ -86,8 +118,42 @@
 {% include "partials/results_table.html" %}
   </div>
 
-  <div id="mode-flashcards" role="tabpanel" style="display:none; min-height:40vh; color:#fff;">
-    <p style="margin-top:40px; font-size:1.2rem;">Flashcards mode is coming soon.</p>
+  <div id="mode-flashcards" role="tabpanel" aria-labelledby="tab-flashcards" style="display:none; min-height:40vh; color:#fff;">
+    <div id="flashcards-ui" style="display:none;">
+      <div class="fc-controls">
+        <label for="fc-pos-filter">Part of speech</label>
+        <select id="fc-pos-filter" aria-label="Filter flashcards by part of speech"></select>
+        <label class="fc-starred-toggle"><input type="checkbox" id="fc-starred-only"> Starred only</label>
+        <span id="fc-progress" class="fc-progress" aria-live="polite"></span>
+      </div>
+
+      <div class="fc-card-wrap">
+        <button type="button" id="fc-star" class="fc-star" aria-pressed="false" aria-label="Star this word" title="Star this word">&#9733;</button>
+        <div id="fc-card" class="fc-card" tabindex="0">
+          <div class="fc-card-inner">
+            <div id="fc-front" class="fc-face fc-front">
+              <div id="fc-front-parts" class="fc-parts"></div>
+            </div>
+            <div id="fc-back" class="fc-face fc-back" aria-hidden="true">
+              <div class="fc-back-content">
+                <div id="fc-back-pos" class="fc-pos-badge"></div>
+                <div id="fc-back-def" class="fc-def"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="fc-instructions">Click the card or press Space to show the definition.</p>
+      <div id="fc-live" class="fc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+      <div class="fc-nav" aria-label="Flashcard navigation">
+        <button type="button" id="fc-prev" class="fc-nav-btn">Previous</button>
+        <button type="button" id="fc-flip" class="fc-nav-btn">Flip card</button>
+        <button type="button" id="fc-next" class="fc-nav-btn">Next</button>
+      </div>
+      <p id="fc-filtered-empty" class="fc-filtered-empty" style="display:none;">No flashcards match these filters.</p>
+    </div>
+    <p id="flashcards-empty" style="display:none; margin-top:40px; font-size:1.2rem;">This list has no words to study yet.</p>
   </div>
 </div>
 </section></body><script type="text/javascript">
@@ -107,6 +173,7 @@
     canDelete: {{ can_delete|tojson }},
     canManage: {{ can_manage|tojson }}
   };
+  window.STUDY_STARRED = {{ (starred_words or [])|tojson }};
 
   function showMode(mode) {
     var browse = document.getElementById('mode-browse');
@@ -128,5 +195,6 @@
 <script src="{{ static_v('/assets/js/select-result.js') }}"></script>
 <script src="{{ static_v('/assets/js/export.js') }}"></script>
 <script src="{{ static_v('/assets/js/study-list-actions.js') }}"></script>
+<script src="{{ static_v('/assets/js/study-flashcards.js') }}"></script>
 
 {% include "footer.html" %}

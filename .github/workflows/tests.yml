@@ -54,8 +54,10 @@ jobs:
 
       # The integration tests mock the heavy ML stack and exercise only the web and Mongo
       # layers, so we install just those libraries instead of the full requirements.txt.
+      # email-validator (userspace models) and requests (firebase_auth import) are pulled in
+      # by the userspace router the star-route test mounts, beyond the base set.
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv
+        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv email-validator requests
 
       - name: Run integration tests
         env:

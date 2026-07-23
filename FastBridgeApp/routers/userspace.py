@@ -290,11 +290,20 @@ async def list_study_page(
     can_delete = is_owner or permission == "admin"
     can_manage = is_owner
 
+    # Per-user starred words for this list, read from the caller's own doc.
+    starred_doc = storage.lists.find_one({"user_id": user_id}, {"starred": 1, "_id": 0})
+    starred_words = [
+        r["word"] for r in (starred_doc or {}).get("starred", [])
+        if r.get("owner_id") == owner_id and r.get("language") == language
+        and r.get("list_name") == list_name
+    ]
+
     context = {
         "request": request, "language": language, "list_name": list_name,
         "permission": permission, "is_owner": is_owner, "owner_id": owner_id,
         "shared": shared, "section": list_name,
         "can_edit": can_edit, "can_delete": can_delete, "can_manage": can_manage,
+        "starred_words": starred_words,
     }
 
     if not words:
@@ -1278,6 +1287,41 @@ async def delete_words(request: Request, user=Depends(get_current_user_cookie)):
         "success": True,
         "message": f"Deleted {len(words_to_delete)} word(s) from list"
     }
+
+class ToggleStarPayload(BaseModel):
+    owner_id: str
+    language: str
+    list_name: str
+    word: list          # [SIMPLE_LEMMA, SHORT_DEFINITION]
+    starred: bool
+
+@router.post("/toggle_star")
+async def toggle_star(payload: ToggleStarPayload, user=Depends(get_current_user_cookie)):
+    """Star/unstar a word for the current user.
+
+    Stars are personal, so they live in the caller's own lists doc (never the
+    owner's), keyed by the list's (owner_id, language, list_name) identity. That
+    one structure covers both the caller's own lists and lists shared to them,
+    and keeps the [lemma, gloss] word pair untouched. Stored as an array of
+    records rather than nested keys because list names can contain dots.
+    """
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    if not payload.language or not payload.list_name or not payload.word:
+        raise HTTPException(status_code=400, detail="Missing language, list_name, or word")
+
+    storage = atlas_client.get_database("App-Storage")
+    record = {
+        "owner_id": payload.owner_id,
+        "language": payload.language,
+        "list_name": payload.list_name,
+        "word": payload.word,
+    }
+    op = {"$addToSet": {"starred": record}} if payload.starred else {"$pull": {"starred": record}}
+    storage.lists.update_one({"user_id": user_id}, op, upsert=True)
+
+    return {"success": True, "starred": payload.starred}
 
 @router.get("/permissions/list")
 async def get_list_permissions(
