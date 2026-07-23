@@ -65,7 +65,7 @@ function initEventListeners() {
     // Comment button
     $('#comments-btn').on('click', toggleCommentsPanel);
 
-    // Suggestions button (only visible to CAN_EDIT/owners)
+    // Suggestions button (only visible to edit/owners)
     $('#view-suggestions-btn').on('click', showSuggestionsModal);
 }
 
@@ -156,8 +156,8 @@ function renderTable() {
     // Update info
     $('#table-info').html(`Showing ${filteredRows.length} of ${allRows.length} rows`);
 
-    // Add cell editing handlers if user can edit (either CAN_EDIT permission OR suggest mode is ON)
-    const canEdit = userPermission === 'CAN_EDIT' || suggestMode;
+    // Add cell editing handlers if user can edit (either edit permission OR suggest mode is ON)
+    const canEdit = userPermission === 'edit' || suggestMode;
     if (canEdit) {
         setTimeout(() => {
             attachCellEditHandlers();
@@ -173,8 +173,8 @@ function renderTableRow(row) {
     const bgColor = getConfidenceColor(confidence);
     const rowData = row.data || {};
 
-    // Create cells (editable if user has CAN_EDIT permission OR if Suggest Mode is ON)
-    const canEdit = userPermission === 'CAN_EDIT' || suggestMode;
+    // Create cells (editable if user has edit permission OR if Suggest Mode is ON)
+    const canEdit = userPermission === 'edit' || suggestMode;
     const cells = columnNames.map(col => {
         const value = rowData[col] || '';
         const editableAttr = canEdit ? 'contenteditable="true"' : '';
@@ -182,7 +182,7 @@ function renderTableRow(row) {
         return `<td class="${editableClass}" data-field="${col}" ${editableAttr}>${escapeHtml(value)}</td>`;
     }).join('');
 
-    // Add action column with comment button (all users can comment - CAN_VIEW minimum)
+    // Add action column with comment button (all users can comment - view minimum)
     const actionCell = `
         <td style="text-align:center; width:50px; padding:8px;">
             <button class="row-comment-btn" onclick="addRowComment('${row.row_id}')"
@@ -391,9 +391,9 @@ async function saveCellEdit(rowId, fieldName, newValue, cellElement) {
 
         let response, result;
 
-        // CAN_VIEW users MUST create suggestions (they can't do direct edits)
-        // CAN_EDIT users can choose: if suggest mode is ON, create suggestion; otherwise, direct edit
-        const mustUseSuggestions = userPermission !== 'CAN_EDIT' || suggestMode;
+        // view users MUST create suggestions (they can't do direct edits)
+        // edit users can choose: if suggest mode is ON, create suggestion; otherwise, direct edit
+        const mustUseSuggestions = userPermission !== 'edit' || suggestMode;
 
         if (mustUseSuggestions) {
             // Create suggestion instead of direct edit
@@ -588,7 +588,7 @@ async function submitShare() {
         // Close modal and reset form
         $('#shareModal').modal('hide');
         $('#share-email').val('');
-        $('#share-permission').val('CAN_VIEW');
+        $('#share-permission').val('view');
 
         const recipientName = result.recipient_name || email;
         alert(`Project shared successfully with ${recipientName} (${email})`);
@@ -649,8 +649,8 @@ async function loadPermissions() {
                     <div style="margin-left:16px;">
                         <select class="permission-select" data-user-id="${p.user_id}"
                                 style="padding:6px 12px; background:#2a2a2a; color:#fff; border:1px solid #444; border-radius:4px;">
-                            <option value="CAN_VIEW" ${p.permission_level === 'CAN_VIEW' ? 'selected' : ''}>Can View</option>
-                            <option value="CAN_EDIT" ${p.permission_level === 'CAN_EDIT' ? 'selected' : ''}>Can Edit</option>
+                            <option value="view" ${p.permission_level === 'view' ? 'selected' : ''}>View</option>
+                            <option value="edit" ${p.permission_level === 'edit' ? 'selected' : ''}>Edit</option>
                         </select>
                     </div>
                     <button class="btn btn-sm btn-danger" onclick="revokePermission('${p.user_id}')"
@@ -1221,7 +1221,7 @@ function renderSuggestionCard(suggestion) {
                 </div>
             ` : ''}
 
-            ${(userPermission === 'CAN_EDIT' || isOwner) ? `
+            ${(userPermission === 'edit' || isOwner) ? `
                 <div class="suggestion-actions">
                     <button class="btn-reject-suggestion" onclick="rejectSuggestion('${suggestion.suggestion_id}')">
                         <i class="fas fa-times"></i> Reject

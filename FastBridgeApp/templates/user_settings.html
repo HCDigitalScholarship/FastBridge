@@ -234,9 +234,8 @@
 
         let html = '';
         data.shared_lists.forEach(list => {
-          const permissionColor = list.permission === 'admin' ? '#22b3b3' : list.permission === 'edit' ? '#ffb366' : '#ccc';
-          const permissionIcon = list.permission === 'admin' ? '👑' : list.permission === 'edit' ? '✏️' : '👁️';
-          const isAdmin = list.permission === 'admin';
+          const permissionColor = list.permission === 'edit' ? '#22b3b3' : list.permission === 'contribute' ? '#ffb366' : '#ccc';
+          const isAdmin = list.permission === 'edit';
 
           html += `
             <div style="background:#333; padding:12px; border-radius:6px; margin-bottom:12px;">
@@ -246,7 +245,7 @@
                   <span style="color:#ccc; margin-left:8px;">(${list.language})</span>
                   <br>
                   <small style="color:#aaa;">Shared by: ${list.owner_name}</small>
-                  <span style="color:${permissionColor}; margin-left:12px; font-weight:600;">${permissionIcon} ${list.permission}</span>
+                  <span style="color:${permissionColor}; margin-left:12px; font-weight:600;">${list.permission}</span>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                   ${isAdmin ? `<button class="manage-shared-permissions-btn" data-list="${list.list_name}" data-lang="${list.language}" data-owner="${list.owner_id}" style="background:#ffb366; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.9rem; font-weight:600;">Manage Permissions</button>` : ''}
@@ -259,7 +258,7 @@
 
         container.innerHTML = html;
 
-        // Attach Manage Permissions event listeners for admin users
+        // Attach Manage Permissions event listeners for editors
         document.querySelectorAll('.manage-shared-permissions-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             const listName = btn.getAttribute('data-list');
@@ -339,8 +338,8 @@
                 <label style='display:block; color:#fff; margin-bottom:4px; font-size:0.9rem;'>Permission:</label>
                 <select id='new-permission-level' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff;'>
                   <option value='view'>View — see words only</option>
-                  <option value='edit' selected>Edit — view + add words</option>
-                  <option value='admin'>Admin — edit + remove words + manage access</option>
+                  <option value='contribute' selected>Contribute — view + add words</option>
+                  <option value='edit'>Edit — contribute + remove words + manage access</option>
                 </select>
               </div>
               <button id='grant-access-btn' style='flex:0 0 auto; background:#22b3b3; color:#fff; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-weight:600;'>Grant Access</button>
@@ -405,7 +404,7 @@
               language: language,
               recipient_email: email,
               permission: permission,
-              owner_id: ownerId  // Pass owner_id for admin users
+              owner_id: ownerId  // Pass owner_id for lists that can be fully edited
             })
           });
 
@@ -472,7 +471,7 @@
 
         let html = '';
         data.permissions.forEach(perm => {
-          const permissionColor = perm.permission === 'admin' ? '#22b3b3' : perm.permission === 'edit' ? '#ffb366' : '#ccc';
+          const permissionColor = perm.permission === 'edit' ? '#22b3b3' : perm.permission === 'contribute' ? '#ffb366' : '#ccc';
           const isSelf = perm.user_id === currentUserId;
 
           html += `
@@ -486,12 +485,12 @@
               </div>
               <div style='display:flex; gap:8px; align-items:center;'>
                 ${isSelf ?
-                  `<span style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>${perm.permission === 'admin' ? '👑' : perm.permission === 'edit' ? '✏️' : '👁️'} ${perm.permission.charAt(0).toUpperCase() + perm.permission.slice(1)}</span>`
+                  `<span style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>${perm.permission.charAt(0).toUpperCase() + perm.permission.slice(1)}</span>`
                   :
                   `<select class='permission-change' data-user-id='${perm.user_id}' data-original='${perm.permission}' style='padding:4px 8px; border-radius:4px; border:1px solid ${permissionColor}; background:#222; color:${permissionColor}; font-weight:600;'>
-                    <option value='view' ${perm.permission === 'view' ? 'selected' : ''}>👁️ View — see words only</option>
-                    <option value='edit' ${perm.permission === 'edit' ? 'selected' : ''}>✏️ Edit — view + add words</option>
-                    <option value='admin' ${perm.permission === 'admin' ? 'selected' : ''}>👑 Admin — edit + remove words + manage access</option>
+                    <option value='view' ${perm.permission === 'view' ? 'selected' : ''}>View — see words only</option>
+                    <option value='contribute' ${perm.permission === 'contribute' ? 'selected' : ''}>Contribute — view + add words</option>
+                    <option value='edit' ${perm.permission === 'edit' ? 'selected' : ''}>Edit — contribute + remove words + manage access</option>
                   </select>
                   <button class='revoke-btn' data-user-id='${perm.user_id}' style='background:#ff6666; color:#fff; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:0.9rem;'>Revoke</button>`
                 }
@@ -527,7 +526,7 @@
                   language: language,
                   recipient_id: userId,
                   new_permission: newPermission,
-                  owner_id: ownerId  // Pass owner_id for admin users
+                  owner_id: ownerId  
                 })
               });
 
@@ -539,7 +538,7 @@
 
                 // Update the UI without full reload - just update colors and data attribute
                 select.setAttribute('data-original', newPermission);
-                const permissionColor = newPermission === 'admin' ? '#22b3b3' : newPermission === 'edit' ? '#ffb366' : '#ccc';
+                const permissionColor = newPermission === 'edit' ? '#22b3b3' : newPermission === 'contribute' ? '#ffb366' : '#ccc';
                 select.style.borderColor = permissionColor;
                 select.style.color = permissionColor;
 
@@ -581,7 +580,7 @@
                   list_name: listName,
                   language: language,
                   recipient_id: userId,
-                  owner_id: ownerId  // Pass owner_id for admin users
+                  owner_id: ownerId  
                 })
               });
 

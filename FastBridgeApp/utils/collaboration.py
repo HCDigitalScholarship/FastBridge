@@ -99,17 +99,17 @@ class PermissionPolicy:
 # Per-resource policies: the single place where each resource's roles live.
 _LIST_POLICY = PermissionPolicy(
     level_enum=PermissionLevel,
-    ordered_levels=(PermissionLevel.VIEW, PermissionLevel.EDIT, PermissionLevel.ADMIN),
-    owner_level=PermissionLevel.ADMIN,
+    ordered_levels=(PermissionLevel.VIEW, PermissionLevel.CONTRIBUTE, PermissionLevel.EDIT),
+    owner_level=PermissionLevel.EDIT,
     default_level=PermissionLevel.VIEW,
     resource_noun="list",
 )
 
 _LEMMA_POLICY = PermissionPolicy(
     level_enum=LemmaPermissionLevel,
-    ordered_levels=(LemmaPermissionLevel.CAN_VIEW, LemmaPermissionLevel.CAN_EDIT),
-    owner_level=LemmaPermissionLevel.CAN_EDIT,
-    default_level=LemmaPermissionLevel.CAN_VIEW,
+    ordered_levels=(LemmaPermissionLevel.VIEW, LemmaPermissionLevel.EDIT),
+    owner_level=LemmaPermissionLevel.EDIT,
+    default_level=LemmaPermissionLevel.VIEW,
     resource_noun="project",
 )
 
@@ -160,9 +160,9 @@ class PermissionChecker:
         Returns:
             Tuple of (has_permission, actual_permission_level)
         """
-        # Owner always has admin permission, so skip the lookup entirely.
+        # Owner always has the top permission, so skip the lookup entirely.
         if user_id == owner_id:
-            return True, PermissionLevel.ADMIN
+            return True, PermissionLevel.EDIT
 
         permissions = PermissionChecker._get_list_permissions(owner_id, language, list_name)
         return _LIST_POLICY.evaluate(user_id, owner_id, permissions, required_permission)
@@ -253,7 +253,7 @@ class LemmaPermissionChecker:
             Permission level or None
         """
         _, permission = await LemmaPermissionChecker.check_project_permission(
-            user_id, project_id, LemmaPermissionLevel.CAN_VIEW
+            user_id, project_id, LemmaPermissionLevel.VIEW
         )
         return permission
 

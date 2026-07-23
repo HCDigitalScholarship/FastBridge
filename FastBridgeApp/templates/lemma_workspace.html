@@ -50,14 +50,14 @@
             <i class="fas fa-history" style="margin-right:6px;"></i>
             History
           </button>
-          <button id="view-suggestions-btn" class="toolbar-btn" title="{% if permission == 'CAN_EDIT' or is_owner %}Review pending suggestions{% else %}View your suggestions{% endif %}">
+          <button id="view-suggestions-btn" class="toolbar-btn" title="{% if permission == 'edit' or is_owner %}Review pending suggestions{% else %}View your suggestions{% endif %}">
             <i class="fas fa-lightbulb" style="margin-right:6px;"></i>
             Suggestions
             <span id="suggestions-count-badge" style="background:#ff6b6b; color:#fff; font-size:0.75rem; padding:2px 6px; border-radius:10px; margin-left:6px; display:none;">0</span>
           </button>
           <span id="permission-badge" style="background:#555; color:#fff; font-size:0.85rem; padding:6px 12px; border-radius:4px;">
-            <i class="fas fa-{% if permission == 'CAN_EDIT' %}edit{% else %}eye{% endif %}" style="margin-right:6px;"></i>
-            {{ permission.replace('CAN_', '') }}
+            <i class="fas fa-{% if permission == 'edit' %}edit{% else %}eye{% endif %}" style="margin-right:6px;"></i>
+            {{ permission.capitalize() }}
           </span>
         </div>
       </div>
@@ -548,12 +548,12 @@
               <label for="share-permission">Permission Level</label>
               <select class="form-control" id="share-permission"
                       style="background:#2a2a2a; color:#fff; border:1px solid #444;">
-                <option value="CAN_VIEW">Can View (read-only + comments)</option>
-                <option value="CAN_EDIT">Can Edit (modify cells)</option>
+                <option value="view">View (read-only + comments)</option>
+                <option value="edit">Edit (modify cells)</option>
               </select>
               <small class="form-text text-muted">
-                <strong>Can View:</strong> Read-only access with ability to add comments.<br>
-                <strong>Can Edit:</strong> Full editing access to modify cell values.
+                <strong>View:</strong> Read-only access with ability to add comments.<br>
+                <strong>Edit:</strong> Full editing access to modify cell values.
               </small>
             </div>
           </form>

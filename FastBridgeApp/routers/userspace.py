@@ -284,10 +284,10 @@ async def list_study_page(
         raise HTTPException(status_code=404, detail="List not found")
 
     # Privileges drive which action buttons the page shows; the endpoints
-    # re-check server-side. Edit (add words) needs owner or edit/admin; delete
-    # words needs owner or admin; list-level actions are owner-only.
-    can_edit = is_owner or permission in ("edit", "admin")
-    can_delete = is_owner or permission == "admin"
+    # re-check server-side. Adding words needs owner or contribute/edit; delete
+    # words needs owner or edit; list-level actions are owner-only.
+    can_edit = is_owner or permission in ("contribute", "edit")
+    can_delete = is_owner or permission == "edit"
     can_manage = is_owner
 
     # Per-user starred words for this list, read from the caller's own doc.
@@ -535,7 +535,7 @@ async def add_shared_list(request: Request, user=Depends(get_current_user_cookie
 
     elif mode == "live":
         # Store pointer in `shared_with_me` with permissions
-        permission = data.get("permission", "edit")  # Default permission for live mode
+        permission = data.get("permission", "contribute")  # Default permission for live mode
         list_name = shared_list.get("name")
         if not list_name:
             raise HTTPException(status_code=500, detail="Shared list is missing a name")
@@ -655,7 +655,7 @@ async def accept_list(share_id: str, user_token: str = Cookie(None)):
         # Live share — grant whatever level the owner set on the link (defaults
         # to view). Never downgrade a recipient who already holds a higher level,
         # e.g. one the owner granted via Manage Permissions.
-        rank = {"view": 0, "edit": 1, "admin": 2}
+        rank = {"view": 0, "contribute": 1, "edit": 2}
         link_permission = shared_list.get("link_permission", "view")
         if link_permission not in rank:
             link_permission = "view"
@@ -730,9 +730,9 @@ async def add_words(payload: ListCreate, user=Depends(get_current_user_cookie)):
         if not owner_id:
             raise HTTPException(status_code=404, detail="Shared list not found")
 
-        # Check permission (requires at least EDIT permission)
+        # Check permission (requires at least CONTRIBUTE permission)
         await PermissionChecker.require_permission(
-            user_id, owner_id, payload.language, payload.list_name, PermissionLevel.EDIT
+            user_id, owner_id, payload.language, payload.list_name, PermissionLevel.CONTRIBUTE
         )
 
         target_user_id = owner_id
@@ -828,7 +828,7 @@ async def grant_permission(
 ):
     """
     Grant permission to another user for a live-shared list.
-    Owner or admin users can grant permissions.
+    Owner or users with edit permission can grant permissions.
     """
     user_id = user.get("uid")
     if not user_id:
@@ -838,10 +838,10 @@ async def grant_permission(
     language = payload.language.value
     owner_id = payload.owner_id if payload.owner_id else user_id
 
-    # avoid admin users from changing their permission
+    # avoid users with edit permission from changing their permission
     if owner_id != user_id:
         await PermissionChecker.require_permission(
-            user_id, owner_id, language, payload.list_name, PermissionLevel.ADMIN
+            user_id, owner_id, language, payload.list_name, PermissionLevel.EDIT
         )
 
     # get list
@@ -930,7 +930,7 @@ async def modify_permission(
 ):
     """
     Modify existing permission level for a user.
-    Owner or admin users can modify permissions.
+    Owner or users with edit permission can modify permissions.
     """
     try:
         print(f"[MODIFY PERMISSION] Request from user {user.get('uid')} - Payload: {payload}")
@@ -951,10 +951,10 @@ async def modify_permission(
 
         print(f"[MODIFY PERMISSION] User: {user_id}, Owner: {owner_id}, Language: {language}, List: {payload.list_name}")
 
-        # If modifying on someone else's list, check ADMIN permission
+        # If modifying on someone else's list, check EDIT permission
         if owner_id != user_id:
             await PermissionChecker.require_permission(
-                user_id, owner_id, language, payload.list_name, PermissionLevel.ADMIN
+                user_id, owner_id, language, payload.list_name, PermissionLevel.EDIT
             )
 
         # Verify list exists and permission exists
@@ -1071,7 +1071,7 @@ async def revoke_permission(
 ):
     """
     Revoke access from a user (owner action).
-    Owner or admin users can revoke permissions.
+    Owner or users with edit permission can revoke permissions.
     """
     user_id = user.get("uid")
     if not user_id:
@@ -1083,10 +1083,10 @@ async def revoke_permission(
 
     owner_id = payload.owner_id if payload.owner_id else user_id
 
-    # ensure user is an admin
+    # ensure user has edit permission
     if owner_id != user_id:
         await PermissionChecker.require_permission(
-            user_id, owner_id, language, payload.list_name, PermissionLevel.ADMIN
+            user_id, owner_id, language, payload.list_name, PermissionLevel.EDIT
         )
 
     doc = storage.lists.find_one(
@@ -1209,7 +1209,7 @@ async def unlink_shared_list(payload: UnlinkListRequest, user=Depends(get_curren
 async def delete_words(request: Request, user=Depends(get_current_user_cookie)):
     """
     Delete specific words from a list (with permission support for shared lists).
-    Requires ADMIN permission for shared lists, or ownership for own lists.
+    Requires EDIT permission for shared lists, or ownership for own lists.
     """
     user_id = user.get("uid")
     if not user_id:
@@ -1226,10 +1226,10 @@ async def delete_words(request: Request, user=Depends(get_current_user_cookie)):
 
     storage = atlas_client.get_database("App-Storage")
 
-    # If deleting from another user's list, check ADMIN permission
+    # If deleting from another user's list, check EDIT permission
     if owner_id != user_id:
         await PermissionChecker.require_permission(
-            user_id, owner_id, language, list_name, PermissionLevel.ADMIN
+            user_id, owner_id, language, list_name, PermissionLevel.EDIT
         )
 
     # Get list
@@ -1332,7 +1332,7 @@ async def get_list_permissions(
 ):
     """
     Get all users who have access to a list.
-    Owner or admin users can view permissions.
+    Owner or users with edit permission can view permissions.
     """
     print("this should be here")
     user_id = user.get("uid")
@@ -1345,10 +1345,10 @@ async def get_list_permissions(
     if not owner_id:
         owner_id = user_id
 
-    # If requesting permissions for someone else's list, check ADMIN permission
+    # If requesting permissions for someone else's list, check EDIT permission
     if owner_id != user_id:
         await PermissionChecker.require_permission(
-            user_id, owner_id, language, list_name, PermissionLevel.ADMIN
+            user_id, owner_id, language, list_name, PermissionLevel.EDIT
         )
 
     # Find the list
@@ -1445,7 +1445,7 @@ async def get_shared_lists_summary(user=Depends(get_current_user_cookie)):
                         "owner_name": owner_name,
                         "language": lang,
                         "list_name": list_info,
-                        "permission": "edit",
+                        "permission": "contribute",
                         "shared_at": None
                     })
 

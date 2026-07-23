@@ -194,12 +194,12 @@
         "<div role='dialog' aria-modal='true' aria-labelledby='share-modal-title' style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:460px; box-shadow:0 2px 16px rgba(34,179,179,0.18);'>" +
         "<h3 id='share-modal-title' style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>" + S.listName + "</span> (" + S.language + ")</h3>" +
         "<div style='margin-bottom:18px;'><label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>" +
-        "<input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>" +
-        "<input type='radio' name='share-mode' id='share-live' value='live'> <label for='share-live' style='color:#22b3b3;'>Live Share (shared reference with permissions)</label></div>" +
+        "<input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy (allow others to make a copy)</label><br>" +
+        "<input type='radio' name='share-mode' id='share-live' value='live'> <label for='share-live' style='color:#22b3b3;'>Share (invite others to collaborate on this list)</label></div>" +
         "<div id='permission-select-div' style='margin-bottom:18px; display:none;'>" +
-        "<label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Live Share:</label><br>" +
+        "<label for='share-permission' style='font-weight:600; color:#fff;'>Default Permission for Share:</label><br>" +
         "<select id='share-permission' style='width:100%; padding:8px; border-radius:4px; border:1px solid #22b3b3; background:#222; color:#fff; margin-top:6px;'>" +
-        "<option value='view'>View only (see words)</option><option value='edit' selected>Edit (view + add words)</option><option value='admin'>Admin (edit + remove words + manage access)</option></select></div>" +
+        "<option value='view'>View only (see words)</option><option value='contribute' selected>Contribute (view + add words)</option><option value='edit'>Edit (contribute + remove words + manage access)</option></select></div>" +
         "<div id='share-list-message' role='status' aria-live='polite' style='color:#ffb366; margin-bottom:10px;'></div>" +
         "<div style='display:flex; gap:12px; justify-content:flex-end;'>" +
         "<button id='share-list-confirm-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Get Share Link</button>" +
