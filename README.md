@@ -46,7 +46,7 @@ End-to-end tests (Playwright + accessibility) live in `FastBridgeApp/tests/e2e/`
 
 ### Notes
 
-Use python 3.11
+Use python 3.12
 
 ## Requirements.txt notes
 
