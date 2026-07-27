@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-import google.generativeai as genai
 from stats_prompts import get_stats_summary, get_stats_compare_summary
 from dotenv import load_dotenv
 import os
@@ -12,6 +11,98 @@ from MongoDefinitionTools import get_title_location_levels, mg_get_locations, mg
 from TextAnalyzer import TextAnalyzer
 
 load_dotenv("FastBridgeApp/.env")
+
+
+def _collect_analyzer_metrics(analyzer):
+    """
+    Helper function to collect all metrics from a TextAnalyzer instance.
+
+    Returns: dict with all computed metrics
+    """
+    metrics = {}
+
+    # Basic metrics
+    metrics['textname'] = analyzer.get_textname()
+    metrics['word_count'] = analyzer.num_words()
+    metrics['vocab_size'] = analyzer.vocab_size()
+    metrics['hapax'], metrics['hapax_percentage'] = analyzer.hapax_legonema()
+
+    # Lexical metrics
+    metrics['lex_dens'] = analyzer.lex_density()
+    metrics['lex_sophistication'] = analyzer.lex_sophistication()
+    metrics['lex_variation'] = analyzer.lex_variation()
+    metrics['lex_r'] = analyzer.LexR()
+    metrics['total_words_no_p'] = analyzer.totalWordsNoProper()
+    metrics['unique_words_no_p'] = analyzer.uniqueWordsNoProper()
+    metrics['avgWordLength'] = analyzer.avgWordLength()
+    metrics['top20NoDie300'] = analyzer.top20NoDie300()
+
+    # Frequency bins
+    (metrics['freqBin1'], metrics['freqBin2'], metrics['freqBin3'],
+     metrics['freqBin4'], metrics['freqBin5'], metrics['freqBin6']) = analyzer.freqBinMetrics()
+
+    # Readability scores
+    metrics['spache_score'] = analyzer.spache_score()
+    metrics['dale_chall'], metrics['new_dale_chall'] = analyzer.dale_chall_score()
+    metrics['ari'] = analyzer.ari_score()
+    metrics['coleman_liau'] = analyzer.coleman_liau_score()
+    metrics['lix_score'] = analyzer.lix_score()
+    metrics['rix_score'] = analyzer.rix_score()
+    metrics['smog_score'] = analyzer.smog_score()
+
+    return metrics
+
+
+def _build_context_dict(metrics, starts, ends, multiple_texts, plot_paths):
+    """
+    Helper function to build context dictionary for template rendering.
+
+    Args:
+        metrics: dict returned from _collect_analyzer_metrics
+        starts: start section(s) as string
+        ends: end section(s) as string
+        multiple_texts: boolean indicating if multiple texts are being analyzed
+        plot_paths: dict with keys 'freq_plot', 'cum_lex_plot', 'lin_lex_plot', 'freq_bins_plot'
+
+    Returns: dict for template context
+    """
+    context = {
+        "text_name": metrics['textname'] if not multiple_texts else metrics['textname'].split(" + "),
+        "start_section": starts if not multiple_texts else starts.split("+"),
+        "end_section": ends if not multiple_texts else ends.split("+"),
+        "word_count": metrics['word_count'],
+        "vocab_size": metrics['vocab_size'],
+        "hapax_legomena": metrics['hapax'],
+        "hapax_percentage": metrics['hapax_percentage'],
+        "lexical_density": metrics['lex_dens'],
+        "lexical_sophistication": metrics['lex_sophistication'],
+        "lexical_variation": metrics['lex_variation'],
+        "LexR": metrics['lex_r'],
+        "smog": metrics['smog_score'],
+        "total_words_no_proper": metrics['total_words_no_p'],
+        "unique_words_no_proper": metrics['unique_words_no_p'],
+        "avg_word_length": metrics['avgWordLength'],
+        "top20_NoDie300": metrics['top20NoDie300'],
+        "freq1": metrics['freqBin1'],
+        "freq2": metrics['freqBin2'],
+        "freq3": metrics['freqBin3'],
+        "freq4": metrics['freqBin4'],
+        "freq5": metrics['freqBin5'],
+        "freq6": metrics['freqBin6'],
+        "spache": metrics['spache_score'],
+        "new_dale_chall": metrics['new_dale_chall'],
+        "dale_chall": metrics['dale_chall'],
+        "ari": metrics['ari'],
+        "coleman_liau": metrics['coleman_liau'],
+        "lix": metrics['lix_score'],
+        "rix": metrics['rix_score'],
+        "freq_plot_path": plot_paths['freq_plot'],
+        "cum_lex_plot_path": plot_paths['cum_lex_plot'],
+        "lin_lex_plot_path": plot_paths['lin_lex_plot'],
+        "freq_bins_plot_path": plot_paths['freq_bins_plot'],
+    }
+
+    return context
 
 
 def stats_compare_result(request, context, sourcetexts, starts, ends, language):
@@ -25,14 +116,17 @@ def stats_compare_result(request, context, sourcetexts, starts, ends, language):
         analyzer = TextAnalyzer()
         analyzer.add_text(analyzer_texts[i], language, analyzer_starts[i], analyzer_ends[i])
         analyzers.append(analyzer)
-    
 
     # Getting Metrics, Hapax
     text_names = [a.texts[0][0].name for a in analyzers]
     text_starts = [a.texts[0][1] for a in analyzers]
     text_ends = [a.texts[0][2] for a in analyzers]
 
-    texts_and_sections = mg_get_sections("Latin")
+    texts_and_sections = mg_get_sections(language)
+
+    # Clean up analyzer resources
+    for analyzer in analyzers:
+        del analyzer
 
     # add analyzer stats from each text to context
     context.update({
@@ -49,18 +143,20 @@ def stats_compare_result(request, context, sourcetexts, starts, ends, language):
 router = APIRouter()
 router_path = Path.cwd()
 templates = Jinja2Templates(directory="templates")
+from utils.assets import static_v
+templates.env.globals["static_v"] = static_v
 """Expected Prefix: /stats"""
 
 @router.get("/")
-async def stats_index(request: Request):
+def stats_index(request: Request):
     return templates.TemplateResponse("stats-list-index.html", {"request": request})
 
 @router.get("/mode-select/")
-async def stats_mode_selector(request: Request):
+def stats_mode_selector(request: Request):
     return templates.TemplateResponse("stats-mode-selector.html", {"request": request})
 
 @router.get("/{language}/{mode}/")
-async def stats_select(request: Request, language: str, mode: str):
+def stats_select(request: Request, language: str, mode: str):
     try:
         with open(f"data/Static/{language}_titles.json", "r", encoding="utf-8") as f:
             cache = json.load(f)
@@ -76,29 +172,26 @@ async def stats_select(request: Request, language: str, mode: str):
 
 
 @router.get("/select/sections/{textname}/{language}/")
-async def stats_select_section(request: Request, textname: str, language: str):
-    
+def stats_select_section(textname: str, language: str):
     try:
         sectionDict = mg_get_sections(language, textname)
-    except Exception as e:
+    except Exception:
         sectionDict = mg_get_locations(language, textname, get_index=False)
-        
+
     return sectionDict
 
 
 @router.post("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
 @router.get("/{language}/{mode}/result/{sourcetexts}/{starts}-{ends}/{running_list}/")
-async def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
-    global context
-    
+def stats_simple_result(request: Request, starts: str, ends: str, sourcetexts: str, language: str, running_list: str, mode: str):
     context = {}
     running_list = running_list == "running"
 
-    if mode == 'Compare': return stats_compare_result(request, context, sourcetexts, starts, ends, language)
-    
-    analyzer = TextAnalyzer()
+    if mode == 'Compare':
+        return stats_compare_result(request, context, sourcetexts, starts, ends, language)
 
-    # check for multiple texts
+    # Create and populate analyzer
+    analyzer = TextAnalyzer()
     multiple_texts = '+' in sourcetexts
 
     if multiple_texts:
@@ -111,154 +204,61 @@ async def stats_simple_result(request: Request, starts: str, ends: str, sourcete
     else:
         analyzer.add_text(sourcetexts, language, starts, ends)
 
-    textname = analyzer.get_textname()
-    word_count = analyzer.num_words()
-    vocab_size = analyzer.vocab_size()
-    hapax, hapax_percentage = analyzer.hapax_legonema()
-    lex_dens = analyzer.lex_density()
-    lex_sophistication = analyzer.lex_sophistication()
-    lex_variation = analyzer.lex_variation()
-    lex_r = analyzer.LexR()
-    total_words_no_p = analyzer.totalWordsNoProper()
-    unique_words_no_p = analyzer.uniqueWordsNoProper()
-    avgWordLength = analyzer.avgWordLength()
-    top20NoDie300 = analyzer.top20NoDie300()
-    freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
-    spache_score = analyzer.spache_score()
-    dale_chall, new_dale_chall = analyzer.dale_chall_score()
-    ari = analyzer.ari_score()
-    coleman_liau = analyzer.coleman_liau_score()
-    lix_score = analyzer.lix_score()
-    rix_score = analyzer.rix_score()
-    smog_score = analyzer.smog_score()
+    # Collect metrics using helper function
+    metrics = _collect_analyzer_metrics(analyzer)
 
+    # Generate plots
+    plot_paths = {
+        'freq_plot': analyzer.plot_word_freq(),
+        'cum_lex_plot': analyzer.plot_cum_lex_load(),
+        'lin_lex_plot': analyzer.plot_lin_lex_load(),
+        'freq_bins_plot': analyzer.plot_freq_bin(),
+    }
 
-    freq_plot_path = analyzer.plot_word_freq()
-    cum_lex_plot_path = analyzer.plot_cum_lex_load()
-    lin_lex_plot_path = analyzer.plot_lin_lex_load()
-    freq_bins_plot_path = analyzer.plot_freq_bin()
-    
-    context.update({
-        "text_name": textname if not multiple_texts else textname.split(" + "),
-        "start_section": starts if not multiple_texts else starts.split("+"),
-        "end_section": ends if not multiple_texts else ends.split("+"),
-        "word_count": word_count,
-        "vocab_size": vocab_size,
-        "hapax_legomena": hapax,
-        "hapax_percentage": hapax_percentage,
-        "lexical_density": lex_dens,
-        "lexical_sophistication": lex_sophistication,
-        "lexical_variation": lex_variation,
-        "LexR": lex_r,
-        "smog": smog_score,
-        "total_words_no_proper": total_words_no_p,
-        "unique_words_no_proper": unique_words_no_p,
-        "avg_word_length": avgWordLength,
-        "top20_NoDie300": top20NoDie300,
-        "freq1": freqBin1,
-        "freq2": freqBin2,
-        "freq3": freqBin3,
-        "freq4": freqBin4,
-        "freq5": freqBin5,
-        "freq6": freqBin6,
-        "spache": spache_score,
-        "new_dale_chall": new_dale_chall,
-        "dale_chall": dale_chall,
-        "ari": ari,
-        "coleman_liau": coleman_liau,
-        "lix": lix_score,
-        "rix": rix_score,
-        "freq_plot_path": freq_plot_path,
-        "cum_lex_plot_path": cum_lex_plot_path,
-        "lin_lex_plot_path": lin_lex_plot_path,
-        "freq_bins_plot_path": freq_bins_plot_path,
-    })
+    # Clean up analyzer resources
+    del analyzer
+
+    # Build context using helper function
+    context = _build_context_dict(metrics, starts, ends, multiple_texts, plot_paths)
 
     return templates.TemplateResponse("stats-single-text.html", {"context": context, "request": request})
    
 @router.get("/get_metrics/{text_name}/{section_start}-{section_end}/{selected_index}")
-async def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
-    global context
-    context = {}
-    
+def get_metrics_html(request: Request, text_name: str, section_start: str, section_end: str, selected_index: int):
     analyzer = TextAnalyzer()
-    
+
     analyzer.add_text(text_name, "Latin", section_start, section_end)
 
-    textname = analyzer.get_textname()
-    word_count = analyzer.num_words()
-    vocab_size = analyzer.vocab_size()
-    hapax, hapax_percentage = analyzer.hapax_legonema()
-    lex_dens = analyzer.lex_density()
-    lex_sophistication = analyzer.lex_sophistication()
-    lex_variation = analyzer.lex_variation()
-    lex_r = analyzer.LexR()
-    total_words_no_p = analyzer.totalWordsNoProper()
-    unique_words_no_p = analyzer.uniqueWordsNoProper()
-    avgWordLength = analyzer.avgWordLength()
-    top20NoDie300 = analyzer.top20NoDie300()
-    freqBin1, freqBin2, freqBin3, freqBin4, freqBin5, freqBin6 = analyzer.freqBinMetrics()
-    spache_score = analyzer.spache_score()
-    dale_chall, new_dale_chall = analyzer.dale_chall_score()
-    ari = analyzer.ari_score()
-    coleman_liau = analyzer.coleman_liau_score()
-    lix_score = analyzer.lix_score()
-    rix_score = analyzer.rix_score()
-    smog_score = analyzer.smog_score()
-    
-    # Remove file path references and use database for plots (if applicable)
+    # Collect metrics using helper function
+    metrics = _collect_analyzer_metrics(analyzer)
+
+    # Calculate plot path numbers for multiple text comparison
     plotpath_nums = [0, 1, 2, 3]
-    if selected_index > 0:  # if the selected index isn't the first set of graphs
+    if selected_index > 0:
         plotpath_nums = [num + (4 * selected_index) for num in plotpath_nums]
 
-    freq_plot_path = analyzer.plot_word_freq(plotpath_nums[0])
-    cum_lex_plot_path = analyzer.plot_cum_lex_load(plotpath_nums[1])
-    lin_lex_plot_path = analyzer.plot_lin_lex_load(plotpath_nums[2])
-    freq_bins_plot_path = analyzer.plot_freq_bin(plotpath_nums[3])
+    # Generate plots with custom indices
+    plot_paths = {
+        'freq_plot': analyzer.plot_word_freq(plotpath_nums[0]),
+        'cum_lex_plot': analyzer.plot_cum_lex_load(plotpath_nums[1]),
+        'lin_lex_plot': analyzer.plot_lin_lex_load(plotpath_nums[2]),
+        'freq_bins_plot': analyzer.plot_freq_bin(plotpath_nums[3]),
+    }
 
-    now = datetime.now()  # for caching issue with plots
-    
-    context.update({
-        "text_name": textname,
-        "start_section": section_start,
-        "end_section": section_end,
-        "word_count": word_count,
-        "vocab_size": vocab_size,
-        "hapax_legomena": hapax,
-        "hapax_percentage": hapax_percentage,
-        "lexical_density": lex_dens,
-        "lexical_sophistication": lex_sophistication,
-        "lexical_variation": lex_variation,
-        "LexR": lex_r,
-        "smog": smog_score,
-        "total_words_no_proper": total_words_no_p,
-        "unique_words_no_proper": unique_words_no_p,
-        "avg_word_length": avgWordLength,
-        "top20_NoDie300": top20NoDie300,
-        "freq1": freqBin1,
-        "freq2": freqBin2,
-        "freq3": freqBin3,
-        "freq4": freqBin4,
-        "freq5": freqBin5,
-        "freq6": freqBin6,
-        "spache": spache_score,
-        "new_dale_chall": new_dale_chall,
-        "dale_chall": dale_chall,
-        "ari": ari,
-        "coleman_liau": coleman_liau,
-        "lix": lix_score,
-        "rix": rix_score,
-        "freq_plot_path": freq_plot_path,
-        "cum_lex_plot_path": cum_lex_plot_path,
-        "lin_lex_plot_path": lin_lex_plot_path,
-        "freq_bins_plot_path": freq_bins_plot_path,
-    })
+    # Clean up analyzer
+    del analyzer
+
+    # Build context using helper function (single text mode)
+    context = _build_context_dict(metrics, section_start, section_end, False, plot_paths)
+
+    # Timestamp for cache busting plots
+    now = datetime.now()
 
     return templates.TemplateResponse('stats-column-data.html', {"context": context, "request": request, "now": now})
 
 
 @router.get("/formulas")
-async def read_formulas(request: Request):
+def read_formulas(request: Request):
     return templates.TemplateResponse("stats-formulas.html", {"request": request})
 
 
@@ -271,11 +271,15 @@ class ChatRequest(BaseModel):
     initial: bool = False
     mode: str = "single"  # "single" or "compare"
 
-api_key = os.getenv("API_KEY")
-genai.configure(api_key=api_key)
 
 @router.post("/chat")
 def chat(req: ChatRequest):
+    # Import genai only when chat endpoint is used (lazy import)
+    import google.generativeai as genai
+
+    api_key = os.getenv("API_KEY")
+    genai.configure(api_key=api_key)
+
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     if req.history:

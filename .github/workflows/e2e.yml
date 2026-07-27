@@ -1,0 +1,81 @@
+name: e2e
+
+# Non-blocking on purpose: this runs the Playwright + accessibility checks but is NOT a
+# required status check yet. It is expected to fail while issues get fixed. Promote it to a
+# required check (in Settings -> Branches) around end of summer, once it's reliably green.
+on:
+  pull_request:
+    branches: [dev, master]
+  push:
+    branches: [dev, master]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write   # lets the workflow publish the neutral/green accessibility check run
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # The harness stubs Firebase + the torch NLP stack, so it needs the web + Mongo
+      # libraries but not the full requirements.txt. email-validator (userspace models) and
+      # requests (firebase_auth import) are the two extra runtime imports the mounted routers
+      # pull in beyond the base set.
+      - name: Install Python deps
+        run: pip install -r requirements-dev.txt fastapi jinja2 python-multipart httpx pymongo python-dotenv uvicorn email-validator requests
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        working-directory: FastBridgeApp/tests/e2e
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      # Don't fail the job on a11y/e2e failures. The next step publishes the real result as a
+      # neutral ("not green yet") check instead, so the signal is honest without a red X while
+      # the suite is non-blocking. When we promote it to a required check, delete
+      # continue-on-error and the neutral mapping so real failures go red and block the merge.
+      - name: Run Playwright (accessibility + e2e)
+        id: e2e
+        working-directory: FastBridgeApp/tests/e2e
+        continue-on-error: true
+        run: npm test
+
+      - name: Publish accessibility result (neutral until green)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const passed = '${{ steps.e2e.outcome }}' === 'success';
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'accessibility (a11y)',
+              head_sha: context.payload.pull_request?.head.sha ?? context.sha,
+              status: 'completed',
+              conclusion: passed ? 'success' : 'neutral',
+              output: {
+                title: passed ? 'Accessibility checks passed' : 'Not green yet (non-blocking)',
+                summary: passed
+                  ? 'All e2e + axe checks passed.'
+                  : 'e2e + axe ran but are not green yet. Neutral and non-blocking until the '
+                    + 'a11y issues are fixed; this becomes a blocking (red-on-failure) check later.',
+              },
+            });

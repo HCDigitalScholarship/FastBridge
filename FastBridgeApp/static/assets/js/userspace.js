@@ -1,36 +1,22 @@
 // Import Shared List logic
 const importSharedBtn = document.getElementById('import-shared-btn');
 if (importSharedBtn) {
-    importSharedBtn.addEventListener('click', async () => {
-        const link = document.getElementById('import-shared-link').value.trim();
-        const language = document.getElementById('import-shared-language').value;
-        const mode = document.getElementById('import-shared-mode').value;
+    importSharedBtn.addEventListener('click', () => {
+        const raw = document.getElementById('import-shared-link').value.trim();
         const messageDiv = document.getElementById('import-shared-message');
-        if (!link || !language || !mode) {
-            messageDiv.textContent = 'Please enter the shared link/code, select language, and mode.';
+        if (!raw) {
+            messageDiv.textContent = 'Please paste a share link.';
             return;
         }
-        messageDiv.textContent = 'Importing shared list...';
+        // Accept a full URL or a bare share_id
+        let target;
         try {
-            const resp = await fetch('/userspace/add_shared_list', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    share_link: link,
-                    language: language,
-                    mode: mode
-                })
-            });
-            const data = await resp.json();
-            if (data.success) {
-                messageDiv.textContent = 'Shared list imported successfully! Refreshing page...';
-                setTimeout(() => { window.location.reload(); }, 2000);
-            } else {
-                messageDiv.textContent = data.message || 'Error importing shared list.';
-            }
+            const url = new URL(raw);
+            target = url.pathname;
         } catch {
-            messageDiv.textContent = 'Error importing shared list.';
+            target = `/userspace/accept-list/${raw}`;
         }
+        window.location.href = target;
     });
 }
 // Reusable modal for word selection
@@ -48,14 +34,14 @@ function showWordSelectModal({lang, list, onSave, saveLabel = 'Save', cancelLabe
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
     modal.innerHTML = `
-        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:520px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
-            <h3 style='color:#22b3b3; margin-bottom:18px;'>${title}${list ? ` <span style='color:#ffb366;'>${list}</span>` : ''} (${lang})</h3>
-            <input id='word-select-search' type='text' placeholder='Search for a word...' style='width:100%; padding:8px 12px; border-radius:6px; border:none; margin-bottom:12px; font-size:1rem;'>
+        <div role='dialog' aria-modal='true' aria-labelledby='word-select-title' style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:520px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
+            <h3 id='word-select-title' style='color:#22b3b3; margin-bottom:18px;'>${title}${list ? ` <span style='color:#ffb366;'>${list}</span>` : ''} (${lang})</h3>
+            <input id='word-select-search' type='text' placeholder='Search for a word...' aria-label='Search for words to add' style='width:100%; padding:8px 12px; border-radius:6px; border:none; margin-bottom:12px; font-size:1rem;'>
             <div id='word-select-table-container' style='max-height:220px; overflow-y:auto; margin-bottom:12px;'></div>
-            <div id='word-select-message' style='color:#ffb366; margin-bottom:10px;'></div>
+            <div id='word-select-message' role='status' aria-live='polite' style='color:#ffb366; margin-bottom:10px;'></div>
             <div style='display:flex; gap:12px; justify-content:flex-end;'>
-                <button id='word-select-save-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${saveLabel}</button>
-                <button id='word-select-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${cancelLabel}</button>
+                <button id='word-select-save-btn' aria-label='Save selected words to list' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${saveLabel}</button>
+                <button id='word-select-cancel-btn' aria-label='Cancel and close word selection' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>${cancelLabel}</button>
             </div>
         </div>
     `;
@@ -139,37 +125,40 @@ let selectedWords = [];
 // Tab data cache
 const tabDataCache = {};
 
-// Helper to fetch and display data 
+// Helper to fetch and display data
 async function fetchTabData(route, contentDiv) {
-    if (tabDataCache[route]) {
-        contentDiv.innerHTML = tabDataCache[route];
-        setTimeout(() => {
-            attachVocabListEvents();
-            attachSharedListEvents(); // Attach shared list events
-        }, 0);
-        return;
-    }
+    // Don't cache paginated results
     contentDiv.innerHTML = '<p style="color:#fff;">Loading...</p>';
     try {
         const resp = await fetch(route);
         const data = await resp.json();
         let html = '';
+
         if (data.vocab) {
+            if (typeof data.total_lists === 'number') {
+                html += `<div style="margin-bottom:16px; color:#fff; text-align:center;">
+                    <span>Showing ${data.total_lists} lists</span>
+                </div>`;
+            }
+
             // User lists
             Object.entries(data.vocab).forEach(([lang, lists]) => {
                 html += `<div style='margin-bottom:18px; text-align:left;'>
                     <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
                     <div class='vocab-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
-                lists.forEach(listName => {
+                lists.forEach(listItem => {
+                    // Handle both old format (string) and new format (object)
+                    const listName = typeof listItem === 'string' ? listItem : listItem.name;
+                    const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
+                    const wordCountNum = typeof listItem === 'object' ? listItem.word_count : 0;
                     html += `
-                        <button class='vocab-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
-                        <button class='add-word-btn' data-lang='${lang}' data-list='${listName}' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-left:4px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>
+                        <a class='vocab-list-link' href='/userspace/list/${encodeURIComponent(lang)}/${encodeURIComponent(listName)}' aria-label='Open vocabulary list ${listName} (${wordCountNum} words)' style='display:inline-flex; align-items:center; background:#222; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(34,179,179,0.10); font-weight:500; text-decoration:none;'>${listName}${wordCount}</a>
                     `;
                 });
                 html += `</div>
-                    <div class='vocab-list-details-area' style='width:100%; margin-top:10px;'></div>
                 </div>`;
             });
+
             // Shared lists section
             if (data.shared_vocab) {
                 html += `<div style="margin-bottom:32px;">
@@ -178,22 +167,21 @@ async function fetchTabData(route, contentDiv) {
                     html += `<div style='margin-bottom:18px; text-align:left;'>
                         <h4 style='color:#22b3b3; margin-bottom:8px;'>${lang}</h4>
                         <div class='shared-list-row' style='display:flex; flex-direction:row; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-bottom:12px;'>`;
-                    lists.forEach(listName => {
+                    lists.forEach(listItem => {
+                        // Handle both old format (string) and new format (object)
+                        const listName = typeof listItem === 'string' ? listItem : listItem.name;
+                        const wordCount = typeof listItem === 'object' ? ` (${listItem.word_count} words)` : '';
+                        const wordCountNum = typeof listItem === 'object' ? listItem.word_count : 0;
                         html += `
-                            <button class='shared-list-btn' data-lang='${lang}' data-list='${listName}' style='background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; transition:background 0.2s, color 0.2s; border:none;'>${listName}</button>
+                            <a class='shared-list-link' href='/userspace/list/${encodeURIComponent(lang)}/${encodeURIComponent(listName)}?shared=true' aria-label='Open shared vocabulary list ${listName} (${wordCountNum} words)' style='display:inline-flex; align-items:center; background:#333; color:#fff; border-radius:8px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 6px rgba(255,179,102,0.10); font-weight:500; text-decoration:none;'>${listName}${wordCount}</a>
                         `;
                     });
                     html += `</div>
-                        <div class='shared-list-details-area' style='width:100%; margin-top:10px;'></div>
                     </div>`;
                 });
                 html += '</div>';
             }
-            tabDataCache[route] = html;
-            setTimeout(() => {
-                attachVocabListEvents();
-                attachSharedListEvents(); // Attach shared list events
-            }, 0);
+
         }
         contentDiv.innerHTML = html;
     } catch {
@@ -201,429 +189,15 @@ async function fetchTabData(route, contentDiv) {
     }
 }
 
-function attachVocabListEvents() {
-    // Add New Word modal logic (refactored)
-    document.querySelectorAll('.add-word-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lang = btn.getAttribute('data-lang');
-            const list = btn.getAttribute('data-list');
-            showWordSelectModal({
-                lang,
-                list,
-                title: 'Add New Word to',
-                saveLabel: 'Save',
-                cancelLabel: 'Cancel',
-                onSave: async (selected, {modal, messageDiv, saveBtn}) => {
-                    saveBtn.textContent = 'Saving...';
-                    saveBtn.disabled = true;
-                    try {
-                        const resp = await fetch('/userspace/add_words', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                list_name: list,
-                                language: lang,
-                                words: selected
-                            })
-                        });
-                        const data = await resp.json();
-                        if (data.success) {
-                            messageDiv.textContent = 'Words added!';
-                            setTimeout(() => { window.location.reload(); }, 1200);
-                        } else {
-                            messageDiv.textContent = 'Error adding words.';
-                            saveBtn.disabled = false;
-                            saveBtn.textContent = 'Save';
-                        }
-                    } catch {
-                        messageDiv.textContent = 'Error adding words.';
-                        saveBtn.disabled = false;
-                        saveBtn.textContent = 'Save';
-                    }
-                }
-            });
-        });
-    });
-    // No caching for list details
-    let activeBtn = null;
-    document.querySelectorAll('.vocab-list-btn').forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            if (btn !== activeBtn) {
-                btn.style.background = '#228383';
-                btn.style.color = '#fff';
-            }
-        });
-        btn.addEventListener('mouseleave', () => {
-            if (btn !== activeBtn) {
-                btn.style.background = '#222';
-                btn.style.color = '#fff';
-            }
-        });
-        btn.addEventListener('click', async () => {
-            const lang = btn.getAttribute('data-lang');
-            const list = btn.getAttribute('data-list');
-            // Highlight active button
-            if (activeBtn) {
-                activeBtn.style.background = '#222';
-                activeBtn.style.color = '#fff';
-            }
-            btn.style.background = '#22b3b3';
-            btn.style.color = '#fff';
-            activeBtn = btn;
-            // Find details area
-            const detailsArea = btn.closest('div').parentNode.querySelector('.vocab-list-details-area');
-            // Hide details in all details areas for this language
-            btn.closest('div').parentNode.querySelectorAll('.vocab-list-details-area').forEach(area => {
-                area.innerHTML = '';
-            });
-            detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
-            try {
-                const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}`);
-                const data = await resp.json();
-                // Track retained and deleted words
-                let retainedWords = Object.entries(data).map(([word, info]) => info);
-                let deletedWords = [];
-                // Display flash cards
-                let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
-                Object.entries(data).forEach(([word, info]) => {
-                    const simpleLemma = info['SIMPLE LEMMA'];
-                    cardsHtml += `<div class='flashcard' data-word='${simpleLemma}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
-                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${word}</div>`;
-                    Object.entries(info).forEach(([key, val]) => {
-                        cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
-                    });
-                    cardsHtml += `<button class='delete-flashcard-btn' data-word='${simpleLemma}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
-                    cardsHtml += `</div>`;
-                });
-                cardsHtml += '</div>';
-                // Deleted words summary and Save Changes button (initially hidden)
-                cardsHtml += `<div id='deleted-words-summary' style='margin-top:18px;'></div>`;
-                cardsHtml += `<div style='display:flex; gap:12px; align-items:center; margin-top:12px;'>`;
-                cardsHtml += `<button id='share-list-btn' style='background:#22b3b3; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s;'>Share List</button>`;
-                cardsHtml += `<button id='save-changes-btn' style='background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; display:none;'>Save Changes</button>`;
-                cardsHtml += `<button id='delete-list-btn' style='background:#ff6666; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(255,102,102,0.15); transition:background 0.2s;'>Delete Entire List</button>`;
-                cardsHtml += `</div>`;
-                detailsArea.innerHTML = cardsHtml;
-                const shareListBtn = detailsArea.querySelector('#share-list-btn');
-                shareListBtn.addEventListener('click', () => {
-                    // Show modal for share options
-                    let modal = document.createElement('div');
-                    modal.className = 'share-list-modal';
-                    modal.style.position = 'fixed';
-                    modal.style.top = '0';
-                    modal.style.left = '0';
-                    modal.style.width = '100vw';
-                    modal.style.height = '100vh';
-                    modal.style.background = 'rgba(0,0,0,0.6)';
-                    modal.style.zIndex = '9999';
-                    modal.style.display = 'flex';
-                    modal.style.alignItems = 'center';
-                    modal.style.justifyContent = 'center';
-                    modal.innerHTML = `
-                        <div style='background:#222; color:#fff; border-radius:12px; padding:32px 36px; min-width:340px; max-width:420px; box-shadow:0 2px 16px rgba(34,179,179,0.18); position:relative;'>
-                            <h3 style='color:#22b3b3; margin-bottom:18px;'>Share List: <span style='color:#ffb366;'>${list}</span> (${lang})</h3>
-                            <div style='margin-bottom:18px;'>
-                                <label style='font-weight:600; color:#fff;'>Choose sharing mode:</label><br>
-                                <input type='radio' name='share-mode' id='share-copy' value='copy' checked> <label for='share-copy' style='color:#22b3b3;'>Copy Share (makes a copy for new users)</label><br>
-                                <input type='radio' name='share-mode' id='share-editable' value='editable'> <label for='share-editable' style='color:#22b3b3;'>Editable Share (allows others to edit)</label>
-                            </div>
-                            <div id='share-list-message' style='color:#ffb366; margin-bottom:10px;'></div>
-                            <div style='display:flex; gap:12px; justify-content:flex-end;'>
-                                <button id='share-list-confirm-btn' style='background:#22b3b3; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Get Share Link</button>
-                                <button id='share-list-cancel-btn' style='background:#ff6666; color:#fff; border:none; border-radius:6px; padding:8px 18px; font-size:1rem; font-weight:600; cursor:pointer;'>Cancel</button>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-                    const confirmBtn = modal.querySelector('#share-list-confirm-btn');
-                    const cancelBtn = modal.querySelector('#share-list-cancel-btn');
-                    const messageDiv = modal.querySelector('#share-list-message');
-                    confirmBtn.addEventListener('click', async () => {
-                        const mode = modal.querySelector('input[name="share-mode"]:checked').value;
-                        confirmBtn.textContent = 'Generating...';
-                        confirmBtn.disabled = true;
-                        try {
-                            const resp = await fetch('/userspace/get_share_id', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    list_name: list,
-                                    sharing_mode: mode,
-                                    language: lang
-                                })
-                            });
-                            const data = await resp.json();
-                            if (data.success && data.share_id) {
-                                messageDiv.innerHTML = `<span style='color:#22b3b3;'>Share ID:</span> <input type='text' value='${data.share_id}' style='width:70%; padding:6px; border-radius:6px; border:none; background:#333; color:#fff; font-size:1rem;' readonly> <button id='copy-share-link-btn' style='background:#228383; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Copy</button>`;
-                                const copyBtn = messageDiv.querySelector('#copy-share-link-btn');
-                                copyBtn.addEventListener('click', () => {
-                                    const input = messageDiv.querySelector('input');
-                                    input.select();
-                                    document.execCommand('copy');
-                                    copyBtn.textContent = 'Copied!';
-                                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
-                                });
-                                confirmBtn.style.display = 'none';
-                            } else {
-                                messageDiv.textContent = 'Error generating share link.';
-                                confirmBtn.disabled = false;
-                                confirmBtn.textContent = 'Get Share Link';
-                            }
-                        } catch {
-                            messageDiv.textContent = 'Error generating share link.';
-                            confirmBtn.disabled = false;
-                            confirmBtn.textContent = 'Get Share Link';
-                        }
-                    });
-                    cancelBtn.addEventListener('click', () => {
-                        document.body.removeChild(modal);
-                    });
-                });
-                // Delete button logic for flashcards
-                const flashcardList = detailsArea.querySelector('#flashcard-list');
-                flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const word = btn.getAttribute('data-word');
-                        // Remove card from UI
-                        const card = btn.closest('.flashcard');
-                        if (card) card.remove();
-                        // Remove from retainedWords, add to deletedWords
-                        const idx = retainedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
-                        if (idx !== -1) {
-                            const removed = retainedWords.splice(idx, 1)[0];
-                            if (!deletedWords.some(dw => dw['SIMPLE LEMMA'] === removed['SIMPLE LEMMA'])) {
-                                deletedWords.push(removed);
-                            }
-                        }
-                        updateDeletedWordsSummary();
-                    });
-                });
-
-                // Delete Entire List button logic
-                const deleteListBtn = detailsArea.querySelector('#delete-list-btn');
-                deleteListBtn.addEventListener('click', async () => {
-                    if (!confirm('Are you sure you want to delete the entire list? This action cannot be undone.')) return;
-                    deleteListBtn.textContent = 'Deleting...';
-                    deleteListBtn.disabled = true;
-                    try {
-                        const resp = await fetch(`/userspace/delete_list`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                list_name: list,
-                                language: lang
-                            })
-                        });
-                        const result = await resp.json();
-                        if (result.success) {
-                            deleteListBtn.textContent = 'Deleted!';
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1200);
-                        } else {
-                            deleteListBtn.textContent = 'Error!';
-                            deleteListBtn.disabled = false;
-                        }
-                    } catch {
-                        deleteListBtn.textContent = 'Error!';
-                        deleteListBtn.disabled = false;
-                    }
-                });
-                function updateDeletedWordsSummary() {
-                    const summaryDiv = detailsArea.querySelector('#deleted-words-summary');
-                    const saveBtn = detailsArea.querySelector('#save-changes-btn');
-                    saveBtn.onclick = async function() {
-                        saveBtn.textContent = 'Saving...';
-                        saveBtn.disabled = true;
-                        // Only pass SIMPLE LEMMA and SHORT DEFINITION to backend
-                        const wordsToSave = retainedWords.map(w => [w['SIMPLE LEMMA'], w['SHORT DEFINITION']]);
-                        try {
-                            const resp = await fetch(`/userspace/update_list`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    list_name: list,
-                                    language: lang,
-                                    words: wordsToSave
-                                })
-                            });
-                            const result = await resp.json();
-                            if (result.success) {
-                                saveBtn.textContent = 'Saved!';
-                                // Clear deletedWords and update summary so nothing to undo
-                                deletedWords = [];
-                                setTimeout(() => {
-                                    updateDeletedWordsSummary(); // This will hide the button
-                                    saveBtn.textContent = 'Save Changes';
-                                    saveBtn.disabled = false;
-                                }, 1500);
-                            } else {
-                                saveBtn.textContent = 'Error!';
-                                saveBtn.disabled = false;
-                            }
-                        } catch {
-                            saveBtn.textContent = 'Error!';
-                            saveBtn.disabled = false;
-                        }
-                    };
-                    if (deletedWords.length > 0) {
-                        let undoHtml = `<span style='color:#ffb366; font-weight:600;'>Words to delete:</span> `;
-                        deletedWords.forEach(info => {
-                            undoHtml += `<span style='color:#fff; margin-right:8px;'>${info['SIMPLE LEMMA']} <button class='undo-delete-btn' data-word='${info['SIMPLE LEMMA']}' style='background:#228383; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:0.9rem; margin-left:4px; cursor:pointer;'>Undo</button></span>`;
-                        });
-                        summaryDiv.innerHTML = undoHtml;
-                        saveBtn.style.display = '';
-                        // Add undo listeners
-                        summaryDiv.querySelectorAll('.undo-delete-btn').forEach(btn => {
-                            btn.addEventListener('click', () => {
-                                const word = btn.getAttribute('data-word');
-                                const idx = deletedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
-                                if (idx !== -1) {
-                                    const restored = deletedWords.splice(idx, 1)[0];
-                                    retainedWords.push(restored);
-                                    // Re-render flashcard with full info
-                                    let cardHtml = `<div class='flashcard' data-word='${restored['SIMPLE LEMMA']}' style='background:#222; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(34,179,179,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
-                                    cardHtml += `<div style='font-size:1.2rem; font-weight:700; color:#22b3b3; margin-bottom:8px;'>${restored['SIMPLE LEMMA']}</div>`;
-                                    Object.entries(restored).forEach(([key, val]) => {
-                                        cardHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#ffb366;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
-                                    });
-                                    cardHtml += `<button class='delete-flashcard-btn' data-word='${restored['SIMPLE LEMMA']}' style='position:absolute; top:10px; right:10px; background:#ff6666; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.95rem; font-weight:600; cursor:pointer;'>Delete</button>`;
-                                    cardHtml += `</div>`;
-                                    flashcardList.insertAdjacentHTML('beforeend', cardHtml);
-                                    // Re-attach delete listener
-                                    flashcardList.querySelectorAll('.delete-flashcard-btn').forEach(btn => {
-                                        btn.onclick = null;
-                                        btn.addEventListener('click', () => {
-                                            const word = btn.getAttribute('data-word');
-                                            const card = btn.closest('.flashcard');
-                                            if (card) card.remove();
-                                            const idx = retainedWords.findIndex(w => w['SIMPLE LEMMA'] === word);
-                                            if (idx !== -1) {
-                                                const removed = retainedWords.splice(idx, 1)[0];
-                                                if (!deletedWords.some(dw => dw['SIMPLE LEMMA'] === removed['SIMPLE LEMMA'])) {
-                                                    deletedWords.push(removed);
-                                                }
-                                            }
-                                            updateDeletedWordsSummary();
-                                        });
-                                    });
-                                    updateDeletedWordsSummary();
-                                }
-                            });
-                        });
-                    } else {
-                        summaryDiv.innerHTML = '';
-                        saveBtn.style.display = 'none';
-                    }
-                }
-            } catch {
-                detailsArea.innerHTML = '<p style="color:#fff;">Error loading details.</p>';
-            }
-        });
-    });
-}
-
-function attachSharedListEvents() {
-    document.querySelectorAll('.shared-list-btn').forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            btn.style.background = '#ffb366';
-            btn.style.color = '#222';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.background = '#333';
-            btn.style.color = '#fff';
-        });
-        btn.addEventListener('click', async () => {
-            const lang = btn.getAttribute('data-lang');
-            const list = btn.getAttribute('data-list');
-            // Highlight active button
-            document.querySelectorAll('.shared-list-btn').forEach(b => {
-                b.style.background = '#333';
-                b.style.color = '#fff';
-            });
-            btn.style.background = '#ffb366';
-            btn.style.color = '#222';
-            // Find details area
-            const detailsArea = btn.closest('div').parentNode.querySelector('.shared-list-details-area');
-            // Hide details in all details areas for this language
-            btn.closest('div').parentNode.querySelectorAll('.shared-list-details-area').forEach(area => {
-                area.innerHTML = '';
-            });
-            detailsArea.innerHTML = '<p style="color:#fff;">Loading...</p>';
-            try {
-                const resp = await fetch(`/userspace/list_details?language=${encodeURIComponent(lang)}&list_name=${encodeURIComponent(list)}&shared=true`);
-                const data = await resp.json();
-                // Display flash cards (no delete/share)
-                let cardsHtml = '<div id="flashcard-list" style="display:flex; flex-wrap:wrap; gap:16px;">';
-                Object.entries(data).forEach(([word, info]) => {
-                    cardsHtml += `<div class='flashcard' data-word='${info['SIMPLE LEMMA']}' style='background:#333; color:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(255,179,102,0.15); padding:18px 22px; min-width:180px; max-width:320px; margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start; position:relative; word-break:break-word; overflow-wrap:break-word;'>`;
-                    cardsHtml += `<div style='font-size:1.2rem; font-weight:700; color:#ffb366; margin-bottom:8px;'>${word}</div>`;
-                    Object.entries(info).forEach(([key, val]) => {
-                        cardsHtml += `<div style='margin-bottom:4px;'><span style='font-weight:600; color:#22b3b3;'>${key}:</span> <span style='color:#fff;'>${val}</span></div>`;
-                    });
-                    cardsHtml += `</div>`;
-                });
-                cardsHtml += '</div>';
-                // Add New Word button for shared lists
-                cardsHtml += `<button class='add-word-btn' data-lang='${lang}' data-list='${list}' data-shared='true' style='background:#228383; color:#fff; border-radius:8px; padding:10px 14px; margin-top:12px; cursor:pointer; font-weight:500; border:none;'>+ Add New Word</button>`;
-                detailsArea.innerHTML = cardsHtml;
-
-                // Attach Add New Word modal logic for shared lists
-                const addWordBtn = detailsArea.querySelector('.add-word-btn');
-                if (addWordBtn) {
-                    addWordBtn.addEventListener('click', () => {
-                        showWordSelectModal({
-                            lang,
-                            list,
-                            title: 'Add New Word to Shared List',
-                            saveLabel: 'Save',
-                            cancelLabel: 'Cancel',
-                            onSave: async (selected, {modal, messageDiv, saveBtn}) => {
-                                saveBtn.textContent = 'Saving...';
-                                saveBtn.disabled = true;
-                                try {
-                                    const resp = await fetch('/userspace/add_words', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            list_name: list,
-                                            language: lang,
-                                            words: selected,
-                                            shared: true
-                                        })
-                                    });
-                                    const data = await resp.json();
-                                    if (data.success) {
-                                        messageDiv.textContent = 'Words added!';
-                                        setTimeout(() => { window.location.reload(); }, 1200);
-                                    } else {
-                                        messageDiv.textContent = 'Error adding words.';
-                                        saveBtn.disabled = false;
-                                        saveBtn.textContent = 'Save';
-                                    }
-                                } catch {
-                                    messageDiv.textContent = 'Error adding words.';
-                                    saveBtn.disabled = false;
-                                    saveBtn.textContent = 'Save';
-                                }
-                            }
-                        });
-                    });
-                }
-            } catch {
-                detailsArea.innerHTML = '<p style="color:#fff;">Error loading details.</p>';
-            }
-        });
-    });
-}
-
 tabs.forEach((tab, idx) => {
+if (tab.id === 'saved-searches-tab') return; // has its own dedicated handler below
 tab.addEventListener('click', (e) => {
     e.preventDefault();
     tabs.forEach(t => {
     t.classList.remove('active');
     t.style.borderBottom = 'none';
     t.style.color = '#ccc';
+    t.setAttribute('aria-selected', 'false');
     });
     // Only show Vocabulary and Create List
     contents.forEach((c, i) => {
@@ -635,10 +209,11 @@ tab.addEventListener('click', (e) => {
     tab.classList.add('active');
     tab.style.borderBottom = '3px solid #228383';
     tab.style.color = '#fff';
+    tab.setAttribute('aria-selected', 'true');
     // Show only the relevant tab content
     if (tab.getAttribute('href') === '/userspace/vocab') {
     contents[idx].style.display = 'block';
-    fetchTabData(tab.getAttribute('href'), contents[idx]);
+    fetchTabData(tab.getAttribute('href'), document.getElementById('vocabulary-content'));
     } else if (tab.getAttribute('href') === '#') {
     contents[idx].style.display = 'block';
     }
@@ -647,12 +222,13 @@ tab.addEventListener('click', (e) => {
 
 // Initial load for Vocabulary tab
 tabs.forEach((t, i) => {
+    if (t.id === 'saved-searches-tab') return; // managed by its own handler
     if (t.getAttribute('href') === '/userspace/vocab') {
     t.classList.add('active');
     t.style.borderBottom = '3px solid #228383';
     t.style.color = '#fff';
     contents[i].style.display = 'block';
-    fetchTabData(t.getAttribute('href'), contents[i]);
+    fetchTabData(t.getAttribute('href'), document.getElementById('vocabulary-content'));
     } else if (t.getAttribute('href') === '#') {
     t.classList.remove('active');
     t.style.borderBottom = 'none';
@@ -786,3 +362,181 @@ try {
     createListMessage.textContent = 'Error creating list.';
 }
 });
+
+// Reload the vocabulary list when the language filter changes.
+document.addEventListener('DOMContentLoaded', () => {
+    const languageFilter = document.getElementById('vocab-language-filter');
+    if (languageFilter) {
+        languageFilter.addEventListener('change', () => {
+            updateVocabWithFilters();
+        });
+    }
+});
+
+function updateVocabWithFilters() {
+    const languageFilter = document.getElementById('vocab-language-filter');
+    const vocabContent = document.getElementById('vocabulary-content');
+
+    if (!languageFilter || !vocabContent) return;
+
+    const params = new URLSearchParams();
+    if (languageFilter.value) {
+        params.set('language_filter', languageFilter.value);
+    }
+
+    const query = params.toString();
+    fetchTabData(query ? `/userspace/vocab?${query}` : '/userspace/vocab', vocabContent);
+}
+
+// Saved Searches tab
+
+async function loadSavedSearches() {
+    const appFilter  = document.getElementById('search-app-filter')?.value  || '';
+    const langFilter = document.getElementById('search-lang-filter')?.value || '';
+    const nameFilter = document.getElementById('search-name-filter')?.value || '';
+    const container  = document.getElementById('saved-searches-content');
+    if (!container) return;
+
+    const params = new URLSearchParams();
+    if (appFilter)  params.set('app', appFilter);
+    if (langFilter) params.set('language', langFilter);
+    if (nameFilter) params.set('name', nameFilter);
+
+    try {
+        const resp = await fetch(`/userspace/saved_searches?${params}`, { credentials: 'include' });
+        const data = await resp.json();
+
+        if (!data.success || !data.searches.length) {
+            container.innerHTML = '<p style="color:#ccc;">No saved searches yet. Run a search in Lists, Stats, or Oracle and click "Save Search".</p>';
+            return;
+        }
+
+        const rows = data.searches.map(s => `
+            <tr>
+                <td style="color:#fff; padding:8px;">${escapeHtml(s.name)}</td>
+                <td style="color:#ccc; padding:8px;">${s.app}</td>
+                <td style="color:#ccc; padding:8px;">${s.language}</td>
+                <td style="color:#ccc; padding:8px;">${s.created_at ? s.created_at.slice(0,10) : ''}</td>
+                <td style="padding:8px;">
+                    <button type="button" aria-label="Load search: ${escapeHtml(s.name)}" onclick="window.location.href='${escapeHtml(s.url)}'"
+                            style="background:#228383; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; margin-right:6px;">
+                        Load
+                    </button>
+                    <button type="button" aria-label="Share search: ${escapeHtml(s.name)}" onclick="shareSearch('${escapeHtml(s.search_id)}')"
+                            style="background:#1a5276; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer; margin-right:6px;">
+                        Share
+                    </button>
+                    <button type="button" aria-label="Delete search: ${escapeHtml(s.name)}" onclick="deleteSavedSearch('${s.search_id}')"
+                            style="background:#dc3545; color:#fff; border:none; border-radius:5px; padding:5px 12px; cursor:pointer;">
+                        Delete
+                    </button>
+                </td>
+            </tr>`).join('');
+
+        container.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="border-bottom:1px solid #444;">
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Name</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">App</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Language</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Saved</th>
+                        <th scope="col" style="color:#22b3b3; padding:8px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch (err) {
+        container.innerHTML = '<p style="color:#ff6b6b;">Failed to load saved searches.</p>';
+    }
+}
+
+async function shareSearch(searchId) {
+    try {
+        const resp = await fetch(`/userspace/get_search_share_link?search_id=${encodeURIComponent(searchId)}`, {
+            credentials: 'include'
+        });
+        const data = await resp.json();
+        if (!data.success) { alert('Could not generate share link.'); return; }
+
+        let modal = document.getElementById('search-share-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'search-share-modal';
+            modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; display:flex; align-items:center; justify-content:center;';
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = `
+            <div style="background:#1a2a2a; border:1px solid #22b3b3; border-radius:10px; padding:28px 32px; min-width:340px; max-width:480px; position:relative;">
+                <button onclick="document.getElementById('search-share-modal').style.display='none'"
+                        style="position:absolute; top:12px; right:16px; background:none; border:none; color:#ccc; font-size:1.3rem; cursor:pointer;" aria-label="Close">&#x2715;</button>
+                <h5 style="color:#22b3b3; margin:0 0 16px;">Share Search</h5>
+                <p style="color:#ccc; font-size:0.9rem; margin:0 0 12px;">Anyone with this link can add a copy of this search to their account.</p>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input id="search-share-url" type="text" readonly value="${escapeHtml(data.share_url)}"
+                           style="flex:1; padding:8px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.85rem;" />
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('search-share-url').value).then(()=>{this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',1500)})"
+                            style="background:#228383; color:#fff; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; white-space:nowrap;">
+                        Copy
+                    </button>
+                </div>
+            </div>`;
+        modal.style.display = 'flex';
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; }, { once: true });
+    } catch {
+        alert('Failed to generate share link. Please try again.');
+    }
+}
+
+async function deleteSavedSearch(searchId) {
+    if (!confirm('Delete this saved search?')) return;
+    try {
+        const resp = await fetch('/userspace/delete_search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ search_id: searchId })
+        });
+        const data = await resp.json();
+        if (data.success) loadSavedSearches();
+    } catch (err) {
+        alert('Failed to delete search.');
+    }
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Wire up Saved Searches tab click and filters
+(function() {
+    const tab = document.getElementById('saved-searches-tab');
+    if (!tab) return;
+
+    tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('vocabulary').style.display = 'none';
+        document.getElementById('create').style.display = 'none';
+        document.getElementById('saved-searches').style.display = 'block';
+        document.querySelectorAll('.user-tab').forEach(t => {
+            t.style.color = '#ccc';
+            t.style.borderBottom = 'none';
+            t.setAttribute('aria-selected', 'false');
+        });
+        tab.style.color = '#fff';
+        tab.style.borderBottom = '3px solid #228383';
+        tab.setAttribute('aria-selected', 'true');
+        loadSavedSearches();
+    });
+
+    document.getElementById('search-app-filter')?.addEventListener('change', loadSavedSearches);
+    document.getElementById('search-lang-filter')?.addEventListener('change', loadSavedSearches);
+
+    let nameFilterTimer;
+    document.getElementById('search-name-filter')?.addEventListener('input', () => {
+        clearTimeout(nameFilterTimer);
+        nameFilterTimer = setTimeout(loadSavedSearches, 300);
+    });
+})();

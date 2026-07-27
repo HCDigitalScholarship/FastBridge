@@ -1,0 +1,200 @@
+
+<head lang="en">
+  <script type="text/javascript">
+    console.log("rendering list study page")
+  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Bridge: {{ list_name }}</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
+   <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css>
+   <style id = "local_styling" media="screen">{{style|safe}}</style>
+ </head>
+{% include "navbar.html" %}
+<body style="height:70vh;" id="main">{% include "partials/refine_sidebar.html" %}<section id="result" class="download-section content-section text-center" role="main" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
+
+  <div class="container">
+<h2> {{ list_name }} — <span id = "len"> {{ len }} </span> words </h2>
+
+  <style>
+    #contentArea tr[data-lemma] { cursor: pointer; }
+    #contentArea tr.row-selected > td { background: rgba(34,179,179,0.35) !important; }
+    #floating-action-bar {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 1050;
+      display: none; align-items: center; flex-wrap: wrap; gap: 10px;
+      background: rgba(20,20,20,0.97); border: 1px solid #2a6b6b; border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.55); padding: 12px 18px; color: #fff; max-width: 94vw;
+    }
+    #floating-action-bar .fab-divider { width:1px; height:26px; background:#444; margin:0 4px; }
+    .mode-tabs { display:flex; gap:4px; justify-content:center; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+    .mode-tab {
+      background:#222; color:#bbb; border:1px solid #2a6b6b; border-bottom:none;
+      border-radius:8px 8px 0 0; padding:10px 24px; cursor:pointer; font-weight:600; font-size:1rem;
+    }
+    .mode-tab.active { background:#228383; color:#fff; }
+    .back-btn {
+      background:#333; color:#fff; border:1px solid #2a6b6b; border-radius:8px;
+      padding:10px 18px; font-weight:600; font-size:1rem; text-decoration:none;
+      display:inline-flex; align-items:center; gap:6px; margin-right:auto;
+    }
+    .list-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:18px; }
+    .list-action-btn {
+      border:none; border-radius:8px; padding:9px 18px; font-weight:600; font-size:0.95rem;
+      cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:6px;
+    }
+
+    /* Flashcards */
+    .fc-controls { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin:18px 0 8px; }
+    #fc-pos-filter { padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem; }
+    .fc-progress { color:#bbb; font-weight:600; }
+    .fc-card-wrap { position:relative; width:min(560px,92vw); margin:24px auto 0; }
+    .fc-card { position:relative; width:100%; height:320px; perspective:1200px; cursor:pointer; outline:none; }
+    .fc-card:focus-visible .fc-card-inner { box-shadow:0 0 0 3px rgba(34,179,179,0.6); border-radius:16px; }
+    .fc-starred-toggle { color:#fff; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .fc-star { position:absolute; top:12px; right:14px; z-index:2; background:none; border:none; cursor:pointer; font-size:1.7rem; line-height:1; color:#c9c9c9; padding:2px 6px; }
+    .fc-star.starred { color:#f5b301; }
+    .fc-star:focus-visible { outline:2px solid #22b3b3; border-radius:6px; }
+    .fc-card-inner { position:relative; width:100%; height:100%; transition:transform 0.5s; transform-style:preserve-3d; }
+    .fc-card.flipped .fc-card-inner { transform:rotateY(180deg); }
+    .fc-face {
+      position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+      border:1px solid #2a6b6b; border-radius:16px; background:#fff;
+      display:flex; flex-direction:column; align-items:center; padding:26px 28px;
+      box-shadow:0 8px 28px rgba(0,0,0,0.45); overflow:hidden;
+    }
+    .fc-front { justify-content:center; }
+    .fc-back { transform:rotateY(180deg); justify-content:center; }
+    .fc-parts { font-family:'Lora',serif; font-size:clamp(1.35rem,4vw,1.9rem); font-weight:700; color:#1f2937; line-height:1.3; overflow-wrap:anywhere; text-align:center; }
+    .fc-back-content { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-height:100%; }
+    .fc-instructions { margin:10px auto 0; font-size:0.9rem; color:#aaa; text-align:center; }
+    .fc-pos-badge { font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; color:#9a5718; margin-bottom:16px; }
+    .fc-def { font-size:clamp(1.25rem,3vw,1.4rem); color:#25313a; line-height:1.55; text-align:center; overflow-y:auto; width:100%; max-height:210px; overflow-wrap:anywhere; }
+    .fc-nav { display:flex; gap:12px; justify-content:center; margin-top:22px; }
+    .fc-nav-btn { background:#228383; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-weight:600; font-size:1rem; cursor:pointer; }
+    .fc-nav-btn:disabled { opacity:0.4; cursor:default; }
+    .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
+    .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  </style>
+
+  <div class="mode-tabs">
+    <a href="/userspace" class="back-btn" aria-label="Back to my lists"><i class="fas fa-arrow-left" aria-hidden="true"></i> My lists</a>
+    <span role="tablist" style="display:flex; gap:4px;">
+      <button type="button" id="tab-browse" class="mode-tab active" role="tab" aria-selected="true" aria-controls="mode-browse" onclick="showMode('browse')">Browse</button>
+      <button type="button" id="tab-flashcards" class="mode-tab" role="tab" aria-selected="false" aria-controls="mode-flashcards" onclick="showMode('flashcards')">Flashcards</button>
+    </span>
+  </div>
+
+  <div class="list-actions">
+    {% if can_edit %}<button type="button" id="add-word-btn" class="list-action-btn" style="background:#228383;"><i class="fas fa-plus" aria-hidden="true"></i> Add Word</button>{% endif %}
+    {% if can_manage %}<button type="button" id="share-list-btn" class="list-action-btn" style="background:#22b3b3;"><i class="fas fa-share-alt" aria-hidden="true"></i> Share</button>{% endif %}
+    {% if can_manage %}<button type="button" id="manage-permissions-btn" class="list-action-btn" style="background:#ffb366;"><i class="fas fa-user-shield" aria-hidden="true"></i> Permissions</button>{% endif %}
+    {% if can_manage %}<button type="button" id="delete-list-btn" class="list-action-btn" style="background:#ff6666;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete List</button>{% endif %}
+  </div>
+
+  <div id="mode-browse" role="tabpanel" aria-labelledby="tab-browse">
+  <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
+    <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search for terms..." aria-label="Search for terms" id="search"/>
+    <button type="button" id="select-all-terms-btn" class="btn btn-default" style="display:none; border-radius:6px; font-weight:600; border:1px solid #22b3b3; color:#22b3b3;" onclick="selectAllActive()">Select all terms</button>
+  </div>
+
+  <!-- Floating action bar: slides in when rows are selected (Gmail-style) -->
+  <div id="floating-action-bar">
+    <span id="selection-count" style="font-weight:700; margin-right:4px;">0 selected</span>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="selectAllActive()">Select All</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="invertSelection()">Invert</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="clearSelection()">Clear</button>
+    {% if can_delete %}<span class="fab-divider"></span>
+    <button type="button" id="delete-selected-btn" class="btn btn-sm btn-danger" style="border-radius:6px; font-weight:600;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete selected</button>{% endif %}
+    <span class="fab-divider"></span>
+    <span id="save-list-container">
+      <input type="text" id="save-list-name" class="form-control" style="width:11rem; display:inline-block; margin-right:8px; padding:8px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;" placeholder="New list name..." />
+      <button id="save-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save as New List</button>
+    </span>
+    <span id="add-to-list-section" style="display:none;">
+      <span class="fab-divider"></span>
+      <select id="add-to-list-select" style="padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; margin-right:8px;"></select>
+      <button id="add-to-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Add to List</button>
+    </span>
+    <span id="add-to-list-message" style="margin-left:10px; color:#ffb366; font-weight:500;"></span>
+    <span id="save-list-message" style="margin-left:10px; color:#ffb366; font-weight:500;"></span>
+  </div>
+
+{% include "partials/results_table.html" %}
+  </div>
+
+  <div id="mode-flashcards" role="tabpanel" aria-labelledby="tab-flashcards" style="display:none; min-height:40vh; color:#fff;">
+    <div id="flashcards-ui" style="display:none;">
+      <div class="fc-controls">
+        <label for="fc-pos-filter">Part of speech</label>
+        <select id="fc-pos-filter" aria-label="Filter flashcards by part of speech"></select>
+        <label class="fc-starred-toggle"><input type="checkbox" id="fc-starred-only"> Starred only</label>
+        <span id="fc-progress" class="fc-progress" aria-live="polite"></span>
+      </div>
+
+      <div class="fc-card-wrap">
+        <button type="button" id="fc-star" class="fc-star" aria-pressed="false" aria-label="Star this word" title="Star this word">&#9733;</button>
+        <div id="fc-card" class="fc-card" tabindex="0">
+          <div class="fc-card-inner">
+            <div id="fc-front" class="fc-face fc-front">
+              <div id="fc-front-parts" class="fc-parts"></div>
+            </div>
+            <div id="fc-back" class="fc-face fc-back" aria-hidden="true">
+              <div class="fc-back-content">
+                <div id="fc-back-pos" class="fc-pos-badge"></div>
+                <div id="fc-back-def" class="fc-def"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="fc-instructions">Click the card or press Space to show the definition.</p>
+      <div id="fc-live" class="fc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+      <div class="fc-nav" aria-label="Flashcard navigation">
+        <button type="button" id="fc-prev" class="fc-nav-btn">Previous</button>
+        <button type="button" id="fc-flip" class="fc-nav-btn">Flip card</button>
+        <button type="button" id="fc-next" class="fc-nav-btn">Next</button>
+      </div>
+      <p id="fc-filtered-empty" class="fc-filtered-empty" style="display:none;">No flashcards match these filters.</p>
+    </div>
+    <p id="flashcards-empty" style="display:none; margin-top:40px; font-size:1.2rem;">This list has no words to study yet.</p>
+  </div>
+</div>
+</section></body><script type="text/javascript">
+  var True = true
+  var columns = {{ columnheaders|safe }}
+  var full_data = {{ render_words_optional|safe }}
+  var data = {{ render_words|safe }}
+
+  window.STUDY_LIST = {
+    language: {{ language|tojson }},
+    listName: {{ list_name|tojson }},
+    ownerId: {{ owner_id|tojson }},
+    shared: {{ (shared or false)|tojson }},
+    isOwner: {{ is_owner|tojson }},
+    permission: {{ permission|tojson }},
+    canEdit: {{ can_edit|tojson }},
+    canDelete: {{ can_delete|tojson }},
+    canManage: {{ can_manage|tojson }}
+  };
+  window.STUDY_STARRED = {{ (starred_words or [])|tojson }};
+
+  function showMode(mode) {
+    var browse = document.getElementById('mode-browse');
+    var cards = document.getElementById('mode-flashcards');
+    var tb = document.getElementById('tab-browse');
+    var tf = document.getElementById('tab-flashcards');
+    var onBrowse = mode === 'browse';
+    browse.style.display = onBrowse ? '' : 'none';
+    cards.style.display = onBrowse ? 'none' : '';
+    tb.classList.toggle('active', onBrowse);
+    tf.classList.toggle('active', !onBrowse);
+    tb.setAttribute('aria-selected', onBrowse);
+    tf.setAttribute('aria-selected', !onBrowse);
+  }
+</script>
+<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"> </script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js></script>
+<script src="{{ static_v('/assets/js/clusterize.min.js') }}"></script>
+<script src="{{ static_v('/assets/js/select-result.js') }}"></script>
+<script src="{{ static_v('/assets/js/export.js') }}"></script>
+<script src="{{ static_v('/assets/js/study-list-actions.js') }}"></script>
+<script src="{{ static_v('/assets/js/study-flashcards.js') }}"></script>
+
+{% include "footer.html" %}

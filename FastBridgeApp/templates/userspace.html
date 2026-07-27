@@ -9,16 +9,40 @@
         <h2 style="color:#fff; margin-bottom:16px;">{{ username }}'s Space</h2>
         <p style="color:#ccc; margin-bottom:24px;"><em>This is your user dashboard. Here you can manage your account and saved lists.</em></p>
 
-        <div class="dashboard-tabs" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
-          <a href="/userspace/vocab" class="user-tab active" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Vocabulary</a>
-          <a href="#" class="user-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
+        <div class="dashboard-tabs" role="tablist" style="display:flex; justify-content:center; margin-bottom:24px; border-bottom: 2px solid #444; color:#fff;">
+          <a href="/userspace/vocab" data-no-spinner class="user-tab active" role="tab" aria-selected="true" aria-controls="vocabulary" style="color:#fff; padding:12px 24px; text-decoration:none; border-bottom: 3px solid #228383;">Vocabulary</a>
+          <a href="#" class="user-tab" role="tab" aria-selected="false" aria-controls="create" style="color:#ccc; padding:12px 24px; text-decoration:none;">Create List</a>
+          <a href="#" class="user-tab" role="tab" aria-selected="false" aria-controls="saved-searches" id="saved-searches-tab" style="color:#ccc; padding:12px 24px; text-decoration:none;">Saved Searches</a>
         </div>
 
         <div class="tab-content">
-          <div id="vocabulary">
-            <p style="color:#fff;">Your vocabulary will appear here.</p>
+          <div id="vocabulary" role="tabpanel" aria-labelledby="tab-vocabulary">
+            <div id="vocabulary-controls" style="margin-bottom:16px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
+              <label style="color:#fff; font-weight:500;">Filter by language:</label>
+              <select id="vocab-language-filter" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Languages</option>
+                <option value="Latin">Latin</option>
+                <option value="Greek">Greek</option>
+              </select>
+            </div>
+
+            <div id="vocabulary-content"><p style="color:#fff;">Your vocabulary will appear here.</p></div>
+
+            <div style="margin-top:28px; border-top:1px solid #444; padding-top:20px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+              <h3 style="font-size:1.1rem; font-weight:600; color:#22b3b3; margin:0;">Import a Shared List</h3>
+              <p style="color:#ccc; font-size:0.9rem; margin:0;">Paste a share link from another user.</p>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center;">
+                <input type="text" id="import-shared-link" placeholder="Paste share link…"
+                       style="width:22rem; padding:8px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem;">
+                <button id="import-shared-btn"
+                        style="background:#22b3b3; color:#fff; padding:8px 18px; border:none; border-radius:6px; font-size:0.95rem; font-weight:500; cursor:pointer;">
+                  Import
+                </button>
+              </div>
+              <div id="import-shared-message" style="font-size:0.9rem; font-weight:500; color:#ffb366;"></div>
+            </div>
           </div>
-          <div id="create" style="display:none;">
+          <div id="create" role="tabpanel" aria-labelledby="tab-create" style="display:none;">
             <div id="create-list-container" style="color:#fff; text-align:left;">
               <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
                 <h3 style="margin-bottom:18px; font-size:1.5rem; font-weight:600; color:#22b3b3; text-align:center;">Create a New List</h3>
@@ -39,26 +63,33 @@
                 <div id="selected-words-container" style="margin-bottom:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
                 <button id="save-list-btn" style="background:#228383; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(34,179,179,0.15); transition:background 0.2s; text-align:center;">Save List</button>
                 <div id="create-list-message" style="margin-top:16px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
-                <br>
-                <h3 style="margin-bottom:18px; font-size:1.2rem; font-weight:600; color:#22b3b3; text-align:center;">Import Shared List</h3>
-                <div style="margin-bottom:16px; width:100%; display:flex; flex-direction:column; align-items:center;">
-                  <label for="import-shared-link" style="font-weight:500; color:#fff; text-align:center;">Paste Shared Link or Code:</label>
-                  <input type="text" id="import-shared-link" style="margin-top:6px; margin-bottom:12px; width:18rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
-                  <select id="import-shared-language" style="margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
-                    <option value="">--Select Language--</option>
-                    <option value="Greek">Greek</option>
-                    <option value="Latin">Latin</option>
-                  </select>
-                  <select id="import-shared-mode" style="margin-bottom:12px; width:14rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem; text-align:center;">
-                    <option value="copy">Copy (independent)</option>
-                    <option value="linked">Editable (linked)</option>
-                  </select>
-                  <button id="import-shared-btn" style="background:#22b3b3; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-size:1rem; font-weight:500; cursor:pointer; transition:background 0.2s; text-align:center;">Import Shared List</button>
-                  <div id="import-shared-message" style="margin-top:10px; font-size:1rem; font-weight:500; color:#ffb366; text-align:center;"></div>
-                </div>
               </div>
               </div>
           </div>
+
+          <div id="saved-searches" role="tabpanel" aria-labelledby="saved-searches-tab" style="display:none;">
+            <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+              <input type="text" id="search-name-filter" placeholder="Search by name…"
+                     style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;" />
+              <label style="color:#fff; font-weight:500;">Filter by app:</label>
+              <select id="search-app-filter" title="Filter by app" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Apps</option>
+                <option value="LISTS">Lists</option>
+                <option value="STATS">Stats</option>
+                <option value="ORACLE">Oracle</option>
+              </select>
+              <label style="color:#fff; font-weight:500;">Filter by language:</label>
+              <select id="search-lang-filter" title="Filter by language" style="padding:6px 12px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;">
+                <option value="">All Languages</option>
+                <option value="Latin">Latin</option>
+                <option value="Greek">Greek</option>
+              </select>
+            </div>
+            <div id="saved-searches-content" style="color:#fff;">
+              <p style="color:#ccc;">Loading saved searches...</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -66,5 +97,5 @@
   </section>
 
 </body>
-<script src="/assets/js/userspace.js"></script>
+<script src="{{ static_v('/assets/js/userspace.js') }}"></script>
 {% endblock %}

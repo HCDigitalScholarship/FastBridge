@@ -7,10 +7,11 @@
 <div class="container rounded p-4" style="width: 80%; background-color: rgba(28,28,28,0.7); color: white;">
 
 <p style="font-family: Cabin, Helvetica Neue, Helvetica, Arial, sans-serif;">
-With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin or Greek text. To begin, either upload a .txt file or just paste the text. Lemmatizer will match all the words that have only one possible lemma, and will return a csv file for you to complete. All you have to do is disambiguate the remaining words and you have a fully lemmatized text. You can also add custom definitions and/or principal parts!
+With Bridge/Lemmatizer you can find the dictionary form (lemma) of every word in a Latin or Greek text.
 </p>
 
-<form id="post_text" method="post" enctype="multipart/form-data">
+<!-- data-no-spinner: keep base.html's global overlay from firing on AJAX submit -->
+<form id="post_text" method="post" enctype="multipart/form-data" data-no-spinner autocomplete="off">
   <div class="mb-3">
     <label for="text" class="form-label">1. Paste plain text to lemmatize below or upload a .txt file</label>
     <textarea class="form-control" name="text" id="text" rows="8" style="resize: vertical; color: black;"></textarea>
@@ -37,36 +38,447 @@ With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin 
     </select>
   </div>
 
-  <div class="mb-3">
-  <label for="format" class="form-label">4. In which format would you like your lemmata? (Stanza can handle longer texts than Bridge. Must use it for greek. Also it's more accurate for latin than Bridge)</label>
+<div class="mb-3">
+  <label for="format" class="form-label">4. In which format would you like your lemmata? </label>
+  <p style="color: #ccc; font-size: 0.9em;">
+    <strong>Hybrid (CLTK)</strong> combines all three approaches for the best accuracy. Common function words are resolved from a hardcoded table, then CLTK and Stanza are BOTH consulted for every word. When they agree, the answer is high confidence; when they disagree, the word is flagged for you to check. Recommended for most texts, and selected by default.<br><br>
+    <strong>CLTK</strong> (Classical Language Toolkit) is a rule-based lemmatizer for ancient languages. It looks each word up in a lexicon, applies morphological rules, and falls back to the most frequent lemma. Fast and strong on the bulk of classical vocabulary, but it can leave rare or unusual forms unresolved.<br><br>
+    <strong>Stanza</strong> uses a neural network trained on classical Latin and Greek texts. Better at rare words and unusual forms, but slower and occasionally unreliable on common function words.<br><br>
+    <strong>Bridge</strong> uses a pre-built morpheus lexicon dictionary to quickly look up lemmas. Fast and reliable for common words, but limited in coverage for rarer forms.
+
+
   <select name="format" id="format" class="form-select">
-    <option>Bridge</option>
+    <option>Hybrid (CLTK)</option>
+    <option>CLTK</option>
     <option>Stanza</option>
+    <option>Bridge</option>
   </select>
 </div>
 
 
   <div class="mb-3">
-    <label for="resulting_filename" class="form-label">5. What do you want your CSV file to be called?</label>
+    <label for="resulting_filename" class="form-label">5. If you download a CSV, what should it be called?</label>
     <input type="text" name="resulting_filename" id="resulting_filename" class="form-control" value="">
   </div>
 
   <div class="mb-3">
-    <p>6. Click on the button below and you will get a CSV file to be used <a href="/help/lemmatize" style="color: #ccc;">here</a></p>
+    <p>6. Click <strong>Lemmatize!</strong> to see your results on this page as flowing text with hoverable lemmas, or as a table (toggle between them at the top of the results). Or click <strong>Download CSV without waiting</strong> to skip straight to the spreadsheet, which is ready to use <a href="/help/lemmatize" style="color: #ccc;">here</a>.</p>
   </div>
 
-  <button type="submit" class="btn btn-primary">Lemmatize!</button>
+  <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+    <button type="submit" class="btn btn-primary">Lemmatize!</button>
+    <button type="button" id="download-csv-top" class="btn btn-outline-light">
+      <i class="fas fa-download"></i> Download CSV without waiting
+    </button>
+  </div>
 </form>
+
+<!-- ===== Results area (populated by AJAX) ===== -->
+<div id="lemma-status" class="mt-4" role="status" aria-live="polite"></div>
+
+<div id="lemma-results-wrapper" class="mt-3" style="display: none;">
+  <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
+    <h4 class="mb-0" style="color: #fff;">Results <small id="lemma-summary" class="text-muted" style="color: #ccc !important;"></small></h4>
+    <div class="d-flex align-items-center flex-wrap" style="gap: 0.5rem;">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Display mode">
+        <button type="button" id="view-para" class="btn btn-light">Paragraph</button>
+        <button type="button" id="view-table" class="btn btn-outline-light">Table</button>
+      </div>
+      <button type="button" id="download-csv" class="btn btn-outline-light btn-sm">
+        <i class="fas fa-download"></i> Download CSV
+      </button>
+    </div>
+  </div>
+  <div id="lemma-output"></div>
+</div>
 
 </div>
 </section>
 
 <script>
   const fileInput = document.getElementById("file");
+  const fileLabel = document.querySelector("label[for='file']");
+  const FILE_LABEL_DEFAULT = fileLabel.textContent;
+
   fileInput.oninput = () => {
-    const label = document.querySelector("label[for='file']");
-    label.textContent = `You chose: ${fileInput.files[0].name}`;
+    fileLabel.textContent = fileInput.files.length
+      ? `You chose: ${fileInput.files[0].name}`
+      : FILE_LABEL_DEFAULT;
+  };
+
+  // Some browsers restore the previously chosen file when the page is refreshed
+  // or navigated back to (bfcache). Clear it on show so a stale upload doesn't
+  // linger and then collide with pasted text.
+  window.addEventListener("pageshow", () => {
+    fileInput.value = "";
+    fileLabel.textContent = FILE_LABEL_DEFAULT;
+  });
+</script>
+
+<script>
+(function () {
+  const form = document.getElementById("post_text");
+  const statusEl = document.getElementById("lemma-status");
+  const wrapper = document.getElementById("lemma-results-wrapper");
+  const output = document.getElementById("lemma-output");
+  const summary = document.getElementById("lemma-summary");
+  const downloadBtn = document.getElementById("download-csv");
+  const downloadBtnTop = document.getElementById("download-csv-top");
+  const viewParaBtn = document.getElementById("view-para");
+  const viewTableBtn = document.getElementById("view-table");
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  let lastSegments = null;
+  let viewMode = "para";
+  try { viewMode = localStorage.getItem("lemmaView") || "para"; } catch (e) {}
+
+  function setButtonsDisabled(disabled) {
+    if (submitBtn) submitBtn.disabled = disabled;
+    if (downloadBtn) downloadBtn.disabled = disabled;
+    if (downloadBtnTop) downloadBtnTop.disabled = disabled;
   }
+
+  // Endpoints are relative to this page so the router can be mounted anywhere.
+  const basePath = window.location.pathname.replace(/\/+$/, "");
+  const jsonUrl = basePath + "/json";
+  const csvUrl = basePath + "/";
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function setStatus(html) {
+    statusEl.innerHTML = html;
+  }
+
+  // Simple "working" indicator shown while the request is pending.
+  function showWorking(message) {
+    setStatus(
+      '<div class="d-flex align-items-center" style="color:#fff;">' +
+      '<div class="spinner-border text-light mr-3" role="status" aria-hidden="true"></div>' +
+      '<span>' + escapeHtml(message) + '</span></div>'
+    );
+  }
+
+  function showError(message) {
+    setStatus('<div class="alert alert-danger mb-0" role="alert">' + escapeHtml(message) + '</div>');
+  }
+
+  // Popup show/hide with FIXED positioning, so the scrollable results box can't
+  // clip it. Only ONE popup is open at a time — hovering a new word hides the
+  // previous one immediately (fixes popups that used to get stuck open).
+  let activePop = null;
+  let popHideTimer = null;
+  function positionPop(word, pop) {
+    pop.style.display = "block";
+    const wr = word.getBoundingClientRect();
+    const pr = pop.getBoundingClientRect();
+    let top = wr.top - pr.height - 6;
+    if (top < 6) top = wr.bottom + 6;
+    let left = wr.left;
+    const maxLeft = window.innerWidth - pr.width - 8;
+    if (left > maxLeft) left = Math.max(8, maxLeft);
+    pop.style.top = top + "px";
+    pop.style.left = left + "px";
+  }
+  function hidePop(pop) {
+    if (!pop) return;
+    pop.style.display = "none";
+    if (activePop === pop) activePop = null;
+  }
+  function showPop(word, pop) {
+    clearTimeout(popHideTimer);
+    if (activePop && activePop !== pop) hidePop(activePop);
+    activePop = pop;
+    positionPop(word, pop);
+  }
+  function attachPop(word, pop) {
+    word.addEventListener("mouseenter", function () { showPop(word, pop); });
+    word.addEventListener("mouseleave", function () {
+      clearTimeout(popHideTimer);
+      popHideTimer = setTimeout(function () { hidePop(pop); }, 160);
+    });
+    pop.addEventListener("mouseenter", function () { clearTimeout(popHideTimer); });
+    pop.addEventListener("mouseleave", function () { hidePop(pop); });
+  }
+  // Any scroll hides the open popup so it can't float detached from its word.
+  window.addEventListener("scroll", function () { hidePop(activePop); }, true);
+
+  // Confidence line for AGREEING / single-source words.
+  function confHtml(seg) {
+    if (seg.conf === "high") return '<span class="lemma-pop-conf">both tools agree</span>';
+    if (seg.conf === "medium") return '<span class="lemma-pop-conf">single source</span>';
+    return "";
+  }
+
+  // A "CLTK: rosa 📖" option row (popup) — the lemma itself links to its Logeion entry.
+  function optRow(label, lemma, url) {
+    if (!lemma) return "";
+    const inner = url
+      ? '<a class="lemma-pop-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+        escapeHtml(lemma) + ' <i class="fas fa-book-open"></i></a>'
+      : escapeHtml(lemma);
+    return '<span class="lemma-pop-opt"><span class="lemma-pop-optlabel">' + label + '</span> ' + inner + '</span>';
+  }
+
+  // Build one interactive word (paragraph view): the word text plus a hover
+  // popup. For disagreements it shows BOTH candidate lemmas, each linked to its
+  // own Logeion entry so you can look up either and choose.
+  function buildWord(seg) {
+    const span = document.createElement("span");
+    let cls = "lemma-word";
+    if (seg.none) cls += " lemma-none";
+    else if (seg.conf === "review") cls += " lemma-review";
+    span.className = cls;
+    span.textContent = seg.x;
+
+    const pop = document.createElement("span");
+    pop.className = "lemma-pop";
+    if (seg.none) {
+      pop.innerHTML = '<span class="lemma-pop-lemma text-danger">No lemma found</span>';
+    } else if (seg.conf === "review") {
+      pop.innerHTML =
+        '<span class="lemma-pop-flag">The two engines disagree. Pick one:</span>' +
+        optRow("CLTK:", seg.cltk, seg.cltk_logeion) +
+        optRow("Stanza:", seg.stanza, seg.stanza_logeion);
+    } else {
+      pop.innerHTML =
+        '<span class="lemma-pop-lemma">' + escapeHtml(seg.lemma) + '</span>' +
+        confHtml(seg) +
+        (seg.logeion
+          ? '<a class="lemma-pop-link" href="' + escapeHtml(seg.logeion) + '" target="_blank" rel="noopener noreferrer">' +
+            '<i class="fas fa-book-open"></i> Logeion</a>'
+          : '');
+    }
+    span.appendChild(pop);
+    attachPop(span, pop);
+    return span;
+  }
+
+  // Paragraph view: the text in its original layout, each word hover-able.
+  function buildParagraph(segments) {
+    const container = document.createElement("div");
+    const hint = document.createElement("p");
+    hint.className = "mb-2";
+    hint.style.color = "#ccc";
+    hint.style.fontSize = "0.9em";
+    hint.textContent = "Hover any word for its lemma and Logeion link. Amber means the two engines disagree; hover to see both options and pick one. Red means neither engine could resolve the word (rare).";
+    container.appendChild(hint);
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "lemma-text p-3 rounded bg-white text-dark";
+    const frag = document.createDocumentFragment();
+    segments.forEach(function (seg) {
+      if (seg.t === "w") frag.appendChild(buildWord(seg));
+      else if (seg.t === "b") frag.appendChild(document.createElement("br"));
+      else frag.appendChild(document.createTextNode(seg.x));  // "s" or "x"
+    });
+    textDiv.appendChild(frag);
+    container.appendChild(textDiv);
+    return container;
+  }
+
+  // A single linked lemma for the table's disagreement cell.
+  function tableOpt(lemma, url) {
+    if (!lemma) return '<span class="text-muted">&mdash;</span>';
+    return url
+      ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(lemma) + '</a>'
+      : escapeHtml(lemma);
+  }
+
+  // Table view: one row per word, with a Logeion link column.
+  function buildTable(segments) {
+    const wrap = document.createElement("div");
+    wrap.className = "table-responsive";
+    const table = document.createElement("table");
+    table.className = "table table-striped table-hover table-sm bg-white text-dark rounded";
+    table.innerHTML =
+      '<thead class="thead-dark"><tr>' +
+      '<th scope="col">#</th><th scope="col">Word</th><th scope="col">Lemma</th>' +
+      '<th scope="col" class="text-center">Logeion</th><th scope="col">Location</th>' +
+      '</tr></thead>';
+    const tbody = document.createElement("tbody");
+    segments.forEach(function (seg) {
+      if (seg.t !== "w") return;
+      const tr = document.createElement("tr");
+      if (seg.none) tr.className = "table-danger";
+      else if (seg.conf === "review") tr.className = "table-warning";
+
+      let lemmaCell;
+      if (seg.none) {
+        lemmaCell = '<span class="text-danger font-weight-bold">NONE</span>';
+      } else if (seg.conf === "review") {
+        lemmaCell =
+          '<span class="review-opt"><span class="review-optlabel">CLTK</span> ' + tableOpt(seg.cltk, seg.cltk_logeion) + '</span>' +
+          ' <span class="review-sep">·</span> ' +
+          '<span class="review-opt"><span class="review-optlabel">Stanza</span> ' + tableOpt(seg.stanza, seg.stanza_logeion) + '</span>';
+      } else {
+        lemmaCell = escapeHtml(seg.lemma);
+      }
+
+      const logeionCell = seg.logeion
+        ? '<a href="' + escapeHtml(seg.logeion) + '" target="_blank" rel="noopener noreferrer" aria-label="Logeion entry for ' +
+          escapeHtml(seg.lemma) + '"><i class="fas fa-book-open"></i></a>'
+        : '<span class="text-muted">&mdash;</span>';
+      tr.innerHTML =
+        '<td class="text-muted">' + seg.n + '</td>' +
+        '<td>' + escapeHtml(seg.x) + '</td>' +
+        '<td>' + lemmaCell + '</td>' +
+        '<td class="text-center">' + logeionCell + '</td>' +
+        '<td>' + escapeHtml(seg.loc || "") + '</td>';
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function renderView() {
+    if (!lastSegments) return;
+    const para = viewMode === "para";
+    if (viewParaBtn && viewTableBtn) {
+      viewParaBtn.classList.toggle("btn-light", para);
+      viewParaBtn.classList.toggle("btn-outline-light", !para);
+      viewTableBtn.classList.toggle("btn-light", !para);
+      viewTableBtn.classList.toggle("btn-outline-light", para);
+    }
+    output.innerHTML = "";
+    output.appendChild(para ? buildParagraph(lastSegments) : buildTable(lastSegments));
+  }
+
+  function setViewMode(mode) {
+    viewMode = mode;
+    try { localStorage.setItem("lemmaView", mode); } catch (e) {}
+    renderView();
+  }
+
+  function renderResult(data) {
+    const segments = data.segments || [];
+    if (!segments.length) {
+      wrapper.style.display = "none";
+      showError("No words were found to lemmatize.");
+      return;
+    }
+
+    lastSegments = segments;
+    let wordCount = 0;
+    let noneCount = 0;
+    let reviewCount = 0;
+    segments.forEach(function (s) {
+      if (s.t === "w") {
+        wordCount++;
+        if (s.none) noneCount++;
+        else if (s.conf === "review") reviewCount++;
+      }
+    });
+    summary.textContent =
+      "— " + wordCount + " word" + (wordCount === 1 ? "" : "s") +
+      (noneCount ? ", " + noneCount + " unresolved" : "") +
+      (reviewCount ? ", " + reviewCount + " to check" : "");
+    wrapper.style.display = "block";
+    if (data.warning) {
+      setStatus('<div class="alert alert-warning mb-0" role="alert">' + escapeHtml(data.warning) + '</div>');
+    } else {
+      setStatus("");
+    }
+    renderView();
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const text = (document.getElementById("text").value || "").trim();
+    const hasFile = fileInput.files && fileInput.files.length > 0;
+
+    if (!text && !hasFile) {
+      showError("Please enter or upload text.");
+      return;
+    }
+    if (text && hasFile) {
+      showError("Please choose just one input method.");
+      return;
+    }
+
+    wrapper.style.display = "none";
+    showWorking("Lemmatizing… this can take a moment (the neural model is slow on first run).");
+    setButtonsDisabled(true);
+
+    const formData = new FormData(form);
+
+    fetch(jsonUrl, { method: "POST", body: formData })
+      .then(function (resp) {
+        return resp.json().then(function (data) {
+          if (!resp.ok || data.error) {
+            throw new Error(data.error || ("Request failed (" + resp.status + ")"));
+          }
+          return data;
+        });
+      })
+      .then(renderResult)
+      .catch(function (err) {
+        showError(err.message || "Something went wrong while lemmatizing.");
+      })
+      .finally(function () {
+        setButtonsDisabled(false);
+      });
+  });
+
+  // Download CSV: re-post the same form data to the original endpoint and save
+  // the returned file. Available both up front (skip the on-page render, handy
+  // for long texts) and from the results header. Keeps the CSV workflow intact.
+  function downloadCsv() {
+    const text = (document.getElementById("text").value || "").trim();
+    const hasFile = fileInput.files && fileInput.files.length > 0;
+
+    if (!text && !hasFile) {
+      showError("Please enter or upload text.");
+      return;
+    }
+    if (text && hasFile) {
+      showError("Please choose just one input method.");
+      return;
+    }
+
+    let filename = (document.getElementById("resulting_filename").value || "tempfile").trim();
+    if (!filename) filename = "tempfile";
+    filename += ".csv";
+
+    const formData = new FormData(form);
+    showWorking("Preparing your CSV… this can take a moment for longer texts.");
+    setButtonsDisabled(true);
+
+    fetch(csvUrl, { method: "POST", body: formData })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("Could not generate CSV (" + resp.status + ").");
+        return resp.blob();
+      })
+      .then(function (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus('<div class="alert alert-success mb-0" role="alert">Downloaded ' + escapeHtml(filename) + '</div>');
+      })
+      .catch(function (err) {
+        showError(err.message || "Could not download CSV.");
+      })
+      .finally(function () {
+        setButtonsDisabled(false);
+      });
+  }
+
+  if (downloadBtnTop) downloadBtnTop.addEventListener("click", downloadCsv);
+  downloadBtn.addEventListener("click", downloadCsv);
+
+  if (viewParaBtn) viewParaBtn.addEventListener("click", function () { setViewMode("para"); });
+  if (viewTableBtn) viewTableBtn.addEventListener("click", function () { setViewMode("table"); });
+})();
 </script>
 
 <style>
@@ -77,6 +489,124 @@ With Bridge/Lemmatizer you can create a lemmatization spreadsheet for any Latin 
 textarea::selection {
   background: #1860a8;
   color: #fff;
+}
+/* Running-text results with per-word hover popups */
+.lemma-text {
+  white-space: pre-wrap;   /* preserve original spacing and line breaks */
+  line-height: 2.1;
+  font-size: 1.05rem;
+  overflow: visible;
+}
+.lemma-word {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted #1860a8;
+}
+.lemma-word.lemma-none {
+  border-bottom: 1px solid #dc3545;
+  background: rgba(220, 53, 69, 0.12);
+}
+.lemma-word.lemma-review {
+  border-bottom: 1px solid #d98a00;
+  background: rgba(217, 138, 0, 0.16);
+}
+.lemma-pop {
+  display: none;
+  position: fixed;            /* fixed so a scrollable results box never clips it */
+  z-index: 1000;
+  padding: 8px 12px;
+  width: max-content;
+  max-width: 300px;
+  background: #1c1c1c;
+  color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  white-space: normal;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.lemma-pop-lemma {
+  display: block;
+  font-weight: 600;
+}
+.lemma-pop-conf {
+  display: block;
+  margin-top: 3px;
+  color: #9fb0c5;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+.lemma-pop-flag {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffca6b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.lemma-pop-opt {
+  display: block;
+  margin-top: 3px;
+}
+.lemma-pop-optlabel {
+  color: #9fb0c5;
+  font-size: 0.8rem;
+}
+#lemma-output .review-optlabel {
+  color: #9a6b00;
+  font-size: 0.82em;
+}
+#lemma-output .review-sep {
+  color: #b9a06a;
+}
+.lemma-pop-link {
+  display: block;
+  margin-top: 4px;
+  color: #7fb2f0;
+  text-decoration: none;
+}
+.lemma-pop-link:hover {
+  text-decoration: underline;
+  color: #a9cbf5;
+}
+/* Cap the results height and scroll instead of stretching the whole page.
+   A chunky, always-visible scrollbar makes it obvious the panel scrolls. */
+#lemma-output {
+  max-height: 55vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: auto;              /* Firefox */
+  scrollbar-color: #1860a8 #e6e6e6;   /* Firefox: thumb, track */
+}
+#lemma-output::-webkit-scrollbar {
+  width: 16px;
+}
+#lemma-output::-webkit-scrollbar-track {
+  background: #e6e6e6;
+  border-radius: 8px;
+}
+#lemma-output::-webkit-scrollbar-thumb {
+  background: #1860a8;
+  border-radius: 8px;
+  border: 3px solid #e6e6e6;
+}
+#lemma-output::-webkit-scrollbar-thumb:hover {
+  background: #124b82;
+}
+/* Table view links / unresolved / review rows */
+#lemma-output .table a {
+  color: #1860a8;
+}
+#lemma-output .table tr.table-danger td {
+  color: #842029;
+}
+#lemma-output .table tr.table-warning td {
+  color: #7a5b00;
+}
+#lemma-output .review-tag {
+  color: #9a6b00;
+  font-size: 0.85em;
+  cursor: help;
 }
 </style>
 

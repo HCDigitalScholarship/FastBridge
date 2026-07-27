@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+  <section class="content-section" style="background: url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size: cover; background-position: top; min-height: 100vh;">
+    <div class="container" style="max-width: 600px; margin: 80px auto; text-align: center;">
+
+      <div class="error-container" style="background:rgba(0,0,0,0.8); border-radius:15px; box-shadow:0 4px 20px rgba(0,0,0,0.3); padding:48px 32px; color:#fff;">
+
+        <h1 style="font-size: 3rem; margin-bottom: 16px; color: #22b3b3;">
+          {{ status_code }}
+        </h1>
+
+        <h2 style="font-size: 1.5rem; margin-bottom: 24px; color: #fff;">
+          {{ message }}
+        </h2>
+
+        <div class="error-description" style="margin-bottom: 32px; color: #ccc; font-size: 1.1rem;">
+          {% if status_code == 404 %}
+            <p>The page you're looking for doesn't exist or may have been moved.</p>
+          {% elif status_code == 401 %}
+            <p>You need to log in to access this resource.</p>
+          {% elif status_code == 403 %}
+            <p>You don't have permission to access this resource.</p>
+          {% elif status_code == 500 %}
+            <p>Something went wrong on our end. We're working to fix it.</p>
+          {% else %}
+            <p>An unexpected error occurred. Please try again later.</p>
+          {% endif %}
+        </div>
+
+        <div class="error-actions">
+          <a href="/"
+             style="display: inline-block; background: #22b3b3; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 8px; font-weight: 500; transition: background 0.2s;"
+             onmouseover="this.style.background='#1a8a8a'"
+             onmouseout="this.style.background='#22b3b3'">
+              Go Home
+          </a>
+
+          {% if status_code == 401 %}
+            <a href="/account/signin"
+               style="display: inline-block; background: #228383; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 8px; font-weight: 500; transition: background 0.2s;"
+               onmouseover="this.style.background='#1a6a6a'"
+               onmouseout="this.style.background='#228383'">
+                Sign In
+            </a>
+          {% endif %}
+
+          <button onclick="history.back()"
+                  style="background: #6c757d; color: #fff; padding: 12px 24px; border: none; border-radius: 8px; margin: 8px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                  onmouseover="this.style.background='#5a6268'"
+                  onmouseout="this.style.background='#6c757d'">
+              Go Back
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    // Auto-refresh for server errors after a delay
+    {% if status_code >= 500 %}
+      setTimeout(() => {
+        const refresh = confirm("Would you like to try refreshing the page?");
+        if (refresh) {
+          window.location.reload();
+        }
+      }, 10000); // 10 seconds
+    {% endif %}
+
+    // Log client-side error info
+    console.error('Error {{ status_code }}: {{ message }}');
+  </script>
+</body>
+{% endblock %}

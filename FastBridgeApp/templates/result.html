@@ -7,62 +7,57 @@
    <style id = "local_styling" media="screen">{{style|safe}}</style>
  </head>
 {% include "navbar.html" %}
-<body style="height:70vh;" id="main"><div id="slideOut"><div id="slideOutTab" class="slideOutTab">
-  <div>
-  <p style="font-family: sans-serif; font-size:1.5rem;"> Options </p></div></div><div class="modal-content" style="background-color:rgba(110,110,110,0.97)">
-  <div class="btn-group">
-    <button type="button" class="btn btn-default" style="width:50%" id="printSubmit" value="Print" onclick="printData();" title="Print table">Print Page</button>
-    <button type="button" class="btn btn-default" style="width:50%" onclick="exportVisibleDataToCSV();">Export as CSV</button>
-  </div>
-
-  <div class="modal-header"><h4 class="modal-title">Refine your list</h4> </div>
-  <div class="modal-body" style="overflow-y:auto;height:65vh">
-    <div class="form-group">
-      <div class="custom-control custom-checkbox">
-        <input id = "running" type="checkbox"  class="custom-control-input" value= "show" onclick="show_full_list('running');"></input>
-        <label class="custom-control-label" for="running">Toggle Running List</label>
-      </div>
-    </div>
-    <div class="form-group"><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="hide"  id="toggle_all" onchange="toggle_all_filters('toggle_all');" checked><label class="custom-control-label" for="toggle_all">Toggle All/None</label></div></div>
-
-    <div class="POS filters"><label for="POS filters">Part of Speech Filters</label>
-      <div id="POS filters">{{POS_list|safe}}</div><label for="column filters">Add or Remove Columns</label><div id="column filters">{{headers|safe}}</div></div>
-
-  </div><div class="modal-footer"> </div></div></div><section id="result" class="download-section content-section text-center" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
+<body style="height:70vh;" id="main">{% include "partials/refine_sidebar.html" %}<section id="result" class="download-section content-section text-center" role="main" style="background:url('/assets/img/background-img-gray.jpg') fixed center center no-repeat; background-size:cover;">
 
   <div class="container">
 <h2> Now showing <span id = "len"> {{ len }} </span> words in {{ section }} </h2>
 
-  <div id="save-list-container" style="display:none; margin-bottom:18px;">
-    <input type="text" id="save-list-name" class="form-control" style="width:14rem; display:inline-block; margin-right:12px; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" placeholder="List name..." />
-    <button id="save-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save List</button>
+  <style>
+    #contentArea tr[data-lemma] { cursor: pointer; }
+    #contentArea tr.row-selected > td { background: rgba(34,179,179,0.35) !important; }
+    #floating-action-bar {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 1050;
+      display: none; align-items: center; flex-wrap: wrap; gap: 10px;
+      background: rgba(20,20,20,0.97); border: 1px solid #2a6b6b; border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.55); padding: 12px 18px; color: #fff; max-width: 94vw;
+    }
+    #floating-action-bar .fab-divider { width:1px; height:26px; background:#444; margin:0 4px; }
+  </style>
+
+  <!-- Save this search: bookmark the current search URL + filters to re-run later -->
+  <div id="load-search-container"></div>
+  <div id="save-search-container" style="display:none; margin-bottom:10px;">
+    <input type="text" id="save-search-name" class="form-control" aria-label="Name this search" style="width:14rem; display:inline-block; margin-right:12px; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" placeholder="Name this search..." />
+    <button id="save-search-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save Search</button>
   </div>
-  <span id="save-list-message" style="margin-left:12px; color:#ffb366; font-weight:500;"></span>
+  <span id="save-search-message" style="margin-left:12px; color:#ffb366; font-weight:500;"></span>
 
-  <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search" aria-label="Search" type="text" id="search"/>
-
-<div id="export_wrapper">
-
-  <div class="clusterize table-responsive mx-auto">
-    <table class="table table-striped"
-      style="margin-bottom: 0rem; overflow: hidden;">
-      <thead style="text-align:left">
-        <tr>{{other_headers|safe}}</tr>
-    </thead>
-    </table>
-    <div class="clusterize-scroll" id="scrollArea">
-      <table class="table table-striped" id = "main_table">
-        <tbody id="contentArea" class="clusterize-content">
-          <tr class="clusterize-no-data">
-          <td>Loading data…</td>
-        </tr>
-        </tbody>
-      </table>
-
-    </div>
-
+  <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
+    <input class="form-control" style="width:20rem; padding:10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:1rem;" type="text" placeholder="Search for terms..." aria-label="Search for terms" id="search"/>
+    <button type="button" id="select-all-terms-btn" class="btn btn-default" style="display:none; border-radius:6px; font-weight:600; border:1px solid #22b3b3; color:#22b3b3;" onclick="selectAllActive()">Select all terms</button>
   </div>
+
+  <!-- Floating action bar: slides in when rows are selected (Gmail-style) -->
+  <div id="floating-action-bar">
+    <span id="selection-count" style="font-weight:700; margin-right:4px;">0 selected</span>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="selectAllActive()">Select All</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="invertSelection()">Invert</button>
+    <button type="button" class="btn btn-sm btn-default" style="border-radius:6px;" onclick="clearSelection()">Clear</button>
+    <span class="fab-divider"></span>
+    <span id="save-list-container">
+      <input type="text" id="save-list-name" class="form-control" style="width:11rem; display:inline-block; margin-right:8px; padding:8px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff;" placeholder="New list name..." />
+      <button id="save-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Save as New List</button>
+    </span>
+    <span id="add-to-list-section" style="display:none;">
+      <span class="fab-divider"></span>
+      <select id="add-to-list-select" style="padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; margin-right:8px;"></select>
+      <button id="add-to-list-btn" class="btn btn-success" style="border-radius:6px; font-weight:600; background-color:#228383;">Add to List</button>
+    </span>
+    <span id="add-to-list-message" style="margin-left:10px; color:#ffb366; font-weight:500;"></span>
+    <span id="save-list-message" style="margin-left:10px; color:#ffb366; font-weight:500;"></span>
   </div>
+
+{% include "partials/results_table.html" %}
   <a class="btn btn-primary btn-lg btn-default" role="button" href="/select" style="border-radius: 35px;padding: 10px 20px;font-size: 16px;font-family: Actor, sans-serif;">Search again</a>
   <div style="text-align:center;margin-top:40px;"><span class="step"></span><span class="step"></span><span class="step"></span><span class="step active"></span></div>
 </div>
@@ -73,10 +68,11 @@
   var data = {{ render_words|safe }}
 
 </script>
-<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"> </script>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js></script>
-<script src="/assets/js/clusterize.min.js"></script>
-<script src="/assets/js/select-result.js"></script>
-<script src="/assets/js/export.js"></script>
+<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"> </script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js></script>
+<script src="{{ static_v('/assets/js/clusterize.min.js') }}"></script>
+<script src="{{ static_v('/assets/js/select-result.js') }}"></script>
+<script src="{{ static_v('/assets/js/export.js') }}"></script>
+<script src="{{ static_v('/assets/js/save-search.js') }}"></script>
 
 {% include "footer.html" %}

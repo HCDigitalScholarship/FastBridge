@@ -155,17 +155,47 @@ function printData() {
   newWin.close();
 }
 
-fetch('/account/protected', { credentials: 'include' })
-  .then((resp) => {
-    if (!resp.ok) throw new Error('Not authenticated')
-    return resp.json()
-  })
-  .then((data) => {
-    document.getElementById('save-list-container').style.display = ''
-  })
-  .catch((err) => {
-    document.getElementById('save-list-container').style.display = 'none'
-  })
+// Resolve the language for the current page. The study page exposes it via
+// window.STUDY_LIST; the results page (/select/{lang}/...) carries it in the URL.
+function getListLanguage() {
+  if (window.STUDY_LIST && window.STUDY_LIST.language) return window.STUDY_LIST.language;
+  const parts = window.location.pathname.split('/');
+  return parts[parts.indexOf('select') + 1] || '';
+}
+
+(function initSaveList() {
+  const isLoggedIn = document.cookie.split(';').some(c => c.trim().startsWith('session_name='));
+  if (!isLoggedIn) return;
+  // The floating action bar reveals itself on selection (select-result.js); nothing to show here.
+
+  const language = getListLanguage();
+
+  fetch(`/userspace/list_names?language=${encodeURIComponent(language)}`, { credentials: 'include' })
+    .then(r => r.json())
+    .then(lists => {
+      if (!lists || lists.length === 0) return;
+      const select = document.getElementById('add-to-list-select');
+      lists.forEach(lst => {
+        const opt = document.createElement('option');
+        opt.value = lst.name;
+        opt.textContent = lst.name;
+        select.appendChild(opt);
+      });
+      document.getElementById('add-to-list-section').style.display = '';
+    })
+    .catch(() => {});
+})();
+
+// Extract [lemma, gloss] pairs to save. If the user has hand-picked rows
+// (selectedLemmas, from select-result.js), save only those; otherwise save
+// all currently filtered rows.
+function collectWordsForSave(rowData, simpleLemmaIndex, glossIndex) {
+  let chosen = (rowData || []).filter(row => row.active);
+  if (typeof selectedLemmas !== "undefined" && selectedLemmas.size > 0) {
+    chosen = chosen.filter(row => selectedLemmas.has(row.values[simpleLemmaIndex]));
+  }
+  return chosen.map(row => [row.values[simpleLemmaIndex], row.values[glossIndex]]);
+}
 
 document.getElementById('save-list-btn').addEventListener('click', async () => {
   const listName = document.getElementById('save-list-name').value.trim();
@@ -186,18 +216,11 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
     return;
   }
   
-  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS
-  const words = (rowData || []).filter(row => row.active)
-    .map(row => [
-      row.values[simpleLemmaIndex],
-      row.values[glossIndex]
-    ]);
+  // Filter active rows and extract only SIMPLE_LEMMA and GLOSS (selection-aware)
+  const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
 
-  // Get the language from the URL (after /select/)
-  const urlParts = window.location.pathname.split('/');
-  const langIndex = urlParts.indexOf('select') + 1;
-  const language = urlParts[langIndex] || '';
-  
+  const language = getListLanguage();
+
   document.getElementById('save-list-message').textContent = 'Saving...';
   console.log("List Name:", listName, "length:", words.length, "Language:", language, words.slice(0,5));
   try {
@@ -220,5 +243,39 @@ document.getElementById('save-list-btn').addEventListener('click', async () => {
     }
   } catch {
     document.getElementById('save-list-message').textContent = 'Error saving list.';
+  }
+});
+
+document.getElementById('add-to-list-btn').addEventListener('click', async () => {
+  const listName = document.getElementById('add-to-list-select').value;
+  if (!listName) {
+    document.getElementById('add-to-list-message').textContent = 'Please select a list.';
+    return;
+  }
+
+  const checkbox = document.getElementById("running");
+  const colMap = typeof columns === "string" ? JSON.parse(columns) : columns;
+  const simpleLemmaIndex = Object.keys(colMap).indexOf("SIMPLE_LEMMA");
+  const glossIndex = Object.keys(colMap).indexOf("SHORT_DEFINITION");
+  const rowDataRaw = checkbox.checked ? full_data : rows;
+  const rowData = typeof rowDataRaw === "string" ? JSON.parse(rowDataRaw) : rowDataRaw;
+
+  const words = collectWordsForSave(rowData, simpleLemmaIndex, glossIndex);
+
+  const language = getListLanguage();
+
+  document.getElementById('add-to-list-message').textContent = 'Adding...';
+  try {
+    const resp = await fetch('/userspace/add_words', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ list_name: listName, language, words })
+    });
+    const result = await resp.json();
+    document.getElementById('add-to-list-message').textContent = result.success
+      ? result.message
+      : 'Error adding words.';
+  } catch {
+    document.getElementById('add-to-list-message').textContent = 'Error adding words.';
   }
 });
