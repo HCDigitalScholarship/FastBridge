@@ -106,7 +106,7 @@ pluggy==0.13.1
 preshed==3.0.10
 promise==2.3
 proto-plus==1.26.1
-protobuf==5.29.5
+protobuf==5.29.6
 py==1.11.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
