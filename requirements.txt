@@ -119,7 +119,7 @@ pyparsing==2.4.7
 pytest==5.4.3
 python-dateutil==2.8.2
 python-dotenv==1.1.1
-python-multipart==0.0.5
+python-multipart==0.0.22
 pytz==2020.1
 PyYAML==6.0.2
 RapidFuzz==3.13.0
