@@ -43,6 +43,8 @@
     .fc-controls { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin:18px 0 8px; }
     #fc-pos-filter { padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem; }
     .fc-progress { color:#bbb; font-weight:600; }
+    .fc-due { color:#22b3b3; font-weight:600; }
+    .fc-save-warn { color:#ffb366; font-size:0.85rem; }
     .fc-card-wrap { position:relative; width:min(560px,92vw); margin:24px auto 0; }
     .fc-card { position:relative; width:100%; height:320px; perspective:1200px; cursor:pointer; outline:none; }
     .fc-card:focus-visible .fc-card-inner { box-shadow:0 0 0 3px rgba(34,179,179,0.6); border-radius:16px; }
@@ -68,6 +70,11 @@
     .fc-nav { display:flex; gap:12px; justify-content:center; margin-top:22px; }
     .fc-nav-btn { background:#228383; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-weight:600; font-size:1rem; cursor:pointer; }
     .fc-nav-btn:disabled { opacity:0.4; cursor:default; }
+    .fc-rating { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+    .fc-again { background:#c62828; }
+    .fc-hard { background:#b35900; }
+    .fc-good { background:#228383; }
+    .fc-easy { background:#2e7d32; }
     .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
     .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   </style>
@@ -124,7 +131,10 @@
         <label for="fc-pos-filter">Part of speech</label>
         <select id="fc-pos-filter" aria-label="Filter flashcards by part of speech"></select>
         <label class="fc-starred-toggle"><input type="checkbox" id="fc-starred-only"> Starred only</label>
+        <label class="fc-starred-toggle"><input type="checkbox" id="fc-recall"> Recall mode</label>
+        <span id="fc-due" class="fc-due"></span>
         <span id="fc-progress" class="fc-progress" aria-live="polite"></span>
+        <span id="fc-save-warn" class="fc-save-warn" role="status" style="display:none;">Couldn't save your last review.</span>
       </div>
 
       <div class="fc-card-wrap">
@@ -151,6 +161,16 @@
         <button type="button" id="fc-flip" class="fc-nav-btn">Flip card</button>
         <button type="button" id="fc-next" class="fc-nav-btn">Next</button>
       </div>
+      <div class="fc-rating" id="fc-rating" role="group" style="display:none;" aria-label="Rate this card">
+        <button type="button" class="fc-nav-btn fc-again" data-rating="again">Again <kbd>1</kbd></button>
+        <button type="button" class="fc-nav-btn fc-hard" data-rating="hard">Hard <kbd>2</kbd></button>
+        <button type="button" class="fc-nav-btn fc-good" data-rating="good">Good <kbd>3</kbd></button>
+        <button type="button" class="fc-nav-btn fc-easy" data-rating="easy">Easy <kbd>4</kbd></button>
+      </div>
+      <p id="fc-session-done" class="fc-filtered-empty" style="display:none;">
+        <span id="fc-done-msg">Session finished.</span>
+        <button type="button" id="fc-restart" class="fc-nav-btn">Study ahead</button>
+      </p>
       <p id="fc-filtered-empty" class="fc-filtered-empty" style="display:none;">No flashcards match these filters.</p>
     </div>
     <p id="flashcards-empty" style="display:none; margin-top:40px; font-size:1.2rem;">This list has no words to study yet.</p>
@@ -174,6 +194,8 @@
     canManage: {{ can_manage|tojson }}
   };
   window.STUDY_STARRED = {{ (starred_words or [])|tojson }};
+  // "lemma\0gloss" -> ISO due date, for recall-mode ordering.
+  window.STUDY_PROGRESS = {{ (study_progress or {})|tojson }};
 
   function showMode(mode) {
     var browse = document.getElementById('mode-browse');
