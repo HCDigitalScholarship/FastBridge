@@ -65,6 +65,8 @@
   var dueBadge = document.getElementById('fc-due');
   var saveWarn = document.getElementById('fc-save-warn');
   var restartBtn = document.getElementById('fc-restart');
+  var recallHelp = document.getElementById('fc-recall-help');
+  var resetBtn = document.getElementById('fc-reset');
 
   // The card content is normal readable text (not buried in a button), but the
   // flip and navigation are silent to a screen reader on their own, so mirror
@@ -125,6 +127,10 @@
     for (var i = 0; i < ratingBtns.length; i++) ratingBtns[i].disabled = !on;
   }
 
+  // One warning slot for both failed writes, so the message always names the
+  // thing that actually failed rather than whichever one wrote it last.
+  function warn(msg) { saveWarn.textContent = msg || ''; }
+
   function paintStar() {
     var c = current();
     var on = !!(c && starred[keyOf(c.lemma, c.shortDef)]);
@@ -132,8 +138,15 @@
     starBtn.setAttribute('aria-pressed', String(on));
   }
 
+  // Cards the deck still has left to offer in a "study ahead" run: everything
+  // not already rated this session, whether or not it was due.
+  function aheadLeft() {
+    return cards.filter(function (c) { return !reviewed[keyOf(c.lemma, c.shortDef)]; });
+  }
+
   function render() {
     var recall = mode === 'recall';
+    recallHelp.style.display = recall ? '' : 'none';
     dueBadge.textContent = (recall || !cards.length) ? '' : dueCount() + ' due';
     cardEl.classList.remove('flipped');
     frontFace.setAttribute('aria-hidden', 'false');
@@ -157,6 +170,9 @@
       sessionDone.style.display = 'block';
       // No cards done means nothing was waiting in the first place.
       doneMsg.textContent = doneCount ? 'Session finished.' : 'All caught up.';
+      // Nothing left to pull forward once every card has been rated, so don't
+      // offer a button that would hand back an empty deck.
+      restartBtn.style.display = aheadLeft().length ? '' : 'none';
       progress.textContent = '0 left · ' + doneCount + ' done';
       announce(doneMsg.textContent);
       return;
@@ -187,9 +203,14 @@
   // first), never-seen, scheduled-for-later. Shuffling first keeps stored list
   // order out of each group, so you learn the word and not its position.
   // `ahead` keeps the scheduled-for-later cards; a normal session drops them.
+  // It also keeps `reviewed`, so studying ahead pulls forward the cards you
+  // have *not* done rather than replaying the ones you just finished. A fresh
+  // session clears it instead: a card whose save failed has no server-side
+  // schedule, so it ought to come back round.
   function buildQueue(ahead) {
     var now = Date.now();
-    queue = cards.slice();
+    if (!ahead) reviewed = {};
+    queue = aheadLeft();
     for (var i = queue.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var t = queue[i]; queue[i] = queue[j]; queue[j] = t;
@@ -199,8 +220,7 @@
     });
     if (!ahead) queue = queue.filter(function (c) { return dueGroup(c, now) < 2; });
     doneCount = 0;
-    reviewed = {};
-    saveWarn.style.display = 'none';
+    warn('');
   }
 
   function setMode(on) {
@@ -254,7 +274,35 @@
     }).catch(function () {
       // Left up for the rest of the session: a later card saving fine says
       // nothing about the review that was lost.
-      saveWarn.style.display = '';
+      warn("Couldn't save your last review.");
+    });
+  }
+
+  // Throw away the stored schedule for every word in this list, so the whole
+  // deck reads as never-reviewed again. Confirmed first and not undoable, hence
+  // the plain confirm(); the server only ever touches the caller's own rows.
+  function resetProgress() {
+    if (!window.confirm('Reset your recall progress for every word in this list? This cannot be undone.')) return;
+    resetBtn.disabled = true;
+    fetch('/userspace/reset_progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: S.language, list_name: S.listName, shared: !!S.shared
+      })
+    }).then(function (resp) {
+      return resp.ok ? resp.json() : Promise.reject();
+    }).then(function (d) {
+      if (!d.success) return Promise.reject();
+      sched = {};
+      // A session in progress is describing a schedule that no longer exists,
+      // so start it over rather than letting it run on stale ordering.
+      if (mode === 'recall') buildQueue();
+      render();
+      announce('Progress reset.');
+    }).catch(function () {
+      warn("Couldn't reset your progress.");
+    }).then(function () {
+      resetBtn.disabled = false;
     });
   }
 
@@ -338,6 +386,7 @@
     if (btn) rate(btn.getAttribute('data-rating'));
   });
   restartBtn.addEventListener('click', function () { buildQueue(true); render(); });
+  resetBtn.addEventListener('click', resetProgress);
 
   // Keyboard shortcuts, but only while the Flashcards tab is the visible panel
   // and focus isn't in the POS <select>.

@@ -75,6 +75,14 @@
     .fc-hard { background:#b35900; }
     .fc-good { background:#228383; }
     .fc-easy { background:#2e7d32; }
+    /* the button already carries the colour and weight, so this just needs to read as a key rather than as another word. */
+    .fc-rating kbd {
+      font-family:inherit; font-size:0.8rem; font-weight:700; line-height:1;
+      background:rgba(0,0,0,0.28); border-radius:4px; padding:3px 6px; margin-left:4px;
+    }
+    .fc-reset { background:none; border:none; color:#bbb; font-size:0.85rem; text-decoration:underline; cursor:pointer; padding:2px 4px; }
+    .fc-reset:hover { color:#ffb366; }
+    .fc-reset:focus-visible { outline:2px solid #22b3b3; border-radius:4px; }
     .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
     .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   </style>
@@ -134,7 +142,7 @@
         <label class="fc-starred-toggle"><input type="checkbox" id="fc-recall"> Recall mode</label>
         <span id="fc-due" class="fc-due"></span>
         <span id="fc-progress" class="fc-progress" aria-live="polite"></span>
-        <span id="fc-save-warn" class="fc-save-warn" role="status" style="display:none;">Couldn't save your last review.</span>
+        <span id="fc-save-warn" class="fc-save-warn" role="status"></span>
       </div>
 
       <div class="fc-card-wrap">
@@ -154,6 +162,10 @@
         </div>
       </div>
       <p class="fc-instructions">Click the card or press Space to show the definition.</p>
+      <p id="fc-recall-help" class="fc-instructions" style="display:none;">
+        Recall mode shows the words you're due to review based on how confident you are with them. 
+        <button type="button" id="fc-reset" class="fc-reset">Reset progress for this list</button>
+      </p>
       <div id="fc-live" class="fc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
       <div class="fc-nav" aria-label="Flashcard navigation">
@@ -162,10 +174,14 @@
         <button type="button" id="fc-next" class="fc-nav-btn">Next</button>
       </div>
       <div class="fc-rating" id="fc-rating" role="group" style="display:none;" aria-label="Rate this card">
-        <button type="button" class="fc-nav-btn fc-again" data-rating="again">Again <kbd>1</kbd></button>
-        <button type="button" class="fc-nav-btn fc-hard" data-rating="hard">Hard <kbd>2</kbd></button>
-        <button type="button" class="fc-nav-btn fc-good" data-rating="good">Good <kbd>3</kbd></button>
-        <button type="button" class="fc-nav-btn fc-easy" data-rating="easy">Easy <kbd>4</kbd></button>
+        <button type="button" class="fc-nav-btn fc-again" data-rating="again"
+                title="Didn't know it. Comes back momentarily.">Again <kbd>1</kbd></button>
+        <button type="button" class="fc-nav-btn fc-hard" data-rating="hard"
+                title="Knew it, but slowly. Comes back sooner than usual.">Hard <kbd>2</kbd></button>
+        <button type="button" class="fc-nav-btn fc-good" data-rating="good"
+                title="Knew it. Comes back after the normal gap.">Good <kbd>3</kbd></button>
+        <button type="button" class="fc-nav-btn fc-easy" data-rating="easy"
+                title="Knew it instantly. Comes back after the longest gap.">Easy <kbd>4</kbd></button>
       </div>
       <p id="fc-session-done" class="fc-filtered-empty" style="display:none;">
         <span id="fc-done-msg">Session finished.</span>

@@ -17,7 +17,7 @@ const flashcardPanel = `
       <label><input type="checkbox" id="fc-recall"> Recall mode</label>
       <span id="fc-due"></span>
       <span id="fc-progress"></span>
-      <span id="fc-save-warn" style="display:none">Couldn't save your last review.</span>
+      <span id="fc-save-warn" role="status"></span>
       <div id="fc-card" class="fc-card" tabindex="0">
         <button id="fc-star" aria-pressed="false">star</button>
         <div id="fc-front"><div id="fc-front-parts"></div></div>
@@ -28,6 +28,10 @@ const flashcardPanel = `
         <button data-rating="again">Again</button><button data-rating="hard">Hard</button>
         <button data-rating="good">Good</button><button data-rating="easy">Easy</button>
       </div>
+      <p id="fc-recall-help" style="display:none">
+        Recall mode shows the words you're due to review based on how confident you are with them.
+        <button id="fc-reset">Reset progress for this list</button>
+      </p>
       <p id="fc-session-done" style="display:none"><span id="fc-done-msg">Session finished.</span> <button id="fc-restart">Study ahead</button></p>
       <p id="fc-filtered-empty" style="display:none">No flashcards match this filter.</p>
     </div>
@@ -221,9 +225,44 @@ test('recall mode: Again requeues the card, Good retires it, and the session fin
   await expect(page.locator('#fc-card')).toBeHidden();
   await expect(page.locator('#fc-rating')).toBeHidden();
 
+  // Every card in the deck has now been rated, so there is nothing left to pull
+  // forward and the button that would hand back an empty deck is gone. (This
+  // assertion used to expect "Study ahead" to re-serve all 3 cards, which was
+  // the replay bug: it handed back the cards just finished and let a second
+  // rating compound the interval. The behaviour changed, so the test did.)
+  await expect(page.locator('#fc-restart')).toBeHidden();
+  await expect(page.locator('#fc-done-msg')).toHaveText('Session finished.');
+});
+
+test('recall mode: Study ahead pulls forward only the cards not yet rated', async ({ page }) => {
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Noun', 'beta'),
+  ], {
+    // alpha is due, beta is not, so the normal session is alpha alone.
+    progress: {
+      [progressKey('alpha', 'first')]: dueIn(-1),
+      [progressKey('beta', 'second')]: dueIn(6),
+    },
+  });
+
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-done-msg')).toHaveText('Session finished.');
+
+  // beta was never rated, so it is the one card Study ahead has to offer.
   await page.locator('#fc-restart').click();
-  await expect(page.locator('#fc-progress')).toHaveText('3 left · 0 done');
-  await expect(page.locator('#fc-card')).toBeVisible();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  await expect(page.locator('#fc-front-parts')).toHaveText('beta');
+
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-restart')).toBeHidden();
+  // One POST per card, not one per session: alpha was not offered a second time.
+  const calls = await page.evaluate(() => window.__starCalls);
+  expect(calls.map((c) => c.body.lemma).sort()).toEqual(['alpha', 'beta']);
 });
 
 test('recall mode: the session is what is due plus what is new, due cards first', async ({ page }) => {
@@ -328,10 +367,155 @@ test('recall mode: a failed save warns but does not interrupt the session', asyn
   await page.locator('#fc-card').click();
   await page.locator('[data-rating="good"]').click();
 
-  await expect(page.locator('#fc-save-warn')).toBeVisible();
+  await expect(page.locator('#fc-save-warn')).toHaveText("Couldn't save your last review.");
   // The rating still counted locally - the card is not put back or re-shown.
   await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
   await expect(page.locator('#fc-card')).toBeVisible();
+});
+
+test('the recall explainer and reset link appear only in recall mode', async ({ page }) => {
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun')]);
+
+  await expect(page.locator('#fc-recall-help')).toBeHidden();
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-recall-help')).toBeVisible();
+  await expect(page.locator('#fc-reset')).toBeVisible();
+  await page.locator('#fc-recall').uncheck();
+  await expect(page.locator('#fc-recall-help')).toBeHidden();
+});
+
+test('reset progress clears the stored schedule and restarts the session', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Noun', 'beta'),
+  ], {
+    // Both scheduled for later, so nothing is due and the session is empty.
+    progress: {
+      [progressKey('alpha', 'first')]: dueIn(4),
+      [progressKey('beta', 'second')]: dueIn(9),
+    },
+  });
+
+  await expect(page.locator('#fc-due')).toHaveText('0 due');
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-done-msg')).toHaveText('All caught up.');
+
+  await page.locator('#fc-reset').click();
+  // With the schedule gone both words read as never-reviewed, so they are back
+  // in the session without having to "study ahead" to reach them.
+  await expect(page.locator('#fc-progress')).toHaveText('2 left · 0 done');
+  await expect(page.locator('#fc-card')).toBeVisible();
+
+  const calls = await page.evaluate(() => window.__starCalls);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].url).toContain('/userspace/reset_progress');
+  expect(calls[0].body).toEqual({ language: 'Latin', list_name: 'My List', shared: false });
+
+  await page.locator('#fc-recall').uncheck();
+  await expect(page.locator('#fc-due')).toHaveText('2 due');
+});
+
+test('reset progress leaves the schedule alone when the request fails', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun', 'alpha')], {
+    progress: { [progressKey('alpha', 'first')]: dueIn(4) },
+    failSaves: true,
+  });
+
+  await page.locator('#fc-recall').check();
+  await page.locator('#fc-reset').click();
+
+  await expect(page.locator('#fc-save-warn')).toHaveText("Couldn't reset your progress.");
+  await expect(page.locator('#fc-done-msg')).toHaveText('All caught up.');
+  // Re-enabled, so a failed reset can be retried.
+  await expect(page.locator('#fc-reset')).toBeEnabled();
+});
+
+test('cancelling the reset confirmation posts nothing', async ({ page }) => {
+  page.on('dialog', (d) => d.dismiss());
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun', 'alpha')], {
+    progress: { [progressKey('alpha', 'first')]: dueIn(4) },
+  });
+
+  await page.locator('#fc-recall').check();
+  await page.locator('#fc-reset').click();
+
+  expect(await page.evaluate(() => window.__starCalls.length)).toBe(0);
+  await expect(page.locator('#fc-done-msg')).toHaveText('All caught up.');
+});
+
+test('recall mode: toggling off and on drops the cards already rated', async ({ page }) => {
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Noun', 'beta'),
+  ]);
+
+  await page.locator('#fc-recall').check();
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
+
+  // Leaving recall mode shows the browse-mode count, which the save just moved.
+  await page.locator('#fc-recall').uncheck();
+  await expect(page.locator('#fc-due')).toHaveText('1 due');
+
+  // A new session is the one card still waiting, counted from zero.
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+});
+
+test('recall mode: changing the part-of-speech filter restarts the session', async ({ page }) => {
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Verb', 'beta'),
+    row('gamma', 'third', 'Noun', 'gamma'),
+  ]);
+
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('3 left · 0 done');
+
+  await page.locator('#fc-pos-filter').selectOption('Verb');
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  await expect(page.locator('#fc-front-parts')).toHaveText('beta');
+
+  await page.locator('#fc-pos-filter').selectOption('');
+  await expect(page.locator('#fc-progress')).toHaveText('3 left · 0 done');
+});
+
+test('recall mode: clicking a rating then using the 1-4 keys still works', async ({ page }) => {
+  // Clicking a rating leaves focus on a button, where the key handler bails out.
+  // Disabling that button on re-render hands focus back to the body, so the
+  // keyboard path has to stay live after a mouse rating.
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Noun', 'beta'),
+  ]);
+
+  await page.locator('#fc-recall').check();
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+
+  await page.keyboard.press('Space');
+  await page.keyboard.press('3');
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 2 done');
+});
+
+test('recall mode: a lone card rated Again comes straight back', async ({ page }) => {
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun', 'alpha')]);
+
+  await page.locator('#fc-recall').check();
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="again"]').click();
+
+  // Requeued into a one-card deck, unflipped, with the session still open.
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  await expect(page.locator('#fc-card')).not.toHaveClass(/flipped/);
+  await expect(page.locator('[data-rating="good"]')).toBeDisabled();
+
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 1 done');
 });
 
 test('Greek Unicode principal parts and definitions render without rewriting', async ({ page }) => {

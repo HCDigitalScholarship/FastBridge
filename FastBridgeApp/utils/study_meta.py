@@ -45,3 +45,22 @@ def ensure_study_meta():
         STUDY_META_KEY, unique=True, name="user_lang_lemma_gloss"
     )
     storage.study_meta.create_index(STUDY_META_DUE, name="user_lang_due")
+
+
+def study_pairs(words):
+    """The ``(lemma, gloss)`` keys for a list's stored word pairs.
+
+    The client reads its gloss out of the rendered table cell, which is
+    trimmed, while a list stores the raw SHORT_DEFINITION - so strip both ends
+    or progress gets written under one key and looked up under another.
+
+    Malformed entries are skipped one at a time rather than raising: a single
+    short or non-string pair shouldn't cost a whole list its progress.
+    """
+    pairs = set()
+    for w in words:
+        try:
+            pairs.add((w[0], w[1].strip()))
+        except (IndexError, KeyError, TypeError, AttributeError):
+            continue
+    return pairs
