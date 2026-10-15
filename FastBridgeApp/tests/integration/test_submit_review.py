@@ -78,9 +78,11 @@ def test_second_review_updates_in_place(review_client):
     client.post("/userspace/submit_review", json=BODY)
     resp = client.post("/userspace/submit_review", json=BODY)
 
-    # 1 -> 6 is the SM-2 graduation; seeing it here proves the second call read
-    # the first one's state back rather than starting over.
-    assert resp.json()["interval"] == 6
+    # 1 -> 3 is the graduation (see GRADUATING_STEPS in srs.py); seeing the second
+    # step here proves the call read the first review's state back rather than
+    # starting over. The number moved when the ladder was shortened; what the
+    # assertion is for did not.
+    assert resp.json()["interval"] == 3
     docs = _docs(storage)
     assert len(docs) == 1
     assert docs[0]["reps"] == 2

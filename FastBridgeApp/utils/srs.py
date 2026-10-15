@@ -10,16 +10,30 @@ RATINGS = ("again", "hard", "good", "easy")
 MIN_EASE = 1.3
 MAX_INTERVAL = 365
 
+# Deliberately shorter than Anki's defaults, which assume you are retaining a deck
+# for years. These students are mostly working toward a quiz or test a week or two
+# out. On Anki's numbers (second step 6 days, starting ease 2.5) a word answered
+# Good lands on days 1, 7 and 22, so only two of those fall inside a fortnight.
+# These put three in, on days 1, 4 and 10, and still reach roughly six months by
+# the seventh review, so a list kept across a term keeps growing sensibly.
+#
+# Only new words start at START_EASE; a word already reviewed keeps the ease stored
+# on its own document, so changing this number never rewrites existing schedules.
+START_EASE = 2.0
+# Fixed intervals for the first reviews, before the ease multiplier takes over.
+GRADUATING_STEPS = (1, 3)
+
 
 def schedule(state, rating, now):
     """Return the study_meta fields for ``rating`` applied to ``state``.
 
-    ``state`` is None on a word's first review. Anki's flavour of SM-2: Again
-    resets the repetition count and costs ease, Good graduates 1 -> 6 ->
-    interval * ease, Easy takes the Good interval and adds a bonus.
+    ``state`` is None on a word's first review. Anki's flavour of SM-2, on the
+    shorter steps above: Again resets the repetition count and costs ease, Good
+    walks the graduating steps and then multiplies by ease, Easy takes the Good
+    interval and adds a bonus.
     """
     s = state or {}
-    ease = s.get("ease", 2.5)
+    ease = s.get("ease", START_EASE)
     interval = s.get("interval", 0)
     reps = s.get("reps", 0)
     lapses = s.get("lapses", 0)
@@ -34,7 +48,8 @@ def schedule(state, rating, now):
             # Hard over and over would otherwise never leave a 1-day interval.
             interval = max(interval + 1, round(interval * 1.2))
         else:
-            interval = 1 if reps == 0 else 6 if reps == 1 else round(interval * ease)
+            interval = (GRADUATING_STEPS[reps] if reps < len(GRADUATING_STEPS)
+                        else round(interval * ease))
             if rating == "easy":
                 interval = max(1, round(interval * 1.3))
                 ease += 0.15

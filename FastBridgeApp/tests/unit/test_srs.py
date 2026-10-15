@@ -35,17 +35,20 @@ def test_first_review_of_each_rating(rating, interval, reps, lapses):
     assert s["last_review"] == NOW
 
 
-def test_good_graduates_one_then_six_then_interval_times_ease():
-    assert _run(["good"])["interval"] == 1
-    assert _run(["good", "good"])["interval"] == 6
-    # 6 * 2.5 = 15, then 15 * 2.5 = 38 (round-half-even on 37.5).
-    assert _run(["good"] * 3)["interval"] == 15
-    assert _run(["good"] * 4)["interval"] == 38
+def test_good_walks_the_graduating_steps_then_multiplies_by_ease():
+    """The steps are short on purpose: three reviews inside a fortnight rather
+    than Anki's two. See the tuning note in srs.py."""
+    assert _run(["good"])["interval"] == srs.GRADUATING_STEPS[0] == 1
+    assert _run(["good", "good"])["interval"] == srs.GRADUATING_STEPS[1] == 3
+    # Past the steps it is interval * ease, and ease starts at 2.0: 3 -> 6 -> 12.
+    assert _run(["good"] * 3)["interval"] == 6
+    assert _run(["good"] * 4)["interval"] == 12
 
 
 def test_easy_beats_good_once_there_is_an_interval_to_multiply():
-    assert _run(["good", "easy"])["interval"] == 8      # round(6 * 1.3)
-    assert _run(["good", "easy"])["ease"] == 2.65
+    assert _run(["good", "easy"])["interval"] == 4      # round(3 * 1.3)
+    assert _run(["good", "good"])["interval"] == 3      # the Good it beats
+    assert _run(["good", "easy"])["ease"] == srs.START_EASE + 0.15 == 2.15
 
 
 def test_again_resets_reps_and_counts_a_lapse():
@@ -64,10 +67,10 @@ def test_ease_floors_at_1_3_under_repeated_again():
 
 
 def test_hard_lowers_ease_and_grows_the_interval_slowly():
-    s = _run(["good", "good"])                 # interval 6, ease 2.5
+    s = _run(["good", "good"])                 # interval 3, ease 2.0
     h = srs.schedule(s, "hard", NOW)
-    assert h["interval"] == 7                  # round(6 * 1.2)
-    assert h["ease"] == 2.35
+    assert h["interval"] == 4                  # max(3 + 1, round(3 * 1.2))
+    assert h["ease"] == 1.85
     assert h["reps"] == 3
 
 
@@ -92,7 +95,7 @@ def test_due_lands_on_a_day_boundary_not_the_review_time():
 
 
 def test_interval_caps_at_365_days():
-    s = _run(["good"] * 12)
+    s = _run(["good"] * 12)   # hits the cap on the 9th and stays there
     assert s["interval"] == srs.MAX_INTERVAL
     assert s["due"] == (NOW + timedelta(days=365)).replace(hour=0)
     # The cap holds on Easy too, which multiplies on top of the Good interval.
