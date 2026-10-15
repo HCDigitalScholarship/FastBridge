@@ -21,7 +21,7 @@ const PAGES = [
 // page here already fails on - so a scan of one panel would say nothing about that panel.
 async function scan(page, label, within) {
   let builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']);
-  if (within) builder = builder.include(within);
+  for (const sel of [].concat(within || [])) builder = builder.include(sel);
   const results = await builder.analyze();
 
   const blocking = results.violations.filter(
@@ -58,15 +58,30 @@ test('no serious or critical a11y violations: list study flashcards panel', asyn
   await expect(page.locator('#fc-card')).toBeVisible();
   await scan(page, 'flashcards', '#mode-flashcards');
 
-  // Recall mode adds the rating group, the explainer and the reset control.
+  // The (i) beside the Recall mode checkbox has to reveal its tooltip on keyboard focus,
+  // not hover alone, or the explanation is mouse-only. Checked on the real page because the
+  // reveal is pure CSS.
+  const tip = page.locator('#fc-recall-tip');
+  await expect(tip).toBeHidden();
+  await page.locator('#fc-recall-info').hover();
+  await expect(tip).toBeVisible();
+  await page.locator('#fc-pos-filter').hover();
+  await expect(tip).toBeHidden();
+  await page.locator('#fc-recall-info').focus();
+  await expect(tip).toBeVisible();
+
+  // Recall mode adds the rating group, and reveals Reset Progress in the page-level action
+  // bar - which sits outside the flashcard panel, so the scan has to take both subtrees in.
+  // .list-actions is only scannable because its lighter buttons carry dark labels; with the
+  // inherited white they sat at 1.8-2.9:1 against the 4.5:1 AA floor.
   await page.locator('#fc-recall').check();
   await expect(page.locator('#fc-rating')).toBeVisible();
-  await expect(page.locator('#fc-recall-help')).toBeVisible();
-  await scan(page, 'flashcards / recall', '#mode-flashcards');
+  await expect(page.getByRole('button', { name: 'Reset Progress' })).toBeVisible();
+  await scan(page, 'flashcards / recall', ['#mode-flashcards', '.list-actions']);
 
   // Flipping enables the rating buttons; a disabled control is exempt from some
   // checks, so scan them in their live state too.
   await page.locator('#fc-card').click();
   await expect(page.locator('[data-rating="good"]')).toBeEnabled();
-  await scan(page, 'flashcards / recall, card flipped', '#mode-flashcards');
+  await scan(page, 'flashcards / recall, card flipped', ['#mode-flashcards', '.list-actions']);
 });

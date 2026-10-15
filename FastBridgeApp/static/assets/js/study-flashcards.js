@@ -62,11 +62,10 @@
   var ratingBtns = ratingBar.querySelectorAll('[data-rating]');
   var sessionDone = document.getElementById('fc-session-done');
   var doneMsg = document.getElementById('fc-done-msg');
-  var dueBadge = document.getElementById('fc-due');
   var saveWarn = document.getElementById('fc-save-warn');
   var restartBtn = document.getElementById('fc-restart');
-  var recallHelp = document.getElementById('fc-recall-help');
   var resetBtn = document.getElementById('fc-reset');
+  var panelEl = document.getElementById('mode-flashcards');
 
   // The card content is normal readable text (not buried in a button), but the
   // flip and navigation are silent to a screen reader on their own, so mirror
@@ -100,11 +99,30 @@
   // shuffled session `queue`, where the head is the current card.
   var mode = 'browse';
   var queue = [];
-  var doneCount = 0;
   // Cards already sent to the server this session, so a requeued card is
   // only scheduled once (see saveReview).
   var reviewed = {};
   var RATING_KEYS = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
+
+  // Words from this list reviewed today, as a set of keys. Seeded from the server's
+  // last_review timestamps so it is not lost on reload, then added to as you rate -
+  // which is also why it is a set of words rather than a tally: a word reviewed
+  // earlier today and again now is one word done, not two.
+  var doneToday = {};
+  (function seedDoneToday() {
+    var last = window.STUDY_REVIEWED || {};
+    var now = new Date();
+    Object.keys(last).forEach(function (k) {
+      var t = new Date(Date.parse(last[k]));
+      if (isNaN(t)) return;
+      // Compared in the viewer's own timezone, which is the whole reason the server
+      // sends timestamps instead of a count.
+      if (t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth()
+          && t.getDate() === now.getDate()) doneToday[k] = true;
+    });
+  })();
+
+  function doneCount() { return Object.keys(doneToday).length; }
 
   function current() { return mode === 'recall' ? queue[0] : cards[idx]; }
 
@@ -117,10 +135,13 @@
     return dueAt(c) <= now ? 0 : 2;
   }
 
-  function dueCount() {
-    var now = Date.now(), n = 0;
-    cards.forEach(function (c) { if (dueGroup(c, now) < 2) n++; });
-    return n;
+  // Reset Progress lives in the page-level action bar next to Delete List, which sits
+  // outside the flashcard panel and shows on both tabs - so it has to track the active tab
+  // as well as the mode, or it would sit on the Browse tab offering to reset a recall
+  // session that isn't on screen.
+  function paintReset() {
+    var onFlashcards = !panelEl || panelEl.style.display !== 'none';
+    resetBtn.style.display = (mode === 'recall' && onFlashcards) ? '' : 'none';
   }
 
   function setRatingEnabled(on) {
@@ -146,8 +167,7 @@
 
   function render() {
     var recall = mode === 'recall';
-    recallHelp.style.display = recall ? '' : 'none';
-    dueBadge.textContent = (recall || !cards.length) ? '' : dueCount() + ' due';
+    paintReset();
     cardEl.classList.remove('flipped');
     frontFace.setAttribute('aria-hidden', 'false');
     backFace.setAttribute('aria-hidden', 'true');
@@ -169,11 +189,11 @@
       ratingBar.style.display = 'none';
       sessionDone.style.display = 'block';
       // No cards done means nothing was waiting in the first place.
-      doneMsg.textContent = doneCount ? 'Session finished.' : 'All caught up.';
+      doneMsg.textContent = Object.keys(reviewed).length ? 'Session finished.' : 'All caught up.';
       // Nothing left to pull forward once every card has been rated, so don't
       // offer a button that would hand back an empty deck.
       restartBtn.style.display = aheadLeft().length ? '' : 'none';
-      progress.textContent = '0 left · ' + doneCount + ' done';
+      progress.textContent = '0 left · ' + doneCount() + ' done';
       announce(doneMsg.textContent);
       return;
     }
@@ -190,7 +210,7 @@
     paintStar();
 
     if (recall) {
-      progress.textContent = queue.length + ' left · ' + doneCount + ' done';
+      progress.textContent = queue.length + ' left · ' + doneCount() + ' done';
     } else {
       progress.textContent = (idx + 1) + ' / ' + cards.length;
       prevBtn.disabled = idx === 0;
@@ -219,7 +239,6 @@
       return (dueGroup(a, now) - dueGroup(b, now)) || (dueAt(a) - dueAt(b));
     });
     if (!ahead) queue = queue.filter(function (c) { return dueGroup(c, now) < 2; });
-    doneCount = 0;
     warn('');
   }
 
@@ -238,8 +257,6 @@
     saveReview(c, g);
     if (g === 'again' || g === 'hard') {
       queue.splice(Math.min(g === 'again' ? 3 : 7, queue.length), 0, c);
-    } else {
-      doneCount++;
     }
     render();
     var label = g.charAt(0).toUpperCase() + g.slice(1);
@@ -260,6 +277,9 @@
     var key = keyOf(c.lemma, c.shortDef);
     if (reviewed[key]) return;
     reviewed[key] = true;
+    // Counted up front, like the rest of the rating path: the card is behind you whether
+    // or not the write lands, and a save that fails simply won't be there after a reload.
+    doneToday[key] = true;
     fetch('/userspace/submit_review', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -294,6 +314,9 @@
     }).then(function (d) {
       if (!d.success) return Promise.reject();
       sched = {};
+      // The delete takes the last_review timestamps with it, so the day's tally has to
+      // go too or the page would claim words done that no longer have a review on record.
+      doneToday = {};
       // A session in progress is describing a schedule that no longer exists,
       // so start it over rather than letting it run on stale ordering.
       if (mode === 'recall') buildQueue();
@@ -387,6 +410,13 @@
   });
   restartBtn.addEventListener('click', function () { buildQueue(true); render(); });
   resetBtn.addEventListener('click', resetProgress);
+
+  // showMode() is an inline onclick on these, and attribute handlers run before listeners
+  // added here, so the panel's display is already up to date by the time paintReset reads it.
+  ['tab-browse', 'tab-flashcards'].forEach(function (id) {
+    var tab = document.getElementById(id);
+    if (tab) tab.addEventListener('click', paintReset);
+  });
 
   // Keyboard shortcuts, but only while the Flashcards tab is the visible panel
   // and focus isn't in the POS <select>.

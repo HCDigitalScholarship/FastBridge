@@ -2,7 +2,7 @@
 <head lang="en">
   <script type="text/javascript">
     console.log("rendering list study page")
-  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Bridge: {{ list_name }}</title> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
+  </script><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>Bridge: {{ list_name }}</title><link rel="shortcut icon" href="/assets/img/favicon.ico"> <link rel=stylesheet href=/assets/bootstrap/css/bootstrap.min.css>
    <link href="/assets/css/clusterize.css" rel="stylesheet"><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> <link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css> <link rel=stylesheet href=/assets/fonts/fontawesome5-overrides.min.css> <link rel=stylesheet href=/assets/css/styles.css>
    <style id = "local_styling" media="screen">{{style|safe}}</style>
  </head>
@@ -38,13 +38,38 @@
       border:none; border-radius:8px; padding:9px 18px; font-weight:600; font-size:0.95rem;
       cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:6px;
     }
+    /* White on these lighter fills lands at 1.8-2.9:1, well under the 4.5:1 AA floor.
+       Darkening the label rather than the fill keeps #22b3b3 and #ffb366 as they are -
+       #22b3b3 in particular is the site-wide accent, used on five other templates. */
+    .list-action-btn.on-light { color:#1f2937; }
 
     /* Flashcards */
     .fc-controls { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin:18px 0 8px; }
     #fc-pos-filter { padding:8px 10px; border-radius:6px; border:1px solid #22b3b3; background:#222; color:#fff; font-size:0.95rem; }
     .fc-progress { color:#bbb; font-weight:600; }
-    .fc-due { color:#22b3b3; font-weight:600; }
     .fc-save-warn { color:#ffb366; font-size:0.85rem; }
+    /* Keeps the (i) next to its own label instead of a full .fc-controls gap away. */
+    .fc-recall-group { display:inline-flex; align-items:center; gap:6px; }
+    .fc-info-wrap { position:relative; display:inline-flex; }
+    .fc-info {
+      width:18px; height:18px; padding:0; border-radius:50%; border:1px solid #22b3b3;
+      background:none; color:#22b3b3; font-size:0.75rem; font-weight:700; line-height:1;
+      cursor:help; display:inline-flex; align-items:center; justify-content:center;
+    }
+    .fc-info:focus-visible { outline:2px solid #22b3b3; outline-offset:2px; }
+    /* visibility rather than display:none, so the aria-describedby target stays in the
+       accessibility tree while the tooltip is closed. Revealed on focus as well as hover,
+       so it isn't mouse-only - and on :focus, not :focus-visible, which is for drawing a
+       focus ring and doesn't match focus moved by script. */
+    .fc-tip {
+      visibility:hidden; opacity:0; transition:opacity 0.12s;
+      position:absolute; left:50%; transform:translateX(-50%); top:calc(100% + 8px);
+      width:max-content; max-width:min(260px,70vw); z-index:5;
+      background:#111; color:#fff; border:1px solid #2a6b6b; border-radius:8px;
+      padding:8px 10px; font-size:0.8rem; font-weight:400; line-height:1.4; text-align:left;
+      box-shadow:0 6px 18px rgba(0,0,0,0.5);
+    }
+    .fc-info:hover + .fc-tip, .fc-info:focus + .fc-tip { visibility:visible; opacity:1; }
     .fc-card-wrap { position:relative; width:min(560px,92vw); margin:24px auto 0; }
     .fc-card { position:relative; width:100%; height:320px; perspective:1200px; cursor:pointer; outline:none; }
     .fc-card:focus-visible .fc-card-inner { box-shadow:0 0 0 3px rgba(34,179,179,0.6); border-radius:16px; }
@@ -80,9 +105,6 @@
       font-family:inherit; font-size:0.8rem; font-weight:700; line-height:1;
       background:rgba(0,0,0,0.28); border-radius:4px; padding:3px 6px; margin-left:4px;
     }
-    .fc-reset { background:none; border:none; color:#bbb; font-size:0.85rem; text-decoration:underline; cursor:pointer; padding:2px 4px; }
-    .fc-reset:hover { color:#ffb366; }
-    .fc-reset:focus-visible { outline:2px solid #22b3b3; border-radius:4px; }
     .fc-filtered-empty { margin-top:30px; color:#ffb366; font-size:1.1rem; }
     .fc-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   </style>
@@ -97,9 +119,13 @@
 
   <div class="list-actions">
     {% if can_edit %}<button type="button" id="add-word-btn" class="list-action-btn" style="background:#228383;"><i class="fas fa-plus" aria-hidden="true"></i> Add Word</button>{% endif %}
-    {% if can_manage %}<button type="button" id="share-list-btn" class="list-action-btn" style="background:#22b3b3;"><i class="fas fa-share-alt" aria-hidden="true"></i> Share</button>{% endif %}
-    {% if can_manage %}<button type="button" id="manage-permissions-btn" class="list-action-btn" style="background:#ffb366;"><i class="fas fa-user-shield" aria-hidden="true"></i> Permissions</button>{% endif %}
-    {% if can_manage %}<button type="button" id="delete-list-btn" class="list-action-btn" style="background:#ff6666;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete List</button>{% endif %}
+    {% if can_manage %}<button type="button" id="share-list-btn" class="list-action-btn on-light" style="background:#22b3b3;"><i class="fas fa-share-alt" aria-hidden="true"></i> Share</button>{% endif %}
+    {% if can_manage %}<button type="button" id="manage-permissions-btn" class="list-action-btn on-light" style="background:#ffb366;"><i class="fas fa-user-shield" aria-hidden="true"></i> Permissions</button>{% endif %}
+    {% if can_manage %}<button type="button" id="delete-list-btn" class="list-action-btn on-light" style="background:#ff6666;"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete List</button>{% endif %}
+    <!-- Ungated on purpose, unlike its neighbours: this clears only the caller's own review
+         history, so someone with read-only access to a shared list may still reset theirs.
+         Revealed by the Recall mode toggle (see paintReset in study-flashcards.js). -->
+    <button type="button" id="fc-reset" class="list-action-btn on-light" style="background:#ff6666; display:none;"><i class="fas fa-undo" aria-hidden="true"></i> Reset Progress</button>
   </div>
 
   <div id="mode-browse" role="tabpanel" aria-labelledby="tab-browse">
@@ -139,8 +165,13 @@
         <label for="fc-pos-filter">Part of speech</label>
         <select id="fc-pos-filter" aria-label="Filter flashcards by part of speech"></select>
         <label class="fc-starred-toggle"><input type="checkbox" id="fc-starred-only"> Starred only</label>
-        <label class="fc-starred-toggle"><input type="checkbox" id="fc-recall"> Recall mode</label>
-        <span id="fc-due" class="fc-due"></span>
+        <span class="fc-recall-group">
+          <label class="fc-starred-toggle"><input type="checkbox" id="fc-recall"> Recall mode</label>
+          <span class="fc-info-wrap">
+            <button type="button" id="fc-recall-info" class="fc-info" aria-label="About recall mode" aria-describedby="fc-recall-tip">i</button>
+            <span id="fc-recall-tip" class="fc-tip" role="tooltip">Recall mode shows the words you're due to review based on how confident you are with them.</span>
+          </span>
+        </span>
         <span id="fc-progress" class="fc-progress" aria-live="polite"></span>
         <span id="fc-save-warn" class="fc-save-warn" role="status"></span>
       </div>
@@ -162,10 +193,6 @@
         </div>
       </div>
       <p class="fc-instructions">Click the card or press Space to show the definition.</p>
-      <p id="fc-recall-help" class="fc-instructions" style="display:none;">
-        Recall mode shows the words you're due to review based on how confident you are with them. 
-        <button type="button" id="fc-reset" class="fc-reset">Reset progress for this list</button>
-      </p>
       <div id="fc-live" class="fc-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
       <div class="fc-nav" aria-label="Flashcard navigation">
@@ -212,6 +239,9 @@
   window.STUDY_STARRED = {{ (starred_words or [])|tojson }};
   // "lemma\0gloss" -> ISO due date, for recall-mode ordering.
   window.STUDY_PROGRESS = {{ (study_progress or {})|tojson }};
+  // "lemma\0gloss" -> ISO last-review time; the script counts the ones that land on the
+  // viewer's own today, so the "done" tally survives a reload.
+  window.STUDY_REVIEWED = {{ (study_reviewed or {})|tojson }};
 
   function showMode(mode) {
     var browse = document.getElementById('mode-browse');

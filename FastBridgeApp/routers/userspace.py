@@ -307,21 +307,30 @@ async def list_study_page(
     # Keyed "lemma\x00gloss" to match keyOf() in study-flashcards.js. Guarded so
     # a missing or unreachable study_meta renders the page without recall progress, not a 500.
     study_progress = {}
+    # `last_review` rides along so the flashcard script can show a "done" count that
+    # survives a reload. It is sent as a timestamp per word rather than a ready-made
+    # count because "today" is the *reviewer's* day: a GET carries no timezone, so only
+    # the browser can decide which of these fall on it.
+    study_reviewed = {}
     try:
         pairs = study_pairs(words)
         for doc in storage.study_meta.find(
             {"user_id": user_id, "language": language,
              "lemma": {"$in": sorted({p[0] for p in pairs})}},
-            {"_id": 0, "lemma": 1, "gloss": 1, "due": 1},
+            {"_id": 0, "lemma": 1, "gloss": 1, "due": 1, "last_review": 1},
         ):
             pair = (doc.get("lemma"), (doc.get("gloss") or "").strip())
-            # isinstance rather than a truth test: a `due` that isn't a real
-            # BSON date is skipped on its own instead of costing the whole page
-            # its progress via the except below.
-            if pair in pairs and isinstance(doc.get("due"), datetime):
-                # Mongo hands back naive UTC; without the Z, Date.parse() would
-                # read it as the viewer's local time.
-                study_progress["%s\x00%s" % pair] = doc["due"].isoformat() + "Z"
+            if pair not in pairs:
+                continue
+            key = "%s\x00%s" % pair
+            # isinstance rather than a truth test: a field that isn't a real BSON date
+            # is skipped on its own instead of costing the whole page its progress via
+            # the except below. Mongo hands these back naive UTC; without the Z,
+            # Date.parse() would read them as the viewer's local time.
+            if isinstance(doc.get("due"), datetime):
+                study_progress[key] = doc["due"].isoformat() + "Z"
+            if isinstance(doc.get("last_review"), datetime):
+                study_reviewed[key] = doc["last_review"].isoformat() + "Z"
     except Exception as e:
         print(f"study_progress lookup skipped: {e}")
 
@@ -331,6 +340,7 @@ async def list_study_page(
         "shared": shared, "section": list_name,
         "can_edit": can_edit, "can_delete": can_delete, "can_manage": can_manage,
         "starred_words": starred_words, "study_progress": study_progress,
+        "study_reviewed": study_reviewed,
     }
 
     if not words:

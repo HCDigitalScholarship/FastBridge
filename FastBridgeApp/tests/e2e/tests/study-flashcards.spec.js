@@ -9,13 +9,33 @@ const flashcardScript = path.resolve(
 // This mirrors the flashcard panel in list_study.html.  Keeping the word data in
 // the same rendered-row shape as the production page exercises the browser-side
 // parsing path without requiring a MongoDB fixture.
+//
+// The tabs, #fc-reset and the stub showMode() mirror the real page's *structure*: Reset
+// Progress lives in the page-level action bar, outside #mode-flashcards and shown on both
+// tabs, so the script has to hide it when you leave the Flashcards tab. Keeping that shape
+// here is what makes paintReset testable. The recall tooltip is CSS-driven, so only its
+// markup is mirrored - whether it actually reveals is covered on the real page, in
+// accessibility.spec.js.
 const flashcardPanel = `
+  <div class="mode-tabs">
+    <button id="tab-browse" onclick="showMode('browse')">Browse</button>
+    <button id="tab-flashcards" onclick="showMode('flashcards')">Flashcards</button>
+  </div>
+  <div class="list-actions">
+    <button id="fc-reset" style="display:none">Reset Progress</button>
+  </div>
+  <div id="mode-browse" style="display:none"></div>
   <div id="mode-flashcards" style="display:block">
     <div id="flashcards-ui" style="display:none">
       <select id="fc-pos-filter"></select>
       <label><input type="checkbox" id="fc-starred-only"> Starred only</label>
-      <label><input type="checkbox" id="fc-recall"> Recall mode</label>
-      <span id="fc-due"></span>
+      <span class="fc-recall-group">
+        <label><input type="checkbox" id="fc-recall"> Recall mode</label>
+        <span class="fc-info-wrap">
+          <button id="fc-recall-info" class="fc-info" aria-label="About recall mode" aria-describedby="fc-recall-tip">i</button>
+          <span id="fc-recall-tip" class="fc-tip" role="tooltip">Recall mode shows the words you're due to review based on how confident you are with them.</span>
+        </span>
+      </span>
       <span id="fc-progress"></span>
       <span id="fc-save-warn" role="status"></span>
       <div id="fc-card" class="fc-card" tabindex="0">
@@ -28,15 +48,17 @@ const flashcardPanel = `
         <button data-rating="again">Again</button><button data-rating="hard">Hard</button>
         <button data-rating="good">Good</button><button data-rating="easy">Easy</button>
       </div>
-      <p id="fc-recall-help" style="display:none">
-        Recall mode shows the words you're due to review based on how confident you are with them.
-        <button id="fc-reset">Reset progress for this list</button>
-      </p>
       <p id="fc-session-done" style="display:none"><span id="fc-done-msg">Session finished.</span> <button id="fc-restart">Study ahead</button></p>
       <p id="fc-filtered-empty" style="display:none">No flashcards match this filter.</p>
     </div>
     <p id="flashcards-empty" style="display:none">This list has no words to study yet.</p>
-  </div>`;
+  </div>
+  <script>
+    function showMode(m) {
+      document.getElementById('mode-browse').style.display = m === 'browse' ? '' : 'none';
+      document.getElementById('mode-flashcards').style.display = m === 'browse' ? 'none' : '';
+    }
+  </script>`;
 
 function row(principalParts, definition, pos, lemma) {
   return {
@@ -51,11 +73,12 @@ function dueIn(days) {
 
 async function loadFlashcards(page, words, opts = {}) {
   await page.setContent(flashcardPanel);
-  await page.evaluate(({ cards, starred, progress, failSaves }) => {
+  await page.evaluate(({ cards, starred, progress, reviewed, failSaves }) => {
     window.data = cards;
     window.STUDY_LIST = { ownerId: 'owner1', language: 'Latin', listName: 'My List' };
     window.STUDY_STARRED = starred || [];
     window.STUDY_PROGRESS = progress || {};
+    window.STUDY_REVIEWED = reviewed || {};
     // Record every POST the page makes (toggle_star and submit_review) without
     // a backend. `failSaves` exercises the "keep going on a failed save" path.
     window.__starCalls = [];
@@ -72,8 +95,8 @@ async function loadFlashcards(page, words, opts = {}) {
       });
     };
   }, {
-    cards: words, starred: opts.starred,
-    progress: opts.progress, failSaves: opts.failSaves,
+    cards: words, starred: opts.starred, progress: opts.progress,
+    reviewed: opts.reviewed, failSaves: opts.failSaves,
   });
   await page.addScriptTag({ path: flashcardScript });
 }
@@ -207,10 +230,12 @@ test('recall mode: Again requeues the card, Good retires it, and the session fin
   const missed = await front.textContent();
   await page.locator('#fc-card').click();
   await page.locator('[data-rating="again"]').click();
-  await expect(page.locator('#fc-progress')).toHaveText('3 left · 0 done');
+  // 1 done, not 0: "done" is words reviewed today, and Again is a review. The card is
+  // still in the queue, so it is counted on both sides of the dot until it retires.
+  await expect(page.locator('#fc-progress')).toHaveText('3 left · 1 done');
   await expect(front).not.toHaveText(missed);
 
-  for (const counts of ['2 left · 1 done', '1 left · 2 done']) {
+  for (const counts of ['2 left · 2 done', '1 left · 3 done']) {
     await page.locator('#fc-card').click();
     await page.locator('[data-rating="good"]').click();
     await expect(page.locator('#fc-progress')).toHaveText(counts);
@@ -220,6 +245,7 @@ test('recall mode: Again requeues the card, Good retires it, and the session fin
 
   await page.locator('#fc-card').click();
   await page.locator('[data-rating="easy"]').click();
+  // Still 3: the requeued card was already counted, and done tallies words, not keystrokes.
   await expect(page.locator('#fc-progress')).toHaveText('0 left · 3 done');
   await expect(page.locator('#fc-session-done')).toBeVisible();
   await expect(page.locator('#fc-card')).toBeHidden();
@@ -252,9 +278,10 @@ test('recall mode: Study ahead pulls forward only the cards not yet rated', asyn
   await page.locator('[data-rating="good"]').click();
   await expect(page.locator('#fc-done-msg')).toHaveText('Session finished.');
 
-  // beta was never rated, so it is the one card Study ahead has to offer.
+  // beta was never rated, so it is the one card Study ahead has to offer. alpha stays in
+  // the tally across the restart - it is still a word reviewed today.
   await page.locator('#fc-restart').click();
-  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
   await expect(page.locator('#fc-front-parts')).toHaveText('beta');
 
   await page.locator('#fc-card').click();
@@ -278,10 +305,8 @@ test('recall mode: the session is what is due plus what is new, due cards first'
     },
   });
 
-  // gamma isn't waiting on anything, so it's not in the count or the session.
-  await expect(page.locator('#fc-due')).toHaveText('2 due');
-
   await page.locator('#fc-recall').check();
+  // gamma isn't waiting on anything, so it's not in the session at all.
   await expect(page.locator('#fc-progress')).toHaveText('2 left · 0 done');
   // Overdue cards sort ahead of never-seen ones regardless of the shuffle.
   await expect(page.locator('#fc-front-parts')).toHaveText('alpha');
@@ -301,8 +326,6 @@ test('recall mode: nothing due shows "All caught up" and Study ahead adds the re
       [progressKey('beta', 'second')]: dueIn(9),
     },
   });
-
-  await expect(page.locator('#fc-due')).toHaveText('0 due');
 
   await page.locator('#fc-recall').check();
   await expect(page.locator('#fc-session-done')).toBeVisible();
@@ -373,15 +396,35 @@ test('recall mode: a failed save warns but does not interrupt the session', asyn
   await expect(page.locator('#fc-card')).toBeVisible();
 });
 
-test('the recall explainer and reset link appear only in recall mode', async ({ page }) => {
+test('Reset Progress appears only in recall mode, on the Flashcards tab', async ({ page }) => {
   await loadFlashcards(page, [row('alpha', 'first', 'Noun')]);
 
-  await expect(page.locator('#fc-recall-help')).toBeHidden();
+  await expect(page.locator('#fc-reset')).toBeHidden();
   await page.locator('#fc-recall').check();
-  await expect(page.locator('#fc-recall-help')).toBeVisible();
   await expect(page.locator('#fc-reset')).toBeVisible();
+
+  // It sits in the page-level action bar, outside the flashcard panel, so leaving the
+  // Flashcards tab has to take it away even though recall mode is still on.
+  await page.locator('#tab-browse').click();
+  await expect(page.locator('#fc-reset')).toBeHidden();
+  await page.locator('#tab-flashcards').click();
+  await expect(page.locator('#fc-reset')).toBeVisible();
+
   await page.locator('#fc-recall').uncheck();
-  await expect(page.locator('#fc-recall-help')).toBeHidden();
+  await expect(page.locator('#fc-reset')).toBeHidden();
+});
+
+test('the recall tooltip is wired to the checkbox it explains', async ({ page }) => {
+  // Revealing it is CSS, covered on the real page in accessibility.spec.js. What matters
+  // here is that the description target exists and carries the text.
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun')]);
+
+  const info = page.locator('#fc-recall-info');
+  const tipId = await info.getAttribute('aria-describedby');
+  expect(tipId).toBe('fc-recall-tip');
+  await expect(page.locator(`#${tipId}`)).toHaveText(
+    /Recall mode shows the words you're due to review based on how confident you are with them\./
+  );
 });
 
 test('reset progress clears the stored schedule and restarts the session', async ({ page }) => {
@@ -397,7 +440,6 @@ test('reset progress clears the stored schedule and restarts the session', async
     },
   });
 
-  await expect(page.locator('#fc-due')).toHaveText('0 due');
   await page.locator('#fc-recall').check();
   await expect(page.locator('#fc-done-msg')).toHaveText('All caught up.');
 
@@ -412,8 +454,10 @@ test('reset progress clears the stored schedule and restarts the session', async
   expect(calls[0].url).toContain('/userspace/reset_progress');
   expect(calls[0].body).toEqual({ language: 'Latin', list_name: 'My List', shared: false });
 
+  // Re-entering recall still finds both words waiting, so the clear stuck.
   await page.locator('#fc-recall').uncheck();
-  await expect(page.locator('#fc-due')).toHaveText('2 due');
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('2 left · 0 done');
 });
 
 test('reset progress leaves the schedule alone when the request fails', async ({ page }) => {
@@ -456,12 +500,83 @@ test('recall mode: toggling off and on drops the cards already rated', async ({ 
   await page.locator('[data-rating="good"]').click();
   await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
 
-  // Leaving recall mode shows the browse-mode count, which the save just moved.
+  // The rated card's save pushed it into the future, so one card is left - but the day's
+  // tally carries into the new session rather than restarting at zero.
   await page.locator('#fc-recall').uncheck();
-  await expect(page.locator('#fc-due')).toHaveText('1 due');
-
-  // A new session is the one card still waiting, counted from zero.
   await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
+});
+
+// `dueIn` but for last_review: hoursAgo(2) is today, hoursAgo(30) is not.
+function hoursAgo(h) {
+  return new Date(Date.now() - h * 3600000).toISOString();
+}
+
+test('the done tally is seeded from the server and counts only today', async ({ page }) => {
+  // What a reload looks like. alpha was reviewed a couple of hours ago, so it is counted
+  // and is not due again today; beta was reviewed yesterday and is due; gamma is new.
+  await loadFlashcards(page, [
+    row('alpha', 'first', 'Noun', 'alpha'),
+    row('beta', 'second', 'Noun', 'beta'),
+    row('gamma', 'third', 'Noun', 'gamma'),
+  ], {
+    progress: {
+      [progressKey('alpha', 'first')]: dueIn(3),
+      [progressKey('beta', 'second')]: dueIn(-1),
+    },
+    reviewed: {
+      [progressKey('alpha', 'first')]: hoursAgo(2),
+      [progressKey('beta', 'second')]: hoursAgo(30),
+    },
+  });
+
+  // 1 done before anything is rated: that is the whole point, it came from the server.
+  // beta's review was yesterday, so it does not count.
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('2 left · 1 done');
+
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 2 done');
+
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 3 done');
+
+  // Study ahead reaches alpha, which today's tally already counted. Rating it a second
+  // time must not move the number: done tallies words, not reviews.
+  await page.locator('#fc-restart').click();
+  await expect(page.locator('#fc-front-parts')).toHaveText('alpha');
+  await page.locator('#fc-card').click();
+  await page.locator('[data-rating="good"]').click();
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 3 done');
+});
+
+test('a seeded done tally still reads "All caught up" when nothing is waiting', async ({ page }) => {
+  // Reviewed today and not due again until later: the session is empty, but the day's tally
+  // is not. "All caught up" has to track what THIS session did, not the running total.
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun', 'alpha')], {
+    progress: { [progressKey('alpha', 'first')]: dueIn(3) },
+    reviewed: { [progressKey('alpha', 'first')]: hoursAgo(1) },
+  });
+
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-done-msg')).toHaveText('All caught up.');
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 1 done');
+});
+
+test('resetting progress clears the done tally too', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  await loadFlashcards(page, [row('alpha', 'first', 'Noun', 'alpha')], {
+    progress: { [progressKey('alpha', 'first')]: dueIn(3) },
+    reviewed: { [progressKey('alpha', 'first')]: hoursAgo(1) },
+  });
+
+  await page.locator('#fc-recall').check();
+  await expect(page.locator('#fc-progress')).toHaveText('0 left · 1 done');
+
+  // The delete takes the last_review row with it, so the tally it fed has to go as well.
+  await page.locator('#fc-reset').click();
   await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
 });
 
@@ -508,8 +623,9 @@ test('recall mode: a lone card rated Again comes straight back', async ({ page }
   await page.locator('#fc-card').click();
   await page.locator('[data-rating="again"]').click();
 
-  // Requeued into a one-card deck, unflipped, with the session still open.
-  await expect(page.locator('#fc-progress')).toHaveText('1 left · 0 done');
+  // Requeued into a one-card deck, unflipped, with the session still open. Already counted
+  // as done, because rating it Again still reviewed it.
+  await expect(page.locator('#fc-progress')).toHaveText('1 left · 1 done');
   await expect(page.locator('#fc-card')).not.toHaveClass(/flipped/);
   await expect(page.locator('[data-rating="good"]')).toBeDisabled();
 
