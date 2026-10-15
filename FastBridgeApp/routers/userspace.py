@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, Cookie
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from .firebase_auth import get_current_user_cookie
 from mongo_connection import dict_db, atlas_client
-from datetime import datetime
+from pymongo.errors import OperationFailure
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from collections import Counter
 import uuid
 from utils.collaboration import PermissionChecker
 from utils.user_lists import resolve_list_words, paginate_words
+from utils.study_meta import study_pairs
+from utils import srs
 from MongoDefinitionTools import mg_get_lang_data
 from routers.select import build_html_for_clusterize
 from models.user_models import (
@@ -298,12 +301,46 @@ async def list_study_page(
         and r.get("list_name") == list_name
     ]
 
+    # Per-user SM-2 due dates for these words, inlined the same way stars are.
+    # $in on lemma narrows cheaply and the gloss is matched here; an exact $or
+    # over every [lemma, gloss] pair would be a huge query for a long list.
+    # Keyed "lemma\x00gloss" to match keyOf() in study-flashcards.js. Guarded so
+    # a missing or unreachable study_meta renders the page without recall progress, not a 500.
+    study_progress = {}
+    # `last_review` rides along so the flashcard script can show a "done" count that
+    # survives a reload. It is sent as a timestamp per word rather than a ready-made
+    # count because "today" is the *reviewer's* day: a GET carries no timezone, so only
+    # the browser can decide which of these fall on it.
+    study_reviewed = {}
+    try:
+        pairs = study_pairs(words)
+        for doc in storage.study_meta.find(
+            {"user_id": user_id, "language": language,
+             "lemma": {"$in": sorted({p[0] for p in pairs})}},
+            {"_id": 0, "lemma": 1, "gloss": 1, "due": 1, "last_review": 1},
+        ):
+            pair = (doc.get("lemma"), (doc.get("gloss") or "").strip())
+            if pair not in pairs:
+                continue
+            key = "%s\x00%s" % pair
+            # isinstance rather than a truth test: a field that isn't a real BSON date
+            # is skipped on its own instead of costing the whole page its progress via
+            # the except below. Mongo hands these back naive UTC; without the Z,
+            # Date.parse() would read them as the viewer's local time.
+            if isinstance(doc.get("due"), datetime):
+                study_progress[key] = doc["due"].isoformat() + "Z"
+            if isinstance(doc.get("last_review"), datetime):
+                study_reviewed[key] = doc["last_review"].isoformat() + "Z"
+    except Exception as e:
+        print(f"study_progress lookup skipped: {e}")
+
     context = {
         "request": request, "language": language, "list_name": list_name,
         "permission": permission, "is_owner": is_owner, "owner_id": owner_id,
         "shared": shared, "section": list_name,
         "can_edit": can_edit, "can_delete": can_delete, "can_manage": can_manage,
-        "starred_words": starred_words,
+        "starred_words": starred_words, "study_progress": study_progress,
+        "study_reviewed": study_reviewed,
     }
 
     if not words:
@@ -1322,6 +1359,101 @@ async def toggle_star(payload: ToggleStarPayload, user=Depends(get_current_user_
     storage.lists.update_one({"user_id": user_id}, op, upsert=True)
 
     return {"success": True, "starred": payload.starred}
+
+class ReviewPayload(BaseModel):
+    language: str
+    lemma: str
+    gloss: str
+    rating: str          # again | hard | good | easy
+    # JS getTimezoneOffset(): minutes *behind* UTC, so UTC-7 is 420.
+    tz_offset: int = Field(0, ge=-840, le=720)
+
+@router.post("/submit_review")
+async def submit_review(payload: ReviewPayload, user=Depends(get_current_user_cookie)):
+    """Record one recall-mode flashcard review and return the new schedule.
+
+    Keyed per user, per language, per [lemma, gloss] - deliberately no
+    list_name and no owner_id, so a shared list gives its owner and each viewer
+    their own independent schedule.
+    """
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    if not payload.language or not payload.lemma:
+        raise HTTPException(status_code=400, detail="Missing language or lemma")
+    if payload.rating not in srs.RATINGS:
+        raise HTTPException(status_code=400, detail="Invalid rating")
+
+    storage = atlas_client.get_database("App-Storage")
+    key = {
+        "user_id": user_id, "language": payload.language,
+        "lemma": payload.lemma, "gloss": payload.gloss.strip(),
+    }
+    # "now" in the reviewer's own offset, so schedule() floors `due` to their
+    # local midnight rather than UTC's; pymongo stores the aware datetime as UTC.
+    # Caveat: fixed offset at review time, so a DST change before the due date
+    # shifts that card by an hour; send an IANA zone name if that ever matters.
+    fields = srs.schedule(
+        storage.study_meta.find_one(key, {"_id": 0}),
+        payload.rating,
+        datetime.now(timezone(timedelta(minutes=-payload.tz_offset))),
+    )
+    try:
+        storage.study_meta.update_one(key, {"$set": fields}, upsert=True)
+    except OperationFailure as e:
+        # A compound index over two strings caps at 1024 bytes, which a
+        # pathological gloss would blow. Losing one review beats a 500.
+        print(f"submit_review not saved: {e}")
+        return {"success": False, "message": "Review not saved"}
+
+    return {"success": True, "due": fields["due"].isoformat(), "interval": fields["interval"]}
+
+class ResetProgressPayload(BaseModel):
+    language: str
+    list_name: str
+    shared: bool = False
+
+@router.post("/reset_progress")
+async def reset_progress(payload: ResetProgressPayload, user=Depends(get_current_user_cookie)):
+    """Clear the caller's own recall progress for the words in one list.
+
+    Scoped to the caller's uid, so resetting a shared list drops only your own
+    schedule and leaves the owner's (and every other viewer's) alone. Being
+    able to open the list is the only privilege needed - there is nothing here
+    but your own review history, so a read-only viewer may reset it too.
+    """
+    user_id = user.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    storage = atlas_client.get_database("App-Storage")
+    words, _permission, _is_owner, _owner_id = resolve_list_words(
+        storage, user_id, payload.language, payload.list_name, payload.shared
+    )
+    if words is None:
+        raise HTTPException(status_code=404, detail="List not found")
+
+    pairs = study_pairs(words)
+    if not pairs:
+        return {"success": True, "cleared": 0}
+
+    # Same read shape as list_study_page: $in on lemma, gloss matched here, so
+    # a homograph kept under a different gloss survives. Deleting by _id after
+    # that beats a $or clause per pair on a long list.
+    ids = [
+        doc["_id"]
+        for doc in storage.study_meta.find(
+            {"user_id": user_id, "language": payload.language,
+             "lemma": {"$in": sorted({p[0] for p in pairs})}},
+            {"_id": 1, "lemma": 1, "gloss": 1},
+        )
+        if (doc.get("lemma"), (doc.get("gloss") or "").strip()) in pairs
+    ]
+    if not ids:
+        return {"success": True, "cleared": 0}
+
+    cleared = storage.study_meta.delete_many({"_id": {"$in": ids}}).deleted_count
+    return {"success": True, "cleared": cleared}
 
 @router.get("/permissions/list")
 async def get_list_permissions(
