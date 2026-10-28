@@ -57,6 +57,15 @@
   var starBtn = document.getElementById('fc-star');
   var starredToggle = document.getElementById('fc-starred-only');
   var liveEl = document.getElementById('fc-live');
+  var recallToggle = document.getElementById('fc-recall');
+  var ratingBar = document.getElementById('fc-rating');
+  var ratingBtns = ratingBar.querySelectorAll('[data-rating]');
+  var sessionDone = document.getElementById('fc-session-done');
+  var doneMsg = document.getElementById('fc-done-msg');
+  var saveWarn = document.getElementById('fc-save-warn');
+  var restartBtn = document.getElementById('fc-restart');
+  var resetBtn = document.getElementById('fc-reset');
+  var panelEl = document.getElementById('mode-flashcards');
 
   // The card content is normal readable text (not buried in a button), but the
   // flip and navigation are silent to a screen reader on their own, so mirror
@@ -70,6 +79,8 @@
   (window.STUDY_STARRED || []).forEach(function (w) {
     if (w && w.length >= 2) starred[keyOf(w[0], w[1])] = true;
   });
+  // Server-side SM-2 due dates, same key format: "lemma\0gloss" -> ISO date.
+  var sched = window.STUDY_PROGRESS || {};
 
   // POS dropdown from the values actually present in this list, sorted.
   var posSet = {};
@@ -84,36 +95,238 @@
   var cards = allCards;
   var idx = 0;
 
+  // 'browse' pages linearly through `cards` by idx; 'recall' works through a
+  // shuffled session `queue`, where the head is the current card.
+  var mode = 'browse';
+  var queue = [];
+  // Cards already sent to the server this session, so a requeued card is
+  // only scheduled once (see saveReview).
+  var reviewed = {};
+  var RATING_KEYS = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
+
+  // Words from this list reviewed today, as a set of keys. Seeded from the server's
+  // last_review timestamps so it is not lost on reload, then added to as you rate -
+  // which is also why it is a set of words rather than a tally: a word reviewed
+  // earlier today and again now is one word done, not two.
+  var doneToday = {};
+  (function seedDoneToday() {
+    var last = window.STUDY_REVIEWED || {};
+    var now = new Date();
+    Object.keys(last).forEach(function (k) {
+      var t = new Date(Date.parse(last[k]));
+      if (isNaN(t)) return;
+      // Compared in the viewer's own timezone, which is the whole reason the server
+      // sends timestamps instead of a count.
+      if (t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth()
+          && t.getDate() === now.getDate()) doneToday[k] = true;
+    });
+  })();
+
+  function doneCount() { return Object.keys(doneToday).length; }
+
+  function current() { return mode === 'recall' ? queue[0] : cards[idx]; }
+
+  function dueAt(c) { return Date.parse(sched[keyOf(c.lemma, c.shortDef)] || '') || 0; }
+
+  // 0 = due now, 1 = never reviewed, 2 = scheduled for later. A never-reviewed
+  // card sorts after the backlog but still belongs in the session.
+  function dueGroup(c, now) {
+    if (!sched[keyOf(c.lemma, c.shortDef)]) return 1;
+    return dueAt(c) <= now ? 0 : 2;
+  }
+
+  // Reset Progress lives in the page-level action bar next to Delete List, which sits
+  // outside the flashcard panel and shows on both tabs - so it has to track the active tab
+  // as well as the mode, or it would sit on the Browse tab offering to reset a recall
+  // session that isn't on screen.
+  function paintReset() {
+    var onFlashcards = !panelEl || panelEl.style.display !== 'none';
+    resetBtn.style.display = (mode === 'recall' && onFlashcards) ? '' : 'none';
+  }
+
+  function setRatingEnabled(on) {
+    for (var i = 0; i < ratingBtns.length; i++) ratingBtns[i].disabled = !on;
+  }
+
+  // One warning slot for both failed writes, so the message always names the
+  // thing that actually failed rather than whichever one wrote it last.
+  function warn(msg) { saveWarn.textContent = msg || ''; }
+
+  function paintStar() {
+    var c = current();
+    var on = !!(c && starred[keyOf(c.lemma, c.shortDef)]);
+    starBtn.classList.toggle('starred', on);
+    starBtn.setAttribute('aria-pressed', String(on));
+  }
+
+  // Cards the deck still has left to offer in a "study ahead" run: everything
+  // not already rated this session, whether or not it was due.
+  function aheadLeft() {
+    return cards.filter(function (c) { return !reviewed[keyOf(c.lemma, c.shortDef)]; });
+  }
+
   function render() {
+    var recall = mode === 'recall';
+    paintReset();
     cardEl.classList.remove('flipped');
     frontFace.setAttribute('aria-hidden', 'false');
     backFace.setAttribute('aria-hidden', 'true');
+    setRatingEnabled(false);
+    sessionDone.style.display = 'none';
     if (cards.length === 0) {
       cardEl.style.display = 'none';
       nav.style.display = 'none';
+      ratingBar.style.display = 'none';
       filteredEmpty.style.display = 'block';
       progress.textContent = '';
       announce('No flashcards match these filters.');
       return;
     }
-    cardEl.style.display = '';
-    nav.style.display = 'flex';
     filteredEmpty.style.display = 'none';
+    if (recall && queue.length === 0) {
+      cardEl.style.display = 'none';
+      nav.style.display = 'none';
+      ratingBar.style.display = 'none';
+      sessionDone.style.display = 'block';
+      // No cards done means nothing was waiting in the first place.
+      doneMsg.textContent = Object.keys(reviewed).length ? 'Session finished.' : 'All caught up.';
+      // Nothing left to pull forward once every card has been rated, so don't
+      // offer a button that would hand back an empty deck.
+      restartBtn.style.display = aheadLeft().length ? '' : 'none';
+      progress.textContent = '0 left · ' + doneCount() + ' done';
+      announce(doneMsg.textContent);
+      return;
+    }
+    cardEl.style.display = '';
+    nav.style.display = recall ? 'none' : 'flex';
+    ratingBar.style.display = recall ? 'flex' : 'none';
 
-    var c = cards[idx];
+    var c = current();
     frontParts.textContent = c.front;
     backPos.textContent = c.pos || '';
     backPos.style.display = c.pos ? '' : 'none';
     backDef.textContent = c.shortDef || c.longDef || '(no definition)';
 
-    var on = !!starred[keyOf(c.lemma, c.shortDef)];
-    starBtn.classList.toggle('starred', on);
-    starBtn.setAttribute('aria-pressed', String(on));
+    paintStar();
 
-    progress.textContent = (idx + 1) + ' / ' + cards.length;
-    prevBtn.disabled = idx === 0;
-    nextBtn.disabled = idx === cards.length - 1;
+    if (recall) {
+      progress.textContent = queue.length + ' left · ' + doneCount() + ' done';
+    } else {
+      progress.textContent = (idx + 1) + ' / ' + cards.length;
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === cards.length - 1;
+    }
     announce(c.front);
+  }
+
+  // Shuffled copy of the filtered deck, then stably sorted into due (oldest
+  // first), never-seen, scheduled-for-later. Shuffling first keeps stored list
+  // order out of each group, so you learn the word and not its position.
+  // `ahead` keeps the scheduled-for-later cards; a normal session drops them.
+  // It also keeps `reviewed`, so studying ahead pulls forward the cards you
+  // have *not* done rather than replaying the ones you just finished. A fresh
+  // session clears it instead: a card whose save failed has no server-side
+  // schedule, so it ought to come back round.
+  function buildQueue(ahead) {
+    var now = Date.now();
+    if (!ahead) reviewed = {};
+    queue = aheadLeft();
+    for (var i = queue.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = queue[i]; queue[i] = queue[j]; queue[j] = t;
+    }
+    queue.sort(function (a, b) {
+      return (dueGroup(a, now) - dueGroup(b, now)) || (dueAt(a) - dueAt(b));
+    });
+    if (!ahead) queue = queue.filter(function (c) { return dueGroup(c, now) < 2; });
+    warn('');
+  }
+
+  function setMode(on) {
+    mode = on ? 'recall' : 'browse';
+    if (on) buildQueue();
+    render();
+  }
+
+  // In-session requeue: Again comes back 3 cards later, Hard 7 later, Good/Easy
+  // retire the card. Clamping to the queue length puts it at the end of a short
+  // deck (a lone card simply comes straight back).
+  function rate(g) {
+    if (mode !== 'recall' || !queue.length || !cardEl.classList.contains('flipped')) return;
+    var c = queue.shift();
+    saveReview(c, g);
+    if (g === 'again' || g === 'hard') {
+      queue.splice(Math.min(g === 'again' ? 3 : 7, queue.length), 0, c);
+    }
+    render();
+    var label = g.charAt(0).toUpperCase() + g.slice(1);
+    announce(label + '. ' + (queue.length ? queue[0].front : 'Session finished.'));
+  }
+
+  // The long-term interval is the server's business; the requeue above is the
+  // session's, and Anki layers them the same way. Deliberately not awaited and
+  // never reverted - undoing a rating mid-session confuses more than dropping
+  // one review does. No retry buffer.
+  //
+  // Only the FIRST rating of a card counts, which is the one that says whether
+  // you actually knew it. Posting the requeue passes too would both invert the
+  // schedule (Hard then Good would bump `reps` and buy a longer interval than
+  // Good alone) and race its own earlier write, since each call is a separate
+  // read-modify-write.
+  function saveReview(c, g) {
+    var key = keyOf(c.lemma, c.shortDef);
+    if (reviewed[key]) return;
+    reviewed[key] = true;
+    // Counted up front, like the rest of the rating path: the card is behind you whether
+    // or not the write lands, and a save that fails simply won't be there after a reload.
+    doneToday[key] = true;
+    fetch('/userspace/submit_review', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: S.language, lemma: c.lemma, gloss: c.shortDef, rating: g,
+        tz_offset: new Date().getTimezoneOffset()
+      })
+    }).then(function (resp) {
+      return resp.ok ? resp.json() : Promise.reject();
+    }).then(function (d) {
+      if (!d.success) return Promise.reject();
+      sched[key] = d.due;
+    }).catch(function () {
+      // Left up for the rest of the session: a later card saving fine says
+      // nothing about the review that was lost.
+      warn("Couldn't save your last review.");
+    });
+  }
+
+  // Throw away the stored schedule for every word in this list, so the whole
+  // deck reads as never-reviewed again. Confirmed first and not undoable, hence
+  // the plain confirm(); the server only ever touches the caller's own rows.
+  function resetProgress() {
+    if (!window.confirm('Reset your recall progress for every word in this list? This cannot be undone.')) return;
+    resetBtn.disabled = true;
+    fetch('/userspace/reset_progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: S.language, list_name: S.listName, shared: !!S.shared
+      })
+    }).then(function (resp) {
+      return resp.ok ? resp.json() : Promise.reject();
+    }).then(function (d) {
+      if (!d.success) return Promise.reject();
+      sched = {};
+      // The delete takes the last_review timestamps with it, so the day's tally has to
+      // go too or the page would claim words done that no longer have a review on record.
+      doneToday = {};
+      // A session in progress is describing a schedule that no longer exists,
+      // so start it over rather than letting it run on stale ordering.
+      if (mode === 'recall') buildQueue();
+      render();
+      announce('Progress reset.');
+    }).catch(function () {
+      warn("Couldn't reset your progress.");
+    }).then(function () {
+      resetBtn.disabled = false;
+    });
   }
 
   function applyFilter() {
@@ -125,15 +338,20 @@
       return true;
     });
     idx = 0;
+    // The deck contents changed, so a recall session starts over rather than
+    // carrying queue/done counts that no longer describe this deck.
+    if (mode === 'recall') buildQueue();
     render();
   }
 
   function flip() {
-    if (!cards.length) return;
+    var c = current();
+    if (!c) return;
     var isFlipped = cardEl.classList.toggle('flipped');
     frontFace.setAttribute('aria-hidden', String(isFlipped));
     backFace.setAttribute('aria-hidden', String(!isFlipped));
-    var c = cards[idx];
+    // Rating a card you haven't revealed is how people fool themselves.
+    setRatingEnabled(mode === 'recall' && isFlipped);
     if (isFlipped) {
       var def = c.shortDef || c.longDef || '(no definition)';
       announce(c.pos ? c.pos + '. ' + def : def);
@@ -146,16 +364,19 @@
 
   // Under "starred only" a star change moves the current card in or out of the
   // deck, so re-filter; otherwise repaint in place to keep the position.
+  // A recall session keeps its deck (and the card's flipped state) and only
+  // repaints the star.
   function refreshAfterStar() {
-    if (starredToggle && starredToggle.checked) applyFilter();
+    if (mode === 'recall') paintStar();
+    else if (starredToggle && starredToggle.checked) applyFilter();
     else render();
   }
 
   // Toggle the star on the current card. Optimistic: flip local state and UI
   // right away, persist in the background, and revert if the request fails.
   function toggleStar() {
-    if (!cards.length) return;
-    var c = cards[idx];
+    var c = current();
+    if (!c) return;
     var key = keyOf(c.lemma, c.shortDef);
     var willStar = !starred[key];
     if (willStar) starred[key] = true; else delete starred[key];
@@ -182,6 +403,20 @@
   starBtn.addEventListener('click', function (e) { e.stopPropagation(); toggleStar(); });
   prevBtn.addEventListener('click', prev);
   nextBtn.addEventListener('click', next);
+  recallToggle.addEventListener('change', function () { setMode(recallToggle.checked); });
+  ratingBar.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-rating]');
+    if (btn) rate(btn.getAttribute('data-rating'));
+  });
+  restartBtn.addEventListener('click', function () { buildQueue(true); render(); });
+  resetBtn.addEventListener('click', resetProgress);
+
+  // showMode() is an inline onclick on these, and attribute handlers run before listeners
+  // added here, so the panel's display is already up to date by the time paintReset reads it.
+  ['tab-browse', 'tab-flashcards'].forEach(function (id) {
+    var tab = document.getElementById(id);
+    if (tab) tab.addEventListener('click', paintReset);
+  });
 
   // Keyboard shortcuts, but only while the Flashcards tab is the visible panel
   // and focus isn't in the POS <select>.
@@ -195,6 +430,10 @@
     if (tag === 'input' || tag === 'select' || tag === 'textarea' ||
         tag === 'button' || tag === 'a') return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+    else if (mode === 'recall') {
+      // rate() ignores keys until the card is flipped; arrows do nothing here.
+      if (RATING_KEYS[e.key]) { e.preventDefault(); rate(RATING_KEYS[e.key]); }
+    }
     else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
   });
