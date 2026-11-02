@@ -36,7 +36,7 @@ _LEMMATIZE = "routers.ToolsApp.lemmatize"
 # LOGEION, CONFIDENCE, CLTK, CLTK_LOGEION, STANZA, STANZA_LOGEION after these, so the
 # assertions below check the structural prefix and the TEXT column (index 4) instead of
 # an exact full-row match.
-STRUCTURAL_HEADER = "TITLE,LOCATION,SECTION,RUNNINGCOUNT,TEXT"
+STRUCTURAL_HEADER = "Head Word,Location,Section,Counter,Orthographic Form"
 
 
 @pytest.fixture(scope="module")
@@ -88,10 +88,10 @@ def test_post_returns_lemmatized_csv(client):
     body = resp.content.decode("utf-8-sig")  # the route prepends a BOM
     lines = [line for line in body.splitlines() if line]
 
-    # Header starts with the original five columns (trailing columns may follow).
+    # Header starts with the Bridge ontology columns (a Crosswalk column follows).
     assert lines[0].startswith(STRUCTURAL_HEADER)
     assert len(lines) == 3                       # header + one row per input word
 
-    # TEXT is the 5th column (index 4); the original words survive there.
+    # Orthographic Form is the 5th column (index 4); the original words survive there.
     assert lines[1].split(",")[4] == "amo"
     assert lines[2].split(",")[4] == "puella"

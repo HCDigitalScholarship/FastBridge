@@ -175,6 +175,23 @@ def build_logeion_url(lemma: str, language: str = None) -> str:
     return LOGEION_BASE_URL + quote(key)
 
 
+def crosswalk_headword(lemma: str, conversion: dict):
+    """Crosswalk a resolved lemma to its Bridge dictionary Head Word via the
+    morpheus->Bridge equivalence table (conversion_dict), e.g. 'sum' -> 'SVM/1',
+    'duo' -> 'DVO', 'Iapetus' -> 'IAPETVS/N'.
+
+    Proper nouns are keyed capitalized in that table while common words are
+    lowercase, so we try a few case variants. Returns (headword, ok); ok=False
+    means the lemma has no Bridge Head Word, so the row needs a manual headword
+    before it can be imported into the Bridge."""
+    if not lemma:
+        return "", False
+    for key in (lemma, lemma.lower(), lemma.capitalize()):
+        if key in conversion:
+            return conversion[key], True
+    return lemma, False
+
+
 def get_pipeline(language: str):
     global stanza_pipelines
     lang_code = {"latin": "la", "greek": "grc"}.get(language.lower())
@@ -524,28 +541,43 @@ def lemmatize_annotate(text, location, marker_re, language, lemma_lex, format, p
 
         if is_hybrid:
             lemma, conf, cltk_alt, stanza_alt = resolve_ensemble(word, word_clean, language, cltk, stanza_map)
+            resolved_lemma = lemma
             title = f"hybrid: {lemma}"
 
         elif is_cltk_only:
             c = cltk_lemma_for(word_clean, language, cltk)
+            resolved_lemma = c or "NONE"
             title = f"cltk: {c}" if c else "cltk: NONE"
             conf = "medium" if c else "none"
 
         elif is_stanza_only:
             entry = stanza_map.get(word_clean)
             s = entry["lemma"] if entry else ""
+            resolved_lemma = s or "NONE"
             title = f"stanza: {s}" if s else "stanza: NONE"
             conf = "medium" if s else "none"
 
         else:
+            resolved_lemma = lemma_lex.get(word_clean, "NONE")
             if word_clean in lemma_lex:
-                title = lemma_lex[word_clean]
-                title = conversion.get(title, f"morpheus: {title}")
+                title = conversion.get(resolved_lemma, f"morpheus: {resolved_lemma}")
             else:
                 title = "morpheus: NONE"
 
+        # Crosswalk the resolved lemma to its Bridge dictionary Head Word.
+        # A failure (resolved a lemma, but it has no Bridge Head Word) is flagged
+        # so a human can supply a headword before importing into the Bridge.
+        if resolved_lemma.strip().upper() == "NONE":
+            headword = "NONE"
+            crosswalk_failed = False
+        else:
+            headword, _ok = crosswalk_headword(resolved_lemma, conversion)
+            crosswalk_failed = not _ok
+
         row = {
             "title": title,
+            "headword": headword,
+            "crosswalk_failed": crosswalk_failed,
             "location": location,
             "section": section,
             "running_count": running_count,
@@ -599,34 +631,24 @@ def _csv_field(value) -> str:
 
 
 def lemmatize(text, location, marker_re, language, lemma_lex, format, poetry):
-    """Build the CSV string. Delegates the actual lemmatization to
-    lemmatize_rows() so the CSV and JSON endpoints stay in sync.
+    """Build the CSV string from lemmatize_rows().
 
-    LOGEION and CONFIDENCE columns are appended at the end (after the original
-    five columns, so positional importers reading columns 0-4 are unaffected).
-    LOGEION is the dictionary URL for each resolved lemma (blank for NONE);
-    CONFIDENCE is high / review / medium / none for Hybrid & Stanza (blank for
-    the Bridge format). For disagreements (CONFIDENCE=review) the CLTK, CLTK_LOGEION,
-    STANZA, and STANZA_LOGEION columns hold both candidate lemmas and their Logeion
-    links (blank otherwise). Every field is CSV-quoted when needed so trailing
-    punctuation in the TEXT column can't shift columns."""
-    output_lines = [
-        "TITLE,LOCATION,SECTION,RUNNINGCOUNT,TEXT,LOGEION,CONFIDENCE,"
-        "CLTK,CLTK_LOGEION,STANZA,STANZA_LOGEION"
-    ]
+    Column headers match the revised Bridge-database ontology:
+        Head Word, Location, Section, Counter, Orthographic Form
+    where Head Word is the resolved lemma crosswalked to its Bridge dictionary
+    Head Word (e.g. IAPETVS/N), and Orthographic Form is the original word.
+
+    A final Crosswalk column flags a resolved word whose lemma had no Bridge Head
+    Word in the morpheus->Bridge equivalence table (conversion_dict); those rows
+    need a manual headword before they can be imported into the Bridge. Every
+    field is CSV-quoted when needed so punctuation can't shift columns."""
+    output_lines = ["Head Word,Location,Section,Counter,Orthographic Form,Crosswalk"]
     rows = lemmatize_rows(text, location, marker_re, language, lemma_lex, format, poetry)
     for row in rows:
-        _tool, lemma = split_title(row["title"])
-        is_none = lemma.strip().upper() == "NONE"
-        logeion = "" if is_none else build_logeion_url(lemma, language)
-        conf = row.get("conf") or ""
-        cltk_lem = row.get("cltk") or ""
-        stanza_lem = row.get("stanza") or ""
-        cltk_log = build_logeion_url(cltk_lem, language) if cltk_lem else ""
-        stanza_log = build_logeion_url(stanza_lem, language) if stanza_lem else ""
+        crosswalk = "FAILED" if row.get("crosswalk_failed") else ""
         fields = [
-            row["title"], row["location"], row["section"], row["running_count"],
-            row["text"], logeion, conf, cltk_lem, cltk_log, stanza_lem, stanza_log,
+            row["headword"], row["location"], row["section"],
+            row["running_count"], row["text"], crosswalk,
         ]
         output_lines.append(",".join(_csv_field(f) for f in fields))
     return "\n".join(output_lines) + "\n"
