@@ -8,6 +8,7 @@
         {% for href, label in [("/select", "Lists"), ("/lemmatizer/", "Lemmatizer"), ("/stats", "Stats"), ("/oracle", "Oracle"), ("/demacronizer", "Demacronizer")] %}
         <li class="nav-item"><a class="nav-link" href="{{ href }}"{% if path.startswith(href.rstrip('/')) %} aria-current="page"{% endif %}>{{ label }}</a></li>
         {% endfor %}
+        <li class="nav-item"><a class="nav-link" href="{{ '/lemma-workspace/' if request.cookies.get('user_token') else '/account/signin?next=/lemma-workspace/' }}"{% if path.startswith('/lemma-workspace') %} aria-current="page"{% endif %}>Lemmatization Workspace</a></li>
       </ul>
 
       <ul class="nav navbar-nav">
@@ -75,12 +76,6 @@
                        role="menu"
                        aria-labelledby="user-menu-dropdown">
                     <h6 class="dropdown-header">${userName}</h6>
-                    <div class="dropdown-divider" role="separator"></div>
-                    <a class="dropdown-item"
-                       role="menuitem"
-                       href="/lemma-workspace">
-                      <i class="fas fa-table" aria-hidden="true"></i> Lemmatization Workspace
-                    </a>
                     <div class="dropdown-divider" role="separator"></div>
                     <a class="dropdown-item"
                        role="menuitem"

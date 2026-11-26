@@ -18,6 +18,11 @@ a:hover,
 a:focus {
   color: var(--text-primary);
 }
+/* Links inside running text need more than color to stand out (WCAG link-in-text-block) */
+p a:not(.btn) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .btn-primary,
 .btn-default,
 .btn-primary:disabled,
@@ -56,22 +61,6 @@ a:focus {
 img {
   max-width: 100%;
   height: auto;
-}
-.footerImages {
-  max-height: 60px;
-  min-width: 9vh;
-  height: 60px;
-  width: auto;
-  padding: 1vh 1vh 1vh 1vh;
-}
-
-.img-responsive {
-  width: auto;
-  height: 50px;
-}
-.img-feminae {
-  width: 86px;
-  height: 50px;
 }
 
 .btn-nonbs {
@@ -198,11 +187,38 @@ img {
 footer {
   background-color: #000; /* black in both themes: partner logos have dark backgrounds baked in */
   color: #fff;
-  overflow: hidden;
-  max-height: 100px;
-  min-height: 90px;
-  height: 120px;
-  padding: 20px 0;
+  padding: 20px 30px;
+}
+/* Equal outer columns keep the Haverford logo truly centered */
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem 2rem;
+}
+@media (max-width: 767.98px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}
+.footer-partners {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+footer img {
+  height: 50px;
+  width: auto;
+}
+#copyright {
+  margin: 0;
+  justify-self: end;
+}
+@media (max-width: 767.98px) {
+  #copyright {
+    justify-self: center;
+  }
 }
 nav {
   height: var(--nav-height);
@@ -585,6 +601,7 @@ select {
 #main-nav .nav-link {
   color: var(--text-muted);
   padding: 0.5rem 0.75rem;
+  white-space: nowrap;
 }
 
 #main-nav .nav-link:hover,
