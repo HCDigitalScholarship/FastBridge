@@ -30,9 +30,9 @@
   --color-gray-900: #111827;
 
   /* Background Colors (Dark Theme) */
-  --bg-primary: rgba(43, 45, 47, 0.95);
-  --bg-secondary: rgba(51, 51, 51, 0.9);
-  --bg-tertiary: rgba(81, 81, 81, 0.9);
+  --bg-primary: #2b2d2f;
+  --bg-secondary: #34373a;
+  --bg-tertiary: #3d4043;
   --bg-overlay: rgba(0, 0, 0, 0.76);
   --bg-glass: rgba(255, 255, 255, 0.05);
   --bg-glass-hover: rgba(255, 255, 255, 0.1);
@@ -40,8 +40,16 @@
   /* Text Colors */
   --text-primary: #ffffff;
   --text-secondary: #e5e7eb;
-  --text-muted: #9ca3af;
+  --text-muted: #b9bec2;
   --text-inverse: #1f2937;
+
+  /* Theme roles (AA: #22b3b3 on #2b2d2f = 5.4:1; #228383 as text there fails at 3.1:1) */
+  --color-link: #22b3b3;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --logo-filter: invert(1); /* logo PNG is dark text on an opaque white box... */
+  --logo-blend: screen;     /* ...so blend the (inverted, now black) box away */
+  --hero-overlay: rgba(43, 45, 47, 0.78);
+  --nav-height: 72px;
 
   /* Spacing Scale (8px base) */
   --spacing-0: 0;
@@ -116,13 +124,6 @@
   --focus-outline: 3px solid var(--color-accent-bright);
   --focus-offset: 2px;
   --min-touch-target: 44px;
-}
-
-/* Dark theme adjustments */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Already dark by default, but can add overrides if needed */
-  }
 }
 
 /* Reduced motion preferences */

@@ -1,3 +1,53 @@
+/* ========================================
+   THEME — overrides the Grayscale bootstrap build with design tokens
+   ======================================== */
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+h1, h2, h3, h4, h5, h6, .btn {
+  font-family: var(--font-heading);
+  text-transform: none;
+  letter-spacing: normal;
+}
+a {
+  color: var(--color-link);
+}
+a:hover,
+a:focus {
+  color: var(--text-primary);
+}
+.btn-primary,
+.btn-default,
+.btn-primary:disabled,
+.btn-primary.disabled {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-default:hover,
+.btn-default:focus,
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-default:not(:disabled):not(.disabled):active {
+  color: var(--color-white);
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+.dropdown-item.active,
+.dropdown-item:active,
+.custom-control-input:checked ~ .custom-control-label::before {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.masthead {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 .How_to_link {
   width: 100%;
   font-size: 2em;
@@ -146,7 +196,8 @@ img {
   display: block;
 }
 footer {
-  background-color: inherit;
+  background-color: #000; /* black in both themes: partner logos have dark backgrounds baked in */
+  color: #fff;
   overflow: hidden;
   max-height: 100px;
   min-height: 90px;
@@ -154,7 +205,7 @@ footer {
   padding: 20px 0;
 }
 nav {
-  height: 120px;
+  height: var(--nav-height);
 }
 section {
   min-height: 85vh;
@@ -228,7 +279,7 @@ section {
 #slideOut {
   position: fixed;
   width: 300px;
-  top: 120px; /*should the height of the nav bar*/
+  top: var(--nav-height);
   right: -300px;
   background-color: rgb(81, 81, 81, 0.9);
   z-index: 100000000;
@@ -516,17 +567,86 @@ select {
   scrollbar-color: var(--bg-glass) rgba(0, 0, 0, 0.1);
 }
 
+/* Top bar */
+#main-nav {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-heading);
+  padding: 0.5rem 0;
+}
+
+#main-nav .navbar-brand img {
+  height: 32px;
+  width: auto;
+  filter: var(--logo-filter);
+  mix-blend-mode: var(--logo-blend);
+}
+
+#main-nav .nav-link {
+  color: var(--text-muted);
+  padding: 0.5rem 0.75rem;
+}
+
+#main-nav .nav-link:hover,
+#main-nav .nav-link:focus,
+#main-nav .nav-link[aria-current="page"] {
+  color: var(--text-primary);
+}
+
+#main-nav .nav-link[aria-current="page"] {
+  box-shadow: inset 0 -2px 0 var(--color-accent-bright);
+}
+
+#main-nav .navbar-toggler {
+  color: var(--text-primary);
+  border-color: var(--color-border);
+}
+
+#main-nav .dropdown-menu {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--color-border);
+}
+
+#main-nav .dropdown-item {
+  color: var(--text-primary);
+}
+
+#main-nav .dropdown-item:hover,
+#main-nav .dropdown-item:focus {
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+}
+
+#main-nav .dropdown-header {
+  color: var(--text-muted);
+}
+
+#main-nav .dropdown-divider {
+  border-top-color: var(--color-border);
+}
+
+#main-nav #navbar-auth {
+  margin-left: 0.75rem;
+}
+
+#main-nav .dropdown-item .fa-external-link-alt {
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+
+/* Collapsed (mobile) menu sits below the fixed-height bar, so it needs its own background */
+@media (max-width: 991.98px) {
+  #main-nav .navbar-collapse {
+    background-color: var(--bg-primary);
+    padding: 0.5rem 0 1rem;
+  }
+}
+
 /* User dropdown menu styling */
 #user-menu-dropdown {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #333;
-}
-
-#user-menu-dropdown:hover,
-#user-menu-dropdown:focus {
-  color: #228383;
 }
 
 /* Dropdown menu styling */
@@ -534,7 +654,7 @@ select {
   min-width: 200px;
   padding: 0.5rem 0;
   margin-top: 0.125rem;
-  border: 1px solid rgba(0,0,0,.15);
+  border: 1px solid var(--color-border);
   border-radius: 0.25rem;
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
 }
@@ -543,7 +663,7 @@ select {
   padding: 0.5rem 1rem;
   margin-bottom: 0;
   font-size: 0.875rem;
-  color: #6c757d;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -557,7 +677,7 @@ select {
   padding: 0.5rem 1rem;
   clear: both;
   font-weight: 400;
-  color: #212529;
+  color: var(--text-primary);
   text-align: inherit;
   white-space: nowrap;
   background-color: transparent;
@@ -566,9 +686,9 @@ select {
 
 #navbar-auth .dropdown-item:hover,
 #navbar-auth .dropdown-item:focus {
-  color: #16181b;
+  color: var(--text-primary);
   text-decoration: none;
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
 }
 
 #navbar-auth .dropdown-item i {

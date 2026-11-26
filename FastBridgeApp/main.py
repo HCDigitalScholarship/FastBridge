@@ -64,7 +64,7 @@ app.mount("/plots", StaticFiles(directory=plot_path), name="plots")
 
 @app.get("/")
 async def index(request : Request):
-    return templates.TemplateResponse("list-index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/demacronizer", response_class=HTMLResponse)
 async def index(request : Request):

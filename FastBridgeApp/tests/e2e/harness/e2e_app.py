@@ -84,7 +84,7 @@ app.mount("/assets", StaticFiles(directory=str(Path("static") / "assets")), name
 
 @app.get("/")
 async def index(request: Request):
-    return templates.TemplateResponse("list-index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/e2e-login")

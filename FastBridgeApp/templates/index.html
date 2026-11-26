@@ -1,23 +1,172 @@
 {% extends "base.html" %}
+{% block extra_static %}
+<style>
+  .home-hero {
+    background: linear-gradient(var(--hero-overlay), var(--hero-overlay)),
+      url('/assets/img/background-img-gray.png') center / cover;
+    padding: calc(var(--nav-height) + 4rem) 1rem 4rem;
+    text-align: center;
+  }
+  .home-hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 0.75rem; }
+  .home-hero .home-lead { font-size: 1.25rem; color: var(--text-secondary); margin: 0 0 2rem; }
+
+  .home-start {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+  }
+  .home-start h2 { font-size: 1.35rem; margin: 0 0 0.25rem; }
+  .home-start p { font-size: 1rem; color: var(--text-muted); margin: 0 0 1.25rem; }
+  .home-start-buttons { display: flex; justify-content: center; gap: 0.75rem; }
+  .home-start-buttons .btn { flex: 1; max-width: 180px; padding: 0.6rem 1.5rem; font-size: 1.25rem; }
+
+  .home-section { max-width: 1040px; min-height: 0; margin: 0 auto; padding: 3rem 1rem 0; } /* min-height: undo global section{85vh} */
+  .home-section:last-of-type { padding-bottom: 4rem; }
+  .home-section h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+  .home-card {
+    height: 100%;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+  }
+  .home-card p { font-size: 1rem; margin: 0; color: var(--text-muted); }
+
+  .home-account { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+  .home-account > div { flex: 1 1 24rem; }
+  .home-account h2 { margin-bottom: 0.25rem; }
+  .home-list-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 0; }
+  .home-list-links a {
+    padding: 0.4rem 1rem;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+  }
+  .home-list-links a:hover, .home-list-links a:focus { border-color: var(--color-accent-bright); text-decoration: none; }
+
+  .home-apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+  a.home-app { display: block; color: var(--text-primary); transition: var(--transition-all); }
+  a.home-app:hover, a.home-app:focus { color: var(--text-primary); text-decoration: none; border-color: var(--color-accent-bright); }
+  .home-app i { font-size: 1.5rem; color: var(--color-link); margin-bottom: 0.75rem; }
+  .home-app h3 { font-size: 1.2rem; margin: 0 0 0.25rem; }
+  .home-badge {
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    vertical-align: middle;
+    white-space: nowrap;
+    color: var(--text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+  }
+</style>
+{% endblock %}
 {% block content %}
-<body id="page-top">
-    <header class="masthead" style="background-image: url('/assets/img/background-img-gray.png') ;background-size: cover; background-position: top;">
-        <div class="intro-body">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-8 mx-auto" style="opacity: 1;padding: 15px 20px;">
-                        <p class="intro-text" style="font-family: Cabin, sans-serif;font-size: 34px;margin-bottom: 45px;font-weight: normal;">
-                            Welcome to the Bridge!</p>
-                        <p class="intro-text" style="font-family: Actor, sans-serif;font-size: 22px;color: #ffffff;margin-bottom: 15px;font-weight: normal;font-style: normal;">
-                            (intro text here)  </p>
-                        <a class="btn btn-nonbs select-btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(125,232,194,0.75);" href="/oracle/">
-                            Oracle</a>
-                        <a class="btn btn-nonbs select-btn" role="button" data-bs-hover-animate="pulse" style="background-color: rgba(232,131,125,0.75);" href="/select/">
-                            Lists</a>
-                    </div>
-                </div>
-            </div>
-          </div>
-    </header>
-</body>
+<main id="main-content">
+  <header class="home-hero">
+    <h1>Welcome to The Bridge!</h1>
+    <p class="home-lead">Vocabulary for Greek and Latin learning</p>
+
+    <div class="home-start">
+      <h2>Build a vocabulary list</h2>
+      <p>Choose a language, then add texts you're reading.</p>
+      <div class="home-start-buttons">
+        <a class="btn btn-primary" href="/select/Greek/">Greek</a>
+        <a class="btn btn-primary" href="/select/Latin/">Latin</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="home-section" aria-label="Your account">
+    <div class="home-card home-account" id="home-signin">
+      <div>
+        <h2>Create personalized lists</h2>
+        <p>Sign into create and save personali.</p>
+      </div>
+      <a class="btn btn-primary" href="/account/signin">Sign in with Google</a>
+    </div>
+    <div class="home-card" id="home-lists" hidden>
+      <div class="home-account">
+        <h2>Your lists</h2>
+        <a href="/userspace">Saved &rarr;</a>
+      </div>
+      <div class="home-list-links" id="home-list-links"></div>
+    </div>
+  </section>
+
+  <section class="home-section" aria-labelledby="home-apps-heading">
+    <h2 id="home-apps-heading">Apps</h2>
+    <div class="home-apps">
+      <a class="home-card home-app" href="/lemmatizer/">
+        <i class="fas fa-spell-check" aria-hidden="true"></i>
+        <h3>Lemmatizer</h3>
+        <p>Paste or upload a text and get the dictionary form of every word.</p>
+      </a>
+      <a class="home-card home-app" href="/stats">
+        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+        <h3>Stats</h3>
+        <p>Readability metrics for Latin texts, alone or compared side by side.</p>
+      </a>
+      <a class="home-card home-app" href="/oracle">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <h3>Oracle</h3>
+        <p>Find the passages you can already read, based on the vocabulary you know.</p>
+      </a>
+      <a class="home-card home-app" href="/demacronizer">
+        <i class="fas fa-eraser" aria-hidden="true"></i>
+        <h3>Demacronizer</h3>
+        <p>Strip the macrons from a Latin text.</p>
+      </a>
+      <a class="home-card home-app" id="home-workspace" href="/account/signin?next=/lemma-workspace/">
+        <i class="fas fa-table" aria-hidden="true"></i>
+        <h3>Lemmatization Workspace <span class="home-badge" id="home-workspace-badge">Sign in</span></h3>
+        <p>Lemmatize a text together, with comments, suggestions and history.</p>
+      </a>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function () {
+    if (!/(^|; )session_name=/.test(document.cookie)) return;
+
+    var signin = document.getElementById('home-signin');
+    var lists = document.getElementById('home-lists');
+    var links = document.getElementById('home-list-links');
+    signin.hidden = true;
+    lists.hidden = false;
+    document.getElementById('home-workspace').href = '/lemma-workspace/';
+    document.getElementById('home-workspace-badge').remove();
+
+    fetch('/userspace/vocab', { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        var count = 0;
+        Object.keys(data.vocab || {}).forEach(function (lang) {
+          (data.vocab[lang] || []).forEach(function (list) {
+            if (count++ >= 8) return;
+            var a = document.createElement('a');
+            a.href = '/userspace/list/' + encodeURIComponent(lang) + '/' + encodeURIComponent(list.name);
+            a.textContent = list.name + ' (' + lang + ')';
+            links.appendChild(a);
+          });
+        });
+        if (!count) {
+          var p = document.createElement('p');
+          p.textContent = 'No saved lists yet. Pick a text above, then save words from the results.';
+          links.appendChild(p);
+        }
+      })
+      .catch(function () {
+        // Stale cookie (server session expired): fall back to the sign-in pitch.
+        lists.hidden = true;
+        signin.hidden = false;
+      });
+  })();
+</script>
 {% endblock %}
